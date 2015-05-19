@@ -44,10 +44,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
-#include <ros/console.h>
-#include <iostream>
-#include <fstream>
-#include <opencv2/legacy/legacy.hpp>
 
 using namespace teb_local_planner; // it is ok here to import everything for testing purposes
 
@@ -71,7 +67,7 @@ int main( int argc, char** argv )
 {
   ros::init(argc, argv, "test_optim_node");
   ros::NodeHandle n("~");
-  // ============== initialize ROS-Environment (Timers, Publishers,...) ========================================
+ 
   
   // load ros parameters from node handle
   config.loadRosParamFromNodeHandle(n);
@@ -82,8 +78,7 @@ int main( int argc, char** argv )
   
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
-//   obst_vector.push_back(Eigen::Vector2d(-5,-0.5));
-  
+
   obst_vector.push_back( boost::make_shared<PointObstacle>(-5,1) );
   obst_vector.push_back( boost::make_shared<PointObstacle>(-5,2.2) );
   obst_vector.push_back( boost::make_shared<PointObstacle>(0,0.1) );
@@ -111,10 +106,13 @@ int main( int argc, char** argv )
     }
   }
   marker_server.applyChanges();
-  // =============================================================================================================
   
+  
+  // Setup visualization
   visual = TebVisualizationPtr(new TebVisualization(n, config));
   
+  
+  // Setup planner (homotopy class planning or just the local teb planner)
   if (config.hcp.enable_homotopy_class_planning)
     planner = PlannerInterfacePtr(new HomotopyClassPlanner(config, &obst_vector, visual));
   else
@@ -126,12 +124,13 @@ int main( int argc, char** argv )
   return 0;
 }
 
-
+// Planning loop
 void CB_mainCycle(const ros::TimerEvent& e)
 {
-  planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0), Eigen::Vector2d(0,0));
+  planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0), Eigen::Vector2d(0,0)); // hardcoded start and goal for testing purposes
 }
 
+// Visualization loop
 void CB_publishCycle(const ros::TimerEvent& e)
 {
   planner->visualize();
