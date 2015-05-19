@@ -1,0 +1,20 @@
+#---standard pioneer footprint---
+
+#---(in inches)---
+#footprint: [ [10, -2], [7, -2], [7, -7], [-7.5, -7], [-10, 0], [-7.5, 7], [7, 7], [7, 2], [10, 2] ]
+#---(in meters)---
+footprint: [ [0.254, -0.0508], [0.1778, -0.0508], [0.1778, -0.1778], [-0.1905, -0.1778], [-0.254, 0], [-0.1905, 0.1778], [0.1778, 0.1778], [0.1778, 0.0508], [0.254, 0.0508] ]
+
+
+transform_tolerance: 0.2
+map_type: costmap
+
+obstacle_range: 6.0
+raytrace_range: 6.5
+inflation_radius: 0.2
+track_unknown_space: false
+
+observation_sources: laser_scan_sensor
+
+laser_scan_sensor: {sensor_frame: laser, data_type: LaserScan, topic: laser/scan, marking: true, clearing: true}
+

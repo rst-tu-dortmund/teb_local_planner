@@ -1,0 +1,68 @@
+TebLocalPlannerROS:
+
+ odom_topic: odom
+ map_frame: /odom
+    
+ # Trajectory
+  
+ teb_autosize: True
+ dt_ref: 0.3
+ dt_hysteresis: 0.1
+ global_plan_overwrite_orientation: True
+    
+ # Robot
+         
+ max_vel_x: 0.4
+ max_vel_x_backwards: 0.2
+ max_vel_theta: 0.3
+ acc_lim_x: 0.5
+ acc_lim_theta: 0.5
+    
+ # GoalTolerance
+    
+ xy_goal_tolerance: 0.2
+ yaw_goal_tolerance: 0.1
+ free_goal_vel: False
+    
+ # Obstacles
+    
+ min_obstacle_dist: 0.35
+ costmap_emergency_stop_dist: 0.3
+ include_costmap_obstacles: True
+ costmap_obstacles_front_only: True
+ obstacle_poses_affected: 5
+ polygon_obstacle_poses_affected: 25
+
+ # Optimization
+    
+ no_inner_iterations: 5
+ no_outer_iterations: 4
+ optimization_activate: True
+ optimization_verbose: False
+ penalty_scale: 0.1
+ penalty_epsilon: 0.1
+ weight_max_vel_x: 2
+ weight_max_vel_theta: 1
+ weight_acc_lim_x: 1
+ weight_acc_lim_theta: 1
+ weight_kinematics_nh: 1000
+ weight_kinematics_forward_drive: 1
+ weight_optimaltime: 1
+ weight_point_obstacle: 5
+ weight_poly_obstacle: 10
+ weight_dynamic_obstacle: 10
+ alternative_time_cost: False
+
+ # Homotopy Class Planner
+
+ enable_homotopy_class_planning: True
+ enable_multithreading: True
+ simple_exploration: False
+ max_number_classes: 5
+ roadmap_graph_no_samples: 15
+ roadmap_graph_area_width: 6
+ h_signature_prescaler: 0.5
+ h_signature_threshold: 0.1
+ obstacle_keypoint_offset: 0.1
+ obstacle_heading_threshold: 1
+ visualize_hc_graph: False

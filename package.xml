@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<package>
+  <name>teb_local_planner</name>
+  <version>0.1.0</version>
+  <description>
+	The teb_local_planner package implements a plugin
+	to the base_local_planner of the 2D navigation stack.
+	The underlying method called Timed Elastic Band locally optimizes
+	the robot's trajectory with respect to trajectory execution time,
+	separation from obstacles and compliance with kinodynamic constraints at runtime.	
+  </description>
+
+
+  <maintainer email="christoph.roesmann@tu-dortmund.de">Christoph Rösmann</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://wiki.ros.org/teb_local_planner</url>
+
+  <author email="christoph.roesmann@tu-dortmund.de">Christoph Rösmann</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>base_local_planner</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>interactive_markers</build_depend>
+  <build_depend>libg2o</build_depend>
+  <build_depend>nav_core</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+
+  <run_depend>base_local_planner</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>interactive_markers</run_depend>
+  <run_depend>libg2o</run_depend>
+  <run_depend>nav_core</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+
+
+  <export>
+	<nav_core plugin="${prefix}/teb_local_planner_plugin.xml"/>
+  </export>
+</package>

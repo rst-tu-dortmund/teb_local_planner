@@ -1,0 +1,33 @@
+<launch>
+	
+	<!-- Load robot driver and laser scanner -->
+	<include file="$(find pioneer_rst_description)/launch/pioneer3dx.real.launch">
+	     <arg name="robot_name" value="p3dx" />
+	</include>
+
+	<!-- Load rst map file map file -->
+	<node pkg="map_server" type="map_server" name="map_server" args="$(find pioneer_rst_description)/maps/rst_lab.yaml"/>
+
+  	<!--- Run AMCL -->
+   	<node pkg="amcl" type="amcl" name="amcl" args="scan:=/p3dx/laser/scan">
+		<param name="odom_frame_id" value="/p3dx/odom" />
+   	 	<param name="base_frame_id" value="/p3dx/base_link" />
+		<param name="global_frame_id" value="/map" />
+	</node>
+
+	<!-- Publish TF between Odom and Base_Link -->
+  	<!--node pkg="tf" type="static_transform_publisher" name="map_to_odom_p3dx" args="0.0 -0.0 0.0 0.0 0.0 0.0 /map p3dx/odom 200" /-->
+
+	<!-- run Navigation Stack -->
+	<group ns="p3dx">
+	     <param name="tf_prefix" value="p3dx" />
+	     <include file="$(find teb_local_planner)/launch/move_base.launch" />
+	</group>
+
+
+  	<!-- RVIZ -->
+  	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find teb_local_planner)/cfg/rviz_teb_gazebo.rviz" />
+
+
+</launch>
+

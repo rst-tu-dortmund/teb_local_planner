@@ -1,0 +1,37 @@
+<launch>
+	
+	<param name="/use_sim_time" value="true"/>
+
+	<!-- Load Gazebo world -->
+	<!--include file="$(find gazebo_ros)/launch/empty_world.launch"-->
+	<include file="$(find gazebo_ros)/launch/willowgarage_world.launch">
+	    <!--arg name="world_name" value="$(find gazebo_ros)/worlds/walls.world"/-->
+	    <!-- more default parameters can be changed here -->
+	</include>
+
+
+	<!-- Load willow-garage map file -->
+	<node pkg="map_server" type="map_server" name="map_server" args="$(find pioneer_rst_description)/maps/map_willow_garage.yaml"/>
+
+	<!-- Spawn robot with diff drive -->
+	<include file="$(find pioneer_rst_description)/launch/pioneer3dx.gazebo.launch">
+	     <arg name="robot_name" value="p3dx" />
+	     <arg name="robot_position" value="-x 0.0 -y 0 -z 0.01 -R 0 -P 0 -Y +1.57" />
+	</include>
+
+	<!-- Publish TF between Odom and Base_Link -->
+  	<node pkg="tf" type="static_transform_publisher" name="map_to_odom_p3dx" args="0.0 -0.0 0.0 0.0 0.0 0.0 /map p3dx/odom 200" />
+
+	<!-- run Navigation Stack -->
+	<group ns="p3dx">
+	     <param name="tf_prefix" value="p3dx" />
+	     <include file="$(find teb_local_planner)/launch/move_base.launch" />
+	</group>
+
+
+  	<!-- RVIZ -->
+  	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find teb_local_planner)/cfg/rviz_teb_gazebo.rviz" />
+
+
+</launch>
+

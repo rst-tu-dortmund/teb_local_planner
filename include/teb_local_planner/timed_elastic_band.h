@@ -1,0 +1,557 @@
+/*********************************************************************
+ *
+ * Software License Agreement (BSD License)
+ *
+ *  Copyright (c) 2015,
+ *  TU Dortmund - Institute of Control Theory and Systems Engineering.
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the institute nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: Christoph Rösmann
+ *********************************************************************/
+
+#ifndef TIMED_ELASTIC_BAND_H_
+#define TIMED_ELASTIC_BAND_H_
+
+#include <ros/ros.h>
+#include <ros/assert.h>
+
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseArray.h>
+#include <tf/tf.h>
+
+#include <complex>
+#include <iterator>
+
+#include <teb_local_planner/obstacles.h>
+
+// G2O Types
+#include <teb_local_planner/g2o_types/vertex_pose.h>
+#include <teb_local_planner/g2o_types/vertex_timediff.h>
+
+
+namespace teb_local_planner
+{
+
+//! Container of poses that represent the spatial part of the trajectory
+typedef std::vector<VertexPose*> PoseSequence;
+//! Container of time differences that define the temporal of the trajectory
+typedef std::vector<VertexTimeDiff*> TimeDiffSequence;
+
+
+/**
+ * @class TimedElasticBand
+ * @brief Class that defines a trajectory modeled as an elastic band with augmented tempoarl information.
+ * 
+ * All trajectory related methods (initialization, modifying, ...) are implemented inside this class. \n
+ * Let \f$ Q = \lbrace \mathbf{s}_i \rbrace_{i=0...n},\ n \in \mathbb{N} \f$ be a sequence of poses, \n
+ * in which \f$ \mathbf{s}_i = [x_i, y_i, \beta_i]^T \in \mathbb{R}^2 \times S^1 \f$ denotes a single pose of the robot. \n
+ * The Timed Elastic Band (TEB) augments this sequence of poses by incorporating time intervals between
+ * two consecutive poses, resuting in a sequence of \c n-1 time intervals \f$ \Delta T_i \f$: \n
+ * \f$ \tau = \lbrace \Delta T_i \rbrace_{i=0...n-1} \f$. \n
+ * Each time interval (time diff) denotes the time that the robot requires to transit from the current configuration to the next configuration.
+ * The tuple of both sequences defines the underlying trajectory.
+ * 
+ * Poses and time differences are wrapped into a g2o::Vertex class in order to enable the efficient optimization in TebOptimalPlanner. \n
+ * TebOptimalPlanner utilizes this Timed_Elastic_band class for representing an optimizable trajectory.
+ * 
+ * @todo Move decision if the start or goal state should be marked as fixed or unfixed for the optimization to the TebOptimalPlanner class.
+ */
+class TimedElasticBand
+{
+public:
+
+  /**
+   * @brief Construct the class
+   */
+  TimedElasticBand();
+  
+  /**
+   * @brief Destruct the class
+   */
+  virtual ~TimedElasticBand();
+
+  
+  
+  /** @name Access pose and timediff sequences */
+  //@{
+  
+  /**
+   * @brief Access the complete pose sequence 
+   * @return reference to the pose sequence
+   */
+  PoseSequence& poses() {return pose_vec_;};
+  
+   /**
+   * @brief Access the complete pose sequence (read-only)
+   * @return const reference to the pose sequence
+   */
+  const PoseSequence& poses() const {return pose_vec_;};
+  
+  /**
+   * @brief Access the complete timediff sequence 
+   * @return reference to the dimediff sequence
+   */
+  TimeDiffSequence& timediffs() {return timediff_vec_;};
+  
+  /**
+   * @brief Access the complete timediff sequence 
+   * @return reference to the dimediff sequence
+   */
+  const TimeDiffSequence& timediffs() const {return timediff_vec_;};  
+  
+  /**
+   * @brief Access the time difference at pos \c index of the time sequence
+   * @param index element position inside the internal TimeDiffSequence
+   * @return reference to the time difference at pos \c index
+   */
+  double& TimeDiff(unsigned int index)
+  {
+    ROS_ASSERT(index<sizeTimeDiffs()); 
+    return timediff_vec_.at(index)->dt();
+  }
+  
+  /**
+   * @brief Access the time difference at pos \c index of the time sequence (read-only)
+   * @param index element position inside the internal TimeDiffSequence
+   * @return const reference to the time difference at pos \c index
+   */
+  const double& TimeDiff(unsigned int index) const
+  {
+    ROS_ASSERT(index<sizeTimeDiffs()); 
+    return timediff_vec_.at(index)->dt();
+  }
+  
+  /**
+   * @brief Access the pose at pos \c index of the pose sequence
+   * @param index element position inside the internal PoseSequence
+   * @return reference to the pose at pos \c index
+   */
+  PoseSE2& Pose(unsigned int index) 
+  {
+    ROS_ASSERT(index<sizePoses());
+    return pose_vec_.at(index)->pose();
+  }
+  
+  /**
+   * @brief Access the pose at pos \c index of the pose sequence (read-only)
+   * @param index element position inside the internal PoseSequence
+   * @return const reference to the pose at pos \c index
+   */
+  const PoseSE2& Pose(unsigned int index) const 
+  {
+    ROS_ASSERT(index<sizePoses());
+    return pose_vec_.at(index)->pose();
+  }
+  
+  /**
+   * @brief Access the last PoseSE2 in the pose sequence
+   */
+  PoseSE2& BackPose() {return pose_vec_.back()->pose(); }
+  
+  /**
+   * @brief Access the last PoseSE2 in the pose sequence (read-only) 
+   */
+  const PoseSE2& BackPose() const {return pose_vec_.back()->pose();}
+  
+  /**
+   * @brief Access the last TimeDiff in the time diff sequence
+   */ 
+  double& BackTimeDiff() {return timediff_vec_.back()->dt(); }
+  
+  /**
+   * @brief Access the last TimeDiff in the time diff sequence (read-only)
+   */  
+  const double& BackTimeDiff() const {return timediff_vec_.back()->dt(); }
+  
+  /**
+   * @brief Access the vertex of a pose at pos \c index for optimization purposes
+   * @param index element position inside the internal PoseSequence
+   * @return Weak raw pointer to the pose vertex at pos \c index
+   */ 
+  VertexPose* PoseVertex(unsigned int index) 
+  {
+    ROS_ASSERT(index<sizePoses());
+    return pose_vec_.at(index);
+  }
+  
+  /**
+   * @brief Access the vertex of a time difference at pos \c index for optimization purposes
+   * @param index element position inside the internal TimeDiffSequence
+   * @return Weak raw pointer to the timediff vertex at pos \c index
+   */  
+  VertexTimeDiff* TimeDiffVertex(unsigned int index) 
+  {
+    ROS_ASSERT(index<sizeTimeDiffs()); 
+    return timediff_vec_.at(index);
+  }
+  
+  //@}
+  
+  
+  
+  /** @name Append new elements to the pose and timediff sequences */
+  //@{
+  
+  /**
+   * @brief Append a new pose vertex to the back of the pose sequence 
+   * @param pose PoseSE2 to push back on the internal PoseSequence
+   * @param fixed Mark the pose to be fixed or unfixed during trajectory optimization (important for the TebOptimalPlanner)
+   */
+  void addPose(const PoseSE2& pose, bool fixed=false);  
+
+  /**
+   * @brief Append a new pose vertex to the back of the pose sequence 
+   * @param position 2D vector representing the position part
+   * @param theta yaw angle representing the orientation part
+   * @param fixed Mark the pose to be fixed or unfixed during trajectory optimization (important for the TebOptimalPlanner)
+   */
+  void addPose(const Eigen::Ref<const Eigen::Vector2d>& position, double theta, bool fixed=false);
+  
+  /**
+   * @brief Append a new pose vertex to the back of the pose sequence 
+   * @param x x-coordinate of the position part
+   * @param y y-coordinate of the position part
+   * @param theta yaw angle representing the orientation part
+   * @param fixed Mark the pose to be fixed or unfixed during trajectory optimization (important for the TebOptimalPlanner)
+   */
+  void addPose(double x, double y, double theta, bool fixed=false);
+  
+  /**
+   * @brief Append a new time difference vertex to the back of the time diff sequence 
+   * @param dt time difference value to push back on the internal TimeDiffSequence
+   * @param fixed Mark the pose to be fixed or unfixed during trajectory optimization (important for the TebOptimalPlanner)
+   */
+  void addTimeDiff(double dt, bool fixed=false);
+  
+  /**
+   * @brief Append a (pose, timediff) vertex pair to the end of the current trajectory (pose and timediff sequences)
+   * @param pose PoseSE2 to push back on the internal PoseSequence
+   * @param dt time difference value to push back on the internal TimeDiffSequence
+   * @warning 	Since the timediff is defined to connect two consecutive poses, this call is only 
+   * 		allowed if there exist already n poses and n-1 timediffs in the sequences (n=1,2,...):
+   * 		therefore add a single pose using addPose() first!
+   */
+  void addPoseAndTimeDiff(const PoseSE2& pose, double dt);
+  
+  /**
+   * @brief Append a (pose, timediff) vertex pair to the end of the current trajectory (pose and timediff sequences)
+   * @param position 2D vector representing the position part
+   * @param theta yaw angle representing the orientation part
+   * @param dt time difference value to push back on the internal TimeDiffSequence
+   * @warning see addPoseAndTimeDiff(const PoseSE2& pose, double dt)
+   */
+  void addPoseAndTimeDiff(const Eigen::Ref<const Eigen::Vector2d>& position, double theta, double dt);
+  
+  /**
+   * @brief Append a (pose, timediff) vertex pair to the end of the current trajectory (pose and timediff sequences)
+   * @param x x-coordinate of the position part
+   * @param y y-coordinate of the position part
+   * @param theta yaw angle representing the orientation part
+   * @param dt time difference value to push back on the internal TimeDiffSequence
+   * @warning see addPoseAndTimeDiff(const PoseSE2& pose, double dt)
+   */
+  void addPoseAndTimeDiff(double x, double y, double theta, double dt);
+  
+  //@}
+  
+
+  /** @name Insert new elements and remove elements of the pose and timediff sequences */
+  //@{
+
+  /**
+   * @brief Insert a new pose vertex at pos. \c index to the pose sequence
+   * @param index element position inside the internal PoseSequence
+   * @param pose PoseSE2 element to insert into the internal PoseSequence
+   */
+  void insertPose(unsigned int index, const PoseSE2& pose);
+  
+  /**
+   * @brief Insert a new pose vertex at pos. \c index to the pose sequence
+   * @param index element position inside the internal PoseSequence
+   * @param position 2D vector representing the position part
+   * @param theta yaw-angle representing the orientation part
+   */
+  void insertPose(unsigned int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta);
+  
+  /**
+   * @brief Insert a new pose vertex at pos. \c index to the pose sequence
+   * @param index element position inside the internal PoseSequence
+   * @param x x-coordinate of the position part
+   * @param y y-coordinate of the position part
+   * @param theta yaw-angle representing the orientation part
+   */
+  void insertPose(unsigned int index, double x, double y, double theta);
+  
+  /**
+   * @brief Insert a new timediff vertex at pos. \c index to the timediff sequence
+   * @param index element position inside the internal TimeDiffSequence
+   * @param dt timediff value
+   */   
+  void insertTimeDiff(unsigned int index, double dt);
+    
+  /**
+   * @brief Delete pose at pos. \c index in the pose sequence
+   * @param index element position inside the internal PoseSequence
+   */
+  void deletePose(unsigned int index);
+
+  /**
+   * @brief Delete pose at pos. \c index in the timediff sequence
+   * @param index element position inside the internal TimeDiffSequence
+   */
+  void deleteTimeDiff(unsigned int index);
+  
+  //@}
+  
+  
+  /** @name Init the trajectory */
+  //@{
+  
+  /**
+   * @brief Initialize a trajectory between a given start and goal pose.
+   * 
+   * The implemented algorithm subsamples the straight line between
+   * start and goal using a given discretiziation width. \n
+   * The discretization width can be defined in the euclidian space
+   * using the \c diststep parameter. Each time difference between two consecutive
+   * poses is initialized to \c timestep. \n
+   * If the \c diststep is chosen to be zero, 
+   * the resulting trajectory contains the start and goal pose only.
+   * @param start PoseSE2 defining the start of the trajectory
+   * @param goal PoseSE2 defining the goal of the trajectory (final pose)
+   * @param diststep euclidian distance between two consecutive poses
+   * @param timestep intialization for the timediff between two consecutive poses
+   * @return true if everything was fine, false otherwise
+   */
+  bool initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep=0, double timestep=1);
+  
+  
+  /**
+   * @brief Initialize a trajectory from a generic 2D reference path.
+   * 
+   * The temporal information is determined using a given maximum velocity 
+   * (2D vector containing the translational and angular velocity). \n
+   * A constant velocity profile is implemented. \n
+   * A possible maximum acceleration is considered if \c max_acceleration param is provided.
+   * 
+   * Since the orientation is not included in the reference path, it can be provided seperately
+   * (e.g. from the robot pose and robot goal). \n
+   * Otherwise the goal heading will be used as start and goal orientation. \n
+   * The orientation along the trajectory will be determined using the connection vector
+   * between two consecutive positions of the reference path.
+   * 
+   * The reference path is provided using a start and end iterator to a container class.
+   * You must provide a unary function that accepts the dereferenced iterator and returns
+   * a copy or (const) reference to an Eigen::Vector2d type containing the 2d position.
+   * 
+   * @param path_start start iterator of a generic 2d path
+   * @param path_end end iterator of a generic 2d path
+   * @param fun_position unary function that returns the Eigen::Vector2d object
+   * @param max_vel_x maximum translational velocity used for determining time differences
+   * @param max_vel_y maximum angular velocity used for determining time differences
+   * @param max_acc_x specify to satisfy a maxmimum transl. acceleration and decceleration (optional)
+   * @param max_acc_y specify to satisfy a maxmimum angular acceleration and decceleration (optional)
+   * @param start_orientation Orientation of the first pose of the trajectory (optional, otherwise use goal heading)
+   * @param goal_orientation Orientation of the last pose of the trajectory (optional, otherwise use goal heading)
+   * @tparam BidirIter Bidirectional iterator type
+   * @tparam Fun unyary function that transforms the dereferenced iterator into an Eigen::Vector2d
+   * @return true if everything was fine, false otherwise
+   * @remarks Use \c boost::none to skip optional arguments.
+   */ 
+  template<typename BidirIter, typename Fun>
+  bool initTEBtoGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
+		      boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
+		      boost::optional<double> start_orientation, boost::optional<double> goal_orientation);  
+  
+  /**
+   * @brief Initialize a trajectory from a reference pose sequence (positions and orientations).
+   *
+   * This method initializes the timed elastic band using a pose container
+   * (e.g. as local plan from the ros navigation stack). \n
+   * The initial time difference between two consecutive poses can be uniformly set
+   * via the argument \c dt.
+   * @param plan vector of geometry_msgs::PoseStamped
+   * @param dt specify a uniform time difference between two consecutive poses
+   * @return true if everything was fine, false otherwise
+   */
+  bool initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt);
+  
+  //@}
+  
+  /** @name Update and modify the trajectory */
+  //@{
+  
+  
+  /**
+   * @brief Hot-Start from an existing trajectory with updated start and goal poses.
+   *
+   * This method updates a previously optimized trajectory with a new start and/or a new goal pose. \n
+   * The current simple implementation cuts of pieces of the trajectory that are already passed due to the new start. \n
+   * Afterwards the start and goal pose are replaced by the new ones. The resulting discontinuity will not be smoothed.
+   * The optimizer has to smooth the trajectory in TebOptimalPlanner. \n
+   * Before updating the goal, the method checks whether the new goal is too far away, in that case the function
+   * returns \c false such that the user can decide whether to stop planning or to reinitialize a new trajectory.
+   * 
+   * @todo Smooth the trajectory here and test the performance improvement of the optimization.
+   * @todo Implement a updateAndPruneTEB based on a new reference path / pose sequence.
+   * 
+   * @param new_start New start pose (optional)
+   * @param new_goal New goal pose (optional)
+   * @param max_goal_separation Maximum allowed distance between old and new goal, otherwise return \c false
+   * @return \c false if the goal point is too far away to update the goal (see max_goal_separation)
+   */  
+  bool updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, 
+			  boost::optional<const PoseSE2&> new_goal, double max_goal_separation = 1.0);
+  
+  
+  /**
+   * @brief Resize the trajectory by removing or inserting a (pose,dt) pair depending on a reference temporal resolution.
+   *
+   * Resizing the trajectory is helpful e.g. for the following scenarios:
+   * 
+   * 	- Obstacles requires the teb to be extended in order to 
+   * 	  satisfy the given discritization width (plan resolution)
+   *      and to avoid undesirable behavior due to a large/small discretization step widths \f$ \Delta T_i \f$
+   * 	  After clearance of obstacles, the teb should (re-) contract to its (time-)optimal version.
+   *    - If the distance to the goal state is getting smaller,
+   *      dt is decreasing as well. This leads to a heavily
+   *      fine-grained discretization in combination with many
+   *      discrete poses. Thus, the computation time will
+   *      be/remain high and in addition numerical instabilities
+   *      can appear (e.g. due to the division by a small \f$ \Delta T_i \f$).
+   *
+   * The implemented strategy checks all timediffs \f$ \Delta T_i \f$ and
+   * 
+   * 	- inserts a new sample if \f$ \Delta T_i > \Delta T_{ref} + \Delta T_{hyst} \f$
+   *    - removes a sample if \f$ \Delta T_i < \Delta T_{ref} - \Delta T_{hyst} \f$
+   * 
+   * Each call only one new sample (pose-dt-pair) is inserted or removed.
+   * @param dt_ref reference temporal resolution
+   * @param dt_hysteresis hysteresis to avoid oscillations
+   */    
+  void autoResize(double dt_ref, double dt_hysteresis);
+  
+  
+  /**
+   * @brief Set a pose vertex at pos \c index of the pose sequence to be fixed or unfixed during optimization.
+   * @param index index to the pose vertex
+   * @param status if \c true, the vertex will be fixed, otherwise unfixed
+   */
+  void setPoseVertexFixed(unsigned int index, bool status);
+  
+  /**
+   * @brief Set a timediff vertex at pos \c index of the timediff sequence to be fixed or unfixed during optimization.
+   * @param index index to the timediff vertex
+   * @param status if \c true, the vertex will be fixed, otherwise unfixed
+   */
+  void setTimeDiffVertexFixed(unsigned int index, bool status);
+  
+  /**
+   * @brief clear all poses and timediffs from the trajectory.
+   * The pose and timediff sequences will be empty and isInit() will return \c false
+   */
+  void clearTimedElasticBand();
+  
+  //@}
+  
+  
+  /** @name Utility and status methods */
+  //@{
+  
+  /**
+   * @brief Find the closest point on the trajectory w.r.t to a provided reference point.
+   * 
+   * This function can be useful to find the part of a trajectory that is close to an obstacle.
+   * 
+   * @todo implement a more efficient version that first performs a coarse search.
+   * @todo implement a fast approximation that assumes only one local minima w.r.t to the distance:
+   *       Allows simple comparisons starting from the middle of the trajectory.
+   * 
+   * @param ref_point reference point (2D position vector)
+   * @return Index to the closest pose in the pose sequence
+   */
+  unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point) const;
+  
+  /**
+   * @brief Get the length of the internal pose sequence
+   */
+  std::size_t sizePoses() const {return pose_vec_.size();};
+  
+  /**
+   * @brief Get the length of the internal timediff sequence
+   */
+  std::size_t sizeTimeDiffs() const {return timediff_vec_.size();};
+  
+  /**
+   * @brief Check whether the trajectory is initialized (nonzero pose and timediff sequences)
+   */
+  bool isInit() const {return !timediff_vec_.empty() && !pose_vec_.empty();}
+				
+  /**
+   * @brief Calculate the total transition time (sum over all time intervals of the timediff sequence)
+   */		
+  double getSumOfAllTimeDiffs() const;
+  
+  
+  /**
+   * @brief Detect whether the trajectory contains detours.
+   * 
+   * Two different cases forces the method to return \c true : \n
+   * 	1. The trajectory contain parts that increase the distance to the goal. \n
+   * 	   This is checked by comparing the orientations theta_i with the goal heading. \n
+   * 	   If the scalar product is below the \c threshold param, the method returns \c true.
+   * 	2. The trajectory consist of backwards motions at the beginning of the trajectory,
+   * 	   e.g. the second pose is behind the start pose w.r.t. to the same goal heading.
+   * 
+   * Detours are not critical, but can be takein into account if multiple trajectory candidates are avaiable.
+   * @param treshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg)
+   * @return \c true if one of both cases mentioned above are satisfied, false otherwise
+   */
+  bool detectDetoursBackwards(double threshold=0) const;
+  
+  
+  //@}
+	
+protected:
+  PoseSequence pose_vec_; //!< Internal container storing the sequence of optimzable pose vertices
+  TimeDiffSequence timediff_vec_;  //!< Internal container storing the sequence of optimzable timediff vertices
+  
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+} // namespace teb_local_planner
+
+
+// include template implementations / definitions
+#include <teb_local_planner/timed_elastic_band.hpp>
+
+
+#endif /* TIMED_ELASTIC_BAND_H_ */
