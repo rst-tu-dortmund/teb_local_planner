@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.2 (2015-05-19)
+------------------
 * Removed unused include that could break compilation.
 
 0.1.1 (2015-05-19)
