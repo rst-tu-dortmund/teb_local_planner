@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.4 (2015-05-20)
+------------------
 * Fixed compilation errors on ROS Jade
 
 0.1.3 (2015-05-20)
