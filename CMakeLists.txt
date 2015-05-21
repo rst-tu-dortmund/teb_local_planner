@@ -39,21 +39,22 @@ set(EXTERNAL_LIBS ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
 
 
 ## C++11 support
-## Unfortunately, the 3d-party dependency libg2o requires c++11.
+## Unfortunately, the 3d-party dependency libg2o requires c++11 starting from ROS Jade.
 ## Even if the ROS Jade specifications do not want c++11-only packages,
-## we have no alternative now. Another option would be to downgrade the 
+## we cannot compile without c++11 enabled. Another option would be to downgrade  
 ## libg2o third-party package.
-## By now, if you do not want c++11 please refer to the indigo version.
+## By now, if you do not want c++11, please refer to the ros indigo version.
 IF(NOT MSVC)
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+  include(CheckCXXCompilerFlag)
+  CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+  CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(COMPILER_SUPPORTS_CXX11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support which is required by linked third party packages.")
+  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support which is required 
+  by linked third party packages starting from ROS Jade. Ignore this message for ROS Indigo.")
 endif()
 endif()
 
@@ -188,13 +189,6 @@ target_link_libraries(test_optim_node
    ${catkin_LIBRARIES}
 )
 
-#add_executable(ecmr2015 paper/ecmr2015.cpp)
-
-#target_link_libraries(ecmr2015
-#   teb_local_planner
-#   ${EXTERNAL_LIBS}
-#   ${catkin_LIBRARIES}
-#)
 
 #############
 ## Install ##
@@ -213,6 +207,9 @@ target_link_libraries(test_optim_node
 ## Mark executables and/or libraries for installation
 install(TARGETS teb_local_planner
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+install(TARGETS test_optim_node
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation
