@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.5 (2015-05-21)
+------------------
 * Added possibility to dynamically change parameters of test_optim_node using dynamic reconfigure.
 * Fixed a wrong default-min-max tuple in the dynamic reconfigure config.
 * Useful config and launch files are now added to cmake install.
