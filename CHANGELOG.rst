@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.6 (2015-05-22)
+------------------
 * Fixed compilation errors on ubuntu saucy caused by different FindEigen.cmake scripts.
   I am not able to test releasing on saucy, forcing me to release again and again. Sorry.
 
