@@ -160,7 +160,6 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.alternative_time_cost = cfg.alternative_time_cost;
   
   // Homotopy Class Planner
-  hcp.enable_homotopy_class_planning = cfg.enable_homotopy_class_planning;
   hcp.enable_multithreading = cfg.enable_multithreading;
   hcp.simple_exploration = cfg.simple_exploration;
   hcp.max_number_classes = cfg.max_number_classes; 

@@ -1,0 +1,12 @@
+<launch>
+	
+  	<!--- Run optimization test node -->
+   	<node pkg="teb_local_planner" type="test_optim_node" name="test_optim_node" output="screen">
+	</node>
+
+  	<!-- RVIZ -->
+  	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find teb_local_planner)/cfg/rviz_test_optim.rviz" />
+
+
+</launch>
+

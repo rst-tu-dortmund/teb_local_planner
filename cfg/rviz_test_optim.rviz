@@ -52,13 +52,7 @@ Visualization Manager:
       Class: rviz/Path
       Color: 25; 255; 0
       Enabled: true
-      Line Style: Lines
-      Line Width: 0.03
       Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
       Topic: /test_optim_node/local_plan
       Value: true
     - Arrow Length: 0.3
@@ -73,7 +67,7 @@ Visualization Manager:
       Marker Topic: /test_optim_node/teb_markers
       Name: Marker
       Namespaces:
-        PointObstacles: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/InteractiveMarkers
@@ -109,7 +103,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.41082
+      Distance: 11.8049
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1

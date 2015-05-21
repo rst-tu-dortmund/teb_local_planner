@@ -48,15 +48,17 @@
 using namespace teb_local_planner; // it is ok here to import everything for testing purposes
 
 // ============= Global Variables ================
+// Ok global variables are bad, but here we only have a simple testing node.
 PlannerInterfacePtr planner;
 TebVisualizationPtr visual;
 std::vector<ObstaclePtr> obst_vector;
 TebConfig config;
-
+boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg;
 
 // =========== Function declarations =============
 void CB_mainCycle(const ros::TimerEvent& e);
 void CB_publishCycle(const ros::TimerEvent& e);
+void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level);
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb);
 void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 
@@ -75,6 +77,10 @@ int main( int argc, char** argv )
   ros::Timer cycle_timer = n.createTimer(ros::Duration(0.025), CB_mainCycle);
   ros::Timer publish_timer = n.createTimer(ros::Duration(0.1), CB_publishCycle);
   
+  // setup dynamic reconfigure
+  dynamic_recfg = boost::make_shared< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> >(n);
+  dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(CB_reconfigure, _1, _2);
+  dynamic_recfg->setCallback(cb);
   
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
@@ -137,6 +143,10 @@ void CB_publishCycle(const ros::TimerEvent& e)
   visual->publishObstacles(obst_vector);
 }
 
+void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level)
+{
+  config.reconfigure(reconfig);
+}
 
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb)
 {
