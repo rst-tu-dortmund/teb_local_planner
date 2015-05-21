@@ -2,6 +2,11 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed compilation errors on ubuntu saucy caused by different FindEigen.cmake scripts.
+  I am not able to test releasing on saucy, forcing me to release again and again. Sorry.
+
 0.1.5 (2015-05-21)
 ------------------
 * Added possibility to dynamically change parameters of test_optim_node using dynamic reconfigure.
