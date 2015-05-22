@@ -25,7 +25,6 @@ message(STATUS "System: ${CMAKE_SYSTEM}")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake_modules)
 message(STATUS "${CMAKE_MODULE_PATH}")
 find_package(Boost REQUIRED COMPONENTS system thread graph)
-find_package(Eigen3)
 find_package(SUITESPARSE REQUIRED)
 find_package(G2O REQUIRED)
 
