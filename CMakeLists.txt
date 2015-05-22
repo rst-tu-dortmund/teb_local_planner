@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   visualization_msgs
 )
-
+message(STATUS "System: ${CMAKE_SYSTEM}")
 ## System dependencies are found with CMake's conventions
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake_modules)
 message(STATUS "${CMAKE_MODULE_PATH}")
@@ -31,12 +31,15 @@ find_package(G2O REQUIRED)
 
 # Eigen3 FindScript Backward compatibility (ubuntu saucy)
 # Since FindEigen.cmake is deprecated starting from jade.
-if (NOT Eigen_FOUND AND NOT Eigen3_FOUND)
-  find_package(Eigen REQUIRED)
-endif(NOT Eigen_FOUND AND NOT Eigen3_FOUND)
-if (NOT Eigen_INCLUDE_DIRS AND Eigen3_FOUND)
+if (EXISTS "FindEigen3.cmake")
+  find_package(Eigen3 REQUIRED)
   set(Eigen_INCLUDE_DIRS ${Eigen3_INCLUDE_DIRS})
-endif(NOT Eigen_INCLUDE_DIRS AND Eigen3_FOUND)
+elseif (EXISTS "FindEigen.cmake")
+  find_package(Eigen REQUIRED)
+elseif (EXISTS "FindEigen.cmake")
+  message(WARNING "No findEigen cmake script found. You must provde one of them,
+  e.g. by adding it to ${PROJECT_SOURCE_DIR}/cmake_modules.")
+endif (EXISTS "FindEigen3.cmake")
 
 set(EXTERNAL_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS} ${SUITESPARSE_INCLUDE_DIRS} ${G2O_INCLUDE_DIR})
 set(EXTERNAL_LIBS ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
