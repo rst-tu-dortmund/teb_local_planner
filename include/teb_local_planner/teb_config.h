@@ -71,7 +71,7 @@ public:
     double teb_autosize; //!< Enable automatic resizing of the trajectory w.r.t to the temporal resolution (recommended)
     double dt_ref; //!< Desired temporal resolution of the trajectory (should be in the magniture of the underlying control rate)
     double dt_hysteresis; //!< Hysteresis for automatic resizing depending on the current temporal resolution (dt): usually 10% of dt_ref
-    double global_plan_overwrite_orientation; //!< Overwrite orientation of local subgoals provided by the global planner
+    bool global_plan_overwrite_orientation; //!< Overwrite orientation of local subgoals provided by the global planner
     double force_reinit_new_goal_dist; //!< Reinitialize the trajectory if a previous goal is updated with a seperation of more than the specified value in meters (skip hot-starting)
   } trajectory; //!< Trajectory related parameters
     
@@ -88,8 +88,8 @@ public:
   //! Goal tolerance related parameters
   struct GoalTolerance
   {
-    double yaw_goal_tolerance; //!< Allowed final euclidean distance to the goal position
-    double xy_goal_tolerance; //!< Allowed final orientation error to the goal orientation
+    double yaw_goal_tolerance; //!< Allowed final orientation error
+    double xy_goal_tolerance; //!< Allowed final euclidean distance to the goal position
     double free_goal_vel; //!< "Allow the robot's velocity to be nonzero (usally max_vel) for planning purposes
   } goal_tolerance; //!< Goal tolerance related parameters
 
@@ -115,7 +115,7 @@ public:
     bool optimization_verbose; //!< Print verbose information
     
     double penalty_scale; //!< Lower values increase the penalty cost for hard-constraint approximations (do not choose too low: no satisfaction of constraints, or too high: bad matrix conditions)
-    double penalty_epsilon; //!< Add a small safty margin to penalty functions for hard-constraint approximations
+    double penalty_epsilon; //!< Add a small safety margin to penalty functions for hard-constraint approximations
     
     double weight_max_vel_x; //!< Optimization weight for satisfying the maximum allowed translational velocity
     double weight_max_vel_theta; //!< Optimization weight for satisfying the maximum allowed angular velocity
@@ -124,9 +124,9 @@ public:
     double weight_kinematics_nh; //!< Optimization weight for satisfying the non-holonomic kinematics
     double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities)
     double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t transition time
-    double weight_point_obstacle; //!< Optimization weight for satisfying a minimum seperation from point obstacles
-    double weight_poly_obstacle; //!< Optimization weight for satisfying a minimum seperation from polygon obstacles
-    double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum seperation from dynamic obstacles
+    double weight_point_obstacle; //!< Optimization weight for satisfying a minimum separation from point obstacles
+    double weight_poly_obstacle; //!< Optimization weight for satisfying a minimum separation from polygon obstacles
+    double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles
     bool alternative_time_cost; //!< Not in use yet...
     
   } optim; //!< Optimization related parameters
