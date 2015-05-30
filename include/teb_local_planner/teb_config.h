@@ -134,15 +134,15 @@ public:
   
   struct HomotopyClasses
   {
-    bool enable_homotopy_class_planning; //!< Activate homotopy class planning (Requires much more resources that simple planning, since multiple trajectory are optimized at once).
+    bool enable_homotopy_class_planning; //!< Activate homotopy class planning (Requires much more resources that simple planning, since multiple trajectories are optimized at once).
     bool enable_multithreading; //!< Activate multiple threading for planning multiple trajectories in parallel.
-    bool simple_exploration; //!< If true, the homotopies are explored usign a simple left-right approach (pass each obstacle on the left or right side) for path generation, otherwise sample possible roadmaps randomly in a specified region between start and goal.
+    bool simple_exploration; //!< If true, distinctive trajectories are explored using a simple left-right approach (pass each obstacle on the left or right side) for path generation, otherwise sample possible roadmaps randomly in a specified region between start and goal.
     int max_number_classes; //!< Specify the maximum number of allowed alternative homotopy classes (limits computational effort)
     
     int roadmap_graph_no_samples; //! < Specify the number of samples generated for creating the roadmap graph, if simple_exploration is turend off.
-    double roadmap_graph_area_width; //!< Specify the width of the area in which sampled will be generated between start and goal [m] (the height equals the start-goal distance).
+    double roadmap_graph_area_width; //!< Random keypoints/waypoints are sampled in a rectangular region between start and goal. Specify the width of that region in meters.
     double h_signature_prescaler; //!< Scale number of obstacle value in order to allow huge number of obstacles. Do not choose it extremly low, otherwise obstacles cannot be distinguished from each other (0.2<H<=1).
-    double h_signature_threshold; //!< Two h-signuteres are assumed to be equal, if both the difference of real parts and complex parts are below the specified threshold.
+    double h_signature_threshold; //!< Two h-signatures are assumed to be equal, if both the difference of real parts and complex parts are below the specified threshold.
     
     double obstacle_keypoint_offset; //!< If simple_exploration is turned on, this parameter determines the distance on the left and right side of the obstacle at which a new keypoint will be cretead (in addition to min_obstacle_dist).
     double obstacle_heading_threshold; //!< Specify the value of the scalar product between obstacle heading and goal heading in order to take them (obstacles) into account for exploration.
