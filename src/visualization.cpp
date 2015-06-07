@@ -180,12 +180,15 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       }
       
       // Also add last point to close the polygon
-      geometry_msgs::Point point;
-      point.x = pobst->vertices().front().x();
-      point.y = pobst->vertices().front().y();
-      point.z = 0;
-      marker.points.push_back(point);
-      
+      // but only if polygon has more than 2 points (it is not a line)
+      if (pobst->vertices().size() > 2)
+      {
+	geometry_msgs::Point point;
+	point.x = pobst->vertices().front().x();
+	point.y = pobst->vertices().front().y();
+	point.z = 0;
+	marker.points.push_back(point);
+      }
       marker.scale.x = 0.1;
       marker.scale.y = 0.1;
       marker.color.a = 1.0;

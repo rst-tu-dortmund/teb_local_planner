@@ -234,7 +234,7 @@ public:
     hcp.roadmap_graph_no_samples = 15;
     hcp.roadmap_graph_area_width = 6; // [m]
     hcp.h_signature_prescaler = 1;
-    hcp.h_signature_threshold = 0.1;
+    hcp.h_signature_threshold = 0.01;
     
     hcp.visualize_hc_graph = false;
 

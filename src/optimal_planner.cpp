@@ -391,7 +391,7 @@ void TebOptimalPlanner::AddEdgesObstacles()
       dist_bandpt_obst->setTebConfig(*cfg_);
       optimizer_->addEdge(dist_bandpt_obst);
 
-      for (unsigned int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.obstacle_poses_affected/2); neighbourIdx++)
+      for (unsigned int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.polygon_obstacle_poses_affected/2); neighbourIdx++)
       {
 	if (index+neighbourIdx < teb_.sizePoses())
 	{

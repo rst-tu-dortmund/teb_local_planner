@@ -18,7 +18,7 @@ Build status of the *master* branch:
 - Rösmann C., Feiten W., Wösch T., Hoffmann F. and Bertram. T.: Efficient trajectory optimization using a sparse model. Proc. European Conference on Mobile Robots, Spain, Barcelona, 2013, pp. 138–143. 
 
 
-### Licence
+### License
 
 The *teb_local_planner* package is licensed under the BSD license.
 It depends on other ROS packages, which are listed in the package.xml. They are also BSD licensed.

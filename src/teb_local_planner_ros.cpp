@@ -38,6 +38,8 @@
 
 #include <teb_local_planner/teb_local_planner_ros.h>
 
+#include <tf_conversions/tf_eigen.h>
+
 // pluginlib macros
 #include <pluginlib/class_list_macros.h>
 
@@ -123,6 +125,9 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(&TebLocalPlannerROS::reconfigureCB, this, _1, _2);
     dynamic_recfg_->setCallback(cb);
         
+    // setup callback for custom obstacles
+    custom_obst_sub_ = nh.subscribe("obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
+    
     // set initialized flag
     initialized_ = true;
 
@@ -198,9 +203,6 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return false;
   }
 
-  // Prune plan based on the position of the robot
-  base_local_planner::prunePlan(global_pose, transformed_plan, global_plan_);
-    
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty()) return false;
             
@@ -217,12 +219,10 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   {
     robot_goal_.theta() = tf::getYaw(goal_point.getRotation());
   }
-
-  // Add costmap obstacles if desired
-  if (cfg_.obstacles.include_costmap_obstacles)
-  {
-    updateCostmapObstacles();
-  }
+  
+  
+  // Update obstacle container
+  updateObstacleContainer();
     
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
@@ -299,7 +299,9 @@ bool TebLocalPlannerROS::isGoalReached()
   Eigen::Vector2d deltaS;
   deltaS.x() = goal_pose.pose.position.x - global_pose.getOrigin().getX();
   deltaS.y() = goal_pose.pose.position.y - global_pose.getOrigin().getY();
-  if(fabs(deltaS.norm())<cfg_.goal_tolerance.xy_goal_tolerance)
+  double delta_orient = g2o::normalize_theta( tf::getYaw(goal_pose.pose.orientation) - tf::getYaw(global_pose.getRotation()) );
+  if(fabs(deltaS.norm()) < cfg_.goal_tolerance.xy_goal_tolerance
+    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance)
   {
     ROS_INFO("GOAL Reached!");
     planner_->clearPlanner();
@@ -312,45 +314,98 @@ bool TebLocalPlannerROS::isGoalReached()
 
 
 
-void TebLocalPlannerROS::updateCostmapObstacles()
+void TebLocalPlannerROS::updateObstacleContainer()
 {
   // first clear current obstacle vector
   obstacles_.clear();
 
-  // now scan costmap for obstacles and add them to the obst_vector
-  /*
-  unsigned int window_range = static_cast<unsigned int>(tebConfig.costmap_emergency_stop_dist/costmap->getResolution());
-  unsigned int robot_xm;
-  unsigned int robot_ym;
-  costmap->worldToMap(robot_pose[0],robot_pose[1],robot_xm,robot_ym);
-  
-  for(unsigned int j=std::max((int)robot_xm - (int)window_range,0) ; j<=std::min(robot_xm+window_range,costmap->getSizeInCellsX()-1) ; j++)
-  {
-	  for(unsigned int k=std::max((int)robot_ym-(int)window_range,0) ; k<=std::min(robot_ym+window_range,costmap->getSizeInCellsY()-1) ;	k++)
-	  {
-		  if(costmap->getCost(j,k) == costmap_2d::LETHAL_OBSTACLE) return true;
-	  }
-  }
-  */
-  
-  Eigen::Vector2d robot2goal = robot_goal_.position() - robot_pose_.position();
-  
-  for (unsigned int i=0; i<costmap_->getSizeInCellsX()-1; ++i)
-  {
-    for (unsigned int j=0; j<costmap_->getSizeInCellsY()-1; ++j)
+  // Add custom obstacles obtained via message
+  { // New scope for locking purposes
+    boost::mutex::scoped_lock l(custom_obst_mutex_);
+    
+    if (!custom_obstacle_msg_.obstacles.empty())
     {
-      if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
+      // We only use the global header to specify the obstacle coordinate system instead of individual ones
+      Eigen::Affine3d obstacle_to_map_eig;
+      try 
       {
-	Eigen::Vector2d obs;
-	costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
-	  
-	// check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
-	if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
-	  continue;
-	  
-	obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
+	tf::StampedTransform obstacle_to_map;
+	tf_->waitForTransform(global_frame_, ros::Time(0),
+			    custom_obstacle_msg_.header.frame_id, ros::Time(0),
+			    custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
+	tf_->lookupTransform(global_frame_, ros::Time(0),
+			  custom_obstacle_msg_.header.frame_id, ros::Time(0), 
+			  custom_obstacle_msg_.header.frame_id, obstacle_to_map);
+	tf::transformTFToEigen(obstacle_to_map, obstacle_to_map_eig);
+      }
+      catch (tf::TransformException ex)
+      {
+	ROS_ERROR("%s",ex.what());
+	obstacle_to_map_eig.setIdentity();
+      }
+      
+      for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = custom_obstacle_msg_.obstacles.begin(); obst_it != custom_obstacle_msg_.obstacles.end(); ++obst_it)
+      {
+	if (obst_it->polygon.points.size() == 1 )
+	{
+	  Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
+	  obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
+	}
+	else
+	{
+	  PolygonObstacle* polyobst = new PolygonObstacle;
+	  for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+	  {
+	    Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
+	    polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
+	  }
+	  polyobst->finalizePolygon();
+	  obstacles_.push_back(ObstaclePtr(polyobst));
+	}
       }
     }
+  }  
+  
+  // Add costmap obstacles if desired
+  if (cfg_.obstacles.include_costmap_obstacles)
+  {
+  
+    // now scan costmap for obstacles and add them to the obst_vector
+    /*
+    unsigned int window_range = static_cast<unsigned int>(tebConfig.costmap_emergency_stop_dist/costmap->getResolution());
+    unsigned int robot_xm;
+    unsigned int robot_ym;
+    costmap->worldToMap(robot_pose[0],robot_pose[1],robot_xm,robot_ym);
+    
+    for(unsigned int j=std::max((int)robot_xm - (int)window_range,0) ; j<=std::min(robot_xm+window_range,costmap->getSizeInCellsX()-1) ; j++)
+    {
+	    for(unsigned int k=std::max((int)robot_ym-(int)window_range,0) ; k<=std::min(robot_ym+window_range,costmap->getSizeInCellsY()-1) ;	k++)
+	    {
+		    if(costmap->getCost(j,k) == costmap_2d::LETHAL_OBSTACLE) return true;
+	    }
+    }
+    */
+    
+    Eigen::Vector2d robot2goal = robot_goal_.position() - robot_pose_.position();
+    
+    for (unsigned int i=0; i<costmap_->getSizeInCellsX()-1; ++i)
+    {
+      for (unsigned int j=0; j<costmap_->getSizeInCellsY()-1; ++j)
+      {
+	if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
+	{
+	  Eigen::Vector2d obs;
+	  costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
+	    
+	  // check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
+	  if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
+	    continue;
+	    
+	  obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
+	}
+      }
+    }
+  
   }
 }
 
@@ -380,6 +435,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
     if (!global_plan.size() > 0)
     {
       ROS_ERROR("Received plan with zero length");
+      *current_goal_idx = 0;
       return false;
     }
 
@@ -474,7 +530,7 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
   unsigned int n = (unsigned int)global_plan.size();
   
   // check if we are near the global goal already
-  if (current_goal_idx >= n-moving_average_length)
+  if (current_goal_idx > n-moving_average_length-2)
   {
     if (current_goal_idx >= n-1) // we've exactly reached the goal
     {
@@ -533,7 +589,16 @@ void TebLocalPlannerROS::saturateVelocity(Eigen::Vector2d* velocity, double max_
   if (velocity->x() < -max_vel_x_backwards)
     velocity->x() = -max_vel_x_backwards;
 }
-      
+     
+     
+     
+void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
+{
+  boost::mutex::scoped_lock l(custom_obst_mutex_);
+  custom_obstacle_msg_ = *obst_msg;  
+}
+     
+     
 
 } // end namespace teb_local_planner
 

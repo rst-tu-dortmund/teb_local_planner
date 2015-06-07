@@ -8,5 +8,5 @@ local_costmap:
   rolling_window: true
   width: 5.0
   height: 5.0
-  resolution: 0.2
+  resolution: 0.15
 

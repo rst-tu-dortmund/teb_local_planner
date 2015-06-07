@@ -37,7 +37,7 @@
  *********************************************************************/
 
 #include <teb_local_planner/obstacles.h>
-
+// #include <teb_local_planner/misc.h>
 
 namespace teb_local_planner
 {
@@ -100,7 +100,15 @@ void PolygonObstacle::calcCentroid()
   centroid_.setZero();
   
   assert(!vertices_.empty());
-
+  
+  // if polygon is a line:
+  if (noVertices()==2)
+  {
+    centroid_ = 0.5*(vertices_.front() + vertices_.back());
+    return;
+  }
+  // otherwise:
+  
   // calculate centroid (see wikipedia http://de.wikipedia.org/wiki/Geometrischer_Schwerpunkt#Polygon)
   double A = 0;  // A = 0.5 * sum_0_n-1 (x_i * y_{i+1} - x_{i+1} * y_i)
   for (unsigned int i=0; i<noVertices()-1; ++i)
@@ -132,12 +140,17 @@ double PolygonObstacle::getMinimumDistance(const Eigen::Vector2d& position) cons
   for (unsigned int i=0; i<vertices_.size()-1; ++i)
   {
       double new_dist = DistanceFromLineSegment(position, vertices_.at(i), vertices_.at(i+1));
+//       double new_dist = calc_distance_point_to_segment( position,  vertices_.at(i), vertices_.at(i+1));
       if (new_dist < dist)
 	dist = new_dist;
   }
-  double new_dist = DistanceFromLineSegment(position, vertices_.at(vertices_.size()-1), vertices_.at(0)); // check last edge
-  if (new_dist < dist)
-    return new_dist;
+
+  if (noVertices()>2) // if not a line close polygon
+  {
+    double new_dist = DistanceFromLineSegment(position, vertices_.at(vertices_.size()-1), vertices_.at(0)); // check last edge
+    if (new_dist < dist)
+      return new_dist;
+  }
   
   return dist;
 }
@@ -162,9 +175,12 @@ Eigen::Vector2d PolygonObstacle::getMinimumDistanceVec(const Eigen::Vector2d& po
       diff = new_diff;
     }
   }
-  Eigen::Vector2d new_diff = position - ClosestPointOnLineSegment(position, vertices_.at(vertices_.size()-1), vertices_.at(0)); // check last edge
-  if (new_diff.norm() < dist) return new_diff;
-  
+    
+  if (noVertices()>2) // if not a line close polygon
+  {
+    Eigen::Vector2d new_diff = position - ClosestPointOnLineSegment(position, vertices_.at(vertices_.size()-1), vertices_.at(0)); // check last edge
+    if (new_diff.norm() < dist) return new_diff;
+  }
   return diff;
 }
 
@@ -179,7 +195,10 @@ bool PolygonObstacle::checkLineIntersection(const Eigen::Vector2d& line_start, c
     if ( CheckLineSegmentsIntersection(line_start, line_end, vertices_.at(i), vertices_.at(i+1)) ) 
       return true;
   }
-  return CheckLineSegmentsIntersection(line_start, line_end, vertices_.at(vertices_.size()-1), vertices_.at(0));
+  if (noVertices()==2) // if polygon is a line
+    return false;
+  
+  return CheckLineSegmentsIntersection(line_start, line_end, vertices_.at(vertices_.size()-1), vertices_.at(0)); //otherwise close polygon
 }
 
 

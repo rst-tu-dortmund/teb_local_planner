@@ -38,7 +38,6 @@
 
 #include <teb_local_planner/homotopy_class_planner.h>
 
-
 namespace teb_local_planner
 {
   
@@ -49,12 +48,18 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
    if (obstacles->empty()) 
      return std::complex<double>(0,0);
    
+   
   ROS_ASSERT_MSG(prescaler>0.1 && prescaler<=1, "Only a prescaler on the interval (0.1,1] ist allowed.");
   
   // guess values for f0
   // paper proposes a+b=N-1 && |a-b|<=1, 1...N obstacles
   int m = obstacles->size()-1;
-  m = round(double(m) * prescaler);
+  
+  if (m>5)
+     m = 5;  // hardcoded, but this was working in my test cases... TODO further tests requried
+  
+//   m = round(double(m) * prescaler);
+
   int a = (int) std::ceil(m/2);
   int b = m-a;
   
@@ -65,7 +70,7 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
   // use distance from start to goal as distance to each direction
   // TODO: one could move the map determination outside this function, since it remains constant for the whole planning interval
   cplx start = fun_cplx_point(*path_start);
-  cplx end = fun_cplx_point(*path_end); // path_end points to the last point now after calling advance before
+  cplx end = fun_cplx_point(*path_end); // path_end points to the last point now after calling std::advance before
   double dist = std::sqrt( std::norm(end - start) ); 
   if (dist < 3.0)
     dist = 3.0; // set minimum bound on distance (we do not want to have numerical instabilities) and 3.0 performs fine...
@@ -87,17 +92,18 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
     for (unsigned int l=0; l<obstacles->size(); ++l) // iterate all obstacles
     {
       cplx obst_l = obstacles->at(l)->getCentroidCplx();
-      cplx f0 = std::pow(obst_l-map_bottom_left,a)*std::pow(obst_l-map_top_right,b);
-      cplx denum = 1;
+      cplx f0 = (long double) prescaler * std::pow(obst_l-map_bottom_left,a)*std::pow(obst_l-map_top_right,b);
       // denum contains product with all obstacles exepct j==l
+      cplx Al = f0;
       for (unsigned int j=0; j<obstacles->size(); ++j)
       {
-	if (j==l) continue;
+	if (j==l) 
+            continue;
 	cplx obst_j = obstacles->at(j)->getCentroidCplx();
-	denum *= (obst_l-obst_j);
+        cplx diff = obst_l - obst_j;
+        if (diff.real()!=0 || diff.imag()!=0)
+            Al /= (obst_l-obst_j);
       }
-      cplx Al = f0/denum;
-      
       // compute log value
       double diff2 = std::abs(z2-obst_l);
       double diff1 = std::abs(z1-obst_l);
@@ -115,6 +121,7 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
     }
     ++path_start;
   }
+
   return H;
 }
 

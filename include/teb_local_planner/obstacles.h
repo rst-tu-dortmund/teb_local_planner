@@ -183,7 +183,7 @@ public:
     * @param line1_end 2D point representing the end of the first line segment
     * @param line2_start 2D point representing the start of the second line segment
     * @param line2_end 2D point representing the end of the second line segment
-    * @param intersection [optional] Write intersection point to destination (the value is only written, if both lines intersect, e.g. if the function returns \c true)
+    * @param[out] intersection [optional] Write intersection point to destination (the value is only written, if both lines intersect, e.g. if the function returns \c true)
     * @return \c true if both line segments intersect
     */	
   static bool CheckLineSegmentsIntersection(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
@@ -315,6 +315,9 @@ public:
 /**
  * @class PolygonObstacle
  * @brief Implements a polygon obstacle with an arbitrary number of vertices
+ * @details If the polygon has only 2 vertices, than it is considered as a line,
+ * 	    otherwise the polygon will always be closed (a connection between the first and the last vertex
+ * 	    is automatically included).
  */
 class PolygonObstacle : public Obstacle
 {
@@ -344,6 +347,10 @@ public:
   // implements checkCollision() of the base class
   virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
   {
+      // line case
+      if (noVertices()==2)
+	return getMinimumDistance(point) <= min_dist;
+    
       // check if point is in the interior of the polygon
       // point in polygon test - raycasting (http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html)
       // using the following algorithm we may obtain false negatives on edge-cases, but that's ok for our purposes	

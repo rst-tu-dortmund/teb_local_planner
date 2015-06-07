@@ -54,11 +54,14 @@ TebVisualizationPtr visual;
 std::vector<ObstaclePtr> obst_vector;
 TebConfig config;
 boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg;
+ros::Subscriber custom_obst_sub;
+unsigned int no_fixed_obstacles;
 
 // =========== Function declarations =============
 void CB_mainCycle(const ros::TimerEvent& e);
 void CB_publishCycle(const ros::TimerEvent& e);
 void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level);
+void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg);
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb);
 void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 
@@ -81,6 +84,9 @@ int main( int argc, char** argv )
   dynamic_recfg = boost::make_shared< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> >(n);
   dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(CB_reconfigure, _1, _2);
   dynamic_recfg->setCallback(cb);
+  
+  // setup callback for custom obstacles
+  custom_obst_sub = n.subscribe("obstacles", 1, CB_customObstacle);
   
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
@@ -125,6 +131,7 @@ int main( int argc, char** argv )
     planner = PlannerInterfacePtr(new TebOptimalPlanner(config, &obst_vector, visual));
   
 
+  no_fixed_obstacles = obst_vector.size();
   ros::spin();
 
   return 0;
@@ -206,8 +213,33 @@ void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConst
   unsigned int index;
   ss >> index;
   
-  if (index>=obst_vector.size()) 
+  if (index>=no_fixed_obstacles) 
     return;
   PointObstacle* pobst = static_cast<PointObstacle*>(obst_vector.at(index).get());
   pobst->position() = Eigen::Vector2d(feedback->pose.position.x,feedback->pose.position.y);	  
+}
+
+void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
+{
+  // resize such that the vector contains only the fixed obstacles specified inside the main function
+  obst_vector.resize(no_fixed_obstacles);
+  
+  // Add custom obstacles obtained via message (assume that all obstacles coordiantes are specified in the default planning frame)  
+  for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = obst_msg->obstacles.begin(); obst_it != obst_msg->obstacles.end(); ++obst_it)
+  {
+    if (obst_it->polygon.points.size() == 1 )
+    {
+      obst_vector.push_back(ObstaclePtr(new PointObstacle( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y )));
+    }
+    else
+    {
+      PolygonObstacle* polyobst = new PolygonObstacle;
+      for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+      {
+	polyobst->pushBackVertex( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y );
+      }
+      polyobst->finalizePolygon();
+      obst_vector.push_back(ObstaclePtr(polyobst));
+    }
+  }
 }

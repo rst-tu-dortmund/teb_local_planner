@@ -120,7 +120,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   updateAllTEBs(start, goal, start_vel);
   
   // Init new TEBs based on newly explored homotopy classes
-  exploreHomotopyClassesAndInitTebs(start, goal, cfg_->obstacles.min_obstacle_dist, 0.1);
+  exploreHomotopyClassesAndInitTebs(start, goal, cfg_->obstacles.min_obstacle_dist);
   // Optimize all trajectories in alternative homotopy classes
   optimizeAllTEBs(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
   // Select which candidate (based on alternative homotopy classes) should be used
@@ -417,7 +417,7 @@ void HomotopyClassPlanner::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
       
       // check if H-Signature is already known
       // and init new TEB if no duplicate was found
-      if ( addNewHSignatureIfNew(H, 0.1) )
+      if ( addNewHSignatureIfNew(H, cfg_->hcp.h_signature_threshold) )
       {
 	addAndInitNewTeb(visited.begin(), visited.end(), boost::bind(getVector2dFromHcGraph, _1, boost::cref(graph_)), start_orientation, goal_orientation);
       }
@@ -550,7 +550,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
 }
  
  
-void HomotopyClassPlanner::exploreHomotopyClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double hp_threshold)
+void HomotopyClassPlanner::exploreHomotopyClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst)
 {
   // first process old trajectories
   renewAndAnalyzeOldTebs(false);

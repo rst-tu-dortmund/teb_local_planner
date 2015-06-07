@@ -263,9 +263,8 @@ public:
    * @param start Current start pose (e.g. pose of the robot)
    * @param goal Goal pose (e.g. robot's goal)
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
-   * @param hp_threshold Two h-signuteres are assumed to be equal, if both the difference of real parts and complex parts are below \c hp_threshold.
    */
-  void exploreHomotopyClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double hp_threshold=0.1);
+  void exploreHomotopyClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst);
 
   
   /**

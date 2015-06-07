@@ -59,6 +59,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
+#include <teb_local_planner/ObstacleMsg.h>
 
 // transforms
 #include <angles/angles.h>
@@ -142,8 +143,11 @@ protected:
 
   /**
     * @brief Call this function to update the internal obstacle vector (e.g. with costmap obstacle cells)
+    * @todo Include temporal coherence among obstacle msgs (id vector)
+    * @todo Include properties for dynamic obstacles (e.g. using constant velocity model)
+    * @todo Add prefiltering for costmap obstacles
     */
-  void updateCostmapObstacles();
+  void updateObstacleContainer();
   
   /**
     * @brief Callback for the dynamic_reconfigure node.
@@ -153,6 +157,12 @@ protected:
     * @param level Dynamic reconfigure level
     */
   void reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level);
+  
+   /**
+    * @brief Callback for custom obstacles that are not obtained from the costmap 
+    * @param obst_msg pointer to the message containing a list of polygon shaped obstacles
+    */
+  void customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg);
   
   /**
     * @brief  Transforms the global plan of the robot from the planner frame to the local frame (modified).
@@ -228,6 +238,9 @@ protected:
   base_local_planner::OdometryHelperRos odom_helper_; //!< Provides an interface to receive the current velocity from the robot
   
   dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>* dynamic_recfg_; //!< Dynamic reconfigure server to allow config modifications at runtime
+  ros::Subscriber custom_obst_sub_; //!< Subscriber for custom obstacles received via a ObstacleMsg.
+  boost::mutex custom_obst_mutex_; //!< Mutex that locks the obstacle array (multi-threaded)
+  ObstacleMsg custom_obstacle_msg_; //!< Copy of the most recent obstacle message
   
   PoseSE2 robot_pose_; //!< Store current robot pose
   PoseSE2 robot_goal_; //!< Store current robot goal

@@ -12,12 +12,14 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   geometry_msgs
   interactive_markers
+  message_generation
   nav_core
   nav_msgs
   roscpp
   std_msgs
   pluginlib
   tf
+  tf_conversions
   visualization_msgs
 )
 message(STATUS "System: ${CMAKE_SYSTEM}")
@@ -94,11 +96,10 @@ endif()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  ObstacleMsg.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -115,10 +116,10 @@ endif()
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   nav_msgs#   std_msgs#   std_msgs#   visualization_msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   geometry_msgs std_msgs
+)
 
 #add dynamic reconfigure api
 #find_package(catkin REQUIRED dynamic_reconfigure)
@@ -145,12 +146,14 @@ catkin_package(
 	dynamic_reconfigure
 	geometry_msgs
 	interactive_markers
+	message_runtime
 	nav_core
 	nav_msgs
 	pluginlib
 	roscpp
 	std_msgs
 	tf
+	tf_conversions
 	visualization_msgs
   DEPENDS Eigen3 SuiteSparse G2O
 )
