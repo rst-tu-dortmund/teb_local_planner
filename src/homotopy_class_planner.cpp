@@ -495,11 +495,33 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
     for(ObstContainer::const_iterator it_obst = obstacles_->begin(); it_obst != obstacles_->end(); ++it_obst)
     {
       //TODO: findNearestBandpoint for arbitary obstacles
-      double dist = it_obst->get()->getMinimumDistance( it_teb->get()->teb().Pose( it_teb->get()->teb().findClosestTrajectoryPose(it_obst->get()->getCentroid()) ).position() ); // TODO: inefficient. Can be stored in a previous loop
+      unsigned int closest_pt_idx = it_teb->get()->teb().findClosestTrajectoryPose(it_obst->get()->getCentroid());
+      double dist = it_obst->get()->getMinimumDistance( it_teb->get()->teb().Pose( closest_pt_idx ).position() ); // TODO: inefficient. Can be stored in a previous loop
       if (dist < 0.03)
       {
 	ROS_DEBUG("getAndFilterHomotopyClassesTEB() - TEB and Intersection Point are at the same place, erasing candidate.");	
 	flag=true;
+      }
+      
+      // TODO TEST
+      // if polygon obstacle, check line intersection
+      // but consider only points around the closest point
+      int lower = (int)closest_pt_idx - 4; // let's try 4 points before and behind the closest one
+      int upper = (int)closest_pt_idx + 4;
+      if (lower < 0) lower = 0;
+      if (upper > it_teb->get()->teb().sizePoses()-1) upper = it_teb->get()->teb().sizePoses()-1;
+      const PolygonObstacle* poly_obst = dynamic_cast<const PolygonObstacle*>(it_obst->get());
+      if (poly_obst)
+      {
+        while (lower < upper)
+        {
+	  if ( poly_obst->checkLineIntersection( it_teb->get()->teb().Pose(lower).position(), it_teb->get()->teb().Pose(lower+1).position() ) )
+	  {
+	    flag = true;
+	    break;
+	  }
+	  ++lower;
+	}
       }
     }
     if (flag)
