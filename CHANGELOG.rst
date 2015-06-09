@@ -4,7 +4,7 @@ Changelog for package teb_local_planner
 
 0.1.8 (2015-06-08)
 ------------------
-* Custom obstacles can included via publishing dedicated messages
+* Custom obstacles can be included via publishing dedicated messages
 * Goal-reached-condition also checks orientation error (desired yaw) now
 * Numerical improvements of the h-signature calculation
 * Minor bugfixes
