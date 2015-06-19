@@ -474,8 +474,8 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
   h_signatures_.clear();
 
   // Collect h-signatures for all existing TEBs and store them together with the corresponding iterator / pointer:
-  typedef std::vector< std::pair<TebOptPlannerContainer::iterator, std::complex<long double> > > TebCandidateType;
-  TebCandidateType teb_candidates;
+//   typedef std::list< std::pair<TebOptPlannerContainer::iterator, std::complex<long double> > > TebCandidateType;
+//   TebCandidateType teb_candidates;
 
   // get new homotopy classes and delete multiple TEBs per homotopy class
   TebOptPlannerContainer::iterator it_teb = tebs_.begin();
@@ -532,42 +532,66 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
 			    
     // calculate H Signature for the current candidate
     std::complex<long double> H = calculateHSignature(it_teb->get()->teb().poses().begin(), it_teb->get()->teb().poses().end(), getCplxFromVertexPosePtr ,obstacles_, cfg_->hcp.h_signature_prescaler);
-
-    teb_candidates.push_back(std::make_pair(it_teb,H));
+    
+//     teb_candidates.push_back(std::make_pair(it_teb,H));
+    
+    // WORKAROUND until the commented code below works
+    // Here we do not compare cost values. Just first come first serve...
+    bool new_flag = addNewHSignatureIfNew(H, cfg_->hcp.h_signature_threshold);
+    if (!new_flag)
+    {
+      it_teb = tebs_.erase(it_teb);
+      continue;
+    }
+    
     ++it_teb;
   }
 
   // After all new h-signatures are collected, check if there are TEBs sharing the same h-signature (relying to the same homotopy class)
-  TebCandidateType::iterator cand_i = teb_candidates.begin();
-  while (cand_i != teb_candidates.end())
-  {
-    TebCandidateType::iterator cand_j = std::find_if(teb_candidates.begin(),teb_candidates.end(), boost::bind(compareH,_1,cand_i->second));
-    if (cand_j != teb_candidates.end() && cand_j != cand_i)
-    {
-      if ( cand_j->first->get()->getCurrentCost().sum() > cand_i->first->get()->getCurrentCost().sum() )
-      {
-	// found one that has higher cost, therefore erase cand_j
-	tebs_.erase(cand_j->first);
-	teb_candidates.erase(cand_j);
-      }
-      else   // otherwise erase cand_i
-      {
-	tebs_.erase(cand_i->first);
-	cand_i = teb_candidates.erase(cand_i);
-      }
-    }
-    else ++cand_i;	
-  }
-  /// now add the h-signatures to the internal lookup-table (but only if there is no existing duplicate)
-  for (cand_i=teb_candidates.begin(); cand_i!=teb_candidates.end(); ++cand_i)
-  {
-    bool new_flag = addNewHSignatureIfNew(cand_i->second, cfg_->hcp.h_signature_threshold);
-    if (!new_flag)
-    {
-      ROS_ERROR_STREAM("getAndFilterHomotopyClassesTEB() - This schould not be happen.");
-      tebs_.erase(cand_i->first);
-    }
-  }
+  
+  // Find multiple candidates and delete the one with higher cost 
+  // TODO: this code needs to be adpated. Erasing tebs from the teb container_ could make iteratores stored in the candidate list invalid!
+//   TebCandidateType::reverse_iterator cand_i = teb_candidates.rbegin();
+//   int test_idx = 0;
+//   while (cand_i != teb_candidates.rend())
+//   {
+//          
+//     TebCandidateType::reverse_iterator cand_j = std::find_if(boost::next(cand_i),teb_candidates.rend(), boost::bind(compareH,_1,cand_i->second));
+//     if (cand_j != teb_candidates.rend() && cand_j != cand_i)
+//     {
+//         TebOptimalPlannerPtr pt1 = *(cand_j->first);
+//         TebOptimalPlannerPtr pt2 = *(cand_i->first);
+//         assert(pt1);
+//         assert(pt2);
+//       if ( cand_j->first->get()->getCurrentCost().sum() > cand_i->first->get()->getCurrentCost().sum() )
+//       {
+// 	// found one that has higher cost, therefore erase cand_j
+// 	tebs_.erase(cand_j->first);
+// 	teb_candidates.erase(cand_j);         
+//       }
+//       else   // otherwise erase cand_i
+//       {
+// 	tebs_.erase(cand_i->first);
+// 	cand_i = teb_candidates.erase(cand_i);
+//       }
+//     }
+//     else 
+//     {
+//         ROS_WARN_STREAM("increase cand_i");
+//         ++cand_i;	
+//     }
+//   }
+  
+  // now add the h-signatures to the internal lookup-table (but only if there is no existing duplicate)
+//   for (TebCandidateType::iterator cand=teb_candidates.begin(); cand!=teb_candidates.end(); ++cand)
+//   {
+//     bool new_flag = addNewHSignatureIfNew(cand->second, cfg_->hcp.h_signature_threshold);
+//     if (!new_flag)
+//     {
+// //       ROS_ERROR_STREAM("getAndFilterHomotopyClassesTEB() - This schould not be happen.");
+//       tebs_.erase(cand->first);
+//     }
+//   }
 	
 }
  
