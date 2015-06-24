@@ -14,9 +14,18 @@ Build status of the *master* branch:
 
 ### Papers Describing the Approach
 
-- Rösmann C., Feiten W., Wösch T., Hoffmann F. and Bertram. T.: Trajectory modification considering dynamic constraints of autonomous robots. Proc. 7th German Conference on Robotics, Germany, Munich, 2012, pp 74–79.
-- Rösmann C., Feiten W., Wösch T., Hoffmann F. and Bertram. T.: Efficient trajectory optimization using a sparse model. Proc. European Conference on Mobile Robots, Spain, Barcelona, 2013, pp. 138–143. 
+- Rösmann C., Feiten W., Wösch T., Hoffmann F. and Bertram. T.: Trajectory modification considering dynamic constraints of autonomous robots. Proc. 7th German Conference on Robotics, Germany, Munich, May 2012, pp 74–79.
+- Rösmann C., Feiten W., Wösch T., Hoffmann F. and Bertram. T.: Efficient trajectory optimization using a sparse model. Proc. IEEE European Conference on Mobile Robots, Spain, Barcelona, Sept. 2013, pp. 138–143. 
+- Rösmann C., F. Hoffmann und T. Bertram: Planning of Multiple Robot Trajectories in Distinctive Topologies, Proc. IEEE European Conference on Mobile Robots, UK, Lincoln, Sept. 2015 (accepted) 
 
+### Video
+
+The following video presents the features of the package and shows examples from simulation and real robot situations.
+Some spoken explanations are included in the audio track of the video. 
+
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=e1Bw6JOgHME
+" target="_blank"><img src="http://img.youtube.com/vi/e1Bw6JOgHME/0.jpg" 
+alt="teb_local_planner - An Optimal Trajectory Planner for Mobile Robots" width="240" height="180" border="10" /></a>
 
 ### License
 
