@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.9 (2015-06-24)
+------------------
 * Fixed a segmentation fault issue. This minor update is crucial for stability.
 
 0.1.8 (2015-06-08)
