@@ -20,7 +20,7 @@ Build status of the *master* branch:
 
 ### Video
 
-The following video presents the features of the package and shows examples from simulation and real robot situations.
+The following video presents features of the package and shows examples from simulation and real robot situations.
 Some spoken explanations are included in the audio track of the video. 
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=e1Bw6JOgHME
