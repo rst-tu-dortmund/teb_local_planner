@@ -176,14 +176,17 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   cmd_vel.angular.z = 0;
         
   // Get robot pose
-  tf::Stamped<tf::Pose> global_pose;
-  costmap_ros_->getRobotPose(global_pose);
-  robot_pose_ = PoseSE2(global_pose.getOrigin().x(),global_pose.getOrigin().y(), tf::getYaw(global_pose.getRotation()));
+  tf::Stamped<tf::Pose> robot_pose;
+  costmap_ros_->getRobotPose(robot_pose);
+  robot_pose_ = PoseSE2(robot_pose.getOrigin().x(),robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
     
   // Get robot velocity
   tf::Stamped<tf::Pose> robot_vel_tf;
   odom_helper_.getRobotVel(robot_vel_tf);
   robot_vel_ = tfPoseToEigenVector2dTransRot(robot_vel_tf);
+  geometry_msgs::Twist robot_vel_twist;
+  robot_vel_twist.linear.x = robot_vel_[0];
+  robot_vel_twist.angular.z = robot_vel_[1];
     
   // check if the received robot velocity is identically zero (not just closed to zero)
   // in that case the probability is high, that the odom helper has not received any
@@ -197,7 +200,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   std::vector<geometry_msgs::PoseStamped> transformed_plan;
   unsigned int goal_idx;
   tf::StampedTransform tf_plan_to_global;
-  if (!transformGlobalPlan(*tf_, global_plan_, global_pose, *costmap_, global_frame_, transformed_plan, &goal_idx, &tf_plan_to_global))
+  if (!transformGlobalPlan(*tf_, global_plan_, robot_pose, *costmap_, global_frame_, transformed_plan, &goal_idx, &tf_plan_to_global))
   {
     ROS_WARN("Could not transform the global plan to the frame of the controller");
     return false;
@@ -205,7 +208,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty()) return false;
-            
+              
   // Get current goal point (last point of the transformed plan)
   tf::Stamped<tf::Pose> goal_point;
   tf::poseStampedMsgToTF(transformed_plan.back(), goal_point);
@@ -214,12 +217,17 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   if (cfg_.trajectory.global_plan_overwrite_orientation)
   {
     robot_goal_.theta() = estimateLocalGoalOrientation(global_plan_, goal_point, goal_idx, tf_plan_to_global);
+    // overwrite/update goal orientation of the transformed plan with the actual goal (enable using the plan as initialization)
+    transformed_plan.back().pose.orientation = tf::createQuaternionMsgFromYaw(robot_goal_.theta());
   }  
   else
   {
     robot_goal_.theta() = tf::getYaw(goal_point.getRotation());
   }
   
+  // overwrite/update start of the transformed plan with the actual robot position (enable using the plan as initialization)
+  tf::poseTFToMsg(robot_pose, transformed_plan.front().pose);
+    
   
   // Update obstacle container
   updateObstacleContainer();
@@ -228,7 +236,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
     
   // Now perform the actual planning
-  bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_.goal_tolerance.free_goal_vel);
+//   bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_.goal_tolerance.free_goal_vel); // straight line init
+  bool success = planner_->plan(transformed_plan, &robot_vel_twist, cfg_.goal_tolerance.free_goal_vel);
   if (!success)
   {
     planner_->clearPlanner(); // force reinitialization for next time
@@ -455,6 +464,9 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
     //we'll discard points on the plan that are outside the local costmap
     double dist_threshold = std::max(costmap.getSizeInCellsX() * costmap.getResolution() / 2.0,
 				    costmap.getSizeInCellsY() * costmap.getResolution() / 2.0);
+    dist_threshold *= 0.85; // just consider 85% of the costmap size to better incorporate point obstacle that are
+                           // located on the border of the local costmap
+    
 
     unsigned int i = 0;
     double sq_dist_threshold = dist_threshold * dist_threshold;

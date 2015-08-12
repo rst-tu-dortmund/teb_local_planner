@@ -347,7 +347,12 @@ public:
    */
   boost::shared_ptr<const g2o::SparseOptimizer> optimizer() const {return optimizer_;};
   
-
+  /**
+   * @brief Check if last optimization was successful
+   * @return \c true if the last optimization returned without errors, 
+   *         otherwise \c false (also if no optimization has been called before).
+   */
+  bool isOptimized() const {return optimized_;};
 	
   /**
    * @brief Compute the cost vector of a given optimization problen (hyper-graph must exist).
@@ -525,6 +530,7 @@ protected:
   std::pair<bool, Eigen::Vector2d> vel_goal_; //!< Store the final velocity at the goal pose
 
   bool initialized_; //!< Keeps track about the correct initialization of this class
+  bool optimized_; //!< This variable is \c true as long as the last optimization has been completed successful
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW    

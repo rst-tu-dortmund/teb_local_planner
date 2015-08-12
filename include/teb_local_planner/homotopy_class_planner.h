@@ -101,6 +101,7 @@ typedef boost::graph_traits<HcGraph>::adjacency_iterator HcGraphAdjecencyIterato
  * A couple of possible candidates are sampled / generated and filtered afterwards such that only a single candidate
  * per homotopy class remain. Filtering is applied using the H-Signature, a homotopy (resp. homology) invariant: \n
  * 	- S. Bhattacharya et al.: Search-based Path Planning with Homotopy Class Constraints, AAAI, 2010
+ *      - C. Rösmann et al.: Planning of Multiple Robot Trajectories in Distinctive Topologies, ECMR, 2015.
  * 	
  * Followed by the homotopy class search, each candidate is used as an initialization for the underlying trajectory
  * optimization (in this case utilizing the TebOptimalPlanner class with the TimedElasticBand). \n

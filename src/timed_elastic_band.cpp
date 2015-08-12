@@ -208,7 +208,7 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis)
       insertTimeDiff(i+1,newtime);
     }
     
-    else if(TimeDiff(i) < dt_ref - dt_hysteresis  && sizeTimeDiffs()>5)
+    else if(TimeDiff(i) < dt_ref - dt_hysteresis  && sizeTimeDiffs()>5) // only remove samples if size is smaller than 5.
     {
       ROS_DEBUG("teb_local_planner: autoResize() deleting bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
       
@@ -272,18 +272,32 @@ bool TimedElasticBand::initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, 
 }
 
 
-bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt)
+bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient)
 {
   
   if (!isInit())
   {	
-    addPose(plan.front().pose.position.x ,plan.front().pose.position.y, tf::getYaw(plan.front().pose.orientation)); // add starting point
+    addPose(plan.front().pose.position.x ,plan.front().pose.position.y, tf::getYaw(plan.front().pose.orientation)); // add starting point with given orientation
     setPoseVertexFixed(0,true); // StartConf is a fixed constraint during optimization
-	    
-    for (std::vector<geometry_msgs::PoseStamped>::const_iterator pose = plan.begin()+1; pose != plan.end(); ++pose)
+	 
+    for (unsigned int i=1; i<plan.size()-1; ++i)
     {
-	addPoseAndTimeDiff(pose->pose.position.x, pose->pose.position.y, tf::getYaw(pose->pose.orientation),dt);
+        double yaw;
+        if (estimate_orient)
+        {
+            // get yaw from the orientation of the distance vector between pose_{i+1} and pose_{i}
+            double dx = plan[i+1].pose.position.x - plan[i].pose.position.x;
+            double dy = plan[i+1].pose.position.y - plan[i].pose.position.y;
+            yaw = std::atan2(dy,dx);
+        }
+        else 
+        {
+            yaw = tf::getYaw(plan[i].pose.orientation);
+        }
+	addPoseAndTimeDiff(plan[i].pose.position.x, plan[i].pose.position.y, yaw, dt);
     }
+    // Now add final state with given orientation
+    addPoseAndTimeDiff(plan.back().pose.position.x, plan.back().pose.position.y, tf::getYaw(plan.back().pose.orientation), dt);
     setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization
   }
   else // size!=0

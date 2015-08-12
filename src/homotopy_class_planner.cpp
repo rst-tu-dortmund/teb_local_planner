@@ -96,6 +96,14 @@ void HomotopyClassPlanner::setVisualization(TebVisualizationPtr visualization)
 bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_vel, bool free_goal_vel)
 {    
   ROS_ASSERT_MSG(initialized_, "Call initialize() first.");
+  
+  // if no teb has been planned before, use the initial plan as candidate
+  if (tebs_.empty())
+  {
+        tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
+        tebs_.back()->teb().initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true);     
+  }
+  
   PoseSE2 start(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw( initial_plan.front().pose.orientation) );
   PoseSE2 goal(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw( initial_plan.back().pose.orientation) );
   Eigen::Vector2d vel = start_vel ?  Eigen::Vector2d( start_vel->linear.x, start_vel->angular.z ) : Eigen::Vector2d::Zero();
@@ -123,10 +131,10 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   exploreHomotopyClassesAndInitTebs(start, goal, cfg_->obstacles.min_obstacle_dist);
   // Optimize all trajectories in alternative homotopy classes
   optimizeAllTEBs(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
-  // Select which candidate (based on alternative homotopy classes) should be used
-  selectBestTeb();
   // Delete any detours
   deleteTebDetours(0.0); 
+  // Select which candidate (based on alternative homotopy classes) should be used
+  selectBestTeb();
   return true;
 } 
  
@@ -370,7 +378,7 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
       bool collision = false;
       for (ObstContainer::const_iterator it_obst = obstacles_->begin(); it_obst != obstacles_->end(); ++it_obst)
       {
-	if ( (*it_obst)->checkLineIntersection(graph_[*it_i].pos,graph_[*it_j].pos, 0.5*dist_to_obst) )
+	if ( (*it_obst)->checkLineIntersection(graph_[*it_i].pos,graph_[*it_j].pos, dist_to_obst) )
 	{
 	  collision = true;
 	  break;
@@ -644,13 +652,27 @@ void HomotopyClassPlanner::optimizeAllTEBs(unsigned int iter_innerloop, unsigned
 void HomotopyClassPlanner::deleteTebDetours(double threshold)
 {
   TebOptPlannerContainer::iterator it_teb = tebs_.begin();
+  bool modified;
   while(it_teb != tebs_.end())
   {
-    /// delete Detours if other TEBs will remain!
+    modified = false;
+    
+    // delete Detours if other TEBs will remain!
     if (tebs_.size()>1 && it_teb->get()->teb().detectDetoursBackwards(threshold)) 
+    {
       it_teb = tebs_.erase(it_teb); // 0.05
-    else 
-      ++it_teb;
+      modified = true;
+    }
+    
+    // Also delete tebs that cannot be optimized (last optim call failed)
+    if (!it_teb->get()->isOptimized())
+    {
+        it_teb = tebs_.erase(it_teb);
+        modified = true;      
+    }  
+    
+    if (!modified)
+       ++it_teb;
   }
 } 
  

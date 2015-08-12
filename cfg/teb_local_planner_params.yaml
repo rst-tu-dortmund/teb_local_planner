@@ -48,7 +48,7 @@ TebLocalPlannerROS:
  weight_kinematics_nh: 1000
  weight_kinematics_forward_drive: 1
  weight_optimaltime: 1
- weight_point_obstacle: 5
+ weight_point_obstacle: 50
  weight_poly_obstacle: 10
  weight_dynamic_obstacle: 10
  alternative_time_cost: False

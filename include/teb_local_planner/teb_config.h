@@ -217,7 +217,7 @@ public:
     optim.weight_kinematics_nh = 1000;
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_optimaltime = 1;
-    optim.weight_point_obstacle = 1;
+    optim.weight_point_obstacle = 50;
     optim.weight_poly_obstacle = 10;
     optim.weight_dynamic_obstacle = 10;
     optim.alternative_time_cost = false;

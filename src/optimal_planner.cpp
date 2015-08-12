@@ -44,7 +44,7 @@ namespace teb_local_planner
 
 // ============== Implementation ===================
 
-TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), initialized_(false)
+TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), initialized_(false), optimized_(false)
 {    
   cost_.setConstant(HUGE_VAL);
 }
@@ -148,13 +148,27 @@ bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned 
 {
   if (cfg_->optim.optimization_activate==false) 
     return false;
+  bool success = false;
+  optimized_ = false;
   for(unsigned int i=0; i<iterations_outerloop; ++i)
   {
     if (cfg_->trajectory.teb_autosize)
       teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis);
 
-    buildGraph();
-    optimizeGraph(iterations_innerloop, false);
+    success = buildGraph();
+    if (!success) 
+    {
+        clearGraph();
+        return false;
+    }
+    success = optimizeGraph(iterations_innerloop, false);
+    if (!success) 
+    {
+        clearGraph();
+        return false;
+    }
+    optimized_ = true;
+    
     if (compute_cost_afterwards && i==iterations_outerloop-1) // compute cost vec only in the last iteration
       computeCurrentCost(cfg_->optim.alternative_time_cost);
       
@@ -189,7 +203,7 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
   if (!teb_.isInit())
   {
     // init trajectory
-    teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref);
+    teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true);
   } 
   else
   {
@@ -272,13 +286,15 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
 {
   if (cfg_->robot.max_vel_x<0.01)
   {
-    ROS_WARN("Robot Max Velocity is smaller than 0.01m/s. Optimizing aborted...");
+    ROS_WARN("optimizeGraph(): Robot Max Velocity is smaller than 0.01m/s. Optimizing aborted...");
+    if (clear_after) clearGraph();
     return false;	
   }
   
   if (!teb_.isInit() || teb_.sizePoses()<3)
   {
-    ROS_WARN("TEB is empty or has to less elements. Skipping optimization.");
+    ROS_WARN("optimizeGraph(): TEB is empty or has too less elements. Skipping optimization.");
+    if (clear_after) clearGraph();
     return false;	
   }
   
@@ -289,7 +305,7 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
   
   if(!iter)
   {
-	ROS_ERROR("Optimization failed! iter=%i", iter);
+	ROS_ERROR("optimizeGraph(): Optimization failed! iter=%i", iter);
 	return false;
   }
 

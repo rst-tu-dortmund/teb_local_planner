@@ -399,9 +399,11 @@ public:
    * via the argument \c dt.
    * @param plan vector of geometry_msgs::PoseStamped
    * @param dt specify a uniform time difference between two consecutive poses
+   * @param estimate_orient if \c true, calculate orientation using the straight line distance vector between consecutive poses
+   *                        (only copy start and goal orientation; recommended if no orientation data is available).
    * @return true if everything was fine, false otherwise
    */
-  bool initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt);
+  bool initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient=false);
   
   //@}
   
