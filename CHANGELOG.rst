@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.10 (2015-08-13)
+-------------------
 * The optimizer copies the global plan as initialization now instead of using a simple straight line approximation.
 * Some bugfixes and improvements
 
