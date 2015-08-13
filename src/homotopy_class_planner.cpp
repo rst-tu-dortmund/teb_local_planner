@@ -132,7 +132,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   // Optimize all trajectories in alternative homotopy classes
   optimizeAllTEBs(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
   // Delete any detours
-  deleteTebDetours(0.0); 
+  deleteTebDetours(-0.1); 
   // Select which candidate (based on alternative homotopy classes) should be used
   selectBestTeb();
   return true;
@@ -238,7 +238,7 @@ void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal
       Eigen::Vector2d distij = graph_[*it_j].pos-graph_[*it_i].pos;
       distij.normalize();
       // Check if the direction is backwards:
-      if (distij.dot(diff)<=cos(cfg_->hcp.obstacle_heading_threshold))
+      if (distij.dot(diff)<=cfg_->hcp.obstacle_heading_threshold)
 	continue;
 
 			      
@@ -251,7 +251,7 @@ void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal
 	  keypoint_dist.normalize();
 	  Eigen::Vector2d start_orient_vec( cos(start.theta()), sin(start.theta()) ); // already normalized
 	  // check angle
-	  if (start_orient_vec.dot(keypoint_dist) < cos(cfg_->hcp.obstacle_heading_threshold)) 
+	  if (start_orient_vec.dot(keypoint_dist) < cfg_->hcp.obstacle_heading_threshold) 
 	  {
 	    ROS_DEBUG("createGraph() - deleted edge: limit_obstacle_heading");
 	    continue;
@@ -304,7 +304,7 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   Eigen::Vector2d normal(-diff.coeffRef(1),diff.coeffRef(0)); // normal-vector
   normal.normalize();
 
-  // Now sample vertices between start, goal and 5 m width to both sides
+  // Now sample vertices between start, goal and a specified width between both sides
   // Let's start with a square area between start and goal (maybe change it later to something like a circle or whatever)
   
   double area_width = cfg_->hcp.roadmap_graph_area_width; // TODO param
@@ -312,7 +312,7 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   boost::random::uniform_real_distribution<double> distribution_x(0, start_goal_dist);  
   boost::random::uniform_real_distribution<double> distribution_y(0, area_width); 
   
-  double phi = atan2(diff.coeffRef(1),diff.coeffRef(0)); // roate area by this angle
+  double phi = atan2(diff.coeffRef(1),diff.coeffRef(0)); // rotate area by this angle
   Eigen::Rotation2D<double> rot_phi(phi);
   
   Eigen::Vector2d area_origin = start.position() - 0.5*area_width*normal; // bottom left corner of the origin
@@ -320,14 +320,12 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   // Insert Vertices
   HcGraphVertexType start_vtx = boost::add_vertex(graph_); // start vertex
   graph_[start_vtx].pos = start.position();
-  diff.normalize();
+  diff.normalize(); // normalize in place
   
   
   // Start sampling
-  
   for (unsigned int i=0; i<cfg_->hcp.roadmap_graph_no_samples; ++i)
   {
-  
     Eigen::Vector2d sample;
     bool coll_free;
     do // sample as long as a collision free sample is found
@@ -360,18 +358,19 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   
   // Insert Edges
   HcGraphVertexIterator it_i, end_i, it_j, end_j;
-  for (boost::tie(it_i,end_i) = boost::vertices(graph_); it_i!=end_i-1; ++it_i) // ignore goal in this loop
+  for (boost::tie(it_i,end_i) = boost::vertices(graph_); it_i!=boost::prior(end_i); ++it_i) // ignore goal in this loop
   {
     for (boost::tie(it_j,end_j) = boost::vertices(graph_); it_j!=end_j; ++it_j) // check all forward connections
     {
-      if (it_i==it_j)
+      if (it_i==it_j) // same vertex found
 	continue;
 
       Eigen::Vector2d distij = graph_[*it_j].pos-graph_[*it_i].pos;
-      distij.normalize();
+      distij.normalize(); // normalize in place
 
       // Check if the direction is backwards:
-      if (distij.dot(diff)<=cos(cfg_->hcp.obstacle_heading_threshold)) continue;
+      if (distij.dot(diff)<=cfg_->hcp.obstacle_heading_threshold) 
+          continue; // diff is already normalized
 			      
 
       // Collision Check	
@@ -490,7 +489,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
   while(it_teb != tebs_.end())
   {
     // delete Detours if there is at least one other TEB candidate left in the container
-    if (delete_detours &&  tebs_.size()>1 && it_teb->get()->teb().detectDetoursBackwards(cos(cfg_->hcp.obstacle_heading_threshold))) 
+    if (delete_detours &&  tebs_.size()>1 && it_teb->get()->teb().detectDetoursBackwards(-0.1)) 
     {
       it_teb = tebs_.erase(it_teb); // delete candidate and set iterator to the next valid candidate
       continue;

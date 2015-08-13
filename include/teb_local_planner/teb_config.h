@@ -145,7 +145,7 @@ public:
     double h_signature_threshold; //!< Two h-signatures are assumed to be equal, if both the difference of real parts and complex parts are below the specified threshold.
     
     double obstacle_keypoint_offset; //!< If simple_exploration is turned on, this parameter determines the distance on the left and right side of the obstacle at which a new keypoint will be cretead (in addition to min_obstacle_dist).
-    double obstacle_heading_threshold; //!< Specify the value of the scalar product between obstacle heading and goal heading in order to take them (obstacles) into account for exploration.
+    double obstacle_heading_threshold; //!< Specify the value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account for exploration [0,1]
     
     bool visualize_hc_graph; //!< Visualize the graph that is created for exploring new homotopy classes.
   } hcp;
@@ -230,7 +230,7 @@ public:
     hcp.max_number_classes = 5; 
     
     hcp.obstacle_keypoint_offset = 0.1;
-    hcp.obstacle_heading_threshold = 1; //M_PI/3;
+    hcp.obstacle_heading_threshold = 0.45; 
     hcp.roadmap_graph_no_samples = 15;
     hcp.roadmap_graph_area_width = 6; // [m]
     hcp.h_signature_prescaler = 1;
