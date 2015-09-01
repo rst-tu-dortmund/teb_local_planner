@@ -114,7 +114,7 @@ public:
     _error[0] = fabs( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
 
     // positive-drive-direction constraint
-    Eigen::Vector2d angle_vec ( cos(conf1->theta()), sin(conf2->theta()) );	   
+    Eigen::Vector2d angle_vec ( cos(conf1->theta()), sin(conf1->theta()) );	   
     _error[1] = penaltyBoundFromBelow(deltaS.dot(angle_vec), 0,0,cfg_->optim.penalty_scale);
     // epsilon=0, otherwise it pushes the first bandpoints away from start
 
