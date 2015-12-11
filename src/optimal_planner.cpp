@@ -153,7 +153,7 @@ bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned 
   for(unsigned int i=0; i<iterations_outerloop; ++i)
   {
     if (cfg_->trajectory.teb_autosize)
-      teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis);
+      teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples);
 
     success = buildGraph();
     if (!success) 
@@ -210,13 +210,14 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
     // update TEB
     PoseSE2 start_(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw(initial_plan.front().pose.orientation));
     PoseSE2 goal_(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw(initial_plan.back().pose.orientation));
-    teb_.updateAndPruneTEB(start_,goal_, cfg_->trajectory.force_reinit_new_goal_dist);
+    teb_.updateAndPruneTEB(start_, goal_, cfg_->trajectory.force_reinit_new_goal_dist, cfg_->trajectory.min_samples);
   }
-  if (start_vel) setVelocityStart(*start_vel);
+  if (start_vel)
+		setVelocityStart(*start_vel);
   if (free_goal_vel)
-      setVelocityGoalFree();
+    setVelocityGoalFree();
   else
-      vel_goal_.first = true; // we just reactivate and use the previously set velocity (should be zero if nothing was modified)
+    vel_goal_.first = true; // we just reactivate and use the previously set velocity (should be zero if nothing was modified)
   
   // now optimize
   return optimizeTEB(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
@@ -242,13 +243,13 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const Ei
   else
   {
     // update TEB
-    teb_.updateAndPruneTEB(start,goal, cfg_->trajectory.force_reinit_new_goal_dist);
+    teb_.updateAndPruneTEB(start, goal, cfg_->trajectory.force_reinit_new_goal_dist, cfg_->trajectory.min_samples);
   }
   setVelocityStart(start_vel);
   if (free_goal_vel)
-      setVelocityGoalFree();
+    setVelocityGoalFree();
   else
-      vel_goal_.first = true; // we just reactivate and use the previously set velocity (should be zero if nothing was modified)
+    vel_goal_.first = true; // we just reactivate and use the previously set velocity (should be zero if nothing was modified)
       
   // now optimize
   return optimizeTEB(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
@@ -291,7 +292,7 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
     return false;	
   }
   
-  if (!teb_.isInit() || teb_.sizePoses()<3)
+  if (!teb_.isInit() || teb_.sizePoses()<cfg_->trajectory.min_samples)
   {
     ROS_WARN("optimizeGraph(): TEB is empty or has too less elements. Skipping optimization.");
     if (clear_after) clearGraph();

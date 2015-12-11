@@ -321,12 +321,26 @@ public:
    * @param index element position inside the internal PoseSequence
    */
   void deletePose(unsigned int index);
+  
+  /**
+   * @brief Delete multiple (\c number) poses starting at pos. \c index in the pose sequence
+   * @param index first element position inside the internal PoseSequence
+   * @param number number of elements that should be deleted
+   */
+  void deletePoses(unsigned int index, unsigned int number);
 
   /**
    * @brief Delete pose at pos. \c index in the timediff sequence
    * @param index element position inside the internal TimeDiffSequence
    */
   void deleteTimeDiff(unsigned int index);
+	
+  /**
+   * @brief Delete multiple (\c number) time differences starting at pos. \c index in the timediff sequence
+   * @param index first element position inside the internal TimeDiffSequence
+   * @param number number of elements that should be deleted
+   */
+  void deleteTimeDiffs(unsigned int index, unsigned int number);
   
   //@}
   
@@ -427,10 +441,11 @@ public:
    * @param new_start New start pose (optional)
    * @param new_goal New goal pose (optional)
    * @param max_goal_separation Maximum allowed distance between old and new goal, otherwise return \c false
+   * @param min_samples Specify the minimum number of samples that should at least remain in the trajectory
    * @return \c false if the goal point is too far away to update the goal (see max_goal_separation)
    */  
   bool updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, 
-			  boost::optional<const PoseSE2&> new_goal, double max_goal_separation = 1.0);
+			  boost::optional<const PoseSE2&> new_goal, double max_goal_separation = 1.0, int min_samples = 3);
   
   
   /**
@@ -457,8 +472,9 @@ public:
    * Each call only one new sample (pose-dt-pair) is inserted or removed.
    * @param dt_ref reference temporal resolution
    * @param dt_hysteresis hysteresis to avoid oscillations
+	 * @param min_samples minimum number of samples that should be remain in the trajectory after resizing
    */    
-  void autoResize(double dt_ref, double dt_hysteresis);
+  void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3);
   
   
   /**

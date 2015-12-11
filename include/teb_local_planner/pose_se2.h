@@ -315,6 +315,16 @@ public:
     return pose;
   }
   
+  /**
+	 * @brief Output stream operator
+	 * @param stream output stream
+	 * @param pose to be used
+	 */
+	friend std::ostream& operator<< (std::ostream& stream, const PoseSE2& pose)
+	{
+		stream << "x: " << pose._position[0] << " y: " << pose._position[1] << " theta: " << pose._theta;
+    return stream;
+	}
   
   ///@}
       

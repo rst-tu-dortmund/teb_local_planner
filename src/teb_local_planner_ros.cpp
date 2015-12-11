@@ -193,7 +193,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // odom message on the given topic. Unfortunately, the odom helper does not have any exception for that case.
   // We only check translational velocities here in order query a warning message
   if (robot_vel_tf.getOrigin().getX()==0 && robot_vel_tf.getOrigin().getY()==0)
-    ROS_WARN("The robot velocity is zero w.r.t to the max. available precision. Often the odom topic is not specified correctly (e.g. with namespaces), please check that.");
+    ROS_WARN_ONCE("The robot velocity is zero w.r.t to the max. available precision. \
+		Often the odom topic is not specified correctly (e.g. with namespaces), please check that. This message will be printed once.");
     
 
   // Transform global plan to the frame of interest (w.r.t to the local costmap)
@@ -338,39 +339,39 @@ void TebLocalPlannerROS::updateObstacleContainer()
       Eigen::Affine3d obstacle_to_map_eig;
       try 
       {
-	tf::StampedTransform obstacle_to_map;
-	tf_->waitForTransform(global_frame_, ros::Time(0),
-			    custom_obstacle_msg_.header.frame_id, ros::Time(0),
-			    custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
-	tf_->lookupTransform(global_frame_, ros::Time(0),
-			  custom_obstacle_msg_.header.frame_id, ros::Time(0), 
-			  custom_obstacle_msg_.header.frame_id, obstacle_to_map);
-	tf::transformTFToEigen(obstacle_to_map, obstacle_to_map_eig);
+		tf::StampedTransform obstacle_to_map;
+		tf_->waitForTransform(global_frame_, ros::Time(0),
+					custom_obstacle_msg_.header.frame_id, ros::Time(0),
+					custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
+		tf_->lookupTransform(global_frame_, ros::Time(0),
+				custom_obstacle_msg_.header.frame_id, ros::Time(0), 
+				custom_obstacle_msg_.header.frame_id, obstacle_to_map);
+		tf::transformTFToEigen(obstacle_to_map, obstacle_to_map_eig);
       }
       catch (tf::TransformException ex)
       {
-	ROS_ERROR("%s",ex.what());
-	obstacle_to_map_eig.setIdentity();
+		ROS_ERROR("%s",ex.what());
+		obstacle_to_map_eig.setIdentity();
       }
       
       for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = custom_obstacle_msg_.obstacles.begin(); obst_it != custom_obstacle_msg_.obstacles.end(); ++obst_it)
       {
-	if (obst_it->polygon.points.size() == 1 )
-	{
-	  Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
-	  obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
-	}
-	else
-	{
-	  PolygonObstacle* polyobst = new PolygonObstacle;
-	  for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
-	  {
-	    Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
-	    polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
-	  }
-	  polyobst->finalizePolygon();
-	  obstacles_.push_back(ObstaclePtr(polyobst));
-	}
+		if (obst_it->polygon.points.size() == 1 )
+		{
+		Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
+		obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
+		}
+		else
+		{
+		PolygonObstacle* polyobst = new PolygonObstacle;
+		for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+		{
+			Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
+			polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
+		}
+		polyobst->finalizePolygon();
+		obstacles_.push_back(ObstaclePtr(polyobst));
+		}
       }
     }
   }  
@@ -401,17 +402,17 @@ void TebLocalPlannerROS::updateObstacleContainer()
     {
       for (unsigned int j=0; j<costmap_->getSizeInCellsY()-1; ++j)
       {
-	if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
-	{
-	  Eigen::Vector2d obs;
-	  costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
-	    
-	  // check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
-	  if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
-	    continue;
-	    
-	  obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
-	}
+		if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
+		{
+		Eigen::Vector2d obs;
+		costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
+			
+		// check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
+		if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
+			continue;
+			
+		obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
+		}
       }
     }
   
@@ -480,7 +481,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
       sq_dist = x_diff * x_diff + y_diff * y_diff;
       if (sq_dist <= sq_dist_threshold) 
       {
-	break;
+		break;
       }
       ++i;
     }
