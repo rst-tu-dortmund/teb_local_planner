@@ -46,7 +46,7 @@ namespace teb_local_planner
 template<typename BidirIter, typename Fun>
 bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
 		      boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
-		      boost::optional<double> start_orientation, boost::optional<double> goal_orientation) 
+		      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples) 
 {
     Eigen::Vector2d start_position = fun_position( *path_start );
     Eigen::Vector2d goal_position = fun_position( *boost::prior(path_end) );
@@ -135,7 +135,22 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
       }
       else timestep = timestep_vel;
 
-      addPoseAndTimeDiff(goal_position, goal_orient, timestep); // add goal point
+			
+			PoseSE2 goal(goal_position, goal_orient);
+			
+			// if number of samples is not larger than min_samples, insert manually
+			if ( (int)sizePoses() < min_samples-1 )
+			{
+				ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
+				while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
+				{
+					// simple strategy: interpolate between the current pose and the goal
+					addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), timestep ); // let the optimier correct the timestep (TODO: better initialization	
+				}
+			}
+			
+			// now add goal
+      addPoseAndTimeDiff(goal, timestep); // add goal point
       setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization
     }
     else // size!=0

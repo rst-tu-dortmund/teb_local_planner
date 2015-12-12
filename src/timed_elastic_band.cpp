@@ -242,7 +242,7 @@ double TimedElasticBand::getSumOfAllTimeDiffs() const
   return time;
 }
 
-bool TimedElasticBand::initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep, double timestep)
+bool TimedElasticBand::initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep, double timestep, int min_samples)
 {
   if (!isInit())
   {   
@@ -268,6 +268,19 @@ bool TimedElasticBand::initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, 
       }
 
     }
+    
+    // if number of samples is not larger than min_samples, insert manually
+    if ( (int)sizePoses() < min_samples-1 )
+		{
+			ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
+			while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
+			{
+				// simple strategy: interpolate between the current pose and the goal
+				addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), timestep ); // let the optimier correct the timestep (TODO: better initialization	
+			}
+		}
+		
+		// add goal
     addPoseAndTimeDiff(goal,timestep); // add goal point
     setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization	
   }
@@ -281,7 +294,7 @@ bool TimedElasticBand::initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, 
 }
 
 
-bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient)
+bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient, int min_samples)
 {
   
   if (!isInit())
@@ -305,8 +318,22 @@ bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStampe
         }
 				addPoseAndTimeDiff(plan[i].pose.position.x, plan[i].pose.position.y, yaw, dt);
     }
+    
+    PoseSE2 goal(plan.back().pose.position.x, plan.back().pose.position.y, tf::getYaw(plan.back().pose.orientation));
+    
+    // if number of samples is not larger than min_samples, insert manually
+    if ( (int)sizePoses() < min_samples-1 )
+		{
+			ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
+			while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
+			{
+				// simple strategy: interpolate between the current pose and the goal
+				addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), dt ); // let the optimier correct the timestep (TODO: better initialization	
+			}
+		}
+    
     // Now add final state with given orientation
-    addPoseAndTimeDiff(plan.back().pose.position.x, plan.back().pose.position.y, tf::getYaw(plan.back().pose.orientation), dt);
+    addPoseAndTimeDiff(goal, dt);
     setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization
   }
   else // size!=0
