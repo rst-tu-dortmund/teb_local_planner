@@ -201,7 +201,7 @@ protected:
     * @return orientation (yaw-angle) estimate
     */
   double estimateLocalGoalOrientation(const std::vector<geometry_msgs::PoseStamped>& global_plan, const tf::Stamped<tf::Pose>& local_goal,
-		      unsigned int current_goal_idx, const tf::StampedTransform& tf_plan_to_global, unsigned int moving_average_length=3) const;
+		      int current_goal_idx, const tf::StampedTransform& tf_plan_to_global, int moving_average_length=3) const;
 		      
 		      
   /**
