@@ -2,6 +2,10 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* This is a bugfix release (it fixes a lot of issues which occured frequently when the robot was close to the goal)
+
 0.1.10 (2015-08-13)
 -------------------
 * The optimizer copies the global plan as initialization now instead of using a simple straight line approximation.
