@@ -202,4 +202,22 @@ bool PolygonObstacle::checkLineIntersection(const Eigen::Vector2d& line_start, c
 }
 
 
+
+double LineObstacle::getMinimumDistance(const Eigen::Vector2d& position) const
+{
+  return DistanceFromLineSegment(position, start_, end_);
+}
+
+Eigen::Vector2d LineObstacle::getMinimumDistanceVec(const Eigen::Vector2d& position) const
+{
+  return position - ClosestPointOnLineSegment(position, start_, end_);
+}
+
+
+
+
+
+
+
+
 } // namespace teb_local_planner

@@ -135,7 +135,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
     {
       boost::shared_ptr<PointObstacle> pobst = boost::dynamic_pointer_cast<PointObstacle>(*obst);      
       if (!pobst)
-	continue;
+        continue;
       geometry_msgs::Point point;
       point.x = pobst->x();
       point.y = pobst->y();
@@ -152,7 +152,47 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 
     teb_marker_pub_.publish( marker );
   }
-    
+  
+  // Visualize line obstacles
+  {
+    unsigned int idx = 0;
+    for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
+    {	
+      boost::shared_ptr<LineObstacle> pobst = boost::dynamic_pointer_cast<LineObstacle>(*obst);   
+      if (!pobst)
+        continue;
+      
+      visualization_msgs::Marker marker;
+      marker.header.frame_id = cfg_->map_frame;
+      marker.header.stamp = ros::Time::now();
+      marker.ns = "LineObstacles";
+      marker.id = idx++;
+      marker.type = visualization_msgs::Marker::LINE_STRIP;
+      marker.action = visualization_msgs::Marker::ADD;
+      marker.lifetime = ros::Duration(5.0);
+      geometry_msgs::Point start;
+      start.x = pobst->start().x();
+      start.y = pobst->start().y();
+      start.z = 0;
+      marker.points.push_back(start);
+      geometry_msgs::Point end;
+      end.x = pobst->end().x();
+      end.y = pobst->end().y();
+      end.z = 0;
+      marker.points.push_back(end);
+  
+      marker.scale.x = 0.1;
+      marker.scale.y = 0.1;
+      marker.color.a = 1.0;
+      marker.color.r = 0.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      
+      teb_marker_pub_.publish( marker );     
+    }
+  }
+  
+
   // Visualize polygon obstacles
   {
     unsigned int idx = 0;
@@ -160,7 +200,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
     {	
       boost::shared_ptr<PolygonObstacle> pobst = boost::dynamic_pointer_cast<PolygonObstacle>(*obst);   
       if (!pobst)
-	continue;
+				continue;
       
       visualization_msgs::Marker marker;
       marker.header.frame_id = cfg_->map_frame;
@@ -172,22 +212,22 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       
       for (PolygonObstacle::VertexContainer::const_iterator vertex = pobst->vertices().begin(); vertex != pobst->vertices().end(); ++vertex)
       {
-	geometry_msgs::Point point;
-	point.x = vertex->x();
-	point.y = vertex->y();
-	point.z = 0;
-	marker.points.push_back(point);
+        geometry_msgs::Point point;
+        point.x = vertex->x();
+        point.y = vertex->y();
+        point.z = 0;
+        marker.points.push_back(point);
       }
       
       // Also add last point to close the polygon
       // but only if polygon has more than 2 points (it is not a line)
       if (pobst->vertices().size() > 2)
       {
-	geometry_msgs::Point point;
-	point.x = pobst->vertices().front().x();
-	point.y = pobst->vertices().front().y();
-	point.z = 0;
-	marker.points.push_back(point);
+        geometry_msgs::Point point;
+        point.x = pobst->vertices().front().x();
+        point.y = pobst->vertices().front().y();
+        point.z = 0;
+        marker.points.push_back(point);
       }
       marker.scale.x = 0.1;
       marker.scale.y = 0.1;

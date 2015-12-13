@@ -102,6 +102,7 @@ public:
     bool include_costmap_obstacles; //!< Specify whether the obstacles in the costmap should be taken into account directly
     bool costmap_obstacles_front_only; //!< Limit the considered costmap obstacles to the front of the robot (much more efficient)
     int obstacle_poses_affected; //!< The obstacle position is attached to the closest pose on the trajectory to reduce computational effort, but take a number of neighbors into account as well
+    int line_obstacle_poses_affected; //!< See obstacle_poses_affected, but here for obstacles of line shape
     int polygon_obstacle_poses_affected; //!< See obstacle_poses_affected, but here for obstacles of polygonial shape
   } obstacles; //!< Obstacle related parameters
 
@@ -126,6 +127,7 @@ public:
     double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities)
     double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t transition time
     double weight_point_obstacle; //!< Optimization weight for satisfying a minimum separation from point obstacles
+    double weight_line_obstacle; //!< Optimization weight for satisfying a minimum separation from polygon obstacles
     double weight_poly_obstacle; //!< Optimization weight for satisfying a minimum separation from polygon obstacles
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles
     bool alternative_time_cost; //!< Not in use yet...
@@ -201,6 +203,7 @@ public:
     obstacles.include_costmap_obstacles = true;
     obstacles.costmap_obstacles_front_only = true;
     obstacles.obstacle_poses_affected = 10;
+    obstacles.line_obstacle_poses_affected = 25;
     obstacles.polygon_obstacle_poses_affected = 25;
 
    
@@ -220,6 +223,7 @@ public:
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_optimaltime = 1;
     optim.weight_point_obstacle = 50;
+    optim.weight_line_obstacle = 50;
     optim.weight_poly_obstacle = 10;
     optim.weight_dynamic_obstacle = 10;
     optim.alternative_time_cost = false;

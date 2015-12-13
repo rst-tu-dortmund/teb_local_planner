@@ -64,6 +64,7 @@
 #include <teb_local_planner/g2o_types/edge_kinematics.h>
 #include <teb_local_planner/g2o_types/edge_time_optimal.h>
 #include <teb_local_planner/g2o_types/edge_point_obstacle.h>
+#include <teb_local_planner/g2o_types/edge_line_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_polygon_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
 
@@ -105,7 +106,7 @@ public:
    * @see computeCurrentCost()
    * @see optimizeTEB()
    */
-  typedef Eigen::Matrix<double, 9, 1> TebCostVec;
+  typedef Eigen::Matrix<double, 10, 1> TebCostVec;
   
   /**
    * @brief Default constructor

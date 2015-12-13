@@ -271,16 +271,16 @@ bool TimedElasticBand::initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, 
     
     // if number of samples is not larger than min_samples, insert manually
     if ( (int)sizePoses() < min_samples-1 )
-		{
-			ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
-			while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
-			{
-				// simple strategy: interpolate between the current pose and the goal
-				addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), timestep ); // let the optimier correct the timestep (TODO: better initialization	
-			}
-		}
-		
-		// add goal
+    {
+      ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
+      while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
+      {
+        // simple strategy: interpolate between the current pose and the goal
+        addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), timestep ); // let the optimier correct the timestep (TODO: better initialization	
+      }
+    }
+    
+    // add goal
     addPoseAndTimeDiff(goal,timestep); // add goal point
     setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization	
   }
@@ -316,21 +316,21 @@ bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStampe
         {
             yaw = tf::getYaw(plan[i].pose.orientation);
         }
-				addPoseAndTimeDiff(plan[i].pose.position.x, plan[i].pose.position.y, yaw, dt);
+        addPoseAndTimeDiff(plan[i].pose.position.x, plan[i].pose.position.y, yaw, dt);
     }
     
     PoseSE2 goal(plan.back().pose.position.x, plan.back().pose.position.y, tf::getYaw(plan.back().pose.orientation));
     
     // if number of samples is not larger than min_samples, insert manually
     if ( (int)sizePoses() < min_samples-1 )
-		{
-			ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
-			while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
-			{
-				// simple strategy: interpolate between the current pose and the goal
-				addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), dt ); // let the optimier correct the timestep (TODO: better initialization	
-			}
-		}
+    {
+      ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
+      while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
+      {
+        // simple strategy: interpolate between the current pose and the goal
+        addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), dt ); // let the optimier correct the timestep (TODO: better initialization	
+      }
+    }
     
     // Now add final state with given orientation
     addPoseAndTimeDiff(goal, dt);
@@ -375,6 +375,42 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const 
   }
   return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
 }
+
+
+unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end)
+{
+  std::vector<double> dist_vec; // TODO: improve! efficiency
+  dist_vec.reserve(sizePoses());
+	
+  // calc distances  
+  for (unsigned int i = 0; i < sizePoses(); i++)
+  {
+    Eigen::Vector2d point = Pose(i).position();
+    double diff = Obstacle::DistanceFromLineSegment(point, ref_line_start, ref_line_end);
+    dist_vec.push_back(diff);
+  }
+
+
+  // find minimum
+  unsigned int index_min = 0;
+
+  double last_value = dist_vec.at(0);
+  for (unsigned int i=1; i < dist_vec.size(); i++)
+  {
+    if (dist_vec.at(i) < last_value)
+    {
+      last_value = dist_vec.at(i);
+      index_min = i;
+    }
+  }
+  return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
+}
+
+
+
+
+
+
 
 
 bool TimedElasticBand::detectDetoursBackwards(double threshold) const
@@ -423,34 +459,34 @@ bool TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
   if (new_start)
   {
     // find nearest state (using l2-norm) in order to prune the trajectory
-		// (remove already passed states)
-		double dist_cache = (new_start->position()- Pose(0).position()).norm();
-		double dist;
-		int lookahead = std::min<int>( int(sizePoses())-min_samples, 10); // satisfy min_samples, otherwise max 10 samples
+    // (remove already passed states)
+    double dist_cache = (new_start->position()- Pose(0).position()).norm();
+    double dist;
+    int lookahead = std::min<int>( int(sizePoses())-min_samples, 10); // satisfy min_samples, otherwise max 10 samples
 
-		int nearest_idx = 0;
-		for (int i = 1; i<=lookahead; ++i)
-		{
-			dist = (new_start->position()- Pose(i).position()).norm();
-			if (dist<dist_cache)
-			{
-				dist_cache = dist;
-				nearest_idx = i;
-			}
-			else break;
-		}
-		
-		// prune trajectory at the beginning (and extrapolate sequences at the end if the horizon is fixed)
-		if (nearest_idx>0)
-		{
-			// nearest_idx is equal to the number of samples to be removed (since it counts from 0 ;-) )
-			// WARNING delete starting at pose 1, and overwrite the original pose(0) wiht new_start, since pose(0) is fixed during optimization!
-			deletePoses(1, nearest_idx);  // delete first states such that the closest state is the new first one
-			deleteTimeDiffs(1, nearest_idx); // delete corresponding time differences
-		}
-		
-		// update start
-		Pose(0) = *new_start;
+    int nearest_idx = 0;
+    for (int i = 1; i<=lookahead; ++i)
+    {
+      dist = (new_start->position()- Pose(i).position()).norm();
+      if (dist<dist_cache)
+      {
+        dist_cache = dist;
+        nearest_idx = i;
+      }
+      else break;
+    }
+    
+    // prune trajectory at the beginning (and extrapolate sequences at the end if the horizon is fixed)
+    if (nearest_idx>0)
+    {
+      // nearest_idx is equal to the number of samples to be removed (since it counts from 0 ;-) )
+      // WARNING delete starting at pose 1, and overwrite the original pose(0) wiht new_start, since pose(0) is fixed during optimization!
+      deletePoses(1, nearest_idx);  // delete first states such that the closest state is the new first one
+      deleteTimeDiffs(1, nearest_idx); // delete corresponding time differences
+    }
+    
+    // update start
+    Pose(0) = *new_start;
   }
   
   if (new_goal)

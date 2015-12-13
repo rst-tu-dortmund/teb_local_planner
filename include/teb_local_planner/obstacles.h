@@ -166,7 +166,7 @@ public:
     * @param line_end 2D point representing the end of the line segment
     * @return minimum distance to a given line segment
     */
-  inline static double DistanceFromLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
+  static double DistanceFromLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
 
   /**
     * @brief Helper function to obtain the closest point on a line segment w.r.t. a reference point
@@ -175,7 +175,7 @@ public:
     * @param line_end 2D point representing the end of the line segment
     * @return Closest point on the line segment
     */
-  inline static Eigen::Vector2d ClosestPointOnLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
+  static Eigen::Vector2d ClosestPointOnLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
 
   /**
     * @brief Helper function to check whether two line segments intersects
@@ -311,6 +311,87 @@ public:
 };
 
 
+
+/**
+* @class LineObstacle
+* @brief Implements a 2D line obstacle
+*/
+  
+class LineObstacle : public Obstacle
+{
+public:
+  //! Abbrev. for a container storing vertices (2d points defining the edge points of the polygon)
+  typedef std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
+  
+  /**
+    * @brief Default constructor of the point obstacle class
+    */
+  LineObstacle() : Obstacle()
+  {
+    start_.setZero();
+    end_.setZero();
+    centroid_.setZero();
+  }
+  LineObstacle(double x1, double y1, double x2, double y2) : Obstacle()     
+  {
+    start_.x() = x1;
+    start_.y() = y1;
+    end_.x() = x2;
+    end_.y() = y2;
+    calcCentroid();
+  }
+
+  // implements checkCollision() of the base class
+  virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const    
+  {
+    return getMinimumDistance(point) <= min_dist;
+  }
+  
+  // implements checkLineIntersection() of the base class
+  virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist) const 
+  {
+    return CheckLineSegmentsIntersection(line_start, line_end, start_, end_);
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& position) const;    
+  
+  
+  // implements getMinimumDistanceVec() of the base class
+  virtual Eigen::Vector2d getMinimumDistanceVec(const Eigen::Vector2d& position) const;   
+  
+  
+  // implements getCentroid() of the base class
+  virtual const Eigen::Vector2d& getCentroid() const    
+  {
+    return centroid_;
+  }
+  
+  // implements getCentroidCplx() of the base class
+  virtual std::complex<double> getCentroidCplx() const  
+  {
+    return std::complex<double>(centroid_.x(), centroid_.y());
+  }
+  
+  // Access or modify line
+  const Eigen::Vector2d& start() const {return start_;}
+  Eigen::Vector2d& start() {return start_;}
+  const Eigen::Vector2d& end() const {return end_;}
+  Eigen::Vector2d& end() {return end_;}
+  
+protected:
+  void calcCentroid()	{	centroid_ = 0.5*(start_ + end_); }
+  
+private:
+	Eigen::Vector2d start_;
+	Eigen::Vector2d end_;
+	
+  Eigen::Vector2d centroid_;
+
+public:	
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW  
+};
+  
 
 /**
  * @class PolygonObstacle

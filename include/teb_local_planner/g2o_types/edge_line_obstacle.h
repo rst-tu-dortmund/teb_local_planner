@@ -38,11 +38,10 @@
  * g2o-framework. g2o is licensed under the terms of the BSD License.
  * Refer to the base class source for detailed licensing information.
  *
- * Author: Christoph Rösmann
+ * Author: Otniel Rinaldo, Christoph Rösmann
  *********************************************************************/
-
-#ifndef EDGE_POLYGONOBSTACLE_H
-#define EDGE_POLYGONOBSTACLE_H
+#ifndef EDGE_LINEOBSTACLE_H
+#define EDGE_LINEOBSTACLE_H
 
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/penalties.h>
@@ -51,16 +50,17 @@
 
 #include "g2o/core/base_unary_edge.h"
 
-
 #include <Eigen/Core>
 
+#include <chrono>
 
-namespace teb_local_planner 
+
+namespace teb_local_planner
 {
-
+  
 /**
- * @class EdgePolygonObstacle
- * @brief Edge defining the cost function for keeping a minimum distance from obstacles (polygon shape).
+ * @class EdgeLineObstacle
+ * @brief Edge defining the cost function for keeping a minimum distance from obstacles (line shape).
  * 
  * The edge depends on a single vertex \f$ \mathbf{s}_i \f$ and minimizes: \n
  * \f$ \min \textrm{penaltyBelow}( dist2polygon ) \cdot weight \f$. \n
@@ -70,14 +70,14 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesObstacles
  * @remarks Do not forget to call setTebConfig() and setObstacle()
  */   
-class EdgePolygonObstacle : public g2o::BaseUnaryEdge<1, const PolygonObstacle*, VertexPose>
+class EdgeLineObstacle : public g2o::BaseUnaryEdge<1, const LineObstacle*, VertexPose>
 {
 public:
     
   /**
    * @brief Construct edge.
    */  
-  EdgePolygonObstacle() 
+  EdgeLineObstacle() 
   {
     _vertices[0] = NULL;
   }
@@ -88,7 +88,7 @@ public:
    * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
    * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
    */    
-  virtual ~EdgePolygonObstacle() 
+  virtual ~EdgeLineObstacle() 
   {
     if(_vertices[0]) 
       _vertices[0]->edges().erase(this);
@@ -99,11 +99,14 @@ public:
    */    
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgePolygonObstacle()");
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeLineObstacle()");
+    
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
-    _error[0] = penaltyBoundFromBelow(fabs(_measurement->getMinimumDistance(bandpt->position())), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
+    double distance_to_line = fabs(_measurement->getMinimumDistance(bandpt->position()));
 
-    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgePolygonObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
+    _error[0] = penaltyBoundFromBelow(distance_to_line, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
+
+    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgeLineObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
   }
   
   /**
@@ -137,10 +140,10 @@ public:
   }
   
   /**
-   * @brief Set PolygonObstacle for the underlying cost function
-   * @param obstacle Const pointer to the PolygonObstacle
+   * @brief Set LineObstacle for the underlying cost function
+   * @param obstacle Const pointer to the LineObstacle
    */     
-  void setObstacle(const PolygonObstacle* obstacle)
+  void setObstacle(const LineObstacle* obstacle) //Finished
   {
     _measurement = obstacle;
   }
@@ -149,13 +152,12 @@ public:
    * @brief Assign the TebConfig class for parameters.
    * @param cfg TebConfig class
    */     
-  void setTebConfig(const TebConfig& cfg)
+  void setTebConfig(const TebConfig& cfg) //Finished
   {
     cfg_ = &cfg;
   }
 
 protected:
-  
   const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
   
@@ -164,8 +166,12 @@ public:
 
 };
   
-} // end namespace g2o
   
 
   
+  
+  
+  
+}//end namespace teb_local_planner
+
 #endif
