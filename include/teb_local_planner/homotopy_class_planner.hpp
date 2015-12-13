@@ -131,7 +131,7 @@ void HomotopyClassPlanner::addAndInitNewTeb(BidirIter path_start, BidirIter path
 {
   tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
   tebs_.back()->teb().initTEBtoGoal(path_start, path_end, fun_position, cfg_->robot.max_vel_x, cfg_->robot.max_vel_theta, 
-				    cfg_->robot.acc_lim_x, cfg_->robot.acc_lim_theta, start_orientation, goal_orientation);	
+				    cfg_->robot.acc_lim_x, cfg_->robot.acc_lim_theta, start_orientation, goal_orientation, cfg_->trajectory.min_samples);	
 }
   
 } // namespace teb_local_planner

@@ -360,7 +360,7 @@ public:
    * the resulting trajectory contains the start and goal pose only.
    * @param start PoseSE2 defining the start of the trajectory
    * @param goal PoseSE2 defining the goal of the trajectory (final pose)
-   * @param diststep euclidian distance between two consecutive poses
+   * @param diststep euclidian distance between two consecutive poses (if 0, no intermediate samples are inserted despite min_samples)
    * @param timestep intialization for the timediff between two consecutive poses
 	 * @param min_samples Minimum number of samples that should be initialized at least
    * @return true if everything was fine, false otherwise

@@ -203,7 +203,7 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
   if (!teb_.isInit())
   {
     // init trajectory
-    teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true);
+    teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples);
   } 
   else
   {
@@ -238,7 +238,7 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const Ei
   if (!teb_.isInit())
   {
     // init trajectory
-    teb_.initTEBtoGoal(start, goal);
+    teb_.initTEBtoGoal(start, goal, 0, 1, cfg_->trajectory.min_samples); // 0 intermediate samples, but dt=1 -> autoResize will add more samples before calling first optimization
   }
   else
   {

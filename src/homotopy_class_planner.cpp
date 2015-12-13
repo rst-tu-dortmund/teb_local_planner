@@ -101,7 +101,7 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
   if (tebs_.empty())
   {
         tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
-        tebs_.back()->teb().initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true);     
+        tebs_.back()->teb().initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples);     
   }
   
   PoseSE2 start(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw( initial_plan.front().pose.orientation) );
