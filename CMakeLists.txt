@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf_conversions
   visualization_msgs
+  obstacle_preprocessor
 )
 message(STATUS "System: ${CMAKE_SYSTEM}")
 ## System dependencies are found with CMake's conventions
@@ -155,6 +156,7 @@ catkin_package(
 	tf
 	tf_conversions
 	visualization_msgs
+	obstacle_preprocessor
   DEPENDS Eigen3 SuiteSparse G2O
 )
 

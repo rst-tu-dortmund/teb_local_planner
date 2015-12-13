@@ -112,6 +112,24 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     global_frame_ = costmap_ros_->getGlobalFrameID();
     cfg_.map_frame = global_frame_; // TODO
     robot_base_frame_ = costmap_ros_->getBaseFrameID();
+		
+		
+		 //Initialize Obstacle Preprocessing Costmap and Threads (TODO, NODELET)
+    obstacle_map_.setCostmap2DRos(costmap_ros_, min_line_pts);
+    if(enable_preprocess == false){
+      ROS_INFO_STREAM("Original obstacle container TEB is used");
+    }
+    else if(enable_preprocess == true && preprocess_multithreaded == true){
+      double preprocess_duration = 0.1; 
+      nh.param("update_map_timer", preprocess_duration, preprocess_duration);    
+      ros::Rate preprocess_rate( ros::Duration(0.2) );
+      boost::thread workerThread(boost::bind(&obstacle_preprocess::Obstacle_List::spinPreprocess, &obstacle_map_, preprocess_rate));
+      ROS_INFO_STREAM("Multithreaded obstacle preprocessing initialized");
+    }
+    else if(enable_preprocess == true && preprocess_multithreaded == false){
+      ROS_INFO_STREAM("Singlethreaded obstacle preprocessing initialized");
+    }
+		
     
     // Get footprint of the robot and minimum and maximum distance from the center of the robo to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
@@ -231,7 +249,22 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     
   
   // Update obstacle container
-  updateObstacleContainer();
+  if(enable_preprocess == false)
+  {
+    //Update obstacle container with traditional obstacles
+    updateObstacleContainer(); //Original TEB Obstacles version
+  }
+  else if(enable_preprocess == true && preprocess_multithreaded == true)
+  {
+    //Update obstacle container with obstacle preprocess multithreaded
+    updateObstacleContainerWithObstacleMap();
+  }
+  else if(enable_preprocess == true && preprocess_multithreaded == false)
+  {
+    //Update obstacle container with obstacle preprocess singlethreaded
+    obstacle_map_.preprocessSingleThread();
+    updateObstacleContainerWithObstacleMap();
+  }
     
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
@@ -338,39 +371,39 @@ void TebLocalPlannerROS::updateObstacleContainer()
       Eigen::Affine3d obstacle_to_map_eig;
       try 
       {
-				tf::StampedTransform obstacle_to_map;
-				tf_->waitForTransform(global_frame_, ros::Time(0),
-							custom_obstacle_msg_.header.frame_id, ros::Time(0),
-							custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
-				tf_->lookupTransform(global_frame_, ros::Time(0),
-						custom_obstacle_msg_.header.frame_id, ros::Time(0), 
-						custom_obstacle_msg_.header.frame_id, obstacle_to_map);
-				tf::transformTFToEigen(obstacle_to_map, obstacle_to_map_eig);
+        tf::StampedTransform obstacle_to_map;
+        tf_->waitForTransform(global_frame_, ros::Time(0),
+              custom_obstacle_msg_.header.frame_id, ros::Time(0),
+              custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
+        tf_->lookupTransform(global_frame_, ros::Time(0),
+            custom_obstacle_msg_.header.frame_id, ros::Time(0), 
+            custom_obstacle_msg_.header.frame_id, obstacle_to_map);
+        tf::transformTFToEigen(obstacle_to_map, obstacle_to_map_eig);
       }
       catch (tf::TransformException ex)
       {
-				ROS_ERROR("%s",ex.what());
-				obstacle_to_map_eig.setIdentity();
+        ROS_ERROR("%s",ex.what());
+        obstacle_to_map_eig.setIdentity();
       }
       
       for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = custom_obstacle_msg_.obstacles.begin(); obst_it != custom_obstacle_msg_.obstacles.end(); ++obst_it)
       {
-		if (obst_it->polygon.points.size() == 1 )
-		{
-			Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
-			obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
-		}
-		else
-		{
-		PolygonObstacle* polyobst = new PolygonObstacle;
-		for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
-		{
-			Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
-			polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
-		}
-			polyobst->finalizePolygon();
-			obstacles_.push_back(ObstaclePtr(polyobst));
-		}
+        if (obst_it->polygon.points.size() == 1 )
+        {
+          Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
+          obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
+        }
+        else
+        {
+          PolygonObstacle* polyobst = new PolygonObstacle;
+          for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+          {
+            Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
+            polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
+          }
+          polyobst->finalizePolygon();
+          obstacles_.push_back(ObstaclePtr(polyobst));
+        }
       }
     }
   }  
@@ -401,21 +434,66 @@ void TebLocalPlannerROS::updateObstacleContainer()
     {
       for (unsigned int j=0; j<costmap_->getSizeInCellsY()-1; ++j)
       {
-		if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
-		{
-		Eigen::Vector2d obs;
-		costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
-			
-		// check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
-		if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
-			continue;
-			
-		obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
-		}
+        if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
+        {
+        Eigen::Vector2d obs;
+        costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
+          
+        // check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
+        if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
+          continue;
+          
+        obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
+        }
       }
     }
   
   }
+}
+
+void TebLocalPlannerROS::updateObstacleContainerWithObstacleMap()
+{
+  obstacles_.clear();
+  vector_point.clear();
+  vector_line.clear();
+  vector_polygon.clear();
+  
+  //Get obstacles from obstacle preprocessor
+  if(obstacle_type == 1)
+	{
+    int Point = 0;
+    int Line = 1;
+    vector_point = obstacle_map_.getObstacles(Point);
+    vector_line = obstacle_map_.getObstacles(Line);
+  }
+  else if(obstacle_type == 2)
+	{
+    int Polygon = 2;
+    vector_polygon = obstacle_map_.getObstacles(Polygon);
+  }
+  
+  //Assign obstacles to obstacle container
+  int number_of_points = 0, number_of_lines = 0;
+  for(int a = 0; a < vector_point.size(); a++){
+    double vx = vector_point[a].x;
+    double vy = vector_point[a].y;
+    obstacles_.push_back(ObstaclePtr(new PointObstacle(vx, vy)));
+//     number_of_points++;
+  }
+  if (vector_line.size()>1){
+    for(int a = 0; a < vector_line.size(); a++)
+		{
+      double vx1 = vector_line[a].x;
+      double vy1 = vector_line[a].y;
+      double vx2 = vector_line[a+1].x;
+      double vy2 = vector_line[a+1].y;
+      obstacles_.push_back(ObstaclePtr(new LineObstacle(vx1,vy1,vx2,vy2)));
+//       number_of_lines++;
+      a++;
+    }
+  }
+//   textObstacle();
+//   textNumberOfObstacle(number_of_points, number_of_lines);
 }
 
       
@@ -451,11 +529,11 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
     // get plan_to_global_transform from plan frame to global_frame
     tf::StampedTransform plan_to_global_transform;
     tf.waitForTransform(global_frame, ros::Time::now(),
-			plan_pose.header.frame_id, plan_pose.header.stamp,
-			plan_pose.header.frame_id, ros::Duration(0.5));
+    plan_pose.header.frame_id, plan_pose.header.stamp,
+    plan_pose.header.frame_id, ros::Duration(0.5));
     tf.lookupTransform(global_frame, ros::Time(),
-		      plan_pose.header.frame_id, plan_pose.header.stamp, 
-		      plan_pose.header.frame_id, plan_to_global_transform);
+    plan_pose.header.frame_id, plan_pose.header.stamp, 
+    plan_pose.header.frame_id, plan_to_global_transform);
 
     //let's get the pose of the robot in the frame of the plan
     tf::Stamped<tf::Pose> robot_pose;
@@ -463,7 +541,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
 
     //we'll discard points on the plan that are outside the local costmap
     double dist_threshold = std::max(costmap.getSizeInCellsX() * costmap.getResolution() / 2.0,
-				    costmap.getSizeInCellsY() * costmap.getResolution() / 2.0);
+                                     costmap.getSizeInCellsY() * costmap.getResolution() / 2.0);
     dist_threshold *= 0.85; // just consider 85% of the costmap size to better incorporate point obstacle that are
                            // located on the border of the local costmap
     
@@ -533,6 +611,65 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
 
   return true;
 }
+
+// TODO copied from otniel, why here?
+//Intersection Line From http://www.dcs.gla.ac.uk/~pat/52233/slides/Geometry1x1.pdf
+bool TebLocalPlannerROS::isLineIntersect(Eigen::Vector2d &line1_start, Eigen::Vector2d &line1_end, Eigen::Vector2d &line2_start, Eigen::Vector2d &line2_end)
+{
+  // Find the four orientations needed for general and
+  // special cases
+  int o1 = lineOrientation(line1_start, line1_end, line2_start);
+  int o2 = lineOrientation(line1_start, line1_end, line2_end);
+  int o3 = lineOrientation(line2_start, line2_end, line1_start);
+  int o4 = lineOrientation(line2_start, line2_end, line1_end);
+  
+  // General case
+  if (o1 != o2 && o3 != o4)
+      return true;
+ 
+  // Special Cases
+  // p1, q1 and p2 are colinear and p2 lies on segment p1q1
+  if (o1 == 0 && onSegment(line1_start, line2_start, line1_end)) return true;
+ 
+  // p1, q1 and p2 are colinear and q2 lies on segment p1q1
+  if (o2 == 0 && onSegment(line1_start, line2_end, line1_end)) return true;
+ 
+  // p2, q2 and p1 are colinear and p1 lies on segment p2q2
+  if (o3 == 0 && onSegment(line2_start, line1_start, line2_end)) return true;
+ 
+   // p2, q2 and q1 are colinear and q1 lies on segment p2q2
+  if (o4 == 0 && onSegment(line2_start, line1_end, line2_end)) return true;
+ 
+  return false; // Doesn't fall in any of the above cases
+}
+
+int TebLocalPlannerROS::lineOrientation(Eigen::Vector2d &point1, Eigen::Vector2d &point2, Eigen::Vector2d &point3)
+{
+  // 0 --> point1, point2 and point3 are colinear
+  // 1 --> Clockwise
+  // 2 --> Counterclockwise
+  int val = ((point2.y() - point1.y()) * (point3.x() - point2.x())) - ((point2.x() - point1.x()) * (point3.y() - point2.y()));
+  if (val == 0){
+    return 0;  // colinear
+  }
+  else if (val>0){
+    return (val > 0)? 1: 2; // clock or counterclock wise
+  }
+}
+
+bool TebLocalPlannerROS::onSegment(Eigen::Vector2d &point1, Eigen::Vector2d &point2, Eigen::Vector2d &point3)
+{
+  if ((point2.x() <= std::max(point1.x(), point3.x())) && (point2.x() >= std::min(point1.x(), point3.x())) && (point2.y() <= std::max(point1.y(), point3.y())) && 
+    point2.y() >= std::min(point1.y(), point3.y())){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+
+
+
       
       
       

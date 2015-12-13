@@ -70,6 +70,9 @@
 // costmap
 #include <costmap_2d/costmap_2d_ros.h>
 
+// costmap postprocessing / obstacle preprocessing
+#include <obstacle_preprocessor/obstacle_preprocess.h>
+
 
 // dynamic reconfigure
 #include <teb_local_planner/TebLocalPlannerReconfigureConfig.h>
@@ -149,6 +152,9 @@ protected:
     */
   void updateObstacleContainer();
   
+	void updateObstacleContainerWithObstacleMap(); // TODO
+	
+	
   /**
     * @brief Callback for the dynamic_reconfigure node.
     * 
@@ -184,6 +190,10 @@ protected:
 		    const std::string& global_frame, std::vector<geometry_msgs::PoseStamped>& transformed_plan,
 		    unsigned int* current_goal_idx = NULL, tf::StampedTransform* tf_plan_to_global = NULL) const;
   
+// TODO this is copied from otniel!!! Required? where?
+  bool isLineIntersect(Eigen::Vector2d &line1_start, Eigen::Vector2d &line1_end, Eigen::Vector2d &line2_start,Eigen::Vector2d &line2_end);
+  int lineOrientation(Eigen::Vector2d &point1, Eigen::Vector2d &point2, Eigen::Vector2d &point3);
+  bool onSegment(Eigen::Vector2d &point1, Eigen::Vector2d &point2, Eigen::Vector2d &point3);
   
   /**
     * @brief Estimate the orientation of a pose from the global_plan that is treated as a local goal for the local planner.
@@ -224,7 +234,7 @@ protected:
   // external objects (store weak pointers)
   costmap_2d::Costmap2DROS* costmap_ros_; //!< Pointer to the costmap ros wrapper, received from the navigation stack
   costmap_2d::Costmap2D* costmap_; //!< Pointer to the 2d costmap (obtained from the costmap ros wrapper)
-
+  
   // internal objects (memory management owned)
   PlannerInterfacePtr planner_; //!< Instance of the underlying optimal planner class
   ObstContainer obstacles_; //!< Obstacle vector that should be considered during local trajectory optimization
@@ -237,6 +247,13 @@ protected:
   
   base_local_planner::OdometryHelperRos odom_helper_; //!< Provides an interface to receive the current velocity from the robot
   
+  obstacle_preprocess::Obstacle_List obstacle_map_; // TODO make preprocessing as nodelet
+  std::vector<geometry_msgs::Point> vector_point, vector_line, vector_polygon;  // TODO: this is now just copied from otiniel, return vector from preprocessing
+  		int min_line_pts = 2; // TODO
+		bool enable_preprocess = true; // TODO
+		bool preprocess_multithreaded = false; //TODO
+		int obstacle_type = 1; // TODO, 1 = points and lines, 2 = polgyons
+   
   dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>* dynamic_recfg_; //!< Dynamic reconfigure server to allow config modifications at runtime
   ros::Subscriber custom_obst_sub_; //!< Subscriber for custom obstacles received via a ObstacleMsg.
   boost::mutex custom_obst_mutex_; //!< Mutex that locks the obstacle array (multi-threaded)
