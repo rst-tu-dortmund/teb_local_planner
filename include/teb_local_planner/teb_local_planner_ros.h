@@ -69,9 +69,7 @@
 
 // costmap
 #include <costmap_2d/costmap_2d_ros.h>
-
-// costmap postprocessing / obstacle preprocessing
-#include <obstacle_preprocessor/obstacle_preprocess.h>
+#include <costmap_converter/costmap_converter_interface.h>
 
 
 // dynamic reconfigure
@@ -152,7 +150,7 @@ protected:
     */
   void updateObstacleContainer();
   
-	void updateObstacleContainerWithObstacleMap(); // TODO
+  void updateObstacleContainerWithObstacleMap(); // TODO
 	
 	
   /**
@@ -189,12 +187,7 @@ protected:
 		    const tf::Stamped<tf::Pose>& global_pose,  const costmap_2d::Costmap2D& costmap,
 		    const std::string& global_frame, std::vector<geometry_msgs::PoseStamped>& transformed_plan,
 		    unsigned int* current_goal_idx = NULL, tf::StampedTransform* tf_plan_to_global = NULL) const;
-  
-// TODO this is copied from otniel!!! Required? where?
-  bool isLineIntersect(Eigen::Vector2d &line1_start, Eigen::Vector2d &line1_end, Eigen::Vector2d &line2_start,Eigen::Vector2d &line2_end);
-  int lineOrientation(Eigen::Vector2d &point1, Eigen::Vector2d &point2, Eigen::Vector2d &point3);
-  bool onSegment(Eigen::Vector2d &point1, Eigen::Vector2d &point2, Eigen::Vector2d &point3);
-  
+    
   /**
     * @brief Estimate the orientation of a pose from the global_plan that is treated as a local goal for the local planner.
     * 
@@ -247,12 +240,13 @@ protected:
   
   base_local_planner::OdometryHelperRos odom_helper_; //!< Provides an interface to receive the current velocity from the robot
   
-  obstacle_preprocess::Obstacle_List obstacle_map_; // TODO make preprocessing as nodelet
-  std::vector<geometry_msgs::Point> vector_point, vector_line, vector_polygon;  // TODO: this is now just copied from otiniel, return vector from preprocessing
-  		int min_line_pts = 2; // TODO
-		bool enable_preprocess = true; // TODO
-		bool preprocess_multithreaded = false; //TODO
-		int obstacle_type = 1; // TODO, 1 = points and lines, 2 = polgyons
+  pluginlib::ClassLoader<costmap_converter::BaseCostmapToPolygons> costmap_converter_loader_; //!< Load costmap converter plugins at runtime
+  boost::shared_ptr<costmap_converter::BaseCostmapToPolygons> costmap_converter_; //!< Store the current costmap_converter
+  
+  int min_line_pts = 2; // TODO
+	bool enable_preprocess = true; // TODO
+	bool preprocess_multithreaded = false; //TODO
+
    
   dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>* dynamic_recfg_; //!< Dynamic reconfigure server to allow config modifications at runtime
   ros::Subscriber custom_obst_sub_; //!< Subscriber for custom obstacles received via a ObstacleMsg.
