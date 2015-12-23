@@ -536,6 +536,21 @@ public:
   unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end);
 
   /**
+   * @brief Find the closest point on the trajectory w.r.t to a provided reference polygon.
+   * 
+   * This function can be useful to find the part of a trajectory that is close to an (polygon) obstacle.
+   * 
+   * @todo implement a more efficient version that first performs a coarse search.
+   * @todo implement a fast approximation that assumes only one local minima w.r.t to the distance:
+   *       Allows simple comparisons starting from the middle of the trajectory.
+   * 
+   * @param vertices vertex container containing Eigen::Vector2d points (the last and first point are connected)
+   * @return Index to the closest pose in the pose sequence
+   */
+  unsigned int findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices);
+
+  
+  /**
    * @brief Get the length of the internal pose sequence
    */
   std::size_t sizePoses() const {return pose_vec_.size();};

@@ -406,6 +406,46 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const 
   return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
 }
 
+unsigned int TimedElasticBand::findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices)
+{
+  if (vertices.empty())
+    return 0;
+  else if (vertices.size() == 1)
+    return findClosestTrajectoryPose(vertices.front());
+  else if (vertices.size() == 2)
+    return findClosestTrajectoryPose(vertices.front(), vertices.back());
+  
+  std::vector<double> dist_vec; // TODO: improve! efficiency
+  dist_vec.reserve(sizePoses());
+  
+  // calc distances  
+  for (unsigned int i = 0; i < sizePoses(); i++)
+  {
+    Eigen::Vector2d point = Pose(i).position();
+    double diff = HUGE_VAL;
+    for (int j = 0; j < (int) vertices.size()-1; ++j)
+    {
+       diff = std::min(diff, Obstacle::DistanceFromLineSegment(point, vertices[j], vertices[j+1]));
+    }
+    diff = std::min(diff, Obstacle::DistanceFromLineSegment(point, vertices.back(), vertices.front()));
+    dist_vec.push_back(diff);
+  }
+
+
+  // find minimum
+  unsigned int index_min = 0;
+
+  double last_value = dist_vec.at(0);
+  for (unsigned int i=1; i < dist_vec.size(); i++)
+  {
+    if (dist_vec.at(i) < last_value)
+    {
+      last_value = dist_vec.at(i);
+      index_min = i;
+    }
+  }
+  return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
+}
 
 
 

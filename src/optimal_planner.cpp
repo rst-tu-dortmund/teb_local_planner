@@ -360,13 +360,26 @@ void TebOptimalPlanner::AddEdgesObstacles()
     const LineObstacle* line_obst = dynamic_cast<const LineObstacle*>(obst->get());
     const PolygonObstacle* poly_obst = dynamic_cast<const PolygonObstacle*>(obst->get());
     unsigned int index;
-    if(point_obst || poly_obst)
+    if(point_obst)
 		{
-      index = teb_.findClosestTrajectoryPose((*obst)->getCentroid()); // TODO: not valid for generic polygons
+      if (cfg_->obstacles.obstacle_poses_affected >= teb_.sizePoses())
+        index =  teb_.sizePoses() / 2;
+      else
+        index = teb_.findClosestTrajectoryPose((*obst)->getCentroid());
     }
     else if(line_obst)
     { 
-      index = teb_.findClosestTrajectoryPose(line_obst->start(), line_obst->end());
+      if (cfg_->obstacles.line_obstacle_poses_affected >= teb_.sizePoses())
+        index = teb_.sizePoses() / 2;
+      else
+        index = teb_.findClosestTrajectoryPose(line_obst->start(), line_obst->end());
+    }
+    else if(poly_obst)
+    {
+      if (cfg_->obstacles.polygon_obstacle_poses_affected >= teb_.sizePoses())
+        index = teb_.sizePoses() / 2;
+      else
+        index = teb_.findClosestTrajectoryPose(poly_obst->vertices());
     }
     else
     {
@@ -377,8 +390,8 @@ void TebOptimalPlanner::AddEdgesObstacles()
     
     // check if obstacle is outside index-range between start and goal
     if ( (index <= 1) || (index > teb_.sizePoses()-2) ) // start and goal are fixed and findNearestBandpoint finds first or last conf if intersection point is outside the range
-	    continue;
-
+	    continue; 
+    
     if (point_obst)
     {
       Eigen::Matrix<double,1,1> information;
