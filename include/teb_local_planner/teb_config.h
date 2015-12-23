@@ -104,6 +104,9 @@ public:
     int obstacle_poses_affected; //!< The obstacle position is attached to the closest pose on the trajectory to reduce computational effort, but take a number of neighbors into account as well
     int line_obstacle_poses_affected; //!< See obstacle_poses_affected, but here for obstacles of line shape
     int polygon_obstacle_poses_affected; //!< See obstacle_poses_affected, but here for obstacles of polygonial shape
+    std::string costmap_converter_plugin; //!< Define a plugin name of the costmap_converter package (costmap cells are converted to points/lines/polygons)
+    bool costmap_converter_spin_thread; //!< If \c true, the costmap converter invokes its callback queue in a different thread
+    int costmap_converter_rate; //!< The rate that defines how often the costmap_converter plugin processes the current costmap (the value should not be much higher than the costmap update rate)
   } obstacles; //!< Obstacle related parameters
 
   
@@ -178,7 +181,7 @@ public:
     trajectory.teb_autosize = true;
     trajectory.dt_ref = 0.3;
     trajectory.dt_hysteresis = 0.1;
-	trajectory.min_samples = 3;
+    trajectory.min_samples = 3;
     trajectory.global_plan_overwrite_orientation = true;
     trajectory.force_reinit_new_goal_dist = 1;
     
@@ -205,8 +208,10 @@ public:
     obstacles.obstacle_poses_affected = 10;
     obstacles.line_obstacle_poses_affected = 25;
     obstacles.polygon_obstacle_poses_affected = 25;
-
-   
+    obstacles.costmap_converter_plugin = "";
+    obstacles.costmap_converter_spin_thread = true;
+    obstacles.costmap_converter_rate = 5;
+    
     // Optimization
     
     optim.no_inner_iterations = 5;

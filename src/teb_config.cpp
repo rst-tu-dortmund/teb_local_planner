@@ -75,7 +75,8 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("obstacle_poses_affected", obstacles.obstacle_poses_affected, obstacles.obstacle_poses_affected);
   nh.param("line_obstacle_poses_affected", obstacles.line_obstacle_poses_affected, obstacles.line_obstacle_poses_affected);
   nh.param("polygon_obstacle_poses_affected", obstacles.polygon_obstacle_poses_affected, obstacles.polygon_obstacle_poses_affected);
-
+  nh.param("costmap_converter_plugin", obstacles.costmap_converter_plugin, obstacles.costmap_converter_plugin);
+  nh.param("costmap_converter_spin_thread", obstacles.costmap_converter_spin_thread, obstacles.costmap_converter_spin_thread);
   
   // Optimization
   nh.param("no_inner_iterations", optim.no_inner_iterations, optim.no_inner_iterations);

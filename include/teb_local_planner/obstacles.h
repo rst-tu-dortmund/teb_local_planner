@@ -332,6 +332,25 @@ public:
     end_.setZero();
     centroid_.setZero();
   }
+  
+  /**
+   * @brief Construct LineObstacle using 2d position vectors as start and end of the line
+   * @param line_start 2d position that defines the start of the line obstacle
+   * @param line_end 2d position that defines the end of the line obstacle
+   */
+  LineObstacle(const Eigen::Ref< const Eigen::Vector2d>& line_start, const Eigen::Ref< const Eigen::Vector2d>& line_end) 
+                : Obstacle(), start_(line_start), end_(line_end)
+  {
+    calcCentroid();
+  }
+  
+  /**
+   * @brief Construct LineObstacle using start and end coordinates
+   * @param x1 x-coordinate of the start of the line
+   * @param y1 y-coordinate of the start of the line
+   * @param x2 x-coordinate of the end of the line
+   * @param y2 y-coordinate of the end of the line
+   */
   LineObstacle(double x1, double y1, double x2, double y2) : Obstacle()     
   {
     start_.x() = x1;

@@ -40,6 +40,8 @@
 
 #include <tf_conversions/tf_eigen.h>
 
+#include <boost/algorithm/string.hpp>
+
 // pluginlib macros
 #include <pluginlib/class_list_macros.h>
 
@@ -113,41 +115,32 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     global_frame_ = costmap_ros_->getGlobalFrameID();
     cfg_.map_frame = global_frame_; // TODO
     robot_base_frame_ = costmap_ros_->getBaseFrameID();
-		
-		
-		 //Initialize a costmap to polygon converter
-     try
+  
+  
+    //Initialize a costmap to polygon converter
+    if (!cfg_.obstacles.costmap_converter_plugin.empty())
+    {
+      try
       {
-        costmap_converter_ = costmap_converter_loader_.createInstance("costmap_converter::CostmapToLinesDBSMCCH"); // TODO param (CostmapToPolygonsDBSMCCH)
-        costmap_converter_->initialize();
+        costmap_converter_ = costmap_converter_loader_.createInstance(cfg_.obstacles.costmap_converter_plugin);
+        std::string converter_name = costmap_converter_loader_.getName(cfg_.obstacles.costmap_converter_plugin);
+        // replace '::' by '/' to make port the c++ namespace to a NodeHandle namespace
+        boost::replace_all(converter_name, "::", "/");
+        costmap_converter_->initialize(ros::NodeHandle(nh, converter_name));
         costmap_converter_->setCostmap2D(costmap_);
-        preprocess_multithreaded = true; // TODO
-        if(enable_preprocess == false)
-        { // TODO
-          ROS_INFO_STREAM("Original obstacle container TEB is used");
-        }
-        else if(enable_preprocess == true && preprocess_multithreaded == true)
-        {  
-          double preprocess_duration = 0.1; 
-          nh.param("update_map_timer", preprocess_duration, preprocess_duration);    // TODO
-          ros::Rate preprocess_rate( ros::Duration(0.2) ); // TODO get map update rate
-          costmap_converter_->startWorker(preprocess_rate, costmap_, true);
-          ROS_INFO_STREAM("Multithreaded obstacle preprocessing initialized");
-        }
-        else if(enable_preprocess == true && preprocess_multithreaded == false)
-        {
-          ROS_INFO_STREAM("Singlethreaded obstacle preprocessing initialized");
-        }
-
         
+        costmap_converter_->startWorker(ros::Rate(cfg_.obstacles.costmap_converter_rate), costmap_, cfg_.obstacles.costmap_converter_spin_thread);
+        ROS_INFO_STREAM("Costmap conversion plugin " << cfg_.obstacles.costmap_converter_plugin << " loaded.");        
       }
       catch(pluginlib::PluginlibException& ex)
       {
-        ROS_WARN("No costmap converter plugin specified/loaded. All occupied costmap cells are treaten as point obstacles. Error message: %s", ex.what());
+        ROS_WARN("The specified costmap converter plugin cannot be loaded. All occupied costmap cells are treaten as point obstacles. Error message: %s", ex.what());
+        costmap_converter_.reset();
       }
-
-
-		
+    }
+    else 
+      ROS_INFO("No costmap conversion plugin specified. All occupied costmap cells are treaten as point obstacles.");
+  
     
     // Get footprint of the robot and minimum and maximum distance from the center of the robo to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
@@ -230,7 +223,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // We only check translational velocities here in order query a warning message
   if (robot_vel_tf.getOrigin().getX()==0 && robot_vel_tf.getOrigin().getY()==0)
     ROS_WARN_ONCE("The robot velocity is zero w.r.t to the max. available precision. \
-		Often the odom topic is not specified correctly (e.g. with namespaces), please check that. This message will be printed once.");
+    Often the odom topic is not specified correctly (e.g. with namespaces), please check that. \
+    Some robot drivers programmatically set the velocity to zero if it is below a certain treshold, in that case ignore this message. \
+    This message will be printed once.");
     
 
   // Transform global plan to the frame of interest (w.r.t to the local costmap)
@@ -266,27 +261,14 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   tf::poseTFToMsg(robot_pose, transformed_plan.front().pose);
     
   
-  // Update obstacle container
+  // Update obstacle container with costmap information or polygons provided by a costmap_converter plugin
   if (costmap_converter_)
-  {
-    if(enable_preprocess == false)
-    {
-      //Update obstacle container with traditional obstacles
-      updateObstacleContainer(); //Original TEB Obstacles version
-    }
-    else if(enable_preprocess == true && preprocess_multithreaded == true)
-    {
-      //Update obstacle container with obstacle preprocess multithreaded
-      updateObstacleContainerWithObstacleMap();
-    }
-    else if(enable_preprocess == true && preprocess_multithreaded == false)
-    {
-      //Update obstacle container with obstacle preprocess singlethreaded
-      costmap_converter_->setCostmap2D(costmap_);
-      costmap_converter_->compute();
-      updateObstacleContainerWithObstacleMap();
-    }
-  }
+    updateObstacleContainerWithCostmapConverter();
+  else
+    updateObstacleContainerWithCostmap();
+  
+  // also consider custom obstacles (must be called after other updates, since the container is not cleared)
+  updateObstacleContainerWithCustomObstacles();
     
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
@@ -378,61 +360,13 @@ bool TebLocalPlannerROS::isGoalReached()
 
 
 
-void TebLocalPlannerROS::updateObstacleContainer()
-{
-  // first clear current obstacle vector
-  obstacles_.clear();
-
-  // Add custom obstacles obtained via message
-  { // New scope for locking purposes
-    boost::mutex::scoped_lock l(custom_obst_mutex_);
-    
-    if (!custom_obstacle_msg_.obstacles.empty())
-    {
-      // We only use the global header to specify the obstacle coordinate system instead of individual ones
-      Eigen::Affine3d obstacle_to_map_eig;
-      try 
-      {
-        tf::StampedTransform obstacle_to_map;
-        tf_->waitForTransform(global_frame_, ros::Time(0),
-              custom_obstacle_msg_.header.frame_id, ros::Time(0),
-              custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
-        tf_->lookupTransform(global_frame_, ros::Time(0),
-            custom_obstacle_msg_.header.frame_id, ros::Time(0), 
-            custom_obstacle_msg_.header.frame_id, obstacle_to_map);
-        tf::transformTFToEigen(obstacle_to_map, obstacle_to_map_eig);
-      }
-      catch (tf::TransformException ex)
-      {
-        ROS_ERROR("%s",ex.what());
-        obstacle_to_map_eig.setIdentity();
-      }
-      
-      for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = custom_obstacle_msg_.obstacles.begin(); obst_it != custom_obstacle_msg_.obstacles.end(); ++obst_it)
-      {
-        if (obst_it->polygon.points.size() == 1 )
-        {
-          Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
-          obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
-        }
-        else
-        {
-          PolygonObstacle* polyobst = new PolygonObstacle;
-          for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
-          {
-            Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
-            polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
-          }
-          polyobst->finalizePolygon();
-          obstacles_.push_back(ObstaclePtr(polyobst));
-        }
-      }
-    }
-  }  
-  
+void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
+{  
   // Add costmap obstacles if desired
   if (cfg_.obstacles.include_costmap_obstacles)
   {
+    // first clear current obstacle vector
+    obstacles_.clear();
   
     // now scan costmap for obstacles and add them to the obst_vector
     /*
@@ -458,14 +392,14 @@ void TebLocalPlannerROS::updateObstacleContainer()
       {
         if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
         {
-        Eigen::Vector2d obs;
-        costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
-          
-        // check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
-        if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
-          continue;
-          
-        obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
+          Eigen::Vector2d obs;
+          costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
+            
+          // check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
+          if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
+            continue;
+            
+          obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
         }
       }
     }
@@ -473,14 +407,14 @@ void TebLocalPlannerROS::updateObstacleContainer()
   }
 }
 
-void TebLocalPlannerROS::updateObstacleContainerWithObstacleMap()
+void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
 {
   if (!costmap_converter_)
     return;
   
   obstacles_.clear();
   
-  //Get obstacles from obstacle preprocessor
+  //Get obstacles from costmap converter
   costmap_converter::PolygonContainerConstPtr polygons =  costmap_converter_->getPolygons();
   if (!polygons)
     return;
@@ -503,11 +437,65 @@ void TebLocalPlannerROS::updateObstacleContainerWithObstacleMap()
         {
             polyobst->pushBackVertex(polygons->at(i).points[j].x, polygons->at(i).points[j].y);
         }
-        
         polyobst->finalizePolygon();
         obstacles_.push_back(ObstaclePtr(polyobst));
     }
     
+  }
+}
+
+
+void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
+{
+  // Add custom obstacles obtained via message
+  boost::mutex::scoped_lock l(custom_obst_mutex_);
+
+  if (!custom_obstacle_msg_.obstacles.empty())
+  {
+    // We only use the global header to specify the obstacle coordinate system instead of individual ones
+    Eigen::Affine3d obstacle_to_map_eig;
+    try 
+    {
+      tf::StampedTransform obstacle_to_map;
+      tf_->waitForTransform(global_frame_, ros::Time(0),
+            custom_obstacle_msg_.header.frame_id, ros::Time(0),
+            custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
+      tf_->lookupTransform(global_frame_, ros::Time(0),
+          custom_obstacle_msg_.header.frame_id, ros::Time(0), 
+          custom_obstacle_msg_.header.frame_id, obstacle_to_map);
+      tf::transformTFToEigen(obstacle_to_map, obstacle_to_map_eig);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s",ex.what());
+      obstacle_to_map_eig.setIdentity();
+    }
+    
+    for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = custom_obstacle_msg_.obstacles.begin(); obst_it != custom_obstacle_msg_.obstacles.end(); ++obst_it)
+    {
+      if (obst_it->polygon.points.size() == 1 ) // point
+      {
+        Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
+        obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
+      }
+      else if (obst_it->polygon.points.size() == 2 ) // line
+      {
+        Eigen::Vector3d line_start( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
+        Eigen::Vector3d line_end( obst_it->polygon.points.back().x, obst_it->polygon.points.back().y, obst_it->polygon.points.back().z );
+        obstacles_.push_back(ObstaclePtr(new LineObstacle( (obstacle_to_map_eig * line_start).head(2), (obstacle_to_map_eig * line_end).head(2) )));
+      }
+      else // polygon
+      {
+        PolygonObstacle* polyobst = new PolygonObstacle;
+        for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+        {
+          Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
+          polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
+        }
+        polyobst->finalizePolygon();
+        obstacles_.push_back(ObstaclePtr(polyobst));
+      }
+    }
   }
 }
 
@@ -573,7 +561,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
       sq_dist = x_diff * x_diff + y_diff * y_diff;
       if (sq_dist <= sq_dist_threshold) 
       {
-		break;
+        break;
       }
       ++i;
     }

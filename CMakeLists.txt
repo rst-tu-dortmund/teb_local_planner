@@ -8,6 +8,7 @@ set(CMAKE_BUILD_TYPE Release) #None, Debug, Release, RelWithDebInfo, MinSizeRel
 find_package(catkin REQUIRED COMPONENTS
   base_local_planner
   costmap_2d
+  costmap_converter
   cmake_modules
   dynamic_reconfigure
   geometry_msgs
@@ -21,7 +22,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf_conversions
   visualization_msgs
-  costmap_converter
 )
 message(STATUS "System: ${CMAKE_SYSTEM}")
 ## System dependencies are found with CMake's conventions
@@ -144,6 +144,7 @@ catkin_package(
   CATKIN_DEPENDS
 	base_local_planner
 	costmap_2d
+	costmap_converter
 	dynamic_reconfigure
 	geometry_msgs
 	interactive_markers
@@ -156,7 +157,6 @@ catkin_package(
 	tf
 	tf_conversions
 	visualization_msgs
-	costmap_converter
   DEPENDS Eigen3 SuiteSparse G2O
 )
 
