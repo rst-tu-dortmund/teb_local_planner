@@ -2,6 +2,10 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* The teb_local_planner supports costmap_converter plugins (pluginlib) from now on. Those plugins convert occupied costmap2d cells into polygon shapes. The costmap_converter is disabled by default, since the extension still needs to be tested (parameter choices, computation time advantages, etc.). A tutorial will explain how to activate the converter using the ros-param server.
+
 0.1.11 (2015-12-12)
 -------------------
 * This is a bugfix release (it fixes a lot of issues which occured frequently when the robot was close to the goal)
