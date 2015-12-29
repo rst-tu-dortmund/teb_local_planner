@@ -291,6 +291,12 @@ public:
   template<typename BidirIter, typename Fun>
   void addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation); 
   
+  /**
+   * @brief Add a new Teb to the internal trajectory container and initialize it using a generic 2D reference path
+   * @param start start pose
+   * @param goal goal pose
+   */
+  void addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal); 
   
   /**
    * @brief Update TEBs with new pose, goal and current velocity.
@@ -380,9 +386,9 @@ protected:
    * @param start Start pose from wich to start on (e.g. the current robot pose).
    * @param goal Goal pose to find paths to (e.g. the robot's goal).
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
-   * @param limit_obstacle_heading Ignore obstacles that are outside a predefined range of view.
+   * @param obstacle_heading_threshold Value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account [0,1]
    */
-  void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst=0.3, bool limit_obstacle_heading=false);
+  void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold);
   
   /**
    * @brief Create a graph and sample points in the global frame that can be used to explore new possible paths between start and goal.
@@ -396,9 +402,10 @@ protected:
    * @param start Start pose from wich to start on (e.g. the current robot pose).
    * @param goal Goal pose to find paths to (e.g. the robot's goal).
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
-   * @param limit_obstacle_heading Ignore obstacles that are outside a predefined range of view.
+   * @param no_samples number of random samples
+   * @param obstacle_heading_threshold Value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account [0,1]
    */  
-  void createProbRoadmapGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst=0.3, bool limit_obstacle_heading=false);
+  void createProbRoadmapGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, int no_samples, double obstacle_heading_threshold);
   
   
   /**
@@ -407,7 +414,7 @@ protected:
    * @param threshold Two h-signuteres are assumed to be equal, if both the difference of real parts and complex parts are below \c threshold.
    * @return \c true if the h-signature was added and no duplicate was found, \c false otherwise
    */    
-  bool addNewHSignatureIfNew(const std::complex<long double>& H, double threshold);
+  bool addHSignatureIfNew(const std::complex<long double>& H, double threshold);
 
  
   /**

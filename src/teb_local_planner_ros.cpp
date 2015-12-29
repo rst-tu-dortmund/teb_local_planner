@@ -124,7 +124,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
       {
         costmap_converter_ = costmap_converter_loader_.createInstance(cfg_.obstacles.costmap_converter_plugin);
         std::string converter_name = costmap_converter_loader_.getName(cfg_.obstacles.costmap_converter_plugin);
-        // replace '::' by '/' to make port the c++ namespace to a NodeHandle namespace
+        // replace '::' by '/' to convert the c++ namespace to a NodeHandle namespace
         boost::replace_all(converter_name, "::", "/");
         costmap_converter_->initialize(ros::NodeHandle(nh, converter_name));
         costmap_converter_->setCostmap2D(costmap_);
@@ -142,7 +142,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
       ROS_INFO("No costmap conversion plugin specified. All occupied costmap cells are treaten as point obstacles.");
   
     
-    // Get footprint of the robot and minimum and maximum distance from the center of the robo to its footprint vertices.
+    // Get footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
     costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);    
 
@@ -160,7 +160,6 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     // set initialized flag
     initialized_ = true;
 
-    // this is only here to make this process visible in the rxlogger right from the start
     ROS_DEBUG("teb_local_planner plugin initialized.");
   }
   else
@@ -173,7 +172,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
 
 bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& orig_global_plan)
 {
-  // check if plugin initialized
+  // check if plugin is initialized
   if(!initialized_)
   {
     ROS_ERROR("teb_local_planner has not been initialized, please call initialize() before using this planner");
@@ -220,7 +219,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // check if the received robot velocity is identically zero (not just closed to zero)
   // in that case the probability is high, that the odom helper has not received any
   // odom message on the given topic. Unfortunately, the odom helper does not have any exception for that case.
-  // We only check translational velocities here in order query a warning message
+  // We only check translational velocities here in order to query a warning message
   if (robot_vel_tf.getOrigin().getX()==0 && robot_vel_tf.getOrigin().getY()==0)
     ROS_WARN_ONCE("The robot velocity is zero w.r.t to the max. available precision. \
     Often the odom topic is not specified correctly (e.g. with namespaces), please check that. \
@@ -257,7 +256,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     robot_goal_.theta() = tf::getYaw(goal_point.getRotation());
   }
 
-  // overwrite/update start of the transformed plan with the actual robot position (enable using the plan as initialization)
+  // overwrite/update start of the transformed plan with the actual robot position (allows using the plan as initial trajectory)
   tf::poseTFToMsg(robot_pose, transformed_plan.front().pose);
     
   
@@ -283,7 +282,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return false;
   }
      
-  // Check feasibility (but within the first few states, 5 for now)
+  // Check feasibility (but within the first few states only)
   bool feasible = planner_->isTrajectoryFeasible(costmap_model_, footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, 1);
   if (!feasible)
   {
@@ -316,7 +315,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
 bool TebLocalPlannerROS::isGoalReached()
 {
-  if (! initialized_ )
+  if (!initialized_ )
   {
     ROS_ERROR("teb_multi_planner: isGoalReached() - please call initialize() before using this planner");
     return false;
@@ -440,7 +439,6 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
         polyobst->finalizePolygon();
         obstacles_.push_back(ObstaclePtr(polyobst));
     }
-    
   }
 }
 
@@ -639,7 +637,7 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
   }
   
   // reduce number of poses taken into account if the desired number of poses is not available
-  moving_average_length = std::min(moving_average_length, n-current_goal_idx-1 ); // maybe redundant, since we are check the vicinity of the goal before
+  moving_average_length = std::min(moving_average_length, n-current_goal_idx-1 ); // maybe redundant, since we have checked the vicinity of the goal before
   
   std::vector<double> candidates;
   tf::Stamped<tf::Pose> tf_pose_k = local_goal;

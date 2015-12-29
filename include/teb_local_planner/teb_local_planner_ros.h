@@ -194,9 +194,9 @@ protected:
     * @param global_pose The global pose of the robot
     * @param costmap A reference to the costmap being used so the window size for transforming can be computed
     * @param global_frame The frame to transform the plan to
-    * @param transformed_plan (output) Populated with the transformed plan
-    * @param current_goal_idx (output) Index of the current (local) goal pose in the global plan
-    * @param tf_plan_to_global (output) Transformation between the global plan and the global planning frame
+    * @param[out] transformed_plan Populated with the transformed plan
+    * @param[out] current_goal_idx Index of the current (local) goal pose in the global plan
+    * @param[out] tf_plan_to_global Transformation between the global plan and the global planning frame
     */
   bool transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan,
                            const tf::Stamped<tf::Pose>& global_pose,  const costmap_2d::Costmap2D& costmap,
@@ -214,7 +214,7 @@ protected:
     * @param global_plan The global plan
     * @param local_goal Current local goal
     * @param current_goal_idx Index of the current (local) goal pose in the global plan
-    * @param tf_plan_to_global (output) Transformation between the global plan and the global planning frame
+    * @param[out] tf_plan_to_global Transformation between the global plan and the global planning frame
     * @param moving_average_length number of future poses of the global plan to be taken into account
     * @return orientation (yaw-angle) estimate
     */
@@ -228,7 +228,7 @@ protected:
    * The limit of the translational velocity for backwards driving can be changed independently.
    * Do not choose max_vel_x_backwards <= 0. If no backward driving is desired, change the optimization weight for
    * penalizing backwards driving instead.
-   * @param velocity (input and output) The velocity that should be saturated.
+   * @param[in,out] velocity The velocity that should be saturated.
    * @param max_vel_x Maximum translational velocity for forward driving
    * @param max_vel_theta Maximum (absolute) angular velocity
    * @param max_vel_x_backwards Maximum translational velocity for backwards driving

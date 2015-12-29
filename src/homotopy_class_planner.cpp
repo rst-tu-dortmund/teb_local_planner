@@ -135,6 +135,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   deleteTebDetours(-0.1); 
   // Select which candidate (based on alternative homotopy classes) should be used
   selectBestTeb();
+  
   return true;
 } 
  
@@ -172,7 +173,7 @@ void HomotopyClassPlanner::visualize()
 
 
 
-void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, bool limit_obstacle_heading)
+void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold)
 {
   // Clear existing graph and paths
   clearGraph();
@@ -180,8 +181,16 @@ void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal
   // Direction-vector between start and goal and normal-vector:
   Eigen::Vector2d diff = goal.position()-start.position();
   
-  if (diff.norm() < cfg_->goal_tolerance.xy_goal_tolerance) 
+  if (diff.norm()<cfg_->goal_tolerance.xy_goal_tolerance) 
+  {
+    ROS_DEBUG("HomotopyClassPlanner::createProbRoadmapGraph(): xy-goal-tolerance already reached.");
+    if (tebs_.empty())
+    {
+      ROS_INFO("HomotopyClassPlanner::createProbRoadmapGraph(): Initializing a small straight line to just correct orientation errors.");
+      addAndInitNewTeb(start, goal);
+    }
     return;
+  }
   
   Eigen::Vector2d normal(-diff[1],diff[0]); // normal-vector
   normal.normalize();
@@ -213,7 +222,7 @@ void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal
       graph_[v].pos = (*it_obst)->getCentroid() - normal;
       
       // store nearest obstacle
-      if (limit_obstacle_heading && dist<min_dist)
+      if (obstacle_heading_threshold && dist<min_dist)
       {
         min_dist = dist;
         nearest_obstacle.first = u;
@@ -232,18 +241,18 @@ void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal
     for (boost::tie(it_j,end_j) = boost::vertices(graph_); it_j!=end_j; ++it_j) // check all forward connections
     {
       if (it_i==it_j) 
-	continue;
+        continue;
       // TODO: make use of knowing in which order obstacles are inserted and that for each obstacle 2 vertices are added,
       // therefore we must only check one of them.
       Eigen::Vector2d distij = graph_[*it_j].pos-graph_[*it_i].pos;
       distij.normalize();
       // Check if the direction is backwards:
-      if (distij.dot(diff)<=cfg_->hcp.obstacle_heading_threshold)
+      if (distij.dot(diff)<=obstacle_heading_threshold)
         continue;
 
     
       // Check start angle to nearest obstacle 
-      if (limit_obstacle_heading && *it_i==start_vtx && min_dist!=DBL_MAX)
+      if (obstacle_heading_threshold && *it_i==start_vtx && min_dist!=DBL_MAX)
       {
         if (*it_j == nearest_obstacle.first || *it_j == nearest_obstacle.second)
         {
@@ -251,7 +260,7 @@ void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal
           keypoint_dist.normalize();
           Eigen::Vector2d start_orient_vec( cos(start.theta()), sin(start.theta()) ); // already normalized
           // check angle
-          if (start_orient_vec.dot(keypoint_dist) < cfg_->hcp.obstacle_heading_threshold) 
+          if (start_orient_vec.dot(keypoint_dist) <= obstacle_heading_threshold) 
           {
             ROS_DEBUG("createGraph() - deleted edge: limit_obstacle_heading");
             continue;
@@ -289,7 +298,7 @@ void HomotopyClassPlanner::createGraph(const PoseSE2& start, const PoseSE2& goal
 }
 
 
-void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, bool limit_obstacle_heading)
+void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, int no_samples, double obstacle_heading_threshold)
 {
   // Clear existing graph and paths
   clearGraph();
@@ -299,15 +308,22 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   double start_goal_dist = diff.norm();
   
   if (start_goal_dist<cfg_->goal_tolerance.xy_goal_tolerance) 
+  {
+    ROS_DEBUG("HomotopyClassPlanner::createProbRoadmapGraph(): xy-goal-tolerance already reached.");
+    if (tebs_.empty())
+    {
+      ROS_INFO("HomotopyClassPlanner::createProbRoadmapGraph(): Initializing a small straight line to just correct orientation errors.");
+      addAndInitNewTeb(start, goal);
+    }
     return;
-	  
+  }
   Eigen::Vector2d normal(-diff.coeffRef(1),diff.coeffRef(0)); // normal-vector
   normal.normalize();
 
   // Now sample vertices between start, goal and a specified width between both sides
   // Let's start with a square area between start and goal (maybe change it later to something like a circle or whatever)
   
-  double area_width = cfg_->hcp.roadmap_graph_area_width; // TODO param
+  double area_width = cfg_->hcp.roadmap_graph_area_width;
     
   boost::random::uniform_real_distribution<double> distribution_x(0, start_goal_dist);  
   boost::random::uniform_real_distribution<double> distribution_y(0, area_width); 
@@ -324,7 +340,7 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   
   
   // Start sampling
-  for (unsigned int i=0; i<cfg_->hcp.roadmap_graph_no_samples; ++i)
+  for (int i=0; i < no_samples; ++i)
   {
     Eigen::Vector2d sample;
     bool coll_free;
@@ -337,11 +353,11 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
       coll_free = true;
       for (ObstContainer::const_iterator it_obst = obstacles_->begin(); it_obst != obstacles_->end(); ++it_obst)
       {
-	if ( (*it_obst)->checkCollision(sample, dist_to_obst)) // TODO really keep dist_to_obst here?
-	{
-	  coll_free = false;
-	  break;
-	}
+        if ( (*it_obst)->checkCollision(sample, dist_to_obst)) // TODO really keep dist_to_obst here?
+        {
+          coll_free = false;
+          break;
+        }
       }
 
     } while (!coll_free && ros::ok());
@@ -369,7 +385,7 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
       distij.normalize(); // normalize in place
 
       // Check if the direction is backwards:
-      if (distij.dot(diff)<=cfg_->hcp.obstacle_heading_threshold) 
+      if (distij.dot(diff)<=obstacle_heading_threshold) 
           continue; // diff is already normalized
       
 
@@ -400,7 +416,7 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
 
 void HomotopyClassPlanner::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation, double goal_orientation)
 {
-  // see http://www.technical-recipes.com/2011/a-recursive-algorithm-to-find-all-paths-between-two-given-nodes/
+  // see http://www.technical-recipes.com/2011/a-recursive-algorithm-to-find-all-paths-between-two-given-nodes/ for details on finding all simple paths
   
   if ((int)tebs_.size() >= cfg_->hcp.max_number_classes)
     return; // We do not need to search for further possible alternative homotopy classes.
@@ -424,7 +440,7 @@ void HomotopyClassPlanner::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
       
       // check if H-Signature is already known
       // and init new TEB if no duplicate was found
-      if ( addNewHSignatureIfNew(H, cfg_->hcp.h_signature_threshold) )
+      if ( addHSignatureIfNew(H, cfg_->hcp.h_signature_threshold) )
       {
         addAndInitNewTeb(visited.begin(), visited.end(), boost::bind(getVector2dFromHcGraph, _1, boost::cref(graph_)), start_orientation, goal_orientation);
       }
@@ -452,8 +468,15 @@ for ( boost::tie(it,end) = boost::adjacent_vertices(back,g); it!=end; ++it)
  
 
 
-bool HomotopyClassPlanner::addNewHSignatureIfNew(const std::complex<long double>& H, double threshold)
+bool HomotopyClassPlanner::addHSignatureIfNew(const std::complex<long double>& H, double threshold)
 {	  
+  if (std::isnan(H.real()) || std::isnan(H.imag()))
+  {
+    ROS_WARN("HomotopyClassPlanner: Ignoring NAN H-signature");
+    return false;
+  }
+  
+  
   // iterate existing h-signatures and check if there is an existing H-Signature similar to the new one
   for (std::vector< std::complex<long double> >::const_iterator it = h_signatures_.begin(); it != h_signatures_.end(); ++it)
   {
@@ -489,46 +512,25 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
   while(it_teb != tebs_.end())
   {
     // delete Detours if there is at least one other TEB candidate left in the container
-    if (delete_detours &&  tebs_.size()>1 && it_teb->get()->teb().detectDetoursBackwards(-0.1)) 
+    if (delete_detours && tebs_.size()>1 && it_teb->get()->teb().detectDetoursBackwards(-0.1)) 
     {
       it_teb = tebs_.erase(it_teb); // delete candidate and set iterator to the next valid candidate
       continue;
     }
-    
+   
     // TEST: check if the following strategy performs well
-    // if the obstacle region is really close to the TEB (far below the safty distance), the TEB will get heavily jabbed (pushed away) -> the obstacle error is very high!
+    // if the obstacle region is really close to the TEB (far below the saftey distance), the TEB will get heavily jabbed (pushed away) -> the obstacle error is very high!
     // Smoothing this effect takes a long time. Here we first detect this artefact and then initialize a new path from the homotopy-planner in renewHomotopyClassesAndInitNewTEB()!
     bool flag=false;
     for(ObstContainer::const_iterator it_obst = obstacles_->begin(); it_obst != obstacles_->end(); ++it_obst)
     {
-      //TODO: findNearestBandpoint for arbitary obstacles
-      unsigned int closest_pt_idx = it_teb->get()->teb().findClosestTrajectoryPose(it_obst->get()->getCentroid());
-      double dist = it_obst->get()->getMinimumDistance( it_teb->get()->teb().Pose( closest_pt_idx ).position() ); // TODO: inefficient. Can be stored in a previous loop
-      if (dist < 0.03)
+      double dist = HUGE_VAL;
+      it_teb->get()->teb().findClosestTrajectoryPose(*(it_obst->get()), &dist);
+      if (dist < 0.06)
       {
         ROS_DEBUG("getAndFilterHomotopyClassesTEB() - TEB and Intersection Point are at the same place, erasing candidate.");	
         flag=true;
-      }
-      
-      // TODO TEST
-      // if polygon obstacle, check line intersection
-      // but consider only points around the closest point
-      int lower = (int)closest_pt_idx - 4; // let's try 4 points before and behind the closest one
-      int upper = (int)closest_pt_idx + 4;
-      if (lower < 0) lower = 0;
-      if (upper > it_teb->get()->teb().sizePoses()-1) upper = it_teb->get()->teb().sizePoses()-1;
-      const PolygonObstacle* poly_obst = dynamic_cast<const PolygonObstacle*>(it_obst->get());
-      if (poly_obst)
-      {
-        while (lower < upper)
-        {
-          if ( poly_obst->checkLineIntersection( it_teb->get()->teb().Pose(lower).position(), it_teb->get()->teb().Pose(lower+1).position() ) )
-          {
-            flag = true;
-            break;
-          }
-          ++lower;
-        }
+        break;
       }
     }
     if (flag)
@@ -544,7 +546,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
     
     // WORKAROUND until the commented code below works
     // Here we do not compare cost values. Just first come first serve...
-    bool new_flag = addNewHSignatureIfNew(H, cfg_->hcp.h_signature_threshold);
+    bool new_flag = addHSignatureIfNew(H, cfg_->hcp.h_signature_threshold);
     if (!new_flag)
     {
       it_teb = tebs_.erase(it_teb);
@@ -554,8 +556,6 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
     ++it_teb;
   }
 
-  // After all new h-signatures are collected, check if there are TEBs sharing the same h-signature (relying to the same homotopy class)
-  
   // Find multiple candidates and delete the one with higher cost 
   // TODO: this code needs to be adpated. Erasing tebs from the teb container_ could make iteratores stored in the candidate list invalid!
 //   TebCandidateType::reverse_iterator cand_i = teb_candidates.rbegin();
@@ -610,11 +610,17 @@ void HomotopyClassPlanner::exploreHomotopyClassesAndInitTebs(const PoseSE2& star
 
   // now explore new homotopy classes and initialize tebs if new ones are found.
   if (cfg_->hcp.simple_exploration)
-    createGraph(start,goal,dist_to_obst,cfg_->hcp.obstacle_heading_threshold!=0);
+    createGraph(start,goal,dist_to_obst,cfg_->hcp.obstacle_heading_threshold);
   else
-    createProbRoadmapGraph(start,goal,dist_to_obst, cfg_->hcp.obstacle_heading_threshold!=0);
+    createProbRoadmapGraph(start,goal,dist_to_obst,cfg_->hcp.roadmap_graph_no_samples,cfg_->hcp.obstacle_heading_threshold);
 } 
 
+
+void HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal)
+{
+  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
+  tebs_.back()->teb().initTEBtoGoal(start, goal, 0, cfg_->trajectory.dt_ref, cfg_->trajectory.min_samples);
+}
 
 void HomotopyClassPlanner::updateAllTEBs(boost::optional<const PoseSE2&> start, boost::optional<const PoseSE2&> goal,  boost::optional<const Eigen::Vector2d&> start_velocity)
 {

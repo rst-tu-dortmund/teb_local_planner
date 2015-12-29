@@ -347,7 +347,7 @@ bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStampe
 }
 
 
-unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point) const
+unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point, double* distance) const
 {
   std::vector<double> dist_vec; // TODO: improve! efficiency
   dist_vec.reserve(sizePoses());
@@ -373,11 +373,13 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const 
       index_min = i;
     }
   }
+  if (distance)
+    *distance = last_value;
   return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
 }
 
 
-unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end)
+unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end, double* distance) const
 {
   std::vector<double> dist_vec; // TODO: improve! efficiency
   dist_vec.reserve(sizePoses());
@@ -403,10 +405,12 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const 
       index_min = i;
     }
   }
+  if (distance)
+    *distance = last_value;
   return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
 }
 
-unsigned int TimedElasticBand::findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices)
+unsigned int TimedElasticBand::findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices, double* distance) const
 {
   if (vertices.empty())
     return 0;
@@ -444,11 +448,28 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const PolygonObstacle::
       index_min = i;
     }
   }
+  if (distance)
+    *distance = last_value;
   return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
 }
 
 
-
+unsigned int TimedElasticBand::findClosestTrajectoryPose(const Obstacle& obstacle, double* distance) const
+{
+  const PointObstacle* pobst = dynamic_cast<const PointObstacle*>(&obstacle);
+  if (pobst)
+    return findClosestTrajectoryPose(pobst->position(), distance);
+  
+  const LineObstacle* lobst = dynamic_cast<const LineObstacle*>(&obstacle);
+  if (lobst)
+    return findClosestTrajectoryPose(lobst->start(), lobst->end(), distance);
+  
+  const PolygonObstacle* polyobst = dynamic_cast<const PolygonObstacle*>(&obstacle);
+  if (polyobst)
+    return findClosestTrajectoryPose(polyobst->vertices(), distance);
+  
+  return findClosestTrajectoryPose(obstacle.getCentroid(), distance);  
+}
 
 
 

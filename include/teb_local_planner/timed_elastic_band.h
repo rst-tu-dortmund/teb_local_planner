@@ -516,9 +516,10 @@ public:
    *       Allows simple comparisons starting from the middle of the trajectory.
    * 
    * @param ref_point reference point (2D position vector)
+   * @param[out] distance [optional] the resulting minimum distance
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point) const;
+  unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point, double* distance = NULL) const;
 
   /**
    * @brief Find the closest point on the trajectory w.r.t to a provided reference line.
@@ -531,9 +532,10 @@ public:
    * 
    * @param ref_line_start start of the reference line (2D position vector)
 	 * @param ref_line_start end of the reference line (2D position vector)
+   * @param[out] distance [optional] the resulting minimum distance
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end);
+  unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end, double* distance = NULL) const;
 
   /**
    * @brief Find the closest point on the trajectory w.r.t to a provided reference polygon.
@@ -545,10 +547,24 @@ public:
    *       Allows simple comparisons starting from the middle of the trajectory.
    * 
    * @param vertices vertex container containing Eigen::Vector2d points (the last and first point are connected)
+   * @param[out] distance [optional] the resulting minimum distance
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices);
+  unsigned int findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices, double* distance = NULL) const;
 
+  /**
+   * @brief Find the closest point on the trajectory w.r.t to a provided obstacle type
+   * 
+   * This function can be useful to find the part of a trajectory that is close to an obstacle.
+   * The method is calculates appropriate distance metrics for point, line and polygon obstacles.
+   * For all unknown obstacles the centroid is used.
+   *
+   * @param obstacle Subclass of the Obstacle base class
+   * @param[out] distance [optional] the resulting minimum distance
+   * @return Index to the closest pose in the pose sequence
+   */
+  unsigned int findClosestTrajectoryPose(const Obstacle& obstacle, double* distance = NULL) const;
+  
   
   /**
    * @brief Get the length of the internal pose sequence
