@@ -435,8 +435,6 @@ public:
    * The current simple implementation cuts of pieces of the trajectory that are already passed due to the new start. \n
    * Afterwards the start and goal pose are replaced by the new ones. The resulting discontinuity will not be smoothed.
    * The optimizer has to smooth the trajectory in TebOptimalPlanner. \n
-   * Before updating the goal, the method checks whether the new goal is too far away, in that case the function
-   * returns \c false such that the user can decide whether to stop planning or to reinitialize a new trajectory.
    * 
    * @todo Smooth the trajectory here and test the performance improvement of the optimization.
    * @todo Implement a updateAndPruneTEB based on a new reference path / pose sequence.
@@ -445,10 +443,8 @@ public:
    * @param new_goal New goal pose (optional)
    * @param max_goal_separation Maximum allowed distance between old and new goal, otherwise return \c false
    * @param min_samples Specify the minimum number of samples that should at least remain in the trajectory
-   * @return \c false if the goal point is too far away to update the goal (see max_goal_separation)
    */  
-  bool updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, 
-			  boost::optional<const PoseSE2&> new_goal, double max_goal_separation = 1.0, int min_samples = 3);
+  void updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, boost::optional<const PoseSE2&> new_goal, int min_samples = 3);
   
   
   /**

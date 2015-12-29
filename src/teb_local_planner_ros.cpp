@@ -101,9 +101,15 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
         
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
+    {
       planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, visualization_));
+      ROS_INFO("Parallel planning in distinctive topologies enabled.");
+    }
     else
+    {
       planner_ = PlannerInterfacePtr(new TebOptimalPlanner(cfg_, &obstacles_, visualization_));
+      ROS_INFO("Parallel planning in distinctive topologies disabled.");
+    }
     
     // init other variables
     tf_ = new tf::TransformListener;
@@ -182,11 +188,10 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
   // store the global plan
   global_plan_.clear();
   global_plan_ = orig_global_plan;
-  planner_->clearPlanner();
-            
-  // TODO:
-  // maybe perform a few optimization steps here before actually controlling the robot
 
+  // we do not clear the local planner here, since setPlan is called frequently whenever the global planner updates the plan.
+  // the local planner checks whether it is required to reinitializes the trajectory or not within each velocity computation step.  
+            
   return true;
 }
 

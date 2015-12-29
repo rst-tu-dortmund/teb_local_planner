@@ -624,6 +624,16 @@ void HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start, const PoseSE2&
 
 void HomotopyClassPlanner::updateAllTEBs(boost::optional<const PoseSE2&> start, boost::optional<const PoseSE2&> goal,  boost::optional<const Eigen::Vector2d&> start_velocity)
 {
+  // If new goal is too far away, clear all existing trajectories to let them reinitialize later.
+  // Since all Tebs are sharing the same fixed goal pose, just take best_teb_ as candidate:
+  if (best_teb_ && (goal->position() - best_teb_->teb().BackPose().position()).norm() >= cfg_->trajectory.force_reinit_new_goal_dist)
+  {
+      ROS_DEBUG("New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
+      tebs_.clear();
+      return;
+  }  
+  
+  // Otherwise hot-start from previous solutions
   for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
   {
     it_teb->get()->teb().updateAndPruneTEB(start, goal);

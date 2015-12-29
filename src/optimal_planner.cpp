@@ -206,12 +206,18 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
     // init trajectory
     teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples);
   } 
-  else
+  else // warm start
   {
-    // update TEB
     PoseSE2 start_(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw(initial_plan.front().pose.orientation));
     PoseSE2 goal_(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw(initial_plan.back().pose.orientation));
-    teb_.updateAndPruneTEB(start_, goal_, cfg_->trajectory.force_reinit_new_goal_dist, cfg_->trajectory.min_samples);
+    if (teb_.sizePoses()>0 && (goal_.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist) // actual warm start!
+      teb_.updateAndPruneTEB(start_, goal_, cfg_->trajectory.min_samples); // update TEB
+    else // goal too far away -> reinit
+    {
+      ROS_DEBUG("New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
+      teb_.clearTimedElasticBand();
+      teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples);
+    }
   }
   if (start_vel)
     setVelocityStart(*start_vel);
@@ -241,10 +247,16 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const Ei
     // init trajectory
     teb_.initTEBtoGoal(start, goal, 0, 1, cfg_->trajectory.min_samples); // 0 intermediate samples, but dt=1 -> autoResize will add more samples before calling first optimization
   }
-  else
+  else // warm start
   {
-    // update TEB
-    teb_.updateAndPruneTEB(start, goal, cfg_->trajectory.force_reinit_new_goal_dist, cfg_->trajectory.min_samples);
+    if (teb_.sizePoses()>0 && (goal.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist) // actual warm start!
+      teb_.updateAndPruneTEB(start, goal, cfg_->trajectory.min_samples);
+    else // goal too far away -> reinit
+    {
+      ROS_DEBUG("New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
+      teb_.clearTimedElasticBand();
+      teb_.initTEBtoGoal(start, goal, 0, 1, cfg_->trajectory.min_samples);
+    }
   }
   setVelocityStart(start_vel);
   if (free_goal_vel)

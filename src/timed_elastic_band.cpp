@@ -512,13 +512,13 @@ bool TimedElasticBand::detectDetoursBackwards(double threshold) const
 
 
 
-bool TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, boost::optional<const PoseSE2&> new_goal, double max_goal_separation, int min_samples)
+void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, boost::optional<const PoseSE2&> new_goal, int min_samples)
 {
   // first and simple approach: change only start confs (and virtual start conf for inital velocity)
   // TEST if optimizer can handle this "hard" placement
 
-  if (new_start)
-  {
+  if (new_start && sizePoses()>0)
+  {    
     // find nearest state (using l2-norm) in order to prune the trajectory
     // (remove already passed states)
     double dist_cache = (new_start->position()- Pose(0).position()).norm();
@@ -550,15 +550,10 @@ bool TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
     Pose(0) = *new_start;
   }
   
-  if (new_goal)
+  if (new_goal && sizePoses()>0)
   {
-    unsigned int teb_size = sizePoses();
-    if((BackPose().position()-new_goal->position()).squaredNorm() > max_goal_separation*max_goal_separation) return false;
-    
     BackPose() = *new_goal;
   }
-
-  return true;
 };
 
 
