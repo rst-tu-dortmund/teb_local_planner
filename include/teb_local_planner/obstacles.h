@@ -119,12 +119,13 @@ public:
     */
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const = 0;
 
-  /**
-    * @brief Get the distance vector with the minimum norm to the obstacle
-    * @return The nearest distance vector
-    */
-  virtual Eigen::Vector2d getMinimumDistanceVec(const Eigen::Vector2d& position) const = 0;
 
+  /**
+   * @brief Get the closest point on the boundary of the obstacle w.r.t. a specified reference position
+   * @param position reference 2d position
+   * @return closest point on the obstacle boundary
+   */
+  virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const = 0;
 
   //@}
 
@@ -272,13 +273,12 @@ public:
   {
     return (position-pos_).norm();
   }
-  
+    
   // implements getMinimumDistanceVec() of the base class
-  virtual Eigen::Vector2d getMinimumDistanceVec(const Eigen::Vector2d& position) const
+  virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
   {
-    return position-pos_;
+    return pos_;
   }
-  
   
   // implements getCentroid() of the base class
   virtual const Eigen::Vector2d& getCentroid() const
@@ -373,12 +373,18 @@ public:
   }
 
   // implements getMinimumDistance() of the base class
-  virtual double getMinimumDistance(const Eigen::Vector2d& position) const;    
-  
-  
+  virtual double getMinimumDistance(const Eigen::Vector2d& position) const 
+  {
+    return DistanceFromLineSegment(position, start_, end_);
+  }
+
   // implements getMinimumDistanceVec() of the base class
-  virtual Eigen::Vector2d getMinimumDistanceVec(const Eigen::Vector2d& position) const;   
-  
+  virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
+  {
+    return ClosestPointOnLineSegment(position, start_, end_);
+  }
+
+
   
   // implements getCentroid() of the base class
   virtual const Eigen::Vector2d& getCentroid() const    
@@ -487,7 +493,7 @@ public:
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const;
   
   // implements getMinimumDistanceVec() of the base class
-  virtual Eigen::Vector2d getMinimumDistanceVec(const Eigen::Vector2d& position) const;
+  virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const;
   
   // implements getCentroid() of the base class
   virtual const Eigen::Vector2d& getCentroid() const

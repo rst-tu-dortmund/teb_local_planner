@@ -46,11 +46,15 @@ namespace teb_local_planner
 Eigen::Vector2d Obstacle::ClosestPointOnLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end)
 {
   Eigen::Vector2d diff = line_end - line_start;
-
-  double u = ((point.x() - line_start.x()) * diff.x() + (point.y() - line_start.y())*diff.y()) / diff.squaredNorm();
+  double sq_norm = diff.squaredNorm();
   
-  if (u < 0) return line_start;
-  else if (u > 1) return line_end;
+  if (sq_norm == 0)
+    return line_start;
+
+  double u = ((point.x() - line_start.x()) * diff.x() + (point.y() - line_start.y())*diff.y()) / sq_norm;
+  
+  if (u <= 0) return line_start;
+  else if (u >= 1) return line_end;
   
   return line_start + u*diff;
 }
@@ -180,19 +184,25 @@ double PolygonObstacle::getMinimumDistance(const Eigen::Vector2d& position) cons
   double dist = HUGE_VAL;
   
   assert(!vertices_.empty());
+  
+  // the polygon is a point
+  if (noVertices() == 1)
+  {
+    return (position - vertices_.front()).norm();
+  }
 	  
   // check each polygon edge
-  for (unsigned int i=0; i<vertices_.size()-1; ++i)
+  for (int i=0; i<(int)vertices_.size()-1; ++i)
   {
       double new_dist = DistanceFromLineSegment(position, vertices_.at(i), vertices_.at(i+1));
 //       double new_dist = calc_distance_point_to_segment( position,  vertices_.at(i), vertices_.at(i+1));
       if (new_dist < dist)
-	dist = new_dist;
+        dist = new_dist;
   }
 
   if (noVertices()>2) // if not a line close polygon
   {
-    double new_dist = DistanceFromLineSegment(position, vertices_.at(vertices_.size()-1), vertices_.at(0)); // check last edge
+    double new_dist = DistanceFromLineSegment(position, vertices_.back(), vertices_.front()); // check last edge
     if (new_dist < dist)
       return new_dist;
   }
@@ -201,34 +211,41 @@ double PolygonObstacle::getMinimumDistance(const Eigen::Vector2d& position) cons
 }
 
 
-Eigen::Vector2d PolygonObstacle::getMinimumDistanceVec(const Eigen::Vector2d& position) const
+
+Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position) const
 {
-  double dist = HUGE_VAL;
-  
   assert(!vertices_.empty());
   
-  Eigen::Vector2d diff;
-      
-  // check each polygon edge
-  for (unsigned int i=0; i<vertices_.size()-1; ++i)
+  // the polygon is a point
+  if (noVertices() == 1)
   {
-    Eigen::Vector2d new_diff = position - ClosestPointOnLineSegment(position, vertices_.at(i), vertices_.at(i+1));
-    double new_dist = diff.norm();
+    return vertices_.front();
+  }
+  
+  Eigen::Vector2d closest_pt, new_pt;
+  double dist = HUGE_VAL;
+  
+  // check each polygon edge
+  for (int i=0; i<(int)vertices_.size()-1; ++i)
+  {
+    new_pt = ClosestPointOnLineSegment(position, vertices_.at(i), vertices_.at(i+1));
+    double new_dist = (new_pt-position).norm();
     if (new_dist < dist)
     {
       dist = new_dist;
-      diff = new_diff;
+      closest_pt = new_pt;
     }
   }
-    
   if (noVertices()>2) // if not a line close polygon
   {
-    Eigen::Vector2d new_diff = position - ClosestPointOnLineSegment(position, vertices_.at(vertices_.size()-1), vertices_.at(0)); // check last edge
-    if (new_diff.norm() < dist) return new_diff;
+    new_pt = ClosestPointOnLineSegment(position, vertices_.back(), vertices_.front());
+    double new_dist = (new_pt-position).norm();
+    if (new_dist < dist)
+      return new_pt;
   }
-  return diff;
+  
+  return closest_pt;
 }
-
 
 
 bool PolygonObstacle::checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist) const
@@ -243,20 +260,12 @@ bool PolygonObstacle::checkLineIntersection(const Eigen::Vector2d& line_start, c
   if (noVertices()==2) // if polygon is a line
     return false;
   
-  return CheckLineSegmentsIntersection(line_start, line_end, vertices_.at(vertices_.size()-1), vertices_.at(0)); //otherwise close polygon
+  return CheckLineSegmentsIntersection(line_start, line_end, vertices_.back(), vertices_.front()); //otherwise close polygon
 }
 
 
 
-double LineObstacle::getMinimumDistance(const Eigen::Vector2d& position) const
-{
-  return DistanceFromLineSegment(position, start_, end_);
-}
 
-Eigen::Vector2d LineObstacle::getMinimumDistanceVec(const Eigen::Vector2d& position) const
-{
-  return position - ClosestPointOnLineSegment(position, start_, end_);
-}
 
 
 
