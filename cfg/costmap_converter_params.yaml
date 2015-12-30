@@ -3,6 +3,7 @@ TebLocalPlannerROS:
   ## Costmap converter plugin   
   costmap_converter_plugin: "costmap_converter::CostmapToPolygonsDBSMCCH"
   #costmap_converter_plugin: "costmap_converter::CostmapToLinesDBSRANSAC"
+  #costmap_converter_plugin: "costmap_converter::CostmapToLinesDBSMCCH"
   costmap_converter_spin_thread: True
   costmap_converter_rate: 5
  

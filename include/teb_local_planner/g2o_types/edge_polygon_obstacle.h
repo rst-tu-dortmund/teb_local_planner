@@ -103,16 +103,22 @@ public:
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
     
     _error[0] = penaltyBoundFromBelow(_measurement->getMinimumDistance(bandpt->position()), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
-    //Eigen::Vector2d deltaS = bandpt->position() - _measurement->getClosestPoint(bandpt->position());
+//     Eigen::Vector2d deltaS = bandpt->position() - _measurement->getClosestPoint(bandpt->position());
    
     // orient: [cos(theta), sin(theta)]
-    //Eigen::Vector2d orient_normal(-sin(bandpt->theta()), cos(bandpt->theta()));
+//     Eigen::Vector2d orient_normal(-sin(bandpt->theta()), cos(bandpt->theta()));
+//     Eigen::Vector2d orient(cos(bandpt->theta()), sin(bandpt->theta()));
+//     double dist_y = orient_normal.dot(deltaS);
+//     double dist_x = orient.dot(deltaS);
+    
+    //_error[0] = std::max(0.0, penaltyBoundFromBelow(dist_y, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale) 
+               // - penaltyBoundFromBelow(-dist_x, -cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale) );
     
     // calculate projection to teb
-    //if (deltaS.norm() >= cfg_->obstacles.min_obstacle_dist)
-    //  _error[0] = 0;
-   // else
-    //  _error[0] = penaltyBoundFromBelow(fabs(deltaS.dot(orient_normal)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
+//     if (dist_x >= cfg_->obstacles.min_obstacle_dist)
+//       _error[0] = 0; // NON-SMOOTH
+//     else
+//       _error[0] = penaltyBoundFromBelow(fabs(deltaS.dot(orient_normal)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
    // _error[0] = deltaS.normalized().dot(orient_normal) * penaltyBoundFromBelow(deltaS.norm(), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
 
 

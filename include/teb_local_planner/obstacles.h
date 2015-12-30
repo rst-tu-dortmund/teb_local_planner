@@ -189,6 +189,17 @@ public:
     */	
   static bool CheckLineSegmentsIntersection(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
 						    const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end, Eigen::Vector2d* intersection = NULL);
+  
+    /**
+    * @brief Helper function to calculate the smallest distance between two line segments
+    * @param line1_start 2D point representing the start of the first line segment
+    * @param line1_end 2D point representing the end of the first line segment
+    * @param line2_start 2D point representing the start of the second line segment
+    * @param line2_end 2D point representing the end of the second line segment
+    * @return smallest distance between both segments
+    */  
+  static double DistanceSegmentToSegment2d(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
+                  const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end);
 
 
   //@}

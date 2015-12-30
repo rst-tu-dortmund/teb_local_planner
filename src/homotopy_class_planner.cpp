@@ -63,11 +63,11 @@ inline const Eigen::Vector2d& getVector2dFromHcGraph(HcGraphVertexType vert_desc
 
 
 
-HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initialized_(false)
+HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), initialized_(false)
 {
 }
   
-HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
+HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual) : initial_plan_(NULL)
 {
   initialize(cfg, obstacles, visual);
 }
@@ -97,13 +97,13 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
 {    
   ROS_ASSERT_MSG(initialized_, "Call initialize() first.");
   
-  // if no teb has been planned before, use the initial plan as candidate
-  if (tebs_.empty())
-  {
-        tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
-        tebs_.back()->teb().initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples);     
-  }
+  // store initial plan for further initializations (must be valid for the lifetime of this object or clearPlanner() is called!)
+  initial_plan_ = &initial_plan;
   
+  // if no teb has been planned before or if they have been deleted, use the initial plan as candidate
+  if (tebs_.empty() && initial_plan_)
+    addAndInitNewTeb(*initial_plan_);
+      
   PoseSE2 start(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw( initial_plan.front().pose.orientation) );
   PoseSE2 goal(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw( initial_plan.back().pose.orientation) );
   Eigen::Vector2d vel = start_vel ?  Eigen::Vector2d( start_vel->linear.x, start_vel->angular.z ) : Eigen::Vector2d::Zero();
@@ -126,7 +126,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   
   // Update old TEBs with new start, goal and velocity
   updateAllTEBs(start, goal, start_vel);
-  
+    
   // Init new TEBs based on newly explored homotopy classes
   exploreHomotopyClassesAndInitTebs(start, goal, cfg_->obstacles.min_obstacle_dist);
   // Optimize all trajectories in alternative homotopy classes
@@ -135,7 +135,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   deleteTebDetours(-0.1); 
   // Select which candidate (based on alternative homotopy classes) should be used
   selectBestTeb();
-  
+
   return true;
 } 
  
@@ -622,18 +622,27 @@ void HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start, const PoseSE2&
   tebs_.back()->teb().initTEBtoGoal(start, goal, 0, cfg_->trajectory.dt_ref, cfg_->trajectory.min_samples);
 }
 
+void HomotopyClassPlanner::addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan)
+{
+  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
+  tebs_.back()->teb().initTEBtoGoal(*initial_plan_, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples); 
+}
+
 void HomotopyClassPlanner::updateAllTEBs(boost::optional<const PoseSE2&> start, boost::optional<const PoseSE2&> goal,  boost::optional<const Eigen::Vector2d&> start_velocity)
 {
   // If new goal is too far away, clear all existing trajectories to let them reinitialize later.
-  // Since all Tebs are sharing the same fixed goal pose, just take best_teb_ as candidate:
-  if (best_teb_ && (goal->position() - best_teb_->teb().BackPose().position()).norm() >= cfg_->trajectory.force_reinit_new_goal_dist)
+  // Since all Tebs are sharing the same fixed goal pose, just take the first candidate:
+  if (!tebs_.empty() && (goal->position() - tebs_.front()->teb().BackPose().position()).norm() >= cfg_->trajectory.force_reinit_new_goal_dist)
   {
       ROS_DEBUG("New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
       tebs_.clear();
-      return;
+      h_signatures_.clear();
+      if (initial_plan_)
+        addAndInitNewTeb(*initial_plan_); // initial velocity will be updated below
+      // otherwise the exploration graph finds new candidates
   }  
   
-  // Otherwise hot-start from previous solutions
+  // hot-start from previous solutions
   for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
   {
     it_teb->get()->teb().updateAndPruneTEB(start, goal);

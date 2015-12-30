@@ -158,7 +158,7 @@ public:
    * Provide this method to create and optimize a trajectory that is initialized
    * according to an initial reference plan (given as a container of poses).
    * @warning The current implementation extracts only the start and goal pose and calls the overloaded plan()
-   * @param initial_plan vector of geometry_msgs::PoseStamped
+   * @param initial_plan vector of geometry_msgs::PoseStamped (must be valid until clearPlanner() is called!)
    * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *		      otherwise the final velocity will be zero (default: false)
@@ -292,11 +292,17 @@ public:
   void addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation); 
   
   /**
-   * @brief Add a new Teb to the internal trajectory container and initialize it using a generic 2D reference path
+   * @brief Add a new Teb to the internal trajectory container and initialize it with a simple straight line between a given start and goal
    * @param start start pose
    * @param goal goal pose
    */
   void addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal); 
+  
+    /**
+   * @brief Add a new Teb to the internal trajectory container and initialize it using a PoseStamped container
+   * @param initial_plan container of poses (start and goal orientation should be valid!)
+   */
+  void addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan);
   
   /**
    * @brief Update TEBs with new pose, goal and current velocity.
@@ -332,7 +338,7 @@ public:
     * 
     * Clear all previously found H-signatures, paths, tebs and the hcgraph.
     */
-  void clearPlanner() {graph_.clear(); h_signatures_.clear(); tebs_.clear();}
+  void clearPlanner() {graph_.clear(); h_signatures_.clear(); tebs_.clear(); initial_plan_ = NULL;}
   
   
   /**
@@ -456,6 +462,8 @@ protected:
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   TebOptimalPlannerPtr best_teb_; //!< Store the current best teb.
+  
+  const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
   
   TebOptPlannerContainer tebs_; //!< Container that stores multiple local teb planners (for alternative homotopy classes) and their corresponding costs
   

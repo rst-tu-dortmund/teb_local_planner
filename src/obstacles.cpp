@@ -98,6 +98,26 @@ bool Obstacle::CheckLineSegmentsIntersection(const Eigen::Ref<const Eigen::Vecto
   return true;
 }
 
+double Obstacle::DistanceSegmentToSegment2d(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
+                  const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end)
+{
+  // TODO more efficient implementation
+  
+  // check if segments intersect
+  if (CheckLineSegmentsIntersection(line1_start, line1_end, line2_start, line2_end))
+    return 0;
+  
+  // check all 4 combinations
+  std::array<double,4> distances;
+  
+  distances[0] = DistanceFromLineSegment(line1_start, line2_start, line2_end);
+  distances[1] = DistanceFromLineSegment(line1_end, line2_start, line2_end);
+  distances[2] = DistanceFromLineSegment(line2_start, line1_start, line1_end);
+  distances[3] = DistanceFromLineSegment(line2_end, line1_start, line1_end);
+  
+  return *std::min_element(distances.begin(), distances.end());
+}
+
 void PolygonObstacle::fixPolygonClosure()
 {
   if (vertices_.size()<2)

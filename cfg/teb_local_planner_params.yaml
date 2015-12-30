@@ -26,7 +26,7 @@ TebLocalPlannerROS:
     
  # Obstacles
     
- min_obstacle_dist: 0.5
+ min_obstacle_dist: 0.4
  costmap_emergency_stop_dist: 0.3
  include_costmap_obstacles: True
  costmap_obstacles_front_only: True
