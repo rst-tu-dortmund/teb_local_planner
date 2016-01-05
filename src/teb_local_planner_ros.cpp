@@ -523,7 +523,6 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const tf::TransformListener& tf, const 
       double dx = robot.getOrigin().x() - it->pose.position.x;
       double dy = robot.getOrigin().y() - it->pose.position.y;
       double dist_sq = dx * dx + dy * dy;
-      // up to now we check a hardcoded value of d < 1
       if (dist_sq < dist_thresh_sq)
       {
          erase_end = it;
