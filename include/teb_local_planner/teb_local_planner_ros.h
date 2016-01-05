@@ -127,6 +127,9 @@ public:
 
   /**
     * @brief  Check if the goal pose has been achieved
+    * 
+    * The actual check is performed in computeVelocityCommands(). 
+    * Only the status flag is checked here.
     * @return True if achieved, false otherwise
     */
   bool isGoalReached();
@@ -266,6 +269,7 @@ protected:
   PoseSE2 robot_pose_; //!< Store current robot pose
   PoseSE2 robot_goal_; //!< Store current robot goal
   Eigen::Vector2d robot_vel_; //!< Store current robot translational and angular velocity (v, omega)
+  bool goal_reached_; //!< store whether the goal is reached or not
   
   std::vector<geometry_msgs::Point> footprint_spec_; //!< Store the footprint of the robot 
   double robot_inscribed_radius_; //!< The radius of the inscribed circle of the robot (collision possible)
