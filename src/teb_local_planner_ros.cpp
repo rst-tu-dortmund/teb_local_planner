@@ -235,7 +235,10 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     Some robot drivers programmatically set the velocity to zero if it is below a certain treshold, in that case ignore this message. \
     This message will be printed once.");
     
-
+  
+  // prune global plan to cut off parts of the past (spatially before the robot)
+  pruneGlobalPlan(*tf_, robot_pose, global_plan_);
+  
   // Transform global plan to the frame of interest (w.r.t to the local costmap)
   std::vector<geometry_msgs::PoseStamped> transformed_plan;
   unsigned int goal_idx;
@@ -496,6 +499,51 @@ Eigen::Vector2d TebLocalPlannerROS::tfPoseToEigenVector2dTransRot(const tf::Pose
   return vel;
 }
       
+      
+bool TebLocalPlannerROS::pruneGlobalPlan(const tf::TransformListener& tf, const tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& global_plan, double dist_behind_robot)
+{
+  if (global_plan.empty())
+    return true;
+  
+  try
+  {
+    // transform robot pose into the plan frame (we do not wait here, since pruning not crucial, if missed a few times)
+    tf::StampedTransform global_to_plan_transform;
+    tf.lookupTransform(global_plan.front().header.frame_id, global_pose.frame_id_, ros::Time(0), global_to_plan_transform);
+    tf::Stamped<tf::Pose> robot;
+    robot.setData( global_to_plan_transform * global_pose );
+    
+    double dist_thresh_sq = dist_behind_robot*dist_behind_robot;
+    
+    // iterate plan until a pose close the robot is found
+    std::vector<geometry_msgs::PoseStamped>::iterator it = global_plan.begin();
+    std::vector<geometry_msgs::PoseStamped>::iterator erase_end = it;
+    while (it != global_plan.end())
+    {
+      double dx = robot.getOrigin().x() - it->pose.position.x;
+      double dy = robot.getOrigin().y() - it->pose.position.y;
+      double dist_sq = dx * dx + dy * dy;
+      // up to now we check a hardcoded value of d < 1
+      if (dist_sq < dist_thresh_sq)
+      {
+         erase_end = it;
+         break;
+      }
+      ++it;
+    }
+    if (erase_end == global_plan.end())
+      return false;
+    
+    if (erase_end != global_plan.begin())
+      global_plan.erase(global_plan.begin(), erase_end);
+  }
+  catch (const tf::TransformException& ex)
+  {
+    ROS_DEBUG("Cannot prune path since no transform is available: %s\n", ex.what());
+    return false;
+  }
+  return true;
+}
       
 
 bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan,

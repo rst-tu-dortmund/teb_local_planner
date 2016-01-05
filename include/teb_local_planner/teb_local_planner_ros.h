@@ -186,6 +186,25 @@ protected:
     */
   void customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg);
   
+  
+   /**
+    * @brief Prune global plan such that already passed poses are cut off
+    * 
+    * The pose of the robot is transformed into the frame of the global plan by taking the most recent tf transform.
+    * If no valid transformation can be found, the method returns \c false.
+    * The global plan is pruned until the distance to the robot is at least \c dist_behind_robot.
+    * If no pose within the specified treshold \c dist_behind_robot can be found,
+    * nothing will be pruned and the method returns \c false.
+    * @remarks Do not choose \c dist_behind_robot too small (not smaller the cellsize of the map), otherwise nothing will be pruned.
+    * @param tf A reference to a transform listener
+    * @param global_pose The global pose of the robot
+    * @param[in,out] global_plan The plan to be transformed
+    * @param dist_behind_robot Distance behind the robot that should be kept [meters]
+    * @return \c true if the plan is pruned, \c false in case of a transform exception or if no pose cannot be found inside the threshold
+    */
+  bool pruneGlobalPlan(const tf::TransformListener& tf, const tf::Stamped<tf::Pose>& global_pose, 
+                       std::vector<geometry_msgs::PoseStamped>& global_plan, double dist_behind_robot=1);
+  
   /**
     * @brief  Transforms the global plan of the robot from the planner frame to the local frame (modified).
     * 
@@ -200,6 +219,7 @@ protected:
     * @param[out] transformed_plan Populated with the transformed plan
     * @param[out] current_goal_idx Index of the current (local) goal pose in the global plan
     * @param[out] tf_plan_to_global Transformation between the global plan and the global planning frame
+    * @return \c true if the global plan is transformed, \c false otherwise
     */
   bool transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan,
                            const tf::Stamped<tf::Pose>& global_pose,  const costmap_2d::Costmap2D& costmap,
