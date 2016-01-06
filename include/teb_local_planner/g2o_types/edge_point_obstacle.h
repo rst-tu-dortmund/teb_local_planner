@@ -105,7 +105,7 @@ public:
 
     // calculate projection to teb
     double angdiff = atan2(deltaS[1],deltaS[0]) - bandpt->theta();
-    _error[0] = penaltyBoundFromBelow(deltaS.norm()*fabs(sin(angdiff)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
+    _error[0] = penaltyBoundFromBelow(deltaS.norm()*fabs(sin(angdiff)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
   ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgePointObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
@@ -128,7 +128,7 @@ public:
     double dist = sqrt(dist_squared);
     
     double aux0 = sin(angdiff);
-    double dev_left_border = penaltyBoundFromBelowDerivative(dist*fabs(aux0),cfg_->obstacles.min_obstacle_dist,cfg_->optim.penalty_epsilon,cfg_->optim.penalty_scale);
+    double dev_left_border = penaltyBoundFromBelowDerivative(dist*fabs(aux0),cfg_->obstacles.min_obstacle_dist,cfg_->optim.penalty_epsilon);
 
     if (dev_left_border==0)
     {

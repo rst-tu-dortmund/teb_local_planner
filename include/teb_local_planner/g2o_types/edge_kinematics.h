@@ -115,7 +115,7 @@ public:
 
     // positive-drive-direction constraint
     Eigen::Vector2d angle_vec ( cos(conf1->theta()), sin(conf1->theta()) );	   
-    _error[1] = penaltyBoundFromBelow(deltaS.dot(angle_vec), 0,0,cfg_->optim.penalty_scale);
+    _error[1] = penaltyBoundFromBelow(deltaS.dot(angle_vec), 0,0);
     // epsilon=0, otherwise it pushes the first bandpoints away from start
 
     ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]) && !std::isnan(_error[1]) && !std::isinf(_error[1]), 
@@ -144,7 +144,7 @@ public:
     
     double dd_error_1 = deltaS[0]*cos1;
     double dd_error_2 = deltaS[1]*sin1;
-    double dd_dev = penaltyBoundFromBelowDerivative(dd_error_1+dd_error_2, 0,0,cfg_->optim.penalty_scale);
+    double dd_dev = penaltyBoundFromBelowDerivative(dd_error_1+dd_error_2, 0,0);
     
     double dev_nh_abs = g2o::sign( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - 
 	      ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );

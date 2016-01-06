@@ -83,7 +83,6 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("no_outer_iterations", optim.no_outer_iterations, optim.no_outer_iterations);
   nh.param("optimization_activate", optim.optimization_activate, optim.optimization_activate);
   nh.param("optimization_verbose", optim.optimization_verbose, optim.optimization_verbose);
-  nh.param("penalty_scale", optim.penalty_scale, optim.penalty_scale);
   nh.param("penalty_epsilon", optim.penalty_epsilon, optim.penalty_epsilon);
   nh.param("weight_max_vel_x", optim.weight_max_vel_x, optim.weight_max_vel_x);
   nh.param("weight_max_vel_theta", optim.weight_max_vel_theta, optim.weight_max_vel_theta);
@@ -150,7 +149,6 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.no_outer_iterations = cfg.no_outer_iterations;
   optim.optimization_activate = cfg.optimization_activate;
   optim.optimization_verbose = cfg.optimization_verbose;
-  optim.penalty_scale = cfg.penalty_scale;
   optim.penalty_epsilon = cfg.penalty_epsilon;
   optim.weight_max_vel_x = cfg.weight_max_vel_x;
   optim.weight_max_vel_theta = cfg.weight_max_vel_theta;

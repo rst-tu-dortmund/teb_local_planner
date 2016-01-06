@@ -119,7 +119,6 @@ public:
     bool optimization_activate; //!< Activate the optimization
     bool optimization_verbose; //!< Print verbose information
     
-    double penalty_scale; //!< Lower values increase the penalty cost for hard-constraint approximations (do not choose too low: no satisfaction of constraints, or too high: bad matrix conditions)
     double penalty_epsilon; //!< Add a small safety margin to penalty functions for hard-constraint approximations
     
     double weight_max_vel_x; //!< Optimization weight for satisfying the maximum allowed translational velocity
@@ -218,7 +217,6 @@ public:
     optim.no_outer_iterations = 4;
     optim.optimization_activate = true;
     optim.optimization_verbose = false;
-    optim.penalty_scale = 0.1;
     optim.penalty_epsilon = 0.1;
     optim.weight_max_vel_x = 2; //1
     optim.weight_max_vel_theta = 1;

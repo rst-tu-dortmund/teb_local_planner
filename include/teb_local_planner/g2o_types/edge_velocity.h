@@ -117,8 +117,8 @@ public:
     
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
   
-    _error[0] = penaltyBoundToInterval(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon,cfg_->optim.penalty_scale);
-    _error[1] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon,cfg_->optim.penalty_scale);
+    _error[0] = penaltyBoundToInterval(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]) && !std::isnan(_error[1]) && !std::isinf(_error[1]),
 		    "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
@@ -145,8 +145,8 @@ public:
     double vel = dist * aux2;
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) * aux2;
     
-    double dev_border_vel = penaltyBoundToIntervalDerivative(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon,cfg_->optim.penalty_scale);
-    double dev_border_omega = penaltyBoundToIntervalDerivative(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon,cfg_->optim.penalty_scale);
+    double dev_border_vel = penaltyBoundToIntervalDerivative(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
+    double dev_border_omega = penaltyBoundToIntervalDerivative(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
     
     _jacobianOplus[0].resize(2,3); // conf1
     _jacobianOplus[1].resize(2,3); // conf2

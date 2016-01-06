@@ -102,7 +102,7 @@ public:
     ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgePolygonObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
     
-    _error[0] = penaltyBoundFromBelow(_measurement->getMinimumDistance(bandpt->position()), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
+    _error[0] = penaltyBoundFromBelow(_measurement->getMinimumDistance(bandpt->position()), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 //     Eigen::Vector2d deltaS = bandpt->position() - _measurement->getClosestPoint(bandpt->position());
    
     // orient: [cos(theta), sin(theta)]
@@ -111,15 +111,15 @@ public:
 //     double dist_y = orient_normal.dot(deltaS);
 //     double dist_x = orient.dot(deltaS);
     
-    //_error[0] = std::max(0.0, penaltyBoundFromBelow(dist_y, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale) 
-               // - penaltyBoundFromBelow(-dist_x, -cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale) );
+    //_error[0] = std::max(0.0, penaltyBoundFromBelow(dist_y, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon) 
+               // - penaltyBoundFromBelow(-dist_x, -cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon) );
     
     // calculate projection to teb
 //     if (dist_x >= cfg_->obstacles.min_obstacle_dist)
 //       _error[0] = 0; // NON-SMOOTH
 //     else
-//       _error[0] = penaltyBoundFromBelow(fabs(deltaS.dot(orient_normal)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
-   // _error[0] = deltaS.normalized().dot(orient_normal) * penaltyBoundFromBelow(deltaS.norm(), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon, cfg_->optim.penalty_scale);
+//       _error[0] = penaltyBoundFromBelow(fabs(deltaS.dot(orient_normal)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+   // _error[0] = deltaS.normalized().dot(orient_normal) * penaltyBoundFromBelow(deltaS.norm(), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
 
     ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgePolygonObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  

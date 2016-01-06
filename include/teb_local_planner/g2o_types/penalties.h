@@ -51,15 +51,14 @@ namespace teb_local_planner
  * @param var The scalar that should be bounded
  * @param a lower and upper absolute bound
  * @param epsilon safty margin (move bound to the interior of the interval)
- * @param scale scale / weight factor
  * @see penaltyBoundToIntervalDerivative
  * @return Penalty / cost value that is nonzero if the constraint is not satisfied
  */
-inline double penaltyBoundToInterval(const double& var,const double& a,const double& epsilon, const double& scale)
+inline double penaltyBoundToInterval(const double& var,const double& a,const double& epsilon)
 {
   if (var < -a+epsilon)
   {
-    return (-var - (a - epsilon)) / scale;
+    return (-var - (a - epsilon));
   }
   if (var <= a-epsilon)
   {
@@ -67,7 +66,7 @@ inline double penaltyBoundToInterval(const double& var,const double& a,const dou
   }
   else
   {
-    return (var - (a - epsilon)) / scale;
+    return (var - (a - epsilon));
   }
 }
 
@@ -77,15 +76,14 @@ inline double penaltyBoundToInterval(const double& var,const double& a,const dou
  * @param a lower bound
  * @param b upper bound
  * @param epsilon safty margin (move bound to the interior of the interval)
- * @param scale scale / weight factor
  * @see penaltyBoundToIntervalDerivative
  * @return Penalty / cost value that is nonzero if the constraint is not satisfied
  */
-inline double penaltyBoundToInterval(const double& var,const double& a, const double& b, const double& epsilon, const double& scale)
+inline double penaltyBoundToInterval(const double& var,const double& a, const double& b, const double& epsilon)
 {
   if (var < a+epsilon)
   {
-    return (-var + (a + epsilon)) / scale;
+    return (-var + (a + epsilon));
   }
   if (var <= b-epsilon)
   {
@@ -93,7 +91,7 @@ inline double penaltyBoundToInterval(const double& var,const double& a, const do
   }
   else
   {
-    return (var - (b - epsilon)) / scale;
+    return (var - (b - epsilon));
   }
 }
 
@@ -103,11 +101,10 @@ inline double penaltyBoundToInterval(const double& var,const double& a, const do
  * @param var The scalar that should be bounded
  * @param a lower bound
  * @param epsilon safty margin (move bound to the interior of the interval)
- * @param scale scale / weight factor
  * @see penaltyBoundFromBelowDerivative
  * @return Penalty / cost value that is nonzero if the constraint is not satisfied
  */
-inline double penaltyBoundFromBelow(const double& var, const double& a,const double& epsilon, const double& scale)
+inline double penaltyBoundFromBelow(const double& var, const double& a,const double& epsilon)
 {
   if (var >= a+epsilon)
   {
@@ -115,40 +112,23 @@ inline double penaltyBoundFromBelow(const double& var, const double& a,const dou
   }
   else
   {
-    return (-var + (a+epsilon)) / scale;
+    return (-var + (a+epsilon));
   }
 }
-
-
-/**
- * @brief Linear penalty function for the equality constraint \f$ var = a \f$
- * @param var The scalar that should be constrained
- * @param a right hand side of the equation
- * @param scale scale / weight factor
- * @see penaltyEqualityDerivative
- * @return Penalty / cost value that is nonzero if the constraint is not satisfied
- */
-inline double penaltyEquality(const double& var,const double& a,const double& scale)
-{
-  return (var - a) / scale;
-}
-
-
 
 /**
  * @brief Derivative of the linear penalty function for bounding \c var to the interval \f$ -a < var < a \f$
  * @param var The scalar that should be bounded
  * @param a lower and upper absolute bound
  * @param epsilon safty margin (move bound to the interior of the interval)
- * @param scale scale / weight factor
  * @see penaltyBoundToInterval
  * @return Derivative of the penalty function w.r.t. \c var
  */
-inline double penaltyBoundToIntervalDerivative(const double& var,const double& a, const double& epsilon, const double& scale)
+inline double penaltyBoundToIntervalDerivative(const double& var,const double& a, const double& epsilon)
 {
   if (var < -a+epsilon)
   {
-    return -1/scale;
+    return -1;
   }
   if (var <= a-epsilon)
   {
@@ -156,7 +136,7 @@ inline double penaltyBoundToIntervalDerivative(const double& var,const double& a
   }
   else
   {
-    return 1/scale;		
+    return 1;		
   }
 }
 
@@ -166,15 +146,14 @@ inline double penaltyBoundToIntervalDerivative(const double& var,const double& a
  * @param a lower bound
  * @param b upper bound
  * @param epsilon safty margin (move bound to the interior of the interval)
- * @param scale scale / weight factor
  * @see penaltyBoundToInterval
  * @return Derivative of the penalty function w.r.t. \c var
  */
-inline double penaltyBoundToIntervalDerivative(const double& var,const double& a, const double& b, const double& epsilon, const double& scale)
+inline double penaltyBoundToIntervalDerivative(const double& var,const double& a, const double& b, const double& epsilon)
 {
   if (var < a+epsilon)
   {
-    return -1/scale;
+    return -1;
   }
   if (var <= b-epsilon)
   {
@@ -182,7 +161,7 @@ inline double penaltyBoundToIntervalDerivative(const double& var,const double& a
   }
   else
   {
-    return 1/scale;		
+    return 1;		
   }
 }
 
@@ -192,11 +171,10 @@ inline double penaltyBoundToIntervalDerivative(const double& var,const double& a
  * @param var The scalar that should be bounded
  * @param a lower bound
  * @param epsilon safty margin (move bound to the interior of the interval)
- * @param scale scale / weight factor
  * @see penaltyBoundFromBelow
  * @return Derivative of the penalty function w.r.t. \c var
  */
-inline double penaltyBoundFromBelowDerivative(const double& var, const double& a,const double& epsilon, const double& scale)
+inline double penaltyBoundFromBelowDerivative(const double& var, const double& a,const double& epsilon)
 {
   if (var >= a+epsilon)
   {
@@ -204,23 +182,10 @@ inline double penaltyBoundFromBelowDerivative(const double& var, const double& a
   }
   else
   {
-    return -1/scale;
+    return -1;
   }
 }
 
-
-/**
- * @brief Derivative of the linear penalty function for the equality constraint \f$ var = a \f$
- * @param var The scalar that should be constrained
- * @param a right hand side of the equation
- * @param scale scale / weight factor
- * @see penaltyEquality
- * @return Derivative of the penalty function w.r.t. \c var
- */
-inline double penaltyEqualityDerivative(const double& var,const double& a,const double& scale)
-{
-  return 1/scale;
-}
 
 } // namespace teb_local_planner
 

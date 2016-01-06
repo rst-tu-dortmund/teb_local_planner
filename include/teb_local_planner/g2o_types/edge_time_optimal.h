@@ -103,10 +103,7 @@ public:
     ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeTimeOptimal()");
     const VertexTimeDiff* timediff = static_cast<const VertexTimeDiff*>(_vertices[0]);
 
-    // we observerd good convergence speeds in conjunction with all other cost functions when we
-    // apply a penalty function instead of just minimizing the time_diff here
-    _error[0] = penaltyEquality(timediff->dt(),0.0,cfg_->optim.penalty_scale);
-//  _error[0] = timediff->dt();
+   _error[0] = timediff->dt();
   
     ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgeTimeOptimal::computeError() _error[0]=%f\n",_error[0]);
   }
@@ -119,7 +116,7 @@ public:
   {
     ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeTimeOptimal()");
     const VertexTimeDiff* vi = static_cast<const VertexTimeDiff*>(_vertices[0]);
-    _jacobianOplusXi( 0 , 0 ) = penaltyEqualityDerivative(vi->dt(),0.0,cfg_->optim.penalty_scale);
+    _jacobianOplusXi( 0 , 0 ) = 1;
   }
 #endif
     
