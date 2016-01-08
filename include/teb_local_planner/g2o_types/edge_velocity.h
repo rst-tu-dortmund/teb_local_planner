@@ -112,8 +112,10 @@ public:
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
     Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
-
-    double vel = deltaS.norm() / deltaT->estimate();
+    double dist = deltaS.norm();
+    double vel = dist / deltaT->estimate();
+//     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
+    vel *= fast_sigmoid( 100 * (deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())) ); // consider direction
     
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
   
@@ -125,7 +127,8 @@ public:
   }
 
 #ifdef USE_ANALYTIC_JACOBI
-#if 1
+#if 0 //TODO the hardcoded jacobian is does not include the changing direction 
+      // Change accordingly...
 
   /**
    * @brief Jacobi matrix of the cost function specified in computeError().

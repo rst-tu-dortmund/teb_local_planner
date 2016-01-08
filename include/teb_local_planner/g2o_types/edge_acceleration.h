@@ -114,10 +114,19 @@ public:
     const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
 
     // VELOCITY & ACCELERATION
-
-    double vel1 = (pose2->position() - pose1->position()).norm() / dt1->dt();
-    double vel2 = (pose3->position() - pose2->position()).norm() / dt2->dt();
+    Eigen::Vector2d diff1 = pose2->position() - pose1->position();
+    Eigen::Vector2d diff2 = pose3->position() - pose2->position();
+    double vel1 = diff1.norm() / dt1->dt();
+    double vel2 = diff2.norm() / dt2->dt();
+    
+    // consider directions
+//     vel1 *= g2o::sign(diff1[0]*cos(pose1->theta()) + diff1[1]*sin(pose1->theta())); 
+//     vel2 *= g2o::sign(diff2[0]*cos(pose2->theta()) + diff2[1]*sin(pose2->theta())); 
+    vel1 *= fast_sigmoid( 100*(diff1[0]*cos(pose1->theta()) + diff1[1]*sin(pose1->theta())) ); 
+    vel2 *= fast_sigmoid( 100*(diff2[0]*cos(pose2->theta()) + diff2[1]*sin(pose2->theta())) ); 
+    
     double acc_lin  = (vel2 - vel1)*2 / ( dt1->dt() + dt2->dt() );
+   
 
     _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
     
@@ -341,7 +350,7 @@ public:
     for(unsigned int i=0;i<3;i++)
     {
       if(_vertices[i]) 
-	_vertices[i]->edges().erase(this);
+        _vertices[i]->edges().erase(this);
     }
   }
   
@@ -356,11 +365,16 @@ public:
     const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
     // VELOCITY & ACCELERATION
-
+    Eigen::Vector2d diff = pose2->position() - pose1->position();
     double vel1 = _measurement->coeffRef(0);
-    double vel2 = (pose2->position() - pose1->position()).norm() / dt->dt();
-    double acc_lin  = (vel2 - vel1) / dt->dt();
+    double vel2 = diff.norm() / dt->dt();
 
+    // consider directions
+    //vel2 *= g2o::sign(diff[0]*cos(pose1->theta()) + diff[1]*sin(pose1->theta())); 
+    vel2 *= fast_sigmoid( 100*(diff[0]*cos(pose1->theta()) + diff[1]*sin(pose1->theta())) ); 
+    
+    double acc_lin  = (vel2 - vel1) / dt->dt();
+    
     _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
     
     // ANGULAR ACCELERATION
@@ -494,8 +508,14 @@ public:
 
     // VELOCITY & ACCELERATION
 
-    double vel1 = (pose_goal->position() - pose_pre_goal->position()).norm() / dt->dt();
+    Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();    
+    double vel1 = diff.norm() / dt->dt();
     double vel2 = _measurement->coeffRef(0);
+    
+    // consider directions
+    //vel1 *= g2o::sign(diff[0]*cos(pose_pre_goal->theta()) + diff[1]*sin(pose_pre_goal->theta())); 
+    vel1 *= fast_sigmoid( 100*(diff[0]*cos(pose_pre_goal->theta()) + diff[1]*sin(pose_pre_goal->theta())) ); 
+    
     double acc_lin  = (vel2 - vel1) / dt->dt();
 
     _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
