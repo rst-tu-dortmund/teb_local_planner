@@ -54,6 +54,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("min_samples", trajectory.min_samples, trajectory.min_samples);
   nh.param("global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation, trajectory.global_plan_overwrite_orientation);
   nh.param("force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
+  nh.param("publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
   
   // Robot
   nh.param("max_vel_x", robot.max_vel_x, robot.max_vel_x);
@@ -121,6 +122,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   trajectory.dt_hysteresis = cfg.dt_hysteresis;
   trajectory.global_plan_overwrite_orientation = cfg.global_plan_overwrite_orientation;
   trajectory.force_reinit_new_goal_dist = cfg.force_reinit_new_goal_dist;
+  trajectory.publish_feedback = cfg.publish_feedback;
   
   // Robot     
   robot.max_vel_x = cfg.max_vel_x;

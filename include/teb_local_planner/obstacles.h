@@ -47,6 +47,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
+#include <geometry_msgs/Polygon.h>
 
 
 namespace teb_local_planner
@@ -201,6 +202,16 @@ public:
   static double DistanceSegmentToSegment2d(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
                   const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end);
 
+  
+  /**
+   * @brief Convert the obstacle to a polygon message
+   * 
+   * Convert the obstacle to a corresponding polygon msg.
+   * Point obstacles have one vertex, lines have two vertices 
+   * and polygons might are implictly closed such that the start vertex must not be repeated.
+   * @param[out] polygon the polygon message
+   */
+  virtual void toPolygonMsg(geometry_msgs::Polygon& polygon) = 0;
 
   //@}
 	
@@ -312,6 +323,15 @@ public:
   double& y() {return pos_.coeffRef(1);} //!< Return the current x-coordinate of the obstacle
   const double& y() const {return pos_.coeffRef(1);} //!< Return the current y-coordinate of the obstacle (read-only)
       
+  // implements toPolygonMsg() of the base class
+  virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+  {
+    polygon.points.resize(1);
+    polygon.points.front().x = pos_.x();
+    polygon.points.front().y = pos_.y();
+    polygon.points.front().z = 0;
+  }
+      
 protected:
   
   Eigen::Vector2d pos_; //!< Store the position of the PointObstacle
@@ -414,6 +434,18 @@ public:
   void setStart(const Eigen::Ref<const Eigen::Vector2d>& start) {start_ = start; calcCentroid();}
   const Eigen::Vector2d& end() const {return end_;}
   void setEnd(const Eigen::Ref<const Eigen::Vector2d>& end) {end_ = end; calcCentroid();}
+  
+  // implements toPolygonMsg() of the base class
+  virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+  {
+    polygon.points.resize(2);
+    polygon.points.front().x = start_.x();
+    polygon.points.front().y = start_.y();
+    
+    polygon.points.back().x = end_.x();
+    polygon.points.back().y = end_.y();
+    polygon.points.back().z = polygon.points.front().z = 0;
+  }
   
 protected:
   void calcCentroid()	{	centroid_ = 0.5*(start_ + end_); }
@@ -519,6 +551,9 @@ public:
     assert(finalized_ && "Finalize the polygon after all vertices are added.");
     return std::complex<double>(centroid_.coeffRef(0), centroid_.coeffRef(1));
   }
+  
+  // implements toPolygonMsg() of the base class
+  virtual void toPolygonMsg(geometry_msgs::Polygon& polygon);
   
   
   /** @name Define the polygon */

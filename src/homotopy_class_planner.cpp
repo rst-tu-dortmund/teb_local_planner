@@ -162,10 +162,20 @@ void HomotopyClassPlanner::visualize()
     // Visualize active tebs as marker
     visualization_->publishTebContainer(tebs_);
     
-    // Visualize best teb
+    // Visualize best teb and feedback message if desired
     TebOptimalPlannerConstPtr best_teb = bestTeb();
     if (best_teb)
+    {
       visualization_->publishLocalPlanAndPoses(best_teb->teb());
+    
+      // feedback message
+      if (cfg_->trajectory.publish_feedback)
+      {
+        int best_idx = bestTebIdx();
+        if (best_idx>=0)
+          visualization_->publishFeedbackMessage(tebs_, (unsigned int) best_idx, *obstacles_);
+      }
+    }
   }
   else ROS_DEBUG("Ignoring HomotopyClassPlanner::visualize() call, since no visualization class was instantiated before.");
 }
@@ -719,6 +729,23 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
   }	
   return best_teb_;
 } 
+
+int HomotopyClassPlanner::bestTebIdx() const
+{
+  if (tebs_.size() == 1)
+    return 0;
+    
+  if (!best_teb_)
+    return -1;
+  
+  int idx = 0;
+  for (TebOptPlannerContainer::const_iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb, ++idx)
+  {
+    if (it_teb->get() == best_teb_.get())
+      return idx;
+  }
+  return -1;  
+}
 
 bool HomotopyClassPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
 						double inscribed_radius, double circumscribed_radius, int look_ahead_idx)

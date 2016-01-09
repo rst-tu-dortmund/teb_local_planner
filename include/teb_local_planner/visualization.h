@@ -178,6 +178,30 @@ public:
    */
   void publishTebContainer(const std::vector< boost::shared_ptr<TebOptimalPlanner> >& teb_planner, const std::string& ns = "TebContainer");
     
+  /**
+   * @brief Publish a feedback message (multiple trajectory version)
+   * 
+   * The feedback message contains the all planned trajectory candidates (e.g. if planning in distinctive topologies is turned on).
+   * Each trajectory is composed of the sequence of poses, the velocity profile and temporal information.
+   * The feedback message also contains a list of active obstacles.
+   * @param teb_planners container with multiple tebs (resp. their planner instances)
+   * @param idx Idx of the currently selected trajectory in \c teb_planners
+   * @param obstacles Container of obstacles
+   */
+  void publishFeedbackMessage(const std::vector< boost::shared_ptr<TebOptimalPlanner> >& teb_planners, unsigned int selected_trajectory_idx, const ObstContainer& obstacles);
+  
+  /**
+   * @brief Publish a feedback message (single trajectory overload)
+   * 
+   * The feedback message contains the planned trajectory
+   * that is composed of the sequence of poses, the velocity profile and temporal information.
+   * The feedback message also contains a list of active obstacles.
+   * @param teb_planner the planning instance
+   * @param idx Idx of the currently selected trajectory in \c teb_planners
+   * @param obstacles Container of obstacles
+   */
+  void publishFeedbackMessage(const TebOptimalPlanner& teb_planner, const ObstContainer& obstacles);
+  
   //@}
   
 protected:
@@ -192,6 +216,7 @@ protected:
   ros::Publisher local_plan_pub_; //!< Publisher for the local plan
   ros::Publisher teb_poses_pub_; //!< Publisher for the trajectory pose sequence
   ros::Publisher teb_marker_pub_; //!< Publisher for visualization markers
+  ros::Publisher feedback_pub_; //!< Publisher for the feedback message for analysis and debug purposes
   
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   

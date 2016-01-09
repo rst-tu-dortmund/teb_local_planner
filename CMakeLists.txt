@@ -100,6 +100,9 @@ endif()
 add_message_files(
   FILES
   ObstacleMsg.msg
+  TrajectoryPointMsg.msg
+  TrajectoryMsg.msg
+  FeedbackMsg.msg
 )
 
 ## Generate services in the 'srv' folder

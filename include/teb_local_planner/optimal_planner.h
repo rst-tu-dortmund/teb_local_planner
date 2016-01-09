@@ -72,6 +72,7 @@
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_datatypes.h>
+#include <teb_local_planner/TrajectoryMsg.h>
 
 #include <nav_msgs/Odometry.h>
 #include <limits.h>
@@ -384,6 +385,44 @@ public:
    * @return const reference to the TebCostVec.
    */
   const TebCostVec& getCurrentCost() const {return cost_;}
+  
+  /**
+   * @brief Extract the velocity from consecutive poses and a time difference
+   * 
+   * The velocity is extracted using finite differences.
+   * The direction of the translational velocity is also determined.
+   * @param pose1 pose at time k
+   * @param pose2 consecutive pose at time k+1
+   * @param dt actual time difference between k and k+1 (must be >0 !!!)
+   * @param[out] v translational velocity
+   * @param[out] omega rotational velocity
+   */
+  inline void extractVelocity(const PoseSE2& pose1, const PoseSE2& pose2, double dt, double& v, double& omega) const;
+  
+  /**
+   * @brief Compute the velocity profile of the trajectory
+   * 
+   * This method computes the translational and rotational velocity for the complete
+   * planned trajectory. 
+   * The first velocity is the one that is provided as initial velocity (fixed).
+   * All other ones at index k are related to the transition from pose_{k-1} to pose_k. 
+   * It can be used for evaluation and debugging purposes or
+   * for open-loop control. For computing the velocity required for controlling the robot
+   * to the next step refer to getVelocityCommand().
+   * @param[out] velocity_profile velocity profile will be written to this vector (after clearing any existing content)
+   */
+  void getVelocityProfile(std::vector<geometry_msgs::Twist>& velocity_profile) const;
+  
+    /**
+   * @brief Return the complete trajectory including poses, velocity profiles and temporal information
+   * 
+   * It is useful for evaluation and debugging purposes or for open-loop control.
+   * The first velocity is the one that is provided as initial velocity (fixed).
+   * All other ones at index k are related to the transition from pose_{k-1} to pose_k. 
+   * @todo The acceleration profile is not added at the moment.
+   * @param[out] trajectory the resulting trajectory
+   */
+  void getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const;
   
   /**
    * @brief Check whether the planned trajectory is feasible or not.

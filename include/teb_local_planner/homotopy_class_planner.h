@@ -208,7 +208,7 @@ public:
    * @return Shared pointer to the best TebOptimalPlanner that contains the selected trajectory (TimedElasticBand).
    */
   TebOptimalPlannerPtr bestTeb() const {return tebs_.empty() ? TebOptimalPlannerPtr() : tebs_.size()==1 ? tebs_.front() : best_teb_;}
-  
+    
   /**
    * @brief Check whether the planned trajectory is feasible or not.
    * 
@@ -451,6 +451,13 @@ protected:
    * @brief Clear any existing graph of the homotopy class search
    */
   void clearGraph() {graph_.clear();}
+  
+  /**
+   * @brief find the index of the currently best TEB in the container
+   * @remarks bestTeb() should be preferred whenever possible
+   * @return index of the best TEB obtained with bestTEB(), if no TEB is avaiable, it returns -1.
+   */
+  int bestTebIdx() const;
   
   //@}
   

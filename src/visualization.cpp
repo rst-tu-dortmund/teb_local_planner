@@ -38,7 +38,7 @@
 
 #include <teb_local_planner/visualization.h>
 #include <teb_local_planner/optimal_planner.h>
-
+#include <teb_local_planner/FeedbackMsg.h>
 
 namespace teb_local_planner
 {
@@ -65,7 +65,8 @@ void TebVisualization::initialize(ros::NodeHandle& nh, const TebConfig& cfg)
   local_plan_pub_ = nh.advertise<nav_msgs::Path>("local_plan",1);
   teb_poses_pub_ = nh.advertise<geometry_msgs::PoseArray>("teb_poses", 100);
   teb_marker_pub_ = nh.advertise<visualization_msgs::Marker>("teb_markers", 1000);
-    
+  feedback_pub_ = nh.advertise<teb_local_planner::FeedbackMsg>("teb_feedback", 10);  
+  
   initialized_ = true; 
 }
 
@@ -287,6 +288,56 @@ if ( printErrorWhenNotInitialized() )
   teb_marker_pub_.publish( marker );
 }
 
+void TebVisualization::publishFeedbackMessage(const TebOptPlannerContainer& teb_planners, unsigned int selected_trajectory_idx, const ObstContainer& obstacles)
+{
+  FeedbackMsg msg;
+  msg.header.stamp = ros::Time::now();
+  msg.header.frame_id = cfg_->map_frame;
+  msg.selected_trajectory_idx = selected_trajectory_idx;
+  
+  
+  msg.trajectories.resize(teb_planners.size());
+  
+  // Iterate through teb pose sequence
+  std::size_t idx_traj = 0;
+  for( TebOptPlannerContainer::const_iterator it_teb = teb_planners.begin(); it_teb != teb_planners.end(); ++it_teb, ++idx_traj )
+  {   
+    msg.trajectories[idx_traj].header = msg.header;
+    it_teb->get()->getFullTrajectory(msg.trajectories[idx_traj].trajectory);
+  }
+  
+  // add obstacles
+  msg.obstacles.resize(obstacles.size());
+  for (std::size_t i=0; i<obstacles.size(); ++i)
+  {
+    msg.obstacles[i].header = msg.header;
+    obstacles[i]->toPolygonMsg(msg.obstacles[i].polygon);
+  }
+  
+  feedback_pub_.publish(msg);
+}
+
+void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_planner, const ObstContainer& obstacles)
+{
+  FeedbackMsg msg;
+  msg.header.stamp = ros::Time::now();
+  msg.header.frame_id = cfg_->map_frame;
+  msg.selected_trajectory_idx = 0;
+  
+  msg.trajectories.resize(1);
+  msg.trajectories.front().header = msg.header;
+  teb_planner.getFullTrajectory(msg.trajectories.front().trajectory);
+ 
+  // add obstacles
+  msg.obstacles.resize(obstacles.size());
+  for (std::size_t i=0; i<obstacles.size(); ++i)
+  {
+    msg.obstacles[i].header = msg.header;
+    obstacles[i]->toPolygonMsg(msg.obstacles[i].polygon);
+  }
+  
+  feedback_pub_.publish(msg);
+}
 
 inline bool TebVisualization::printErrorWhenNotInitialized() const
 {

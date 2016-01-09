@@ -90,11 +90,14 @@ void TebOptimalPlanner::setVisualization(TebVisualizationPtr visualization)
 
 void TebOptimalPlanner::visualize()
 {
-  if (visualization_)
-  {
-    visualization_->publishLocalPlanAndPoses(teb_);
-  }
-  else ROS_DEBUG("Ignoring TebOptimalPlanner::visualize() call, since no visualization class was instantiated before.");
+  if (!visualization_)
+    return;
+ 
+  visualization_->publishLocalPlanAndPoses(teb_);
+  
+  if (cfg_->trajectory.publish_feedback)
+    visualization_->publishFeedbackMessage(*this, *obstacles_);
+ 
 }
 
 
@@ -759,6 +762,19 @@ void TebOptimalPlanner::computeCurrentCost(bool alternative_time_cost)
 }
 
 
+void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pose2, double dt, double& v, double& omega) const
+{
+  Eigen::Vector2d deltaS = pose2.position() - pose1.position();
+  Eigen::Vector2d conf1dir( cos(pose1.theta()), sin(pose1.theta()) );
+  // translational velocity
+  double dir = deltaS.dot(conf1dir);
+  v = (double) g2o::sign(dir) * deltaS.norm()/dt;
+  
+  // rotational velocity
+  double orientdiff = g2o::normalize_theta(pose2.theta() - pose1.theta());
+  omega = orientdiff/dt;
+}
+
 Eigen::Vector2d TebOptimalPlanner::getVelocityCommand() const
 {
   if (teb_.sizePoses()<2)
@@ -773,18 +789,58 @@ Eigen::Vector2d TebOptimalPlanner::getVelocityCommand() const
 	  
   // Get velocity from the first two configurations
   Eigen::Vector2d vel;
-  Eigen::Vector2d deltaS = teb_.Pose(1).position()-teb_.Pose(0).position();
-  Eigen::Vector2d conf1dir( cos(teb_.Pose(0).theta()) , sin(teb_.Pose(0).theta()) );
-  // translational velocity
-  double dir = deltaS.dot(conf1dir);
-  vel.coeffRef(0) = (double) g2o::sign(dir) * deltaS.norm()/dt;
-  
-  // rotational velocity
-  double orientdiff = g2o::normalize_theta(teb_.Pose(1).theta()-teb_.Pose(0).theta());
-  vel.coeffRef(1) = orientdiff/dt;
-  
+  extractVelocity(teb_.Pose(0), teb_.Pose(1), dt, vel.coeffRef(0), vel.coeffRef(1));
   return vel;
 }
+
+void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::Twist>& velocity_profile) const
+{
+  int n = (int) teb_.sizePoses();
+  velocity_profile.resize( n );
+
+  // start velocity
+  velocity_profile[0].linear.y = velocity_profile[0].linear.z = 0;
+  velocity_profile[0].angular.x = velocity_profile[0].angular.y = 0;  
+  velocity_profile[0].linear.x = vel_start_.second.x();
+  velocity_profile[0].angular.z = vel_start_.second.y();
+  
+  for (int i=1; i<n; ++i)
+  {
+    velocity_profile[i].linear.y = velocity_profile[i].linear.z = 0;
+    velocity_profile[i].angular.x = velocity_profile[i].angular.y = 0;
+    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), velocity_profile[i].linear.x, velocity_profile[i].angular.z);
+  }
+}
+
+void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const
+{
+  int n = (int) teb_.sizePoses();
+  
+  trajectory.resize(n);
+     
+  double curr_time = 0;
+  for (int i=0; i < n; ++i)
+  {
+    TrajectoryPointMsg& point = trajectory[i];
+    teb_.Pose(i).toPoseMsg(point.pose);
+    point.velocity.linear.y = point.velocity.linear.z = 0;
+    point.velocity.angular.x = point.velocity.angular.y = 0;
+    if (i>0)
+    {
+      extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), point.velocity.linear.x, point.velocity.angular.z);
+    }
+    else
+    {
+      point.velocity.linear.x = vel_start_.second.x();
+      point.velocity.angular.z = vel_start_.second.y();
+    }
+    point.time_from_start.fromSec(curr_time);
+    
+    if (i<n-1)
+      curr_time += teb_.TimeDiff(i);
+  }
+}
+
 
 bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
                                              double inscribed_radius, double circumscribed_radius, int look_ahead_idx)

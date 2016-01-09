@@ -112,7 +112,7 @@ public:
     Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
     double vel = deltaS.norm() / deltaT->estimate();
 //     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
-    vel *= fast_sigmoid( 100 * (deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())) ); // consider direction
+    vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
     
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
   

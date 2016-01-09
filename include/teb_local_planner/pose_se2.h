@@ -43,6 +43,8 @@
 
 #include <Eigen/Core>
 #include <teb_local_planner/misc.h>
+#include <geometry_msgs/Pose.h>
+#include <tf/transform_datatypes.h>
 
 namespace teb_local_planner
 {
@@ -170,6 +172,18 @@ public:
   {
     _position.setZero();
     _theta = 0;
+  }
+  
+  /**
+   * @brief Convert PoseSE2 to a geometry_msgs::Pose
+   * @param[out] pose Pose message
+   */
+  void toPoseMsg(geometry_msgs::Pose& pose) const
+  {
+    pose.position.x = _position.x();
+    pose.position.y = _position.y();
+    pose.position.z = 0;
+    pose.orientation = tf::createQuaternionMsgFromYaw(_theta);
   }
       
   ///@}
