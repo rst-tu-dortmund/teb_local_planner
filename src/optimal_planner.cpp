@@ -775,22 +775,28 @@ void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pos
   omega = orientdiff/dt;
 }
 
-Eigen::Vector2d TebOptimalPlanner::getVelocityCommand() const
+bool TebOptimalPlanner::getVelocityCommand(double& v, double& omega) const
 {
   if (teb_.sizePoses()<2)
+  {
     ROS_ERROR("TebOptimalPlanner::getVelocityCommand(): The trajectory contains less than 2 poses. Make sure to init and optimize/plan the trajectory fist.");
+    v = 0;
+    omega = 0;
+    return false;
+  }
   
   double dt = teb_.TimeDiff(0);
   if (dt<=0)
   {	
     ROS_ERROR("TebOptimalPlanner::getVelocityCommand() - timediff<=0 is invalid!");
-    return Eigen::Vector2d::Zero();			
+    v = 0;
+    omega = 0;
+    return false;
   }
 	  
   // Get velocity from the first two configurations
-  Eigen::Vector2d vel;
-  extractVelocity(teb_.Pose(0), teb_.Pose(1), dt, vel.coeffRef(0), vel.coeffRef(1));
-  return vel;
+  extractVelocity(teb_.Pose(0), teb_.Pose(1), dt, v, omega);
+  return true;
 }
 
 void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::Twist>& velocity_profile) const

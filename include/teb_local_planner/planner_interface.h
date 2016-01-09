@@ -125,9 +125,11 @@ public:
   /**
    * @brief Get the velocity command from a previously optimized plan to control the robot at the current sampling interval.
    * @warning Call plan() first and check if the generated plan is feasible.
-   * @return 2D vector containing the translational and angular velocity 
+   * @param[out] v translational velocity [m/s]
+   * @param[out] omega rotational velocity [rad/s]
+   * @return \c true if command is valid, \c false otherwise
    */
-  virtual Eigen::Vector2d getVelocityCommand() const = 0;
+  virtual bool getVelocityCommand(double& v, double& omega) const = 0;
   
   //@}
   

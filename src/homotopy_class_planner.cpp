@@ -139,13 +139,17 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   return true;
 } 
  
-Eigen::Vector2d HomotopyClassPlanner::getVelocityCommand() const
+bool HomotopyClassPlanner::getVelocityCommand(double& v, double& omega) const
 {
   TebOptimalPlannerConstPtr best_teb = bestTeb();
   if (!best_teb)
-    return Eigen::Vector2d::Zero();
+  {
+    v = 0;
+    omega = 0;
+    return false;
+  }
  
-  return best_teb->getVelocityCommand(); 
+  return best_teb->getVelocityCommand(v, omega); 
 }
 
 

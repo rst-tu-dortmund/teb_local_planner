@@ -322,13 +322,15 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   }
 
   // Get the velocity command for this sampling interval
-  Eigen::Vector2d vel_teb = planner_->getVelocityCommand();
+  if (!planner_->getVelocityCommand(cmd_vel.linear.x, cmd_vel.angular.z))
+  {
+    planner_->clearPlanner();
+    ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
+    return false;
+  }
 
-  // Saturate the velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
-  saturateVelocity(&vel_teb, cfg_.robot.max_vel_x, cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
-
-  cmd_vel.linear.x = vel_teb.coeffRef(0);
-  cmd_vel.angular.z = vel_teb.coeffRef(1);
+  // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
+  saturateVelocity(cmd_vel.linear.x, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
     
   // Now visualize everything		    
   planner_->visualize();
@@ -699,24 +701,25 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
 }
       
       
-void TebLocalPlannerROS::saturateVelocity(Eigen::Vector2d* velocity, double max_vel_x, double max_vel_theta, double max_vel_x_backwards)
+void TebLocalPlannerROS::saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards)
 {
   // Limit translational velocity for forward driving
-  if (velocity->x() > max_vel_x)
-    velocity->x() = max_vel_x;
+  if (v > max_vel_x)
+    v = max_vel_x;
   
   // Limit angular velocity
-  if (velocity->y() > max_vel_theta)
-    velocity->y() = max_vel_theta;
-  else if (velocity->y() < -max_vel_theta)
-    velocity->y() = -max_vel_theta;
+  if (omega > max_vel_theta)
+    omega = max_vel_theta;
+  else if (omega < -max_vel_theta)
+    omega = -max_vel_theta;
   
   // Limit backwards velocity
   if (max_vel_x_backwards<=0)
+  {
     ROS_WARN_ONCE("TebLocalPlannerROS(): Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
-  
-  if (velocity->x() < -max_vel_x_backwards)
-    velocity->x() = -max_vel_x_backwards;
+  }
+  else if (v < -max_vel_x_backwards)
+    v = -max_vel_x_backwards;
 }
      
      

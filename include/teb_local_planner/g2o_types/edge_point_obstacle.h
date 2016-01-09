@@ -101,7 +101,7 @@ public:
     
     // version without projection
     // force pushes bandpoints along the trajectory
-    // _error[0] = penaltyBoundFromBelow(deltaS.norm(), humanTEBConfig.human_obstacle_dist, optimizationConfig.optimization_boundaries_epsilon, optimizationConfig.optimization_boundaries_scale);
+     //_error[0] = penaltyBoundFromBelow(deltaS.norm(), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
     // calculate projection to teb
     double angdiff = atan2(deltaS[1],deltaS[0]) - bandpt->theta();
@@ -111,7 +111,7 @@ public:
   }
 
 #ifdef USE_ANALYTIC_JACOBI
-#if 1
+#if 0
 
   /**
    * @brief Jacobi matrix of the cost function specified in computeError().
