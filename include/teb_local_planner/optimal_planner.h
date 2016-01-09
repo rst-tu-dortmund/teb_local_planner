@@ -405,11 +405,17 @@ public:
    * This method computes the translational and rotational velocity for the complete
    * planned trajectory. 
    * The first velocity is the one that is provided as initial velocity (fixed).
-   * All other ones at index k are related to the transition from pose_{k-1} to pose_k. 
+   * Velocities at index k=2...end-1 are related to the transition from pose_{k-1} to pose_k. 
+   * The last velocity is the final velocity (fixed).
+   * The number of Twist objects is therefore sizePoses()+1;
+   * In summary:
+   *     v[0] = v_start,
+   *     v[1,...end-1] = +-(pose_{k+1}-pose{k})/dt, 
+   *     v(end) = v_goal
    * It can be used for evaluation and debugging purposes or
    * for open-loop control. For computing the velocity required for controlling the robot
    * to the next step refer to getVelocityCommand().
-   * @param[out] velocity_profile velocity profile will be written to this vector (after clearing any existing content)
+   * @param[out] velocity_profile velocity profile will be written to this vector (after clearing any existing content) with the size=#poses+1
    */
   void getVelocityProfile(std::vector<geometry_msgs::Twist>& velocity_profile) const;
   
@@ -417,8 +423,10 @@ public:
    * @brief Return the complete trajectory including poses, velocity profiles and temporal information
    * 
    * It is useful for evaluation and debugging purposes or for open-loop control.
-   * The first velocity is the one that is provided as initial velocity (fixed).
-   * All other ones at index k are related to the transition from pose_{k-1} to pose_k. 
+   * Since the velocity obtained using difference quotients is the mean velocity between consecutive poses,
+   * the velocity at each pose at time stamp k is obtained by taking the average between both velocities.
+   * The velocity of the first pose is v_start (provided initial value) and the last one is v_goal (usually zero, if free_goal_vel is off).
+   * See getVelocityProfile() for the list of velocities between consecutive points.
    * @todo The acceleration profile is not added at the moment.
    * @param[out] trajectory the resulting trajectory
    */

@@ -110,6 +110,8 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("obstacle_keypoint_offset", hcp.obstacle_keypoint_offset, hcp.obstacle_keypoint_offset); 
   nh.param("obstacle_heading_threshold", hcp.obstacle_heading_threshold, hcp.obstacle_heading_threshold); 
   nh.param("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph); 
+  
+  checkParameters();
 }
 
 void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
@@ -177,6 +179,45 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   hcp.h_signature_prescaler = cfg.h_signature_prescaler;
   hcp.h_signature_threshold = cfg.h_signature_threshold;
   hcp.visualize_hc_graph = cfg.visualize_hc_graph;
+  
+  checkParameters();
 }
+    
+    
+void TebConfig::checkParameters() const
+{
+  // positive backward velocity?
+  if (robot.max_vel_x_backwards <= 0)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
+  
+  // bounds smaller than penalty epsilon
+  if (robot.max_vel_x <= optim.penalty_epsilon)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+  
+  if (robot.max_vel_x_backwards <= optim.penalty_epsilon)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x_backwards <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+  
+  if (robot.max_vel_theta <= optim.penalty_epsilon)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+  
+  if (robot.acc_lim_x <= optim.penalty_epsilon)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: acc_lim_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+  
+  if (robot.acc_lim_theta <= optim.penalty_epsilon)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: acc_lim_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+  
+  // dt_ref and dt_hyst
+  if (trajectory.dt_ref <= trajectory.dt_hysteresis)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: dt_ref <= dt_hysteresis. The hysteresis is not allowed to be greater or equal!. Undefined behavior... Change at least one of them!");
+    
+  // min number of samples
+  if (trajectory.min_samples <3)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: parameter min_samples is smaller than 3! Sorry, I haven't enough degrees of freedom to plan a trajectory for you. Please increase ...");
+  
+  // hcp: obstacle heading threshold
+  if (hcp.obstacle_keypoint_offset>=1 || hcp.obstacle_keypoint_offset<=0)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: parameter obstacle_heading_threshold must be in the interval ]0,1[. 0=0deg opening angle, 1=90deg opening angle.");
+  
+}    
     
 } // namespace teb_local_planner

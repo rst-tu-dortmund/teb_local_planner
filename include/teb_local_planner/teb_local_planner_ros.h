@@ -180,6 +180,7 @@ protected:
     */
   void reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level);
   
+  
    /**
     * @brief Callback for custom obstacles that are not obtained from the costmap 
     * @param obst_msg pointer to the message containing a list of polygon shaped obstacles

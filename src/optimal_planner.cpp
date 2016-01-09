@@ -796,13 +796,13 @@ Eigen::Vector2d TebOptimalPlanner::getVelocityCommand() const
 void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::Twist>& velocity_profile) const
 {
   int n = (int) teb_.sizePoses();
-  velocity_profile.resize( n );
+  velocity_profile.resize( n+1 );
 
   // start velocity
-  velocity_profile[0].linear.y = velocity_profile[0].linear.z = 0;
-  velocity_profile[0].angular.x = velocity_profile[0].angular.y = 0;  
-  velocity_profile[0].linear.x = vel_start_.second.x();
-  velocity_profile[0].angular.z = vel_start_.second.y();
+  velocity_profile.front().linear.y = velocity_profile.front().linear.z = 0;
+  velocity_profile.front().angular.x = velocity_profile.front().angular.y = 0;  
+  velocity_profile.front().linear.x = vel_start_.second.x();
+  velocity_profile.front().angular.z = vel_start_.second.y();
   
   for (int i=1; i<n; ++i)
   {
@@ -810,6 +810,12 @@ void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::Twist>& ve
     velocity_profile[i].angular.x = velocity_profile[i].angular.y = 0;
     extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), velocity_profile[i].linear.x, velocity_profile[i].angular.z);
   }
+  
+  // goal velocity
+  velocity_profile.back().linear.y = velocity_profile.back().linear.z = 0;
+  velocity_profile.back().angular.x = velocity_profile.back().angular.y = 0;  
+  velocity_profile.back().linear.x = vel_goal_.second.x();
+  velocity_profile.back().angular.z = vel_goal_.second.y();
 }
 
 void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const
@@ -817,28 +823,48 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
   int n = (int) teb_.sizePoses();
   
   trajectory.resize(n);
+  
+  if (n == 0)
+    return;
      
   double curr_time = 0;
-  for (int i=0; i < n; ++i)
+  
+  // start
+  TrajectoryPointMsg& start = trajectory.front();
+  teb_.Pose(0).toPoseMsg(start.pose);
+  start.velocity.linear.y = start.velocity.linear.z = 0;
+  start.velocity.angular.x = start.velocity.angular.y = 0;
+  start.velocity.linear.x = vel_start_.second.x();
+  start.velocity.angular.z = vel_start_.second.y();
+  start.time_from_start.fromSec(curr_time);
+  
+  curr_time += teb_.TimeDiff(0);
+  
+  // intermediate points
+  for (int i=1; i < n-1; ++i)
   {
     TrajectoryPointMsg& point = trajectory[i];
     teb_.Pose(i).toPoseMsg(point.pose);
     point.velocity.linear.y = point.velocity.linear.z = 0;
     point.velocity.angular.x = point.velocity.angular.y = 0;
-    if (i>0)
-    {
-      extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), point.velocity.linear.x, point.velocity.angular.z);
-    }
-    else
-    {
-      point.velocity.linear.x = vel_start_.second.x();
-      point.velocity.angular.z = vel_start_.second.y();
-    }
+    double vel1, vel2, omega1, omega2;
+    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), vel1, omega1);
+    extractVelocity(teb_.Pose(i), teb_.Pose(i+1), teb_.TimeDiff(i), vel2, omega2);
+    point.velocity.linear.x = 0.5*(vel1+vel2);
+    point.velocity.angular.z = 0.5*(omega1+omega2);    
     point.time_from_start.fromSec(curr_time);
     
-    if (i<n-1)
-      curr_time += teb_.TimeDiff(i);
+    curr_time += teb_.TimeDiff(i);
   }
+  
+  // goal
+  TrajectoryPointMsg& goal = trajectory.back();
+  teb_.BackPose().toPoseMsg(goal.pose);
+  goal.velocity.linear.y = goal.velocity.linear.z = 0;
+  goal.velocity.angular.x = goal.velocity.angular.y = 0;
+  goal.velocity.linear.x = vel_goal_.second.x();
+  goal.velocity.angular.z = vel_goal_.second.y();
+  goal.time_from_start.fromSec(curr_time);
 }
 
 

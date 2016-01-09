@@ -91,8 +91,8 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     ros::NodeHandle nh("~/" + name);
 	        
     // get parameters of TebConfig via the nodehandle and override the default config
-    cfg_.loadRosParamFromNodeHandle(nh);
-            
+    cfg_.loadRosParamFromNodeHandle(nh);       
+    
     // reserve some memory for obstacles
     obstacles_.reserve(500);
         
@@ -727,7 +727,7 @@ void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::
   custom_obstacle_msg_ = *obst_msg;  
 }
      
-     
+         
 
 } // end namespace teb_local_planner
 
