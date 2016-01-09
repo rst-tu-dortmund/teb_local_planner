@@ -2,7 +2,7 @@
  *
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2015,
+ *  Copyright (c) 2016,
  *  TU Dortmund - Institute of Control Theory and Systems Engineering.
  *  All rights reserved.
  *
@@ -51,9 +51,7 @@
 
 #include <g2o/core/base_multi_edge.h>
 
-
 #include <iostream>
-#include <float.h>
 
 namespace teb_local_planner
 {
@@ -112,8 +110,7 @@ public:
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
     Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
-    double dist = deltaS.norm();
-    double vel = dist / deltaT->estimate();
+    double vel = deltaS.norm() / deltaT->estimate();
 //     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
     vel *= fast_sigmoid( 100 * (deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())) ); // consider direction
     
@@ -127,7 +124,7 @@ public:
   }
 
 #ifdef USE_ANALYTIC_JACOBI
-#if 0 //TODO the hardcoded jacobian is does not include the changing direction 
+#if 0 //TODO the hardcoded jacobian does not include the changing direction (just the absolute value)
       // Change accordingly...
 
   /**

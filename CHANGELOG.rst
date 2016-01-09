@@ -5,10 +5,10 @@ Changelog for package teb_local_planner
 0.2.1 (2015-12-30)
 ------------------
 * This is an important bugfix release.
-* Fixed a major issue concerning the stability and performance of the optimization process. Each time the global planner was updating the global plan, the local planner was resetted completly even if
+* Fixed a major issue concerning the stability and performance of the optimization process. Each time the global planner was updating the global plan, the local planner was resetted completely even if
   the updated global plan did not differ from the previous one. This led to stupid reinitializations and a slighly jerky behavior if the update rate of the global planner was high (each 0.5-2s).
   From now on the local planner is able to utilize the global plan as a warm start and determine automatically whether to reinitialize or not.
-* Support for polyon obstacles extended and improved (e.g. the homotopy class planner does now compute actual distances to the polygon rather than utilizing the distance to the centroid).
+* Support for polygon obstacles extended and improved (e.g. the homotopy class planner does now compute actual distances to the polygon rather than utilizing the distance to the centroid).
 
 0.2.0 (2015-12-23)
 ------------------
