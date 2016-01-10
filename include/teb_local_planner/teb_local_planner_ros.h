@@ -299,7 +299,7 @@ protected:
   
   std::string global_frame_; //!< The frame in which the controller will run
   std::string robot_base_frame_; //!< Used as the base frame id of the robot
-  
+    
   // flags
   bool initialized_; //!< Keeps track about the correct initialization of this class
 

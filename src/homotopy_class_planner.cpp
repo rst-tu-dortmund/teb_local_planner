@@ -754,18 +754,11 @@ int HomotopyClassPlanner::bestTebIdx() const
 bool HomotopyClassPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
 						double inscribed_radius, double circumscribed_radius, int look_ahead_idx)
 {
-  if (!best_teb_)
+  TebOptimalPlannerPtr best = bestTeb();
+  if (!best)
     return false;
   
-  if (look_ahead_idx < 0 || look_ahead_idx >= (int) best_teb_->teb().sizePoses())
-    look_ahead_idx = (int) best_teb_->teb().sizePoses()-1;
-  
-  for (unsigned int i=0; i <= look_ahead_idx; ++i)
-  {      
-    if ( costmap_model->footprintCost(best_teb_->teb().Pose(i).x(), best_teb_->teb().Pose(i).y(), best_teb_->teb().Pose(i).theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 )
-      return false;
-  }
-  return true;
+  return best->isTrajectoryFeasible(costmap_model,footprint_spec, inscribed_radius, circumscribed_radius, look_ahead_idx);
 }
 
  
