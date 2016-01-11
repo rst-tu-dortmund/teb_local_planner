@@ -2,6 +2,28 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Carlike robots (ackermann steering) are supported from now on (at least experimentally) 
+  by specifying a minimum bound on the turning radius.
+  Currently, the output of the planner in carlike mode is still (v,omega).
+  Since I don't have any real carlike robot, I would be really happy if someone could provide me with
+  some feedback to further improve/extend the support.
+* Obstacle cost function modified to avoid undesired jerks in the trajectory.
+* Added a feedback message that contains current trajectory information (poses, velocities and temporal information).
+  This is useful for analyzing and debugging the velocity profile e.g. at runtime.
+  The message will be published only if it's activated (rosparam).
+  A small python script is added to plot the velocity profile (while *test_optim_node* runs).
+* Cost functions are now taking the direction/sign of the translational velocity into account:
+  Specifying a maximum backwards velocity other than forward velocity works now.
+  Additionally, the change in acceleration is now computed correctly if the robot switches directions.
+* The global plan is now pruned such that already passed posses are cut off
+  (relevant for global planners with *planning_rate=0*).
+* Fixed issue#1: If a global planner with *planning_rate=0* was used, 
+  a TF timing/extrapolation issue appeared after some time.
+* The planner resets now properly if the velocity command cannot be computed due to invalid optimization results.
+
+
 0.2.1 (2015-12-30)
 ------------------
 * This is an important bugfix release.
