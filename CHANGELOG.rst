@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.2 (2016-01-11)
+------------------
 * Carlike robots (ackermann steering) are supported from now on (at least experimentally) 
   by specifying a minimum bound on the turning radius.
   Currently, the output of the planner in carlike mode is still (v,omega).
