@@ -63,6 +63,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
   nh.param("acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
   nh.param("acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
+  nh.param("min_turning_radius", robot.min_turning_radius, robot.min_turning_radius);
   
   // GoalTolerance
   nh.param("xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);
@@ -92,6 +93,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_acc_lim_theta", optim.weight_acc_lim_theta, optim.weight_acc_lim_theta);
   nh.param("weight_kinematics_nh", optim.weight_kinematics_nh, optim.weight_kinematics_nh);
   nh.param("weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
+  nh.param("weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
   nh.param("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
   nh.param("weight_point_obstacle", optim.weight_point_obstacle, optim.weight_point_obstacle);
   nh.param("weight_line_obstacle", optim.weight_line_obstacle, optim.weight_line_obstacle);
@@ -134,6 +136,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.max_vel_theta = cfg.max_vel_theta;
   robot.acc_lim_x = cfg.acc_lim_x;
   robot.acc_lim_theta = cfg.acc_lim_theta;
+  robot.min_turning_radius = cfg.min_turning_radius;
   
   // GoalTolerance
   goal_tolerance.xy_goal_tolerance = cfg.xy_goal_tolerance;
@@ -162,6 +165,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_acc_lim_theta = cfg.weight_acc_lim_theta;
   optim.weight_kinematics_nh = cfg.weight_kinematics_nh;
   optim.weight_kinematics_forward_drive = cfg.weight_kinematics_forward_drive;
+  optim.weight_kinematics_turning_radius = cfg.weight_kinematics_turning_radius;
   optim.weight_optimaltime = cfg.weight_optimaltime;
   optim.weight_point_obstacle = cfg.weight_point_obstacle;
   optim.weight_line_obstacle = cfg.weight_line_obstacle;
@@ -207,7 +211,7 @@ void TebConfig::checkParameters() const
   
   if (robot.acc_lim_theta <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: acc_lim_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
-  
+      
   // dt_ref and dt_hyst
   if (trajectory.dt_ref <= trajectory.dt_hysteresis)
     ROS_WARN("TebLocalPlannerROS() Param Warning: dt_ref <= dt_hysteresis. The hysteresis is not allowed to be greater or equal!. Undefined behavior... Change at least one of them!");

@@ -44,9 +44,8 @@ namespace teb_local_planner
 
 // ============== Implementation ===================
 
-TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), initialized_(false), optimized_(false)
+TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), cost_(HUGE_VAL), initialized_(false), optimized_(false)
 {    
-  cost_.setConstant(HUGE_VAL);
 }
   
 TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, std::vector<ObstaclePtr>* obstacles, TebVisualizationPtr visual)
@@ -71,7 +70,7 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, std::vector<ObstaclePtr
   
   cfg_ = &cfg;
   obstacles_ = obstacles;
-  cost_.setConstant(HUGE_VAL);
+  cost_ = HUGE_VAL;
   setVisualization(visual);
   
   vel_start_.first = true;
@@ -115,7 +114,8 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_ACCELERATION", new g2o::HyperGraphElementCreator<EdgeAcceleration>);
   factory->registerType("EDGE_ACCELERATION_START", new g2o::HyperGraphElementCreator<EdgeAccelerationStart>);
   factory->registerType("EDGE_ACCELERATION_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationGoal>);
-  factory->registerType("EDGE_KINEMATICS", new g2o::HyperGraphElementCreator<EdgeKinematics>);
+  factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
+  factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
   factory->registerType("EDGE_POINT_OBSTACLE", new g2o::HyperGraphElementCreator<EdgePointObstacle>);
   factory->registerType("EDGE_LINE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeLineObstacle>);
   factory->registerType("EDGE_POLYGON_OBSTACLE", new g2o::HyperGraphElementCreator<EdgePolygonObstacle>);
@@ -293,9 +293,11 @@ bool TebOptimalPlanner::buildGraph()
 
   AddEdgesTimeOptimal();	
   
-  AddEdgesKinematics();
+  if (cfg_->robot.min_turning_radius == 0 || cfg_->optim.weight_kinematics_turning_radius == 0)
+    AddEdgesKinematicsDiffDrive(); // we have a differential drive robot
+  else
+    AddEdgesKinematicsCarlike(); // we have a carlike robot since the turning radius is bounded from below.
 
-  
   return true;  
 }
 
@@ -644,12 +646,12 @@ void TebOptimalPlanner::AddEdgesTimeOptimal()
 
 
 
-void TebOptimalPlanner::AddEdgesKinematics()
+void TebOptimalPlanner::AddEdgesKinematicsDiffDrive()
 {
   if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_forward_drive==0)
     return; // if weight equals zero skip adding edges!
   
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding edges for kinematic constraints ...");
+  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding edges for kinematic constraints of a diffdrive robot ...");
 
   // create edge for satisfiying kinematic constraints
   Eigen::Matrix<double,2,2> information_kinematics;
@@ -659,7 +661,7 @@ void TebOptimalPlanner::AddEdgesKinematics()
   
   for (unsigned int i=0; i < teb_.sizePoses()-1; i++) // ignore twiced start only
   {
-    EdgeKinematics* kinematics_edge = new EdgeKinematics;
+    EdgeKinematicsDiffDrive* kinematics_edge = new EdgeKinematicsDiffDrive;
     kinematics_edge->setVertex(0,teb_.PoseVertex(i));
     kinematics_edge->setVertex(1,teb_.PoseVertex(i+1));      
     kinematics_edge->setInformation(information_kinematics);
@@ -668,6 +670,31 @@ void TebOptimalPlanner::AddEdgesKinematics()
   }	 
 }
 
+void TebOptimalPlanner::AddEdgesKinematicsCarlike()
+{
+  if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_forward_drive==0 
+      && cfg_->optim.weight_kinematics_turning_radius)
+    return; // if weight equals zero skip adding edges!
+  
+  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding edges for kinematic constraints of a carlike robot ...");
+
+  // create edge for satisfiying kinematic constraints
+  Eigen::Matrix<double,3,3> information_kinematics;
+  information_kinematics.fill(0.0);
+  information_kinematics(0, 0) = cfg_->optim.weight_kinematics_nh;
+  information_kinematics(1, 1) = cfg_->optim.weight_kinematics_forward_drive;
+  information_kinematics(2, 2) = cfg_->optim.weight_kinematics_turning_radius;
+  
+  for (unsigned int i=0; i < teb_.sizePoses()-1; i++) // ignore twiced start only
+  {
+    EdgeKinematicsCarlike* kinematics_edge = new EdgeKinematicsCarlike;
+    kinematics_edge->setVertex(0,teb_.PoseVertex(i));
+    kinematics_edge->setVertex(1,teb_.PoseVertex(i+1));      
+    kinematics_edge->setInformation(information_kinematics);
+    kinematics_edge->setTebConfig(*cfg_);
+    optimizer_->addEdge(kinematics_edge);
+  }  
+}
 
 
 void TebOptimalPlanner::computeCurrentCost(bool alternative_time_cost)
@@ -691,11 +718,11 @@ void TebOptimalPlanner::computeCurrentCost(bool alternative_time_cost)
   // now we need pointers to all edges -> calculate error for each edge-type
   // since we aren't storing edge pointers, we need to check every edge
     
-  cost_.fill(0.0);
+  cost_ = 0;
   
   if (alternative_time_cost)
   {
-    cost_.coeffRef(0) = teb_.getSumOfAllTimeDiffs()*4; // normalize to cost magnitude! Value is obtained from a few measurements!
+    cost_ += teb_.getSumOfAllTimeDiffs()*4; // normalize to cost magnitude! Value is obtained from a few measurements!
     //TEST we use SumOfAllTimeDiffs() here, because edge cost depends on number of samples, which is not always the same for similar TEBs,
     // since we are using an AutoResize Function with hysteresis. Unfortunately the sparse optimal_time edge cannot be normalized with the number of states.
   }
@@ -703,55 +730,63 @@ void TebOptimalPlanner::computeCurrentCost(bool alternative_time_cost)
   for (std::vector<g2o::OptimizableGraph::Edge*>::const_iterator it = optimizer_->activeEdges().begin(); it!= optimizer_->activeEdges().end(); it++)
   {
     EdgeTimeOptimal* edge_time_optimal = dynamic_cast<EdgeTimeOptimal*>(*it);
-    if (edge_time_optimal!=NULL)
+    if (edge_time_optimal!=NULL && !alternative_time_cost)
     {
-      if (!alternative_time_cost) 
-	cost_.coeffRef(0) += pow(edge_time_optimal->getError()[0],2);
+      cost_ += pow(edge_time_optimal->getError()[0],2);
       continue;
     }
 
-    EdgeKinematics* edge_kinematics = dynamic_cast<EdgeKinematics*>(*it);
-    if (edge_kinematics!=NULL)
+    EdgeKinematicsDiffDrive* edge_kinematics_dd = dynamic_cast<EdgeKinematicsDiffDrive*>(*it);
+    if (edge_kinematics_dd!=NULL)
     {
-      cost_.coeffRef(1) += pow(edge_kinematics->getError()[0],2);
-      cost_.coeffRef(2) += pow(edge_kinematics->getError()[1],2);
+      cost_ += pow(edge_kinematics_dd->getError()[0],2);
+      cost_ += pow(edge_kinematics_dd->getError()[1],2);
+      continue;
+    }
+    
+    EdgeKinematicsCarlike* edge_kinematics_cl = dynamic_cast<EdgeKinematicsCarlike*>(*it);
+    if (edge_kinematics_cl!=NULL)
+    {
+      cost_ += pow(edge_kinematics_cl->getError()[0],2);
+      cost_ += pow(edge_kinematics_cl->getError()[1],2);
+      cost_ += pow(edge_kinematics_cl->getError()[2],2);
       continue;
     }
     
     EdgeVelocity* edge_velocity = dynamic_cast<EdgeVelocity*>(*it);
     if (edge_velocity!=NULL)
     {
-      cost_.coeffRef(3) += pow(edge_velocity->getError()[0],2);
-      cost_.coeffRef(4) += pow(edge_velocity->getError()[1],2);
+      cost_ += pow(edge_velocity->getError()[0],2);
+      cost_ += pow(edge_velocity->getError()[1],2);
       continue;
     }
     
     EdgeAcceleration* edge_acceleration = dynamic_cast<EdgeAcceleration*>(*it);
     if (edge_acceleration!=NULL)
     {
-      cost_.coeffRef(5) += pow(edge_acceleration->getError()[0],2);
-      cost_.coeffRef(6) += pow(edge_acceleration->getError()[1],2);
+      cost_ += pow(edge_acceleration->getError()[0],2);
+      cost_ += pow(edge_acceleration->getError()[1],2);
       continue;
     }
     
     EdgePointObstacle* edge_point_obstacle = dynamic_cast<EdgePointObstacle*>(*it);
     if (edge_point_obstacle!=NULL)
     {
-      cost_.coeffRef(7) += pow(edge_point_obstacle->getError()[0],2);
+      cost_ += pow(edge_point_obstacle->getError()[0],2);
       continue;
     }
 
     EdgeLineObstacle* edge_line_obstacle = dynamic_cast<EdgeLineObstacle*>(*it);
     if (edge_line_obstacle!=NULL)
     {
-      cost_.coeffRef(8) += pow(edge_line_obstacle->getError()[0],2);
+      cost_ += pow(edge_line_obstacle->getError()[0],2);
       continue;
     }
     
     EdgePolygonObstacle* edge_polygon_obstacle = dynamic_cast<EdgePolygonObstacle*>(*it);
     if (edge_polygon_obstacle!=NULL)
     {
-      cost_.coeffRef(9) += pow(edge_polygon_obstacle->getError()[0],2);
+      cost_ += pow(edge_polygon_obstacle->getError()[0],2);
       continue;
     }  
   }

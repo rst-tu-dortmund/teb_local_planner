@@ -17,6 +17,7 @@ TebLocalPlannerROS:
  max_vel_theta: 0.3
  acc_lim_x: 0.5
  acc_lim_theta: 0.5
+ min_turning_radius: 0.0
     
  # GoalTolerance
     
@@ -50,6 +51,7 @@ TebLocalPlannerROS:
  weight_acc_lim_theta: 1
  weight_kinematics_nh: 1000
  weight_kinematics_forward_drive: 1
+ weight_kinematics_turning_radius: 1
  weight_optimaltime: 1
  weight_point_obstacle: 50
  weight_line_obstacle: 50

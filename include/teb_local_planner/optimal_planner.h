@@ -101,14 +101,7 @@ typedef g2o::LinearSolverCSparse<TEBBlockSolver::PoseMatrixType> TEBLinearSolver
 class TebOptimalPlanner : public PlannerInterface
 {
 public:
-  
-  /**
-   * @brief Abbrev. for a vector in which each element corresponds to the cost value of a specific cost function (edge type).
-   * @see computeCurrentCost()
-   * @see optimizeTEB()
-   */
-  typedef Eigen::Matrix<double, 10, 1> TebCostVec;
-  
+    
   /**
    * @brief Default constructor
    */
@@ -371,7 +364,7 @@ public:
    * implemented definition, if the value is scaled to match the magnitude of other cost values.
    * 
    * @todo Remove the scaling term for the alternative time cost.
-   * 
+   * @todo Can we use the last error (chi2) calculated from g2o instead of calculating it by ourself?
    * @see getCurrentCost
    * @see optimizeTEB
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time.
@@ -382,11 +375,11 @@ public:
   /**
    * @brief Access the cost vector.
    *
-   * The cost vector must previously calculated using computeCurrentCost 
+   * The accumulated cost value previously calculated using computeCurrentCost 
    * or by calling optimizeTEB with enabled cost flag.
    * @return const reference to the TebCostVec.
    */
-  const TebCostVec& getCurrentCost() const {return cost_;}
+  double getCurrentCost() const {return cost_;}
   
   /**
    * @brief Extract the velocity from consecutive poses and a time difference
@@ -549,12 +542,20 @@ protected:
   void AddEdgesDynamicObstacles();  
 
   /**
-   * @brief Add all edges (local cost functions) for satisfying kinematic constraints
-   * @see EdgeKinematics
+   * @brief Add all edges (local cost functions) for satisfying kinematic constraints of a differential drive robot
+   * @see AddEdgesKinematicsCarlike
    * @see buildGraph
    * @see optimizeGraph
    */
-  void AddEdgesKinematics();
+  void AddEdgesKinematicsDiffDrive();
+  
+  /**
+   * @brief Add all edges (local cost functions) for satisfying kinematic constraints of a carlike robot
+   * @see AddEdgesKinematicsDiffDrive
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesKinematicsCarlike();
   
   //@}
   
@@ -567,10 +568,10 @@ protected:
     
 
   // external objects (store weak pointers)
-  ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
+  ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
   
-  TebCostVec cost_; //!< Store composed cost vector of the current hyper-graph
+  double cost_; //!< Store cost value of the current hyper-graph
   
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class

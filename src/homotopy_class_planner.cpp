@@ -723,7 +723,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
 
   for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
   {
-    double teb_cost = it_teb->get()->getCurrentCost().sum(); // just sum up all cost components
+    double teb_cost = it_teb->get()->getCurrentCost();
 
     if (teb_cost < min_cost)
     {
