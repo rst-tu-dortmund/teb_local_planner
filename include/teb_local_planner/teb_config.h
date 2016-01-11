@@ -129,7 +129,7 @@ public:
     double weight_acc_lim_x; //!< Optimization weight for satisfying the maximum allowed translational acceleration
     double weight_acc_lim_theta; //!< Optimization weight for satisfying the maximum allowed angular acceleration
     double weight_kinematics_nh; //!< Optimization weight for satisfying the non-holonomic kinematics
-    double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities)
+    double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities, only diffdrive robot)
     double weight_kinematics_turning_radius; //!< Optimization weight for enforcing a minimum turning radius (carlike robots)
     double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t transition time
     double weight_point_obstacle; //!< Optimization weight for satisfying a minimum separation from point obstacles

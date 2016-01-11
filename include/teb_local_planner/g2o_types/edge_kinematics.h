@@ -234,10 +234,8 @@ public:
  * The turning radius is defined by \f$ r=v/omega \f$.
  * 
  * The \e weight can be set using setInformation(): Matrix element 1,1: (Choose a very high value: ~1000). \n
- * A second equation is implemented to penalize backward motions (second element of the error /cost vector). \n
- * The \e weight can be set using setInformation(): Matrix element 2,2: (A value ~1 allows backward driving, but penalizes it slighly). \n
- * The third equation enforces a minimum turning radius.
- * The \e weight can be set using setInformation(): Matrix element 3,3. \n
+ * The second equation enforces a minimum turning radius.
+ * The \e weight can be set using setInformation(): Matrix element 2,2. \n
  * The dimension of the error / cost vector is 3: the first component represents the nonholonomic constraint cost, 
  * the second one backward-drive cost and the third one the minimum turning radius
  * @see TebOptimalPlanner::AddEdgesKinematics, EdgeKinematicsDiffDrive
@@ -245,7 +243,7 @@ public:
  *          the user might add an extra margin to the min_turning_radius param.
  * @remarks Do not forget to call setTebConfig()
  */    
-class EdgeKinematicsCarlike : public g2o::BaseBinaryEdge<3, double, VertexPose, VertexPose>
+class EdgeKinematicsCarlike : public g2o::BaseBinaryEdge<2, double, VertexPose, VertexPose>
 {
 public:
   
@@ -287,69 +285,18 @@ public:
     // non holonomic constraint
     _error[0] = fabs( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
 
-    // positive-drive-direction constraint
-    Eigen::Vector2d angle_vec ( cos(conf1->theta()), sin(conf1->theta()) );    
-    _error[1] = penaltyBoundFromBelow(deltaS.dot(angle_vec), 0,0);
-    // epsilon=0, otherwise it pushes the first bandpoints away from start
-    
     // limit minimum turning radius
     double omega_t = g2o::normalize_theta( conf2->theta() - conf1->theta() );
     if (omega_t == 0)
-      _error[2] = 0; // straight line motion
+      _error[1] = 0; // straight line motion
     else
-      _error[2] = penaltyBoundFromBelow(deltaS.norm() / fabs(omega_t), cfg_->robot.min_turning_radius, 0.0); 
+      _error[1] = penaltyBoundFromBelow(deltaS.norm() / fabs(omega_t), cfg_->robot.min_turning_radius, 0.0); 
     // This edge is not affected by the epsilon parameter, the user might add an exra margin to the min_turning_radius parameter.
     
 
     ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]) && !std::isnan(_error[1]) && !std::isinf(_error[1]), 
       "EdgeKinematicsCarlike::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
-
-#ifdef USE_ANALYTIC_JACOBI
-#if 0
-  /**
-   * @brief Jacobi matrix of the cost function specified in computeError().
-   */
-  void linearizeOplus()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeKinematicsCarlike()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-      
-    double cos1 = cos(conf1->theta());
-    double cos2 = cos(conf2->theta());
-    double sin1 = sin(conf1->theta());
-    double sin2 = sin(conf2->theta());
-    double aux1 = sin1 + sin2;
-    double aux2 = cos1 + cos2;
-    
-    double dd_error_1 = deltaS[0]*cos1;
-    double dd_error_2 = deltaS[1]*sin1;
-    double dd_dev = penaltyBoundFromBelowDerivative(dd_error_1+dd_error_2, 0,0);
-    
-    double dev_nh_abs = g2o::sign( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - 
-        ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
-      
-    // conf1
-    _jacobianOplusXi(0,0) = aux1 * dev_nh_abs; // nh x1
-    _jacobianOplusXi(0,1) = -aux2 * dev_nh_abs; // nh y1
-    _jacobianOplusXi(1,0) = -cos1 * dd_dev; // drive-dir x1
-    _jacobianOplusXi(1,1) = -sin1 * dd_dev; // drive-dir y1
-    _jacobianOplusXi(0,2) = (-dd_error_2 - dd_error_1) * dev_nh_abs; // nh angle
-    _jacobianOplusXi(1,2) = ( -sin1*deltaS[0] + cos1*deltaS[1] ) * dd_dev; // drive-dir angle1
-    
-    // conf2
-    _jacobianOplusXj(0,0) = -aux1 * dev_nh_abs; // nh x2
-    _jacobianOplusXj(0,1) = aux2 * dev_nh_abs; // nh y2
-    _jacobianOplusXj(1,0) = cos1 * dd_dev; // drive-dir x2
-    _jacobianOplusXj(1,1) = sin1 * dd_dev; // drive-dir y2
-    _jacobianOplusXj(0,2) = (-sin2*deltaS[1] - cos2*deltaS[0]) * dev_nh_abs; // nh angle
-    _jacobianOplusXj(1,2) = 0; // drive-dir angle1          
-  }
-#endif
-#endif
     
   /**
   * @brief Compute and return error / cost value.
