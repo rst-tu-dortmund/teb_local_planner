@@ -108,7 +108,7 @@ public:
     //double angdiff = atan2(deltaS[1],deltaS[0]) - bandpt->theta();
     //_error[0] = penaltyBoundFromBelow(deltaS.norm()*fabs(sin(angdiff)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
     
-    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgePointObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgePointObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
 
 #ifdef USE_ANALYTIC_JACOBI

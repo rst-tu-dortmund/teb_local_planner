@@ -118,8 +118,7 @@ public:
     _error[1] = penaltyBoundFromBelow(deltaS.dot(angle_vec), 0,0);
     // epsilon=0, otherwise it pushes the first bandpoints away from start
 
-    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]) && !std::isnan(_error[1]) && !std::isinf(_error[1]), 
-		  "EdgeKinematicsDiffDrive::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
+    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeKinematicsDiffDrive::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
 
 #ifdef USE_ANALYTIC_JACOBI
@@ -222,7 +221,7 @@ public:
 
 
 /**
- * @class EdgeKinematicsDiffDrive
+ * @class EdgeKinematicsCarlike
  * @brief Edge defining the cost function for satisfying the non-holonomic kinematics of a carlike mobile robot.
  * 
  * The edge depends on two vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1} \f$ and minimizes a geometric interpretation
@@ -294,8 +293,7 @@ public:
     // This edge is not affected by the epsilon parameter, the user might add an exra margin to the min_turning_radius parameter.
     
 
-    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]) && !std::isnan(_error[1]) && !std::isinf(_error[1]), 
-      "EdgeKinematicsCarlike::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
+    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeKinematicsCarlike::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
     
   /**

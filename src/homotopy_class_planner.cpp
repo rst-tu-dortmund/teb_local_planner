@@ -484,9 +484,9 @@ for ( boost::tie(it,end) = boost::adjacent_vertices(back,g); it!=end; ++it)
 
 bool HomotopyClassPlanner::addHSignatureIfNew(const std::complex<long double>& H, double threshold)
 {	  
-  if (std::isnan(H.real()) || std::isnan(H.imag()))
+  if (!std::isfinite(H.real()) || !std::isfinite(H.imag()))
   {
-    ROS_WARN("HomotopyClassPlanner: Ignoring NAN H-signature");
+    ROS_WARN("HomotopyClassPlanner: Ignoring nan/inf H-signature");
     return false;
   }
   

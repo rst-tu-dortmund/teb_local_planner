@@ -105,7 +105,7 @@ public:
 
    _error[0] = timediff->dt();
   
-    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgeTimeOptimal::computeError() _error[0]=%f\n",_error[0]);
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeTimeOptimal::computeError() _error[0]=%f\n",_error[0]);
   }
 
 #ifdef USE_ANALYTIC_JACOBI

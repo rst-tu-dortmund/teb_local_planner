@@ -119,8 +119,7 @@ public:
     _error[0] = penaltyBoundToInterval(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
     _error[1] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
 
-    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]) && !std::isnan(_error[1]) && !std::isinf(_error[1]),
-		    "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
 
 #ifdef USE_ANALYTIC_JACOBI

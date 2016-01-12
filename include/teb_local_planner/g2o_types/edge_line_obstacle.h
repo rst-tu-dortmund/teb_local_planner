@@ -106,7 +106,7 @@ public:
 
     _error[0] = penaltyBoundFromBelow(distance_to_line, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
-    ROS_ASSERT_MSG(!std::isnan(_error[0]) && !std::isinf(_error[0]), "EdgeLineObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeLineObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
   }
   
   /**
