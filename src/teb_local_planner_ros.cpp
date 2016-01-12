@@ -327,10 +327,25 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
     return false;
   }
-
+  
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
   saturateVelocity(cmd_vel.linear.x, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
-    
+
+  // convert rot-vel to steering angle if desired (carlike robot).
+  // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
+  // and opposed to the other constraints not affected by penalty_epsilon. The user might add a safety margin to the parameter itself.
+  if (cfg_.robot.cmd_angle_instead_rotvel)
+  {
+    cmd_vel.angular.z = convertTransRotVelToSteeringAngle(cmd_vel.linear.x, cmd_vel.angular.z, cfg_.robot.wheelbase, 0.95*cfg_.robot.min_turning_radius);
+    if (!std::isfinite(cmd_vel.angular.z))
+    {
+      cmd_vel.linear.x = cmd_vel.angular.z = 0;
+      planner_->clearPlanner();
+      ROS_WARN("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...");
+      return false;
+    }
+  }
+  
   // Now visualize everything		    
   planner_->visualize();
   visualization_->publishObstacles(obstacles_);
@@ -700,7 +715,7 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
 }
       
       
-void TebLocalPlannerROS::saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards)
+void TebLocalPlannerROS::saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards) const
 {
   // Limit translational velocity for forward driving
   if (v > max_vel_x)
@@ -721,6 +736,22 @@ void TebLocalPlannerROS::saturateVelocity(double& v, double& omega, double max_v
     v = -max_vel_x_backwards;
 }
      
+     
+double TebLocalPlannerROS::convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius) const
+{
+  if (omega==0)
+    return 0;
+    
+  double radius = v/omega;
+  
+  if (fabs(radius) < min_turning_radius)
+    radius = double(g2o::sign(radius)) * min_turning_radius; 
+  
+  if (v==0)
+    omega = 0;
+  
+  return std::atan(wheelbase / radius);
+}
      
      
 void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)

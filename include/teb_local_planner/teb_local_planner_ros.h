@@ -258,8 +258,25 @@ protected:
    * @param max_vel_theta Maximum (absolute) angular velocity
    * @param max_vel_x_backwards Maximum translational velocity for backwards driving
    */
-  void saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards);
+  void saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards) const;
 
+  
+  /**
+   * @brief Convert translational and rotational velocities to a steering angle of a carlike robot
+   * 
+   * The conversion is based on the following equations:
+   * - The turning radius is defined by \f$ R = v/omega \f$
+   * - For a car like robot withe a distance L between both axles, the relation is: \f$ tan(\phi) = L/R \f$
+   * - phi denotes the steering angle.
+   * @remarks You might provide distances instead of velocities, since the temporal information is not required.
+   * @param v translational velocity [m/s]
+   * @param omega rotational velocity [rad/s]
+   * @param wheelbase distance between both axles (drive shaft and steering axle), the value might be negative for back_wheeled robots
+   * @param min_turning_radius Specify a lower bound on the turning radius
+   * @param back_wheeled if \c true, the steering angle is on the back axes -> inverse steering angles
+   * @return Resulting steering angle in [rad] inbetween [-pi/2, pi/2]
+   */
+  double convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius = 0) const;
   
   
   // Definition of member variables

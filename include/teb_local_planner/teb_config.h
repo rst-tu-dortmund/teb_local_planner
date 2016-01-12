@@ -87,6 +87,8 @@ public:
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
     double min_turning_radius; //!< Minimum turning radius of a carlike robot (diff-drive robot: zero); 
+    double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
+    bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
   } robot; //!< Robot related parameters
   
   //! Goal tolerance related parameters
@@ -198,6 +200,8 @@ public:
     robot.acc_lim_x = 0.5;
     robot.acc_lim_theta = 0.5;
     robot.min_turning_radius = 0;
+    robot.wheelbase = 1.0;
+    robot.cmd_angle_instead_rotvel = false;
     
     // GoalTolerance
     
