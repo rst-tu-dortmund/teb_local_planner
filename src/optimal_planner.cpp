@@ -367,7 +367,6 @@ void TebOptimalPlanner::AddEdgesObstacles()
   if (cfg_->optim.weight_point_obstacle==0 || obstacles_==NULL )
     return; // if weight equals zero skip adding edges!
 
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding obstacle edges ...");
   for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
   {
     if ((*obst)->isDynamic()) // we handle dynamic obstacles differently below
@@ -525,7 +524,6 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
   
   Eigen::Matrix<double,1,1> information;
   information.fill(cfg_->optim.weight_dynamic_obstacle);
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding dynamic obstacle edges ...");
   
   for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
   {
@@ -551,7 +549,6 @@ void TebOptimalPlanner::AddEdgesVelocity()
   if (cfg_->optim.weight_max_vel_x==0 && cfg_->optim.weight_max_vel_theta==0)
     return; // if weight equals zero skip adding edges!
 
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding velocity edges ...");
   std::size_t NoBandpts(teb_.sizePoses());
   Eigen::Matrix<double,2,2> information;
   information.fill(0);
@@ -575,7 +572,6 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   if (cfg_->optim.weight_acc_lim_x==0 && cfg_->optim.weight_acc_lim_theta==0) 
     return; // if weight equals zero skip adding edges!
 
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding acceleration edges ...");
   std::size_t NoBandpts(teb_.sizePoses());
   Eigen::Matrix<double,2,2> information;
   information.fill(0);
@@ -630,7 +626,6 @@ void TebOptimalPlanner::AddEdgesTimeOptimal()
   if (cfg_->optim.weight_optimaltime==0) 
     return; // if weight equals zero skip adding edges!
 
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding edges for optimal Time ...");
   Eigen::Matrix<double,1,1> information;
   information.fill(cfg_->optim.weight_optimaltime);
 
@@ -651,8 +646,6 @@ void TebOptimalPlanner::AddEdgesKinematicsDiffDrive()
   if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_forward_drive==0)
     return; // if weight equals zero skip adding edges!
   
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding edges for kinematic constraints of a diffdrive robot ...");
-
   // create edge for satisfiying kinematic constraints
   Eigen::Matrix<double,2,2> information_kinematics;
   information_kinematics.fill(0.0);
@@ -675,8 +668,6 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
   if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_turning_radius)
     return; // if weight equals zero skip adding edges!
   
-  ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding edges for kinematic constraints of a carlike robot ...");
-
   // create edge for satisfiying kinematic constraints
   Eigen::Matrix<double,2,2> information_kinematics;
   information_kinematics.fill(0.0);
