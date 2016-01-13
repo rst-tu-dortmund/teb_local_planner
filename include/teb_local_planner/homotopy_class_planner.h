@@ -222,10 +222,10 @@ public:
    * @param circumscribed_radius The radius of the circumscribed circle of the robot
    * @param look_ahead_idx Number of poses along the trajectory that should be verified, if -1, the complete trajectory will be checked.
    * @return \c true, if the robot footprint along the first part of the trajectory intersects with 
-   * 		      any obstacle in the costmap, \c false otherwise.
+   *         any obstacle in the costmap, \c false otherwise.
    */
   virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
-				    double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1);
+                                    double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1);
   
   //@}
   
@@ -342,6 +342,16 @@ public:
     */
   void clearPlanner() {graph_.clear(); h_signatures_.clear(); tebs_.clear(); initial_plan_ = NULL;}
   
+  /**
+   * @brief Check if the planner suggests a shorter horizon (e.g. to resolve problems)
+   * 
+   * This method is intendend to be called after determining that a trajectory provided by the planner is infeasible.
+   * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
+   * Implemented cases: see TebOptimalPlanner
+   * @param intial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
+   * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
+   */
+  virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;
   
   /**
    * @brief Calculate the H-Signature of a path

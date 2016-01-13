@@ -185,6 +185,12 @@ public:
     pose.position.z = 0;
     pose.orientation = tf::createQuaternionMsgFromYaw(_theta);
   }
+  
+  /**
+   * @brief Return the unit vector of the current orientation
+   * @returns [cos(theta), sin(theta))]^T
+   */  
+  Eigen::Vector2d orientationUnitVec() const {return Eigen::Vector2d(std::cos(_theta), std::sin(_theta));}
       
   ///@}
 

@@ -752,7 +752,7 @@ int HomotopyClassPlanner::bestTebIdx() const
 }
 
 bool HomotopyClassPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
-						double inscribed_radius, double circumscribed_radius, int look_ahead_idx)
+                                                double inscribed_radius, double circumscribed_radius, int look_ahead_idx)
 {
   TebOptimalPlannerPtr best = bestTeb();
   if (!best)
@@ -761,5 +761,14 @@ bool HomotopyClassPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel
   return best->isTrajectoryFeasible(costmap_model,footprint_spec, inscribed_radius, circumscribed_radius, look_ahead_idx);
 }
 
- 
+bool HomotopyClassPlanner::isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const
+{
+  TebOptimalPlannerPtr best = bestTeb();
+  if (!best)
+    return false;
+  
+  return best->isHorizonReductionAppropriate(initial_plan);
 }
+ 
+ 
+} // end namespace

@@ -91,7 +91,7 @@ public:
    * @param initial_plan vector of geometry_msgs::PoseStamped
    * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
-   *		      otherwise the final velocity will be zero (default: false)
+   *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
   virtual bool plan(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
@@ -104,7 +104,7 @@ public:
    * @param goal tf::Pose containing the goal pose of the trajectory
    * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
-   *		      otherwise the final velocity will be zero (default: false)
+   *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
   virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
@@ -117,7 +117,7 @@ public:
    * @param goal PoseSE2 containing the goal pose of the trajectory
    * @param start_vel Initial velocity at the start pose (2D vector containing the translational and angular velocity).
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
-   *		      otherwise the final velocity will be zero (default: false)
+   *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
   virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const Eigen::Vector2d& start_vel, bool free_goal_vel=false) = 0;
@@ -158,11 +158,24 @@ public:
    * @param circumscribed_radius The radius of the circumscribed circle of the robot
    * @param look_ahead_idx Number of poses along the trajectory that should be verified, if -1, the complete trajectory will be checked.
    * @return \c true, if the robot footprint along the first part of the trajectory intersects with 
-   * 		      any obstacle in the costmap, \c false otherwise.
+   *         any obstacle in the costmap, \c false otherwise.
    */
   virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
-				    double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1) = 0;
+        double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1) = 0;
     
+  
+  /**
+   * @brief Implement this method to check if the planner suggests a shorter horizon (e.g. to resolve problems)
+   * 
+   * This method is intendend to be called after determining that a trajectory provided by the planner is infeasible.
+   * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
+   * Since the trajectory representation is managed by the planner, it is part of the base planner_interface.
+   * The implementation is optional. If not specified, the method returns \c false.
+   * @param intial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
+   * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
+   */
+  virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const {return false;}   
+        
 };
 
 //! Abbrev. for shared instances of PlannerInterface or it's subclasses 

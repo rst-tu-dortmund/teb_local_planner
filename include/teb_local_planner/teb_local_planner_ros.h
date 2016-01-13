@@ -225,7 +225,7 @@ protected:
   bool transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan,
                            const tf::Stamped<tf::Pose>& global_pose,  const costmap_2d::Costmap2D& costmap,
                            const std::string& global_frame, std::vector<geometry_msgs::PoseStamped>& transformed_plan,
-                           unsigned int* current_goal_idx = NULL, tf::StampedTransform* tf_plan_to_global = NULL) const;
+                           int* current_goal_idx = NULL, tf::StampedTransform* tf_plan_to_global = NULL) const;
     
   /**
     * @brief Estimate the orientation of a pose from the global_plan that is treated as a local goal for the local planner.
@@ -309,6 +309,8 @@ protected:
   PoseSE2 robot_goal_; //!< Store current robot goal
   Eigen::Vector2d robot_vel_; //!< Store current robot translational and angular velocity (v, omega)
   bool goal_reached_; //!< store whether the goal is reached or not
+  bool horizon_reduced_; //!< store flag whether the horizon should be reduced temporary
+  ros::Time horizon_reduced_stamp_; //!< Store at which time stamp the horizon reduction was requested
   
   std::vector<geometry_msgs::Point> footprint_spec_; //!< Store the footprint of the robot 
   double robot_inscribed_radius_; //!< The radius of the inscribed circle of the robot (collision possible)

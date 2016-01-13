@@ -353,14 +353,14 @@ public:
    * 
    * The implemented algorithm subsamples the straight line between
    * start and goal using a given discretiziation width. \n
-   * The discretization width can be defined in the euclidian space
+   * The discretization width can be defined in the euclidean space
    * using the \c diststep parameter. Each time difference between two consecutive
    * poses is initialized to \c timestep. \n
    * If the \c diststep is chosen to be zero, 
    * the resulting trajectory contains the start and goal pose only.
    * @param start PoseSE2 defining the start of the trajectory
    * @param goal PoseSE2 defining the goal of the trajectory (final pose)
-   * @param diststep euclidian distance between two consecutive poses (if 0, no intermediate samples are inserted despite min_samples)
+   * @param diststep euclidean distance between two consecutive poses (if 0, no intermediate samples are inserted despite min_samples)
    * @param timestep intialization for the timediff between two consecutive poses
 	 * @param min_samples Minimum number of samples that should be initialized at least
    * @return true if everything was fine, false otherwise
@@ -576,12 +576,16 @@ public:
    * @brief Check whether the trajectory is initialized (nonzero pose and timediff sequences)
    */
   bool isInit() const {return !timediff_vec_.empty() && !pose_vec_.empty();}
-				
+
   /**
    * @brief Calculate the total transition time (sum over all time intervals of the timediff sequence)
-   */		
+   */
   double getSumOfAllTimeDiffs() const;
   
+  /**
+   * @brief Calculate the length (accumulated euclidean distance) of the trajectory
+   */
+  double getAccumulatedDistance() const;
   
   /**
    * @brief Detect whether the trajectory contains detours.

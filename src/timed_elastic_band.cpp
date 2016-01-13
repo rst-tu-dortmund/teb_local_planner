@@ -242,6 +242,17 @@ double TimedElasticBand::getSumOfAllTimeDiffs() const
   return time;
 }
 
+double TimedElasticBand::getAccumulatedDistance() const
+{
+  double dist = 0;
+
+  for(std::size_t i=1; i<sizePoses(); ++i)
+  {
+      dist += (Pose(i).position() - Pose(i-1).position()).norm();
+  }
+  return dist;
+}
+
 bool TimedElasticBand::initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep, double timestep, int min_samples)
 {
   if (!isInit())
