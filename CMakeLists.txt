@@ -247,7 +247,7 @@ install(FILES
 )
 
 install(DIRECTORY
-  launch cfg
+  launch cfg scripts
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   PATTERN ".svn" EXCLUDE
 )

@@ -208,7 +208,7 @@ public:
     // GoalTolerance
     
     goal_tolerance.xy_goal_tolerance = 0.2;
-    goal_tolerance.yaw_goal_tolerance = 0.1;
+    goal_tolerance.yaw_goal_tolerance = 0.2;
     goal_tolerance.free_goal_vel = false;
     
     // Obstacles
@@ -239,8 +239,8 @@ public:
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_kinematics_turning_radius = 1;
     optim.weight_optimaltime = 1;
-    optim.weight_point_obstacle = 50;
-    optim.weight_line_obstacle = 50;
+    optim.weight_point_obstacle = 10;
+    optim.weight_line_obstacle = 10;
     optim.weight_poly_obstacle = 10;
     optim.weight_dynamic_obstacle = 10;
     optim.alternative_time_cost = false;

@@ -121,7 +121,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     global_frame_ = costmap_ros_->getGlobalFrameID();
     cfg_.map_frame = global_frame_; // TODO
     robot_base_frame_ = costmap_ros_->getBaseFrameID();
-    
+
     //Initialize a costmap to polygon converter
     if (!cfg_.obstacles.costmap_converter_plugin.empty())
     {
@@ -769,17 +769,14 @@ void TebLocalPlannerROS::saturateVelocity(double& v, double& omega, double max_v
      
 double TebLocalPlannerROS::convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius) const
 {
-  if (omega==0)
+  if (omega==0 || v==0)
     return 0;
     
   double radius = v/omega;
   
   if (fabs(radius) < min_turning_radius)
     radius = double(g2o::sign(radius)) * min_turning_radius; 
-  
-  if (v==0)
-    omega = 0;
-  
+
   return std::atan(wheelbase / radius);
 }
      
