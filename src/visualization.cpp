@@ -131,6 +131,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
     marker.id = 0;
     marker.type = visualization_msgs::Marker::POINTS;
     marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = ros::Duration(2.0);
     
     for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
     {
@@ -170,7 +171,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       marker.id = idx++;
       marker.type = visualization_msgs::Marker::LINE_STRIP;
       marker.action = visualization_msgs::Marker::ADD;
-      marker.lifetime = ros::Duration(5.0);
+      marker.lifetime = ros::Duration(2.0);
       geometry_msgs::Point start;
       start.x = pobst->start().x();
       start.y = pobst->start().y();
@@ -210,6 +211,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       marker.id = idx++;
       marker.type = visualization_msgs::Marker::LINE_STRIP;
       marker.action = visualization_msgs::Marker::ADD;
+      marker.lifetime = ros::Duration(2.0);
       
       for (PolygonObstacle::VertexContainer::const_iterator vertex = pobst->vertices().begin(); vertex != pobst->vertices().end(); ++vertex)
       {
