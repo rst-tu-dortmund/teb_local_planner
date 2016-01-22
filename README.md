@@ -13,8 +13,7 @@ Build status of the *master* branch:
 
 Travis build status of the *master* branch (ROS Indigo & Jade):
 
-[![Build Status](https://travis-ci.org/rst-tu-dortmund/costmap_converter.svg?branch=master)](https://travis-ci.org/rst-tu-dortmund/costmap_converter)
-
+[![Build Status](https://travis-ci.org/rst-tu-dortmund/teb_local_planner.svg?branch=master)](https://travis-ci.org/rst-tu-dortmund/teb_local_planner)
 
 ### Papers Describing the Approach
 
