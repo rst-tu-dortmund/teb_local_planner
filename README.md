@@ -11,6 +11,10 @@ Build status of the *master* branch:
 - ROS Jade: [![Jade Build Status](http://jenkins.ros.org/buildStatus/icon?job=devel-jade-teb_local_planner)](http://jenkins.ros.org/job/devel-jade-teb_local_planner/)
 - ROS Indigo: [![Indigo Build Status](http://jenkins.ros.org/buildStatus/icon?job=devel-indigo-teb_local_planner)](http://jenkins.ros.org/job/devel-indigo-teb_local_planner/)
 
+Travis build status of the *master* branch (ROS Indigo & Jade):
+
+[![Build Status](https://travis-ci.org/rst-tu-dortmund/costmap_converter.svg?branch=master)](https://travis-ci.org/rst-tu-dortmund/costmap_converter)
+
 
 ### Papers Describing the Approach
 
