@@ -2,7 +2,7 @@
 
 # This small script subscribes to the FeedbackMsg message of teb_local_planner
 # and plots the current velocity.
-# publish_feedback must be turned such that the planner publishes this information.
+# publish_feedback must be turned on such that the planner publishes this information.
 # Author: christoph.roesmann@tu-dortmund.de
 
 import rospy, math
