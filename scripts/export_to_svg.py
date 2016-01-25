@@ -32,7 +32,7 @@ MIN_POSE_DISTANCE = 0.3 # Distance between two consecutive poses in SVG-image
 SCALE_VELOCITY_VEC = 0.4 # Scaling of velocity vectors -> 1 cell = 1/SCALE_VELOCITY_VEC m/s
 GRID_X_MIN = -2  # Define, how many cells your grid should contain in each direction.
 GRID_X_MAX = 2
-GRID_Y_MIN = -3
+GRID_Y_MIN = -2
 GRID_Y_MAX = 1
 
 # TEB parameters:
@@ -166,7 +166,7 @@ if __name__ == '__main__':
       sys.exit()
         
     # iterate trajectories
-    for traj in feedbackMsg.trajectories:
+    for index, traj in enumerate(feedbackMsg.trajectories):
       
         #color
         traj_color = svgwrite.rgb(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255), 'RGB')
@@ -177,8 +177,13 @@ if __name__ == '__main__':
             points.append( (point.pose.position.x*SCALE,-point.pose.position.y*SCALE) ) # y is negative in image coordinates
             # svgwrite rotates clockwise!
             
-        line = svg.add( svg.polyline(points=points, fill='none', stroke=traj_color, stroke_width=10, opacity=1.0 ) )
-        
+
+        if index == feedbackMsg.selected_trajectory_idx: # highlight currently selected teb
+          line = svg.add( svg.polyline(points=points, fill='none', stroke=traj_color, stroke_width=10, stroke_linecap='round', \
+                          stroke_linejoin='round', opacity=1.0 ) )
+        else:
+          line = svg.add( svg.polyline(points=points, fill='none', stroke=traj_color, stroke_width=10, stroke_linecap='butt', \
+                          stroke_linejoin='round', stroke_dasharray='10,3', opacity=1.0 ) )
         #marker_points = points[::7]
         #markerline = svg.add( svg.polyline(points=marker_points, fill='none', stroke=traj_color, stroke_width=10, opacity=0.0 ) )
         #arrow = arrowMarker(traj_color)
@@ -236,16 +241,3 @@ if __name__ == '__main__':
     svg.save() 
     
     rospy.loginfo("Drawing completed.") 
-'''
-    if  len(tebList) == 0:
-        rospy.loginfo("Received TEB-List is empty.")    
-    else:    
-            
-            
-        
-            
-
-'''
-
-        
-
