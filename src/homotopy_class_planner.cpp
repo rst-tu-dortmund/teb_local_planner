@@ -769,6 +769,14 @@ bool HomotopyClassPlanner::isHorizonReductionAppropriate(const std::vector<geome
   
   return best->isHorizonReductionAppropriate(initial_plan);
 }
+
+void HomotopyClassPlanner::computeCurrentCost(std::vector<double>& cost)
+{
+  for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
+  {
+    it_teb->get()->computeCurrentCost(cost);
+  } 
+}
  
  
 } // end namespace

@@ -38,7 +38,11 @@ def velocity_plotter():
   global trajectory
   rospy.init_node("visualize_velocity_profile", anonymous=True)
   
-  rospy.Subscriber("/test_optim_node/teb_feedback", FeedbackMsg, feedback_callback, queue_size = 1) # define feedback topic here!
+  topic_name = "/test_optim_node/teb_feedback"
+  rospy.Subscriber(topic_name, FeedbackMsg, feedback_callback, queue_size = 1) # define feedback topic here!
+
+  rospy.loginfo("Visualizing velocity profile published on '%s'.",topic_name) 
+  rospy.loginfo("Make sure to enable rosparam 'publish_feedback' in the teb_local_planner.")
 
   # two subplots sharing the same t axis
   fig, (ax_v, ax_omega) = plotter.subplots(2, sharex=True)

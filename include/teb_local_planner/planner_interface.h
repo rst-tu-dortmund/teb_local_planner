@@ -176,6 +176,15 @@ public:
    */
   virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const {return false;}   
         
+  /**
+   * Compute and return the cost of the current optimization graph (supports multiple trajectories)
+   * @param[out] cost current cost value for each trajectory
+   *                  [for a planner with just a single trajectory: size=1, vector will not be cleared]
+   */
+  virtual void computeCurrentCost(std::vector<double>& cost)
+  {
+  }      
+        
 };
 
 //! Abbrev. for shared instances of PlannerInterface or it's subclasses 

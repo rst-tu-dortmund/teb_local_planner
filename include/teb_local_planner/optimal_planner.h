@@ -373,6 +373,17 @@ public:
   void computeCurrentCost(bool alternative_time_cost=false);
   
   /**
+   * Compute and return the cost of the current optimization graph (supports multiple trajectories)
+   * @param[out] cost current cost value for each trajectory
+   *                  [for a planner with just a single trajectory: size=1, vector will not be cleared]
+   */
+  virtual void computeCurrentCost(std::vector<double>& cost)
+  {
+    computeCurrentCost();
+    cost.push_back( getCurrentCost() );
+  }
+  
+  /**
    * @brief Access the cost vector.
    *
    * The accumulated cost value previously calculated using computeCurrentCost 
@@ -380,6 +391,7 @@ public:
    * @return const reference to the TebCostVec.
    */
   double getCurrentCost() const {return cost_;}
+  
   
   /**
    * @brief Extract the velocity from consecutive poses and a time difference
