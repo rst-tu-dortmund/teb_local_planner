@@ -8,12 +8,11 @@ separation from obstacles and compliance with kinodynamic constraints at runtime
 Refer to http://wiki.ros.org/teb_local_planner for more information and tutorials.
 
 Build status of the *master* branch:
-- ROS Jade: [![Jade Build Status](http://jenkins.ros.org/buildStatus/icon?job=devel-jade-teb_local_planner)](http://jenkins.ros.org/job/devel-jade-teb_local_planner/)
-- ROS Indigo: [![Indigo Build Status](http://jenkins.ros.org/buildStatus/icon?job=devel-indigo-teb_local_planner)](http://jenkins.ros.org/job/devel-indigo-teb_local_planner/)
+- ROS Buildfarm Jade: [![Jade Build Status](http://build.ros.org/buildStatus/icon?job=Jdev__teb_local_planner__ubuntu_trusty_amd64)](http://build.ros.org/job/Jdev__teb_local_planner__ubuntu_trusty_amd64/)
+- ROS Buildfarm Indigo: [![Inidgo Build Status](http://build.ros.org/buildStatus/icon?job=Idev__teb_local_planner__ubuntu_trusty_amd64)](http://build.ros.org/job/Idev__teb_local_planner__ubuntu_trusty_amd64/)
+- Travis Indigo & Jade: [![Build Status](https://travis-ci.org/rst-tu-dortmund/teb_local_planner.svg?branch=master)](https://travis-ci.org/rst-tu-dortmund/teb_local_planner)
 
-Travis build status of the *master* branch (ROS Indigo & Jade):
 
-[![Build Status](https://travis-ci.org/rst-tu-dortmund/teb_local_planner.svg?branch=master)](https://travis-ci.org/rst-tu-dortmund/teb_local_planner)
 
 ### Papers Describing the Approach
 
