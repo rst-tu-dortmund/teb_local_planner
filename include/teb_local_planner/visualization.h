@@ -162,9 +162,10 @@ public:
    * @endcode
    * 
    * @remarks Actually the underlying path does not necessarily need to be a Eigen::Vector2d sequence. 
-   * 	      Eigen::Vector2d can be replaced with any datatype that implement public x() and y() methods.\n
-   * @param graph Const reference to the boost::adjacency_list (graph)
-   * @param ns_prefix Namespace prefix for the marker objects (the strings "Edges" and "Vertices" will be appended)
+   *          Eigen::Vector2d can be replaced with any datatype that implement public x() and y() methods.\n
+   * @param first Bidirectional iterator pointing to the begin of the path
+   * @param last Bidirectional iterator pointing to the end of the path
+   * @param ns Namespace for the marker objects (the strings "Edges" and "Vertices" will be appended)
    * @tparam BidirIter Bidirectional iterator to a 2D path (sequence of Eigen::Vector2d elements) in a container
    */
   template <typename BidirIter>
@@ -174,7 +175,7 @@ public:
    * @brief Publish multiple Tebs from a container class (publish as marker message).
    * 
    * @param teb_planner Container of boost::shared_ptr< TebOptPlannerPtr >
-   * @param ns_prefix Namespace prefix for the marker objects
+   * @param ns Namespace for the marker objects
    */
   void publishTebContainer(const std::vector< boost::shared_ptr<TebOptimalPlanner> >& teb_planner, const std::string& ns = "TebContainer");
     
@@ -185,7 +186,7 @@ public:
    * Each trajectory is composed of the sequence of poses, the velocity profile and temporal information.
    * The feedback message also contains a list of active obstacles.
    * @param teb_planners container with multiple tebs (resp. their planner instances)
-   * @param idx Idx of the currently selected trajectory in \c teb_planners
+   * @param selected_trajectory_idx Idx of the currently selected trajectory in \c teb_planners
    * @param obstacles Container of obstacles
    */
   void publishFeedbackMessage(const std::vector< boost::shared_ptr<TebOptimalPlanner> >& teb_planners, unsigned int selected_trajectory_idx, const ObstContainer& obstacles);
@@ -197,7 +198,6 @@ public:
    * that is composed of the sequence of poses, the velocity profile and temporal information.
    * The feedback message also contains a list of active obstacles.
    * @param teb_planner the planning instance
-   * @param idx Idx of the currently selected trajectory in \c teb_planners
    * @param obstacles Container of obstacles
    */
   void publishFeedbackMessage(const TebOptimalPlanner& teb_planner, const ObstContainer& obstacles);

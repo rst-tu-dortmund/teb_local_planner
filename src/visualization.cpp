@@ -290,7 +290,8 @@ if ( printErrorWhenNotInitialized() )
   teb_marker_pub_.publish( marker );
 }
 
-void TebVisualization::publishFeedbackMessage(const TebOptPlannerContainer& teb_planners, unsigned int selected_trajectory_idx, const ObstContainer& obstacles)
+void TebVisualization::publishFeedbackMessage(const std::vector< boost::shared_ptr<TebOptimalPlanner> >& teb_planners,
+                                              unsigned int selected_trajectory_idx, const ObstContainer& obstacles)
 {
   FeedbackMsg msg;
   msg.header.stamp = ros::Time::now();

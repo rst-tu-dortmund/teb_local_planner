@@ -305,6 +305,7 @@ inline const T& get_const_reference(const T* ptr) {return *ptr;}
  * Return a constant reference for boths input variants (pointer or reference).
  * @remarks Makes only sense in combination with the overload getConstReference(const T* val).
  * @param val
+ * @param dummy SFINAE helper variable
  * @tparam T arbitrary type 
  * @return  If \c T is a pointer, return const *T (leading to const T&), otherwise const T& with out pointer-to-ref conversion
  */

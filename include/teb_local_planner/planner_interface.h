@@ -153,7 +153,7 @@ public:
    * This method currently checks only that the trajectory, or a part of the trajectory is collision free.
    * Obstacles are here represented as costmap instead of the internal ObstacleContainer.
    * @param costmap_model Pointer to the costmap model
-   * @param footprint The specification of the footprint of the robot in world coordinates
+   * @param footprint_spec The specification of the footprint of the robot in world coordinates
    * @param inscribed_radius The radius of the inscribed circle of the robot
    * @param circumscribed_radius The radius of the circumscribed circle of the robot
    * @param look_ahead_idx Number of poses along the trajectory that should be verified, if -1, the complete trajectory will be checked.
@@ -171,7 +171,7 @@ public:
    * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
    * Since the trajectory representation is managed by the planner, it is part of the base planner_interface.
    * The implementation is optional. If not specified, the method returns \c false.
-   * @param intial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
+   * @param initial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
    * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
    */
   virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const {return false;}   

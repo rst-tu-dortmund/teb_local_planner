@@ -100,9 +100,9 @@ typedef boost::graph_traits<HcGraph>::adjacency_iterator HcGraphAdjecencyIterato
  * Homotopy classes are explored using the help a search-graph. \n
  * A couple of possible candidates are sampled / generated and filtered afterwards such that only a single candidate
  * per homotopy class remain. Filtering is applied using the H-Signature, a homotopy (resp. homology) invariant: \n
- * 	- S. Bhattacharya et al.: Search-based Path Planning with Homotopy Class Constraints, AAAI, 2010
+ *      - S. Bhattacharya et al.: Search-based Path Planning with Homotopy Class Constraints, AAAI, 2010
  *      - C. Rösmann et al.: Planning of Multiple Robot Trajectories in Distinctive Topologies, ECMR, 2015.
- * 	
+ * 
  * Followed by the homotopy class search, each candidate is used as an initialization for the underlying trajectory
  * optimization (in this case utilizing the TebOptimalPlanner class with the TimedElasticBand). \n
  * Depending on the config parameters, the optimization is performed in parallel. \n
@@ -217,7 +217,7 @@ public:
    * This method currently checks only that the trajectory, or a part of the trajectory is collision free.
    * Obstacles are here represented as costmap instead of the internal ObstacleContainer.
    * @param costmap_model Pointer to the costmap model
-   * @param footprint The specification of the footprint of the robot in world coordinates
+   * @param footprint_spec The specification of the footprint of the robot in world coordinates
    * @param inscribed_radius The radius of the inscribed circle of the robot
    * @param circumscribed_radius The radius of the circumscribed circle of the robot
    * @param look_ahead_idx Number of poses along the trajectory that should be verified, if -1, the complete trajectory will be checked.
@@ -273,7 +273,7 @@ public:
   /**
    * @brief Check all available trajectories (TEBs) for detours and delete found ones.
    * @see TimedElasticBand::detectDetoursBackwards
-   * @param treshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg) 
+   * @param threshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg) 
    */
   void deleteTebDetours(double threshold=0.0);
  
@@ -320,7 +320,7 @@ public:
    * 
    * Depending on the configuration parameters, the optimization is performed either single or multi threaded.
    * @param iter_innerloop Number of inner iterations (see TebOptimalPlanner::optimizeTEB())
-   * @param iter_innerloop Number of outer iterations (see TebOptimalPlanner::optimizeTEB())
+   * @param iter_outerloop Number of outer iterations (see TebOptimalPlanner::optimizeTEB())
    */
   void optimizeAllTEBs(unsigned int iter_innerloop, unsigned int iter_outerloop);
   
@@ -348,7 +348,7 @@ public:
    * This method is intendend to be called after determining that a trajectory provided by the planner is infeasible.
    * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
    * Implemented cases: see TebOptimalPlanner
-   * @param intial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
+   * @param initial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
    * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
    */
   virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;

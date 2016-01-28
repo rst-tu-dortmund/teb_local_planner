@@ -48,7 +48,7 @@ TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), cost_(HUG
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, std::vector<ObstaclePtr>* obstacles, TebVisualizationPtr visual)
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
 {    
   initialize(cfg, obstacles, visual);
 }
@@ -63,7 +63,7 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(const TebConfig& cfg, std::vector<ObstaclePtr>* obstacles, TebVisualizationPtr visual)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
 {    
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();

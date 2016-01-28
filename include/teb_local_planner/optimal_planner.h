@@ -422,7 +422,7 @@ public:
    * It can be used for evaluation and debugging purposes or
    * for open-loop control. For computing the velocity required for controlling the robot
    * to the next step refer to getVelocityCommand().
-   * @param[out] velocity_profile velocity profile will be written to this vector (after clearing any existing content) with the size=#poses+1
+   * @param[out] velocity_profile velocity profile will be written to this vector (after clearing any existing content) with the size=no_poses+1
    */
   void getVelocityProfile(std::vector<geometry_msgs::Twist>& velocity_profile) const;
   
@@ -445,7 +445,7 @@ public:
    * This method currently checks only that the trajectory, or a part of the trajectory is collision free.
    * Obstacles are here represented as costmap instead of the internal ObstacleContainer.
    * @param costmap_model Pointer to the costmap model
-   * @param footprint The specification of the footprint of the robot in world coordinates
+   * @param footprint_spec The specification of the footprint of the robot in world coordinates
    * @param inscribed_radius The radius of the inscribed circle of the robot
    * @param circumscribed_radius The radius of the circumscribed circle of the robot
    * @param look_ahead_idx Number of poses along the trajectory that should be verified, if -1, the complete trajectory will be checked.
@@ -466,7 +466,7 @@ public:
    * - Goal heading - start orientation > 90°
    * - The planned trajectory is at least 30° shorter than the initial plan (accumulated euclidean distances)
    * - Distance between consecutive poses > 0.9*min_obstacle_dist
-   * @param intial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
+   * @param initial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
    * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
    */
   virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;
