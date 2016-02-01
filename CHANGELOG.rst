@@ -2,6 +2,21 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Marker lifetime changed
+* In case the local planner detects an infeasible trajectory it does now try to
+  reduce the horizon to 50 percent of the length. The trajectory is only reduced
+  if some predefined cases are detected.
+  This mechanism constitutes a backup behavior.
+* Improved carlike robot support.
+  Instead of commanding the robot using translational and rotational velocities,
+  the robot might also be commanded using the transl. velocity and steering angle.
+  Appropriate parameters are added to the config.
+* Changed default parameter for 'h_signature_threshold' from 0.01 to 0.1 to better match the actual precision.
+* Some python scripts for data conversion added
+* Minor other changes
+
 0.2.2 (2016-01-11)
 ------------------
 * Carlike robots (ackermann steering) are supported from now on (at least experimentally) 
