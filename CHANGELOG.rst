@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.3 (2016-02-01)
+------------------
 * Marker lifetime changed
 * In case the local planner detects an infeasible trajectory it does now try to
   reduce the horizon to 50 percent of the length. The trajectory is only reduced
