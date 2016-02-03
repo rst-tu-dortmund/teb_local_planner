@@ -20,14 +20,16 @@ Build status of the *master* branch:
 - Rösmann C., Feiten W., Wösch T., Hoffmann F. and Bertram. T.: Efficient trajectory optimization using a sparse model. Proc. IEEE European Conference on Mobile Robots, Spain, Barcelona, Sept. 2013, pp. 138–143. 
 - Rösmann C., Hoffmann F. and Bertram. T.: Planning of Multiple Robot Trajectories in Distinctive Topologies, Proc. IEEE European Conference on Mobile Robots, UK, Lincoln, Sept. 2015.
 
-### Video
+### Videos
 
-The following video presents features of the package and shows examples from simulation and real robot situations.
+The left of the following videos presents features of the package and shows examples from simulation and real robot situations.
 Some spoken explanations are included in the audio track of the video. 
+The right one demonstrates features introduced in version 0.2 (supporting car-like robots and costmap conversion). Please watch the left one first.
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=e1Bw6JOgHME
-" target="_blank"><img src="http://img.youtube.com/vi/e1Bw6JOgHME/0.jpg" 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=e1Bw6JOgHME" target="_blank"><img src="http://img.youtube.com/vi/e1Bw6JOgHME/0.jpg" 
 alt="teb_local_planner - An Optimal Trajectory Planner for Mobile Robots" width="240" height="180" border="10" /></a>
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=o5wnRCzdUMo" target="_blank"><img src="http://img.youtube.com/vi/o5wnRCzdUMo/0.jpg" 
+alt="teb_local_planner - Car-like Robots and Costmap Conversion" width="240" height="180" border="10" /></a>
 
 ### License
 
