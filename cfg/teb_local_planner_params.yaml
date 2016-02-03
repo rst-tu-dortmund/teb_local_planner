@@ -31,9 +31,7 @@ TebLocalPlannerROS:
  costmap_emergency_stop_dist: 0.3
  include_costmap_obstacles: True
  costmap_obstacles_front_only: True
- obstacle_poses_affected: 10
- line_obstacle_poses_affected: 25
- polygon_obstacle_poses_affected: 25
+ obstacle_poses_affected: 25
  costmap_converter_plugin: ""
  costmap_converter_spin_thread: True
  costmap_converter_rate: 5
@@ -53,9 +51,7 @@ TebLocalPlannerROS:
  weight_kinematics_forward_drive: 1
  weight_kinematics_turning_radius: 1
  weight_optimaltime: 1
- weight_point_obstacle: 50
- weight_line_obstacle: 50
- weight_poly_obstacle: 50
+ weight_obstacle: 50
  weight_dynamic_obstacle: 10
  alternative_time_cost: False
 

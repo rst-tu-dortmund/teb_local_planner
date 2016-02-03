@@ -63,9 +63,7 @@
 #include <teb_local_planner/g2o_types/edge_acceleration.h>
 #include <teb_local_planner/g2o_types/edge_kinematics.h>
 #include <teb_local_planner/g2o_types/edge_time_optimal.h>
-#include <teb_local_planner/g2o_types/edge_point_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_line_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_polygon_obstacle.h>
+#include <teb_local_planner/g2o_types/edge_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
 
 // messages

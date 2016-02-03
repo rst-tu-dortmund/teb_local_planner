@@ -40,9 +40,10 @@
  *
  * Author: Christoph Rösmann
  *********************************************************************/
-#ifndef EDGE_POINTOBSTACLE_H
-#define EDGE_POINTOBSTACLE_H
+#ifndef EDGE_OBSTACLE_H_
+#define EDGE_OBSTACLE_H_
 
+#include <teb_local_planner/obstacles.h>
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/penalties.h>
 #include <teb_local_planner/teb_config.h>
@@ -54,8 +55,8 @@ namespace teb_local_planner
 {
 
 /**
- * @class EdgePointObstacle
- * @brief Edge defining the cost function for keeping a minimum distance from obstacles (point shape).
+ * @class EdgeObstacle
+ * @brief Edge defining the cost function for keeping a minimum distance from obstacles.
  * 
  * The edge depends on a single vertex \f$ \mathbf{s}_i \f$ and minimizes: \n
  * \f$ \min \textrm{penaltyBelow}( dist2point ) \cdot weight \f$. \n
@@ -65,14 +66,14 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesObstacles
  * @remarks Do not forget to call setTebConfig() and setObstacle()
  */     
-class EdgePointObstacle : public g2o::BaseUnaryEdge<1, const Eigen::Vector2d*, VertexPose>
+class EdgeObstacle : public g2o::BaseUnaryEdge<1, const Obstacle*, VertexPose>
 {
 public:
     
   /**
    * @brief Construct edge.
    */    
-  EdgePointObstacle() 
+  EdgeObstacle() 
   {
     _measurement = NULL;
     _vertices[0] =NULL;
@@ -84,7 +85,7 @@ public:
    * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
    * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
    */   
-  virtual ~EdgePointObstacle() 
+  virtual ~EdgeObstacle() 
   {
     if(_vertices[0]) 
       _vertices[0]->edges().erase(this);
@@ -95,20 +96,14 @@ public:
    */    
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setObstaclePosition() on EdgePointObstacle()");
+    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setObstacle() on EdgeObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
-    Eigen::Vector2d deltaS = *_measurement - bandpt->position();  
-    
-    // version without projection
-    // force pushes bandpoints along the trajectory
-    _error[0] = penaltyBoundFromBelow(deltaS.norm(), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
-    // calculate projection to teb // WARNING this does not work if poses are associated to the teb that are far away 
-    // and from which the orthogonal projection of the distance is small...
-    //double angdiff = atan2(deltaS[1],deltaS[0]) - bandpt->theta();
-    //_error[0] = penaltyBoundFromBelow(deltaS.norm()*fabs(sin(angdiff)), cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
-    
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgePointObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
+    double dist = fabs(_measurement->getMinimumDistance(bandpt->position()));
+
+    _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
 
 #ifdef USE_ANALYTIC_JACOBI
@@ -187,12 +182,12 @@ public:
   }
   
   /**
-   * @brief Set obstacle position for the underlying cost function 
-   * @param obst_pos 2D position vector containing the position of the obstacle
+   * @brief Set pointer to associated obstacle for the underlying cost function 
+   * @param obstacle 2D position vector containing the position of the obstacle
    */ 
-  void setObstaclePosition(const Eigen::Vector2d& obst_pos)
+  void setObstacle(const Obstacle* obstacle)
   {
-    _measurement = &obst_pos;
+    _measurement = obstacle;
   }
   
   /**
