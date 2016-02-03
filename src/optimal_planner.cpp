@@ -44,13 +44,13 @@ namespace teb_local_planner
 
 // ============== Implementation ===================
 
-TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), cost_(HUGE_VAL), initialized_(false), optimized_(false)
+TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), cost_(HUGE_VAL), robot_model_(new PointRobotModel()), initialized_(false), optimized_(false)
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotModelPtr robot_model, TebVisualizationPtr visual)
 {    
-  initialize(cfg, obstacles, visual);
+  initialize(cfg, obstacles, robot_model, visual);
 }
 
 TebOptimalPlanner::~TebOptimalPlanner()
@@ -63,13 +63,14 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotModelPtr robot_model, TebVisualizationPtr visual)
 {    
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
   
   cfg_ = &cfg;
   obstacles_ = obstacles;
+  robot_model_ = robot_model;
   cost_ = HUGE_VAL;
   setVisualization(visual);
   
@@ -93,6 +94,9 @@ void TebOptimalPlanner::visualize()
     return;
  
   visualization_->publishLocalPlanAndPoses(teb_);
+  
+  if (teb_.sizePoses() > 0)
+    visualization_->publishRobotModel(teb_.Pose(0), *robot_model_);
   
   if (cfg_->trajectory.publish_feedback)
     visualization_->publishFeedbackMessage(*this, *obstacles_);
@@ -388,8 +392,7 @@ void TebOptimalPlanner::AddEdgesObstacles()
     EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
     dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
     dist_bandpt_obst->setInformation(information);
-    dist_bandpt_obst->setObstacle(obst->get());   
-    dist_bandpt_obst->setTebConfig(*cfg_);
+    dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst->get());
     optimizer_->addEdge(dist_bandpt_obst);
 
     for (unsigned int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.obstacle_poses_affected/2); neighbourIdx++)
@@ -399,8 +402,7 @@ void TebOptimalPlanner::AddEdgesObstacles()
         EdgeObstacle* dist_bandpt_obst_n_r = new EdgeObstacle;
         dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
         dist_bandpt_obst_n_r->setInformation(information);
-        dist_bandpt_obst_n_r->setObstacle(obst->get()); 
-        dist_bandpt_obst_n_r->setTebConfig(*cfg_);
+        dist_bandpt_obst_n_r->setParameters(*cfg_, robot_model_.get(), obst->get());
         optimizer_->addEdge(dist_bandpt_obst_n_r);
       }
       if ( (int) index - (int) neighbourIdx >= 0) // needs to be casted to int to allow negative values
@@ -408,8 +410,7 @@ void TebOptimalPlanner::AddEdgesObstacles()
         EdgeObstacle* dist_bandpt_obst_n_l = new EdgeObstacle;
         dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
         dist_bandpt_obst_n_l->setInformation(information);
-        dist_bandpt_obst_n_l->setObstacle(obst->get()); 
-        dist_bandpt_obst_n_l->setTebConfig(*cfg_);
+        dist_bandpt_obst_n_l->setParameters(*cfg_, robot_model_.get(), obst->get());
         optimizer_->addEdge(dist_bandpt_obst_n_l);
       }
     } 

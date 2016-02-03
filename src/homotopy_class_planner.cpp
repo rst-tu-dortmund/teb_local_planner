@@ -63,23 +63,24 @@ inline const Eigen::Vector2d& getVector2dFromHcGraph(HcGraphVertexType vert_desc
 
 
 
-HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), initialized_(false)
+HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), robot_model_(new PointRobotModel()), initialized_(false)
 {
 }
   
-HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual) : initial_plan_(NULL)
+HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotModelPtr robot_model, TebVisualizationPtr visual) : initial_plan_(NULL)
 {
-  initialize(cfg, obstacles, visual);
+  initialize(cfg, obstacles, robot_model, visual);
 }
 
 HomotopyClassPlanner::~HomotopyClassPlanner()
 {
 }
 
-void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
+void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotModelPtr robot_model, TebVisualizationPtr visual)
 {
   cfg_ = &cfg;
   obstacles_ = obstacles;
+  robot_model_ = robot_model;
   initialized_ = true;
   
   setVisualization(visual);
@@ -171,6 +172,9 @@ void HomotopyClassPlanner::visualize()
     if (best_teb)
     {
       visualization_->publishLocalPlanAndPoses(best_teb->teb());
+      
+      if (best_teb->teb().sizePoses() > 0) //TODO maybe store current pose (start) within plan method as class field.
+        visualization_->publishRobotModel(best_teb->teb().Pose(0), *robot_model_);
     
       // feedback message
       if (cfg_->trajectory.publish_feedback)
@@ -632,13 +636,13 @@ void HomotopyClassPlanner::exploreHomotopyClassesAndInitTebs(const PoseSE2& star
 
 void HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal)
 {
-  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
+  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_) ) );
   tebs_.back()->teb().initTEBtoGoal(start, goal, 0, cfg_->trajectory.dt_ref, cfg_->trajectory.min_samples);
 }
 
 void HomotopyClassPlanner::addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan)
 {
-  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
+  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_) ) );
   tebs_.back()->teb().initTEBtoGoal(*initial_plan_, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples); 
 }
 

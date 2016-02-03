@@ -109,9 +109,11 @@ public:
    * @brief Construct and initialize the TEB optimal planner.
    * @param cfg Const reference to the TebConfig class for internal parameters
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
+   * @param robot_model Shared pointer to the robot model used for optimization
    * @param visual Shared pointer to the TebVisualization class (optional)
    */
-  TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, TebVisualizationPtr visual = TebVisualizationPtr());
+  TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotModelPtr robot_model = boost::make_shared<PointRobotModel>(),
+                    TebVisualizationPtr visual = TebVisualizationPtr());
   
   /**
    * @brief Destruct the optimal planner.
@@ -122,11 +124,14 @@ public:
     * @brief Initializes the optimal planner
     * @param cfg Const reference to the TebConfig class for internal parameters
     * @param obstacles Container storing all relevant obstacles (see Obstacle)
+    * @param robot_model Shared pointer to the robot model used for optimization
     * @param visual Shared pointer to the TebVisualization class (optional)
     */
-  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, TebVisualizationPtr visual = TebVisualizationPtr());
+  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotModelPtr robot_model = boost::make_shared<PointRobotModel>(),
+                  TebVisualizationPtr visual = TebVisualizationPtr());
   
   
+
   /** @name Plan a trajectory  */
   //@{
   
@@ -601,6 +606,7 @@ protected:
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class
   TimedElasticBand teb_; //!< Actual trajectory object
+  RobotModelPtr robot_model_; //!< Robot model
   boost::shared_ptr<g2o::SparseOptimizer> optimizer_; //!< g2o optimizer for trajectory optimization
   std::pair<bool, Eigen::Vector2d> vel_start_; //!< Store the initial velocity at the start pose
   std::pair<bool, Eigen::Vector2d> vel_goal_; //!< Store the final velocity at the goal pose

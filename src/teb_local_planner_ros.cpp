@@ -99,15 +99,19 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     // create visualization instance	
     visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
         
+    // create robot model
+    // TODO parameters!!!
+    RobotModelPtr robot_model = boost::make_shared<PointRobotModel>();
+    
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
     {
-      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, visualization_));
+      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, robot_model, visualization_));
       ROS_INFO("Parallel planning in distinctive topologies enabled.");
     }
     else
     {
-      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(cfg_, &obstacles_, visualization_));
+      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(cfg_, &obstacles_, robot_model, visualization_));
       ROS_INFO("Parallel planning in distinctive topologies disabled.");
     }
     

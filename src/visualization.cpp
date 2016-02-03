@@ -117,6 +117,31 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
     teb_poses_pub_.publish(teb_poses);
 }
 
+
+
+void TebVisualization::publishRobotModel(const PoseSE2& current_pose, const BaseRobotModel& robot_model, const std::string& ns)
+{
+  if ( printErrorWhenNotInitialized() )
+    return;
+  
+  visualization_msgs::Marker marker;
+  
+  marker.color.a = 1.0;
+  
+  if (!robot_model.visualizeRobot(current_pose, marker))
+    return;
+  
+  marker.header.frame_id = cfg_->map_frame;
+  marker.header.stamp = ros::Time::now();
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.ns = ns;
+  marker.id = 0;
+  marker.lifetime = ros::Duration(2.0);
+  
+  teb_marker_pub_.publish(marker);
+}
+
+
 void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 {
   if ( printErrorWhenNotInitialized() )

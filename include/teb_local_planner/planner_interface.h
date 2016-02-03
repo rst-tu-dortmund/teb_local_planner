@@ -48,6 +48,7 @@
 
 // this package
 #include <teb_local_planner/pose_se2.h>
+#include <teb_local_planner/robot_model.h>
 
 // messages
 #include <geometry_msgs/PoseArray.h>
@@ -79,6 +80,7 @@ public:
   virtual ~PlannerInterface()
   {
   }
+    
   
   /** @name Plan a trajectory */
   //@{
@@ -138,7 +140,7 @@ public:
    * @brief Reset the planner.
    */
   virtual void clearPlanner() = 0;
-  
+    
    /**
    * @brief Visualize planner specific stuff.
    * Overwrite this method to provide an interface to perform all planner related visualizations at once.
@@ -184,7 +186,7 @@ public:
   virtual void computeCurrentCost(std::vector<double>& cost)
   {
   }      
-        
+                
 };
 
 //! Abbrev. for shared instances of PlannerInterface or it's subclasses 

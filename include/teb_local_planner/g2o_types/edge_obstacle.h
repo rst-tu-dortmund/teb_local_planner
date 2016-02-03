@@ -44,6 +44,7 @@
 #define EDGE_OBSTACLE_H_
 
 #include <teb_local_planner/obstacles.h>
+#include <teb_local_planner/robot_model.h>
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/penalties.h>
 #include <teb_local_planner/teb_config.h>
@@ -96,14 +97,14 @@ public:
    */    
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setObstacle() on EdgeObstacle()");
+    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
 
-    double dist = fabs(_measurement->getMinimumDistance(bandpt->position()));
+    double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
 
     _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeObstacle::computeError() _error[0]=%f\n",_error[0]);
   }
 
 #ifdef USE_ANALYTIC_JACOBI
@@ -189,7 +190,16 @@ public:
   {
     _measurement = obstacle;
   }
-  
+    
+  /**
+   * @brief Set pointer to the robot model 
+   * @param robot_model Robot model required for distance calculation
+   */ 
+  void setRobotModel(const BaseRobotModel* robot_model)
+  {
+    robot_model_ = robot_model;
+  }
+    
   /**
    * @brief Assign the TebConfig class for parameters.
    * @param cfg TebConfig class
@@ -199,9 +209,23 @@ public:
       cfg_ = &cfg;
   }
 
+  /**
+   * @brief Set all parameters at once
+   * @param cfg TebConfig class
+   * @param robot_model Robot model required for distance calculation
+   * @param obstacle 2D position vector containing the position of the obstacle
+   */ 
+  void setParameters(const TebConfig& cfg, const BaseRobotModel* robot_model, const Obstacle* obstacle)
+  {
+    cfg_ = &cfg;
+    robot_model_ = robot_model;
+    _measurement = obstacle;
+  }
+  
 protected:
 
   const TebConfig* cfg_; //!< Store TebConfig class for parameters
+  const BaseRobotModel* robot_model_; //!< Store pointer to robot_model
   
 public: 	
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
