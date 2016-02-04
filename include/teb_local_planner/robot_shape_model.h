@@ -85,13 +85,12 @@ public:
   /**
     * @brief Visualize the robot using a markers
     * 
-    * Fill a marker message with all necessary information.
-    * The header, namespace and marker lifetime will be overwritten.
+    * Fill a marker message with all necessary information (type, pose, scale and color).
+    * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
-    * @param[out] marker marker message to be filled
-    * @return \c true, if the robot can be visualized and the message is filled accordingly.
+    * @param[out] markers container of marker messages describing the robot shape
     */
-  virtual bool visualizeRobot(const PoseSE2& current_pose, visualization_msgs::Marker& marker ) const {return false;}
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const {}
 
 	
 
@@ -182,23 +181,23 @@ public:
   /**
     * @brief Visualize the robot using a markers
     * 
-    * Fill a marker message with all necessary information.
-    * The header, namespace and marker lifetime will be overwritten.
+    * Fill a marker message with all necessary information (type, pose, scale and color).
+    * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
-    * @param[out] marker marker message to be filled
-    * @return \c true, if the robot can be visualized and the message is filled accordingly.
+    * @param[out] markers container of marker messages describing the robot shape
     */
-  virtual bool visualizeRobot(const PoseSE2& current_pose, visualization_msgs::Marker& marker ) const 
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
   {
+    markers.resize(1);
+    visualization_msgs::Marker& marker = markers.back();
     marker.type = visualization_msgs::Marker::CYLINDER;
     current_pose.toPoseMsg(marker.pose);
     marker.scale.x = marker.scale.y = 2*radius_; // scale = diameter
     marker.scale.z = 0.05;
     marker.color.a = 0.5;
-    marker.color.r = 0.5;
-    marker.color.g = 0.5;
-    marker.color.b = 0.5;
-    return true;
+    marker.color.r = 0.0;
+    marker.color.g = 0.8;
+    marker.color.b = 0.0;
   }
 
 private:
@@ -257,15 +256,45 @@ public:
   /**
     * @brief Visualize the robot using a markers
     * 
-    * Fill a marker message with all necessary information.
-    * The header, namespace and marker lifetime will be overwritten.
+    * Fill a marker message with all necessary information (type, pose, scale and color).
+    * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
-    * @param[out] marker marker message to be filled
-    * @return \c true, if the robot can be visualized and the message is filled accordingly.
+    * @param[out] markers container of marker messages describing the robot shape
     */
-  virtual bool visualizeRobot(const PoseSE2& current_pose, visualization_msgs::Marker& marker ) const 
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
   {
-    return false;
+    std_msgs::ColorRGBA color;
+    color.a  = 0.5;
+    color.r  = 0.0;
+    color.g = 0.8;
+    color.b  = 0.0;
+    
+    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    if (front_radius_>0)
+    {
+      markers.push_back(visualization_msgs::Marker());
+      visualization_msgs::Marker& marker1 = markers.front();
+      marker1.type = visualization_msgs::Marker::CYLINDER;
+      current_pose.toPoseMsg(marker1.pose);
+      marker1.pose.position.x += front_offset_*dir.x();
+      marker1.pose.position.y += front_offset_*dir.y();
+      marker1.scale.x = marker1.scale.y = 2*front_radius_; // scale = diameter
+//       marker1.scale.z = 0.05;
+      marker1.color = color;
+
+    }
+    if (rear_radius_>0)
+    {
+      markers.push_back(visualization_msgs::Marker());
+      visualization_msgs::Marker& marker2 = markers.back();
+      marker2.type = visualization_msgs::Marker::CYLINDER;
+      current_pose.toPoseMsg(marker2.pose);
+      marker2.pose.position.x -= rear_offset_*dir.x();
+      marker2.pose.position.y -= rear_offset_*dir.y();
+      marker2.scale.x = marker2.scale.y = 2*rear_radius_; // scale = diameter
+//       marker2.scale.z = 0.05;
+      marker2.color = color;
+    }
   }
 
 private:

@@ -124,21 +124,23 @@ void TebVisualization::publishRobotShapeModel(const PoseSE2& current_pose, const
   if ( printErrorWhenNotInitialized() )
     return;
   
-  visualization_msgs::Marker marker;
-  
-  marker.color.a = 1.0;
-  
-  if (!robot_model.visualizeRobot(current_pose, marker))
+  std::vector<visualization_msgs::Marker> markers;
+  robot_model.visualizeRobot(current_pose, markers);
+  if (markers.empty())
     return;
   
-  marker.header.frame_id = cfg_->map_frame;
-  marker.header.stamp = ros::Time::now();
-  marker.action = visualization_msgs::Marker::ADD;
-  marker.ns = ns;
-  marker.id = 0;
-  marker.lifetime = ros::Duration(2.0);
+  int idx = 0;
+  for (std::vector<visualization_msgs::Marker>::iterator marker_it = markers.begin(); marker_it != markers.end(); ++marker_it, ++idx)
+  {
+    marker_it->header.frame_id = cfg_->map_frame;
+    marker_it->header.stamp = ros::Time::now();
+    marker_it->action = visualization_msgs::Marker::ADD;
+    marker_it->ns = ns;
+    marker_it->id = idx;
+    marker_it->lifetime = ros::Duration(2.0);
+    teb_marker_pub_.publish(*marker_it);
+  }
   
-  teb_marker_pub_.publish(marker);
 }
 
 

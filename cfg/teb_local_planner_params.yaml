@@ -31,7 +31,7 @@ TebLocalPlannerROS:
  costmap_emergency_stop_dist: 0.3
  include_costmap_obstacles: True
  costmap_obstacles_front_only: True
- obstacle_poses_affected: 25
+ obstacle_poses_affected: 30
  costmap_converter_plugin: ""
  costmap_converter_spin_thread: True
  costmap_converter_rate: 5
