@@ -48,7 +48,6 @@
 
 // this package
 #include <teb_local_planner/pose_se2.h>
-#include <teb_local_planner/robot_model.h>
 
 // messages
 #include <geometry_msgs/PoseArray.h>

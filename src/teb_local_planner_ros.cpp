@@ -99,9 +99,9 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     // create visualization instance	
     visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
         
-    // create robot model
+    // create robot shape model
     // TODO parameters!!!
-    RobotModelPtr robot_model = boost::make_shared<PointRobotModel>();
+    RobotShapeModelPtr robot_model = boost::make_shared<PointRobotShape>();
     
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)

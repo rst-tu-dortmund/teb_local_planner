@@ -37,8 +37,8 @@
  *********************************************************************/
 
 
-#ifndef ROBOT_MODEL_H
-#define ROBOT_MODEL_H
+#ifndef ROBOT_SHAPE_MODEL_H
+#define ROBOT_SHAPE_MODEL_H
 
 #include <teb_local_planner/pose_se2.h>
 #include <teb_local_planner/obstacles.h>
@@ -48,28 +48,28 @@ namespace teb_local_planner
 {
 
 /**
- * @class BaseRobotModel
- * @brief Abstract class that defines the interface for robot models
+ * @class BaseRobotShapeModel
+ * @brief Abstract class that defines the interface for robot shape models
  * 
  * The robot model class is currently used in optimization only, since
  * taking the navigation stack footprint into account might be
  * inefficient. The footprint is only used for checking feasibility.
  */
-class BaseRobotModel
+class BaseRobotShapeModel
 {
 public:
   
   /**
     * @brief Default constructor of the abstract obstacle class
     */
-  BaseRobotModel()
+  BaseRobotShapeModel()
   {
   }
   
   /**
    * @brief Virtual destructor.
    */
-  virtual ~BaseRobotModel()
+  virtual ~BaseRobotShapeModel()
   {
   }
 
@@ -101,33 +101,33 @@ public:
 
 
 //! Abbrev. for shared obstacle pointers
-typedef boost::shared_ptr<BaseRobotModel> RobotModelPtr;
+typedef boost::shared_ptr<BaseRobotShapeModel> RobotShapeModelPtr;
 //! Abbrev. for shared obstacle const pointers
-typedef boost::shared_ptr<const BaseRobotModel> RobotModelConstPtr;
+typedef boost::shared_ptr<const BaseRobotShapeModel> RobotShapeModelConstPtr;
 
 
 
 /**
- * @class PointRobotModel
+ * @class PointRobotShape
  * @brief Class that defines a point-robot
  * 
  * Instead of using a CircularRobotModel this class might
  * be utitilzed and the robot radius can be added to the mininum distance 
  * parameter. This avoids a subtraction of zero each time a distance is calculated.
  */
-class PointRobotModel : public BaseRobotModel
+class PointRobotShape : public BaseRobotShapeModel
 {
 public:
   
   /**
     * @brief Default constructor of the abstract obstacle class
     */
-  PointRobotModel() {}
+  PointRobotShape() {}
   
   /**
    * @brief Virtual destructor.
    */
-  virtual ~PointRobotModel() {}
+  virtual ~PointRobotShape() {}
 
   /**
     * @brief Calculate the distance between the robot and an obstacle
@@ -144,22 +144,22 @@ public:
 
 
 /**
- * @class CircularRobotModel
+ * @class CircularRobotShape
  * @brief Class that defines the a robot of circular shape
  */
-class CircularRobotModel : public BaseRobotModel
+class CircularRobotShape : public BaseRobotShapeModel
 {
 public:
   
   /**
     * @brief Default constructor of the abstract obstacle class
     */
-  CircularRobotModel(double radius = 0.0) : radius_(radius) { }
+  CircularRobotShape(double radius = 0.0) : radius_(radius) { }
   
   /**
    * @brief Virtual destructor.
    */
-  virtual ~CircularRobotModel() { }
+  virtual ~CircularRobotShape() { }
 
   
   void setRadius(double radius) {radius_ = radius;}
@@ -202,8 +202,6 @@ private:
     
   double radius_;
 
-public: 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 
