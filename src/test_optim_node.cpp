@@ -127,7 +127,7 @@ int main( int argc, char** argv )
   
   // Setup robot shape model
   // TODO parameters!!!
-  RobotShapeModelPtr robot_model = boost::make_shared<PointRobotShape>();
+  RobotShapeModelPtr robot_model = boost::make_shared<TwoCirclesRobotShape>(1, 1, 1, 1);
   
   // Setup planner (homotopy class planning or just the local teb planner)
   if (config.hcp.enable_homotopy_class_planning)

@@ -153,15 +153,19 @@ public:
   
   /**
     * @brief Default constructor of the abstract obstacle class
+    * @param radius radius of the robot
     */
-  CircularRobotShape(double radius = 0.0) : radius_(radius) { }
+  CircularRobotShape(double radius) : radius_(radius) { }
   
   /**
    * @brief Virtual destructor.
    */
   virtual ~CircularRobotShape() { }
 
-  
+  /**
+    * @brief Set radius of the circular robot
+    * @param radius radius of the robot
+    */
   void setRadius(double radius) {radius_ = radius;}
   
   /**
@@ -197,12 +201,84 @@ public:
     return true;
   }
 
-  
 private:
     
   double radius_;
-
 };
+
+
+/**
+ * @class TwoCirclesRobotShape
+ * @brief Class that approximates the robot with two shifted circles
+ */
+class TwoCirclesRobotShape : public BaseRobotShapeModel
+{
+public:
+  
+  /**
+    * @brief Default constructor of the abstract obstacle class
+    * @param front_offset shift the center of the front circle along the robot orientation starting from the center at the rear axis (in meters)
+    * @param front_radius radius of the front circle
+    * @param rear_offset shift the center of the rear circle along the opposite robot orientation starting from the center at the rear axis (in meters)
+    * @param rear_radius radius of the front circle
+    */
+  TwoCirclesRobotShape(double front_offset, double front_radius, double rear_offset, double rear_radius) 
+    : front_offset_(front_offset), front_radius_(front_radius), rear_offset_(rear_offset), rear_radius_(rear_radius) { }
+  
+  /**
+   * @brief Virtual destructor.
+   */
+  virtual ~TwoCirclesRobotShape() { }
+
+  /**
+   * @brief Set parameters of the shape
+   * @param front_offset shift the center of the front circle along the robot orientation starting from the center at the rear axis (in meters)
+   * @param front_radius radius of the front circle
+   * @param rear_offset shift the center of the rear circle along the opposite robot orientation starting from the center at the rear axis (in meters)
+   * @param rear_radius radius of the front circle
+   */
+  void setParameters(double front_offset, double front_radius, double rear_offset, double rear_radius) 
+  {front_offset_=front_offset; front_radius_=front_radius; rear_offset_=rear_offset; rear_radius_=rear_radius;}
+  
+  /**
+    * @brief Calculate the distance between the robot and an obstacle
+    * @param current_pose Current robot pose
+    * @param obstacle Pointer to the obstacle
+    * @return Euclidean distance to the robot
+    */
+  virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+  {
+    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    double dist_front = obstacle->getMinimumDistance(current_pose.position() + front_offset_*dir) - front_radius_;
+    double dist_rear = obstacle->getMinimumDistance(current_pose.position() - rear_offset_*dir) - rear_radius_;
+    return std::min(dist_front, dist_rear);
+  }
+
+  /**
+    * @brief Visualize the robot using a markers
+    * 
+    * Fill a marker message with all necessary information.
+    * The header, namespace and marker lifetime will be overwritten.
+    * @param current_pose Current robot pose
+    * @param[out] marker marker message to be filled
+    * @return \c true, if the robot can be visualized and the message is filled accordingly.
+    */
+  virtual bool visualizeRobot(const PoseSE2& current_pose, visualization_msgs::Marker& marker ) const 
+  {
+    return false;
+  }
+
+private:
+    
+  double front_offset_;
+  double front_radius_;
+  double rear_offset_;
+  double rear_radius_;
+  
+};
+
+
+
 
 
 
