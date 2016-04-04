@@ -119,7 +119,7 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
 
 
 
-void TebVisualization::publishRobotShapeModel(const PoseSE2& current_pose, const BaseRobotShapeModel& robot_model, const std::string& ns)
+void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns)
 {
   if ( printErrorWhenNotInitialized() )
     return;

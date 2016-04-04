@@ -100,9 +100,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
         
     // create robot shape model
-    // TODO parameters!!!
-//     RobotShapeModelPtr robot_model = boost::make_shared<PointRobotShape>();
-    RobotShapeModelPtr robot_model = boost::make_shared<TwoCirclesRobotShape>(0.5, 0.1, 0.5, 0.1);
+    RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer();
     
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
@@ -420,10 +418,10 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
     
     for(unsigned int j=std::max((int)robot_xm - (int)window_range,0) ; j<=std::min(robot_xm+window_range,costmap->getSizeInCellsX()-1) ; j++)
     {
-	    for(unsigned int k=std::max((int)robot_ym-(int)window_range,0) ; k<=std::min(robot_ym+window_range,costmap->getSizeInCellsY()-1) ;	k++)
-	    {
-		    if(costmap->getCost(j,k) == costmap_2d::LETHAL_OBSTACLE) return true;
-	    }
+      for(unsigned int k=std::max((int)robot_ym-(int)window_range,0) ; k<=std::min(robot_ym+window_range,costmap->getSizeInCellsY()-1) ;	k++)
+      {
+        if(costmap->getCost(j,k) == costmap_2d::LETHAL_OBSTACLE) return true;
+      }
     }
     */
     
@@ -792,6 +790,10 @@ void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::
   custom_obstacle_msg_ = *obst_msg;  
 }
      
+RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
+{
+  return boost::make_shared<TwoCirclesRobotFootprint>(1, 0.5, 1, 0.5);
+}
          
 
 } // end namespace teb_local_planner

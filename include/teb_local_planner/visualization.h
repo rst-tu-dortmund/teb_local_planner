@@ -44,7 +44,7 @@
 // teb stuff
 #include <teb_local_planner/teb_config.h>
 #include <teb_local_planner/timed_elastic_band.h>
-#include <teb_local_planner/robot_shape_model.h>
+#include <teb_local_planner/robot_footprint_model.h>
 
 // ros stuff
 #include <ros/publisher.h>
@@ -131,10 +131,10 @@ public:
    * @brief Publish the visualization of the robot model
    * 
    * @param current_pose Current pose of the robot
-   * @param robot_model Subclass of BaseRobotModel
+   * @param robot_model Subclass of BaseRobotFootprintModel
    * @param ns Namespace for the marker objects
    */
-  void publishRobotShapeModel(const PoseSE2& current_pose, const BaseRobotShapeModel& robot_model, const std::string& ns = "RobotShapeModel");
+  void publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns = "RobotFootprintModel");
   
   /**
    * @brief Publish obstacle positions to the ros topic \e ../../teb_markers

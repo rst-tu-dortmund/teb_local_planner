@@ -63,11 +63,11 @@ inline const Eigen::Vector2d& getVector2dFromHcGraph(HcGraphVertexType vert_desc
 
 
 
-HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), robot_model_(new PointRobotShape()), initialized_(false)
+HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), robot_model_(new PointRobotFootprint()), initialized_(false)
 {
 }
   
-HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotShapeModelPtr robot_model, TebVisualizationPtr visual) : initial_plan_(NULL)
+HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual) : initial_plan_(NULL)
 {
   initialize(cfg, obstacles, robot_model, visual);
 }
@@ -76,7 +76,7 @@ HomotopyClassPlanner::~HomotopyClassPlanner()
 {
 }
 
-void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotShapeModelPtr robot_model, TebVisualizationPtr visual)
+void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual)
 {
   cfg_ = &cfg;
   obstacles_ = obstacles;
@@ -174,7 +174,7 @@ void HomotopyClassPlanner::visualize()
       visualization_->publishLocalPlanAndPoses(best_teb->teb());
       
       if (best_teb->teb().sizePoses() > 0) //TODO maybe store current pose (start) within plan method as class field.
-        visualization_->publishRobotShapeModel(best_teb->teb().Pose(0), *robot_model_);
+        visualization_->publishRobotFootprintModel(best_teb->teb().Pose(0), *robot_model_);
     
       // feedback message
       if (cfg_->trajectory.publish_feedback)

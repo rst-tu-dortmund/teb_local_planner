@@ -37,8 +37,8 @@
  *********************************************************************/
 
 
-#ifndef ROBOT_SHAPE_MODEL_H
-#define ROBOT_SHAPE_MODEL_H
+#ifndef ROBOT_FOOTPRINT_MODEL_H
+#define ROBOT_FOOTPRINT_MODEL_H
 
 #include <teb_local_planner/pose_se2.h>
 #include <teb_local_planner/obstacles.h>
@@ -48,28 +48,28 @@ namespace teb_local_planner
 {
 
 /**
- * @class BaseRobotShapeModel
- * @brief Abstract class that defines the interface for robot shape models
+ * @class BaseRobotFootprintModel
+ * @brief Abstract class that defines the interface for robot footprint/contour models
  * 
  * The robot model class is currently used in optimization only, since
  * taking the navigation stack footprint into account might be
  * inefficient. The footprint is only used for checking feasibility.
  */
-class BaseRobotShapeModel
+class BaseRobotFootprintModel
 {
 public:
   
   /**
     * @brief Default constructor of the abstract obstacle class
     */
-  BaseRobotShapeModel()
+  BaseRobotFootprintModel()
   {
   }
   
   /**
    * @brief Virtual destructor.
    */
-  virtual ~BaseRobotShapeModel()
+  virtual ~BaseRobotFootprintModel()
   {
   }
 
@@ -100,9 +100,9 @@ public:
 
 
 //! Abbrev. for shared obstacle pointers
-typedef boost::shared_ptr<BaseRobotShapeModel> RobotShapeModelPtr;
+typedef boost::shared_ptr<BaseRobotFootprintModel> RobotFootprintModelPtr;
 //! Abbrev. for shared obstacle const pointers
-typedef boost::shared_ptr<const BaseRobotShapeModel> RobotShapeModelConstPtr;
+typedef boost::shared_ptr<const BaseRobotFootprintModel> RobotFootprintModelConstPtr;
 
 
 
@@ -110,23 +110,23 @@ typedef boost::shared_ptr<const BaseRobotShapeModel> RobotShapeModelConstPtr;
  * @class PointRobotShape
  * @brief Class that defines a point-robot
  * 
- * Instead of using a CircularRobotModel this class might
+ * Instead of using a CircularRobotFootprint this class might
  * be utitilzed and the robot radius can be added to the mininum distance 
  * parameter. This avoids a subtraction of zero each time a distance is calculated.
  */
-class PointRobotShape : public BaseRobotShapeModel
+class PointRobotFootprint : public BaseRobotFootprintModel
 {
 public:
   
   /**
     * @brief Default constructor of the abstract obstacle class
     */
-  PointRobotShape() {}
+  PointRobotFootprint() {}
   
   /**
    * @brief Virtual destructor.
    */
-  virtual ~PointRobotShape() {}
+  virtual ~PointRobotFootprint() {}
 
   /**
     * @brief Calculate the distance between the robot and an obstacle
@@ -143,10 +143,10 @@ public:
 
 
 /**
- * @class CircularRobotShape
+ * @class CircularRobotFootprint
  * @brief Class that defines the a robot of circular shape
  */
-class CircularRobotShape : public BaseRobotShapeModel
+class CircularRobotFootprint : public BaseRobotFootprintModel
 {
 public:
   
@@ -154,12 +154,12 @@ public:
     * @brief Default constructor of the abstract obstacle class
     * @param radius radius of the robot
     */
-  CircularRobotShape(double radius) : radius_(radius) { }
+  CircularRobotFootprint(double radius) : radius_(radius) { }
   
   /**
    * @brief Virtual destructor.
    */
-  virtual ~CircularRobotShape() { }
+  virtual ~CircularRobotFootprint() { }
 
   /**
     * @brief Set radius of the circular robot
@@ -207,10 +207,10 @@ private:
 
 
 /**
- * @class TwoCirclesRobotShape
+ * @class TwoCirclesRobotFootprint
  * @brief Class that approximates the robot with two shifted circles
  */
-class TwoCirclesRobotShape : public BaseRobotShapeModel
+class TwoCirclesRobotFootprint : public BaseRobotFootprintModel
 {
 public:
   
@@ -221,16 +221,16 @@ public:
     * @param rear_offset shift the center of the rear circle along the opposite robot orientation starting from the center at the rear axis (in meters)
     * @param rear_radius radius of the front circle
     */
-  TwoCirclesRobotShape(double front_offset, double front_radius, double rear_offset, double rear_radius) 
+  TwoCirclesRobotFootprint(double front_offset, double front_radius, double rear_offset, double rear_radius) 
     : front_offset_(front_offset), front_radius_(front_radius), rear_offset_(rear_offset), rear_radius_(rear_radius) { }
   
   /**
    * @brief Virtual destructor.
    */
-  virtual ~TwoCirclesRobotShape() { }
+  virtual ~TwoCirclesRobotFootprint() { }
 
   /**
-   * @brief Set parameters of the shape
+   * @brief Set parameters of the contour/footprint
    * @param front_offset shift the center of the front circle along the robot orientation starting from the center at the rear axis (in meters)
    * @param front_radius radius of the front circle
    * @param rear_offset shift the center of the rear circle along the opposite robot orientation starting from the center at the rear axis (in meters)
@@ -313,4 +313,4 @@ private:
 
 } // namespace teb_local_planner
 
-#endif /* ROBOT_MODEL_H */
+#endif /* ROBOT_FOOTPRINT_MODEL_H */

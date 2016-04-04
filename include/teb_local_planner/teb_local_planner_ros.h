@@ -277,7 +277,13 @@ protected:
    */
   double convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius = 0) const;
   
+  /**
+   * @brief Get the current robot footprint/contour model
+   * @return Robot footprint model used for optimization
+   */
+  RobotFootprintModelPtr getRobotFootprintFromParamServer();
   
+private:
   // Definition of member variables
 
   // external objects (store weak pointers)

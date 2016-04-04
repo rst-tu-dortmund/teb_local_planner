@@ -44,7 +44,7 @@
 #define EDGE_OBSTACLE_H_
 
 #include <teb_local_planner/obstacles.h>
-#include <teb_local_planner/robot_shape_model.h>
+#include <teb_local_planner/robot_footprint_model.h>
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/penalties.h>
 #include <teb_local_planner/teb_config.h>
@@ -195,7 +195,7 @@ public:
    * @brief Set pointer to the robot model 
    * @param robot_model Robot model required for distance calculation
    */ 
-  void setRobotModel(const BaseRobotShapeModel* robot_model)
+  void setRobotModel(const BaseRobotFootprintModel* robot_model)
   {
     robot_model_ = robot_model;
   }
@@ -215,7 +215,7 @@ public:
    * @param robot_model Robot model required for distance calculation
    * @param obstacle 2D position vector containing the position of the obstacle
    */ 
-  void setParameters(const TebConfig& cfg, const BaseRobotShapeModel* robot_model, const Obstacle* obstacle)
+  void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
   {
     cfg_ = &cfg;
     robot_model_ = robot_model;
@@ -225,7 +225,7 @@ public:
 protected:
 
   const TebConfig* cfg_; //!< Store TebConfig class for parameters
-  const BaseRobotShapeModel* robot_model_; //!< Store pointer to robot_model
+  const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
   
 public: 	
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

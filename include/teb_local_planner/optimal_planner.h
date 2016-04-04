@@ -48,7 +48,7 @@
 #include <teb_local_planner/timed_elastic_band.h>
 #include <teb_local_planner/planner_interface.h>
 #include <teb_local_planner/visualization.h>
-#include <teb_local_planner/robot_shape_model.h>
+#include <teb_local_planner/robot_footprint_model.h>
 
 // g2o lib stuff
 #include "g2o/core/sparse_optimizer.h"
@@ -113,7 +113,7 @@ public:
    * @param robot_model Shared pointer to the robot shape model used for optimization
    * @param visual Shared pointer to the TebVisualization class (optional)
    */
-  TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotShapeModelPtr robot_model = boost::make_shared<PointRobotShape>(),
+  TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
                     TebVisualizationPtr visual = TebVisualizationPtr());
   
   /**
@@ -128,7 +128,7 @@ public:
     * @param robot_model Shared pointer to the robot shape model used for optimization
     * @param visual Shared pointer to the TebVisualization class (optional)
     */
-  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotShapeModelPtr robot_model = boost::make_shared<PointRobotShape>(),
+  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
                   TebVisualizationPtr visual = TebVisualizationPtr());
   
   
@@ -607,7 +607,7 @@ protected:
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class
   TimedElasticBand teb_; //!< Actual trajectory object
-  RobotShapeModelPtr robot_model_; //!< Robot model
+  RobotFootprintModelPtr robot_model_; //!< Robot model
   boost::shared_ptr<g2o::SparseOptimizer> optimizer_; //!< g2o optimizer for trajectory optimization
   std::pair<bool, Eigen::Vector2d> vel_start_; //!< Store the initial velocity at the start pose
   std::pair<bool, Eigen::Vector2d> vel_goal_; //!< Store the final velocity at the goal pose

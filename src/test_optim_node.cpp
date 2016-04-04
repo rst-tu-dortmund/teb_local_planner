@@ -126,8 +126,7 @@ int main( int argc, char** argv )
   visual = TebVisualizationPtr(new TebVisualization(n, config));
   
   // Setup robot shape model
-  // TODO parameters!!!
-  RobotShapeModelPtr robot_model = boost::make_shared<TwoCirclesRobotShape>(1, 0.5, 1, 0.5);
+  RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>();
   
   // Setup planner (homotopy class planning or just the local teb planner)
   if (config.hcp.enable_homotopy_class_planning)
