@@ -279,9 +279,11 @@ protected:
   
   /**
    * @brief Get the current robot footprint/contour model
+   * @param nh const reference to the local ros::NodeHandle
    * @return Robot footprint model used for optimization
    */
-  RobotFootprintModelPtr getRobotFootprintFromParamServer();
+  RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh);
+
   
 private:
   // Definition of member variables

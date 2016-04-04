@@ -311,6 +311,7 @@ private:
 
 
 
+
 } // namespace teb_local_planner
 
 #endif /* ROBOT_FOOTPRINT_MODEL_H */

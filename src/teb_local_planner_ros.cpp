@@ -100,7 +100,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
         
     // create robot shape model
-    RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer();
+    RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
     
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
@@ -790,9 +790,58 @@ void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::
   custom_obstacle_msg_ = *obst_msg;  
 }
      
-RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
+RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(const ros::NodeHandle& nh)
 {
-  return boost::make_shared<TwoCirclesRobotFootprint>(1, 0.5, 1, 0.5);
+  std::string model_name; 
+  if (!nh.getParam("footprint_model/type", model_name))
+  {
+    ROS_INFO("No robot footprint model specified for trajectory optimization. Using point-shaped model.");
+    return boost::make_shared<PointRobotFootprint>();
+  }
+    
+  if (model_name.compare("point") == 0)
+  {
+    ROS_INFO("Footprint model 'point' loaded for trajectory optimization.");
+    return boost::make_shared<PointRobotFootprint>();
+  }
+  
+  if (model_name.compare("circular") == 0)
+  {
+    // get radius
+    double radius;
+    if (!nh.getParam("footprint_model/radius", radius))
+    {
+      ROS_ERROR_STREAM("Footprint model 'circular' cannot be loaded for trajectory optimization, since param '" << nh.getNamespace() 
+                       << "/footprint_model/radius' does not exist. Using point-model instead.");
+      return boost::make_shared<PointRobotFootprint>();
+    }
+    ROS_INFO_STREAM("Footprint model 'circular' (radius: " << radius <<"m) loaded for trajectory optimization.");
+    return boost::make_shared<CircularRobotFootprint>(radius);
+  }
+  
+  if (model_name.compare("two_circles") == 0)
+  {
+    // check parameters
+    if (!nh.hasParam("footprint_model/front_offset") || !nh.hasParam("footprint_model/front_radius") 
+        || !nh.hasParam("footprint_model/rear_offset") || !nh.hasParam("footprint_model/rear_radius"))
+    {
+      ROS_ERROR_STREAM("Footprint model 'two_circles' cannot be loaded for trajectory optimization, since params '" << nh.getNamespace()
+                       << "/footprint_model/front_offset', '.../front_radius', '.../rear_offset' and '.../rear_radius' do not exist. Using point-model instead.");
+      return boost::make_shared<PointRobotFootprint>();
+    }
+    double front_offset, front_radius, rear_offset, rear_radius;
+    nh.getParam("footprint_model/front_offset", front_offset);
+    nh.getParam("footprint_model/front_radius", front_radius);
+    nh.getParam("footprint_model/rear_offset", rear_offset);
+    nh.getParam("footprint_model/rear_radius", rear_radius);
+    ROS_INFO_STREAM("Footprint model 'two_circles' (front_offset: " << front_offset <<"m, front_radius: " << front_radius 
+                    << "m, rear_offset: " << rear_offset << "m, rear_radius: " << rear_radius << "m) loaded for trajectory optimization.");
+    return boost::make_shared<TwoCirclesRobotFootprint>(front_offset, front_radius, rear_offset, rear_radius);
+  }
+  
+  //return boost::make_shared<TwoCirclesRobotFootprint>(1, 0.5, 1, 0.5);
+  ROS_WARN_STREAM("Unknown robot footprint model specified with parameter '" << nh.getNamespace() << "/footprint_model/type'. Using point model instead.");
+  return boost::make_shared<PointRobotFootprint>();
 }
          
 

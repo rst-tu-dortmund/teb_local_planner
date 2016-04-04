@@ -18,6 +18,13 @@ TebLocalPlannerROS:
  acc_lim_x: 0.5
  acc_lim_theta: 0.5
  min_turning_radius: 0.0
+ footprint_model: # types: "point", "circular", "two_circles"
+   type: "two_circles"
+   radius: 0.2 # for type "circular"
+   front_offset: 0.2 # for type "two_circles"
+   front_radius: 0.2 # for type "two_circles"
+   rear_offset: 0.2 # for type "two_circles"
+   rear_radius: 0.2 # for type "two_circles"
     
  # GoalTolerance
     
