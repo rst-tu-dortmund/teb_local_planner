@@ -231,6 +231,38 @@ double PolygonObstacle::getMinimumDistance(const Eigen::Vector2d& position) cons
 }
 
 
+double PolygonObstacle::getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+{
+  double dist = HUGE_VAL;
+  
+  assert(!vertices_.empty());
+  
+  // the polygon is a point
+  if (noVertices() == 1)
+  {
+    return DistanceFromLineSegment(vertices_.front(), line_start, line_end);
+  }
+    
+  // check each polygon edge
+  for (int i=0; i<(int)vertices_.size()-1; ++i)
+  {
+      double new_dist = DistanceSegmentToSegment2d(line_start, line_end, vertices_.at(i), vertices_.at(i+1));
+//       double new_dist = calc_distance_point_to_segment( position,  vertices_.at(i), vertices_.at(i+1));
+      if (new_dist < dist)
+        dist = new_dist;
+  }
+
+  if (noVertices()>2) // if not a line close polygon
+  {
+    double new_dist = DistanceSegmentToSegment2d(line_start, line_end, vertices_.back(), vertices_.front()); // check last edge
+    if (new_dist < dist)
+      return new_dist;
+  }
+  
+  return dist;
+}
+
+
 
 Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position) const
 {

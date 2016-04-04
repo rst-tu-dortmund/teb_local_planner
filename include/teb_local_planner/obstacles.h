@@ -115,11 +115,20 @@ public:
   virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const = 0;
 
   /**
-    * @brief Get the minimum euclidean distance to the obstacle
+    * @brief Get the minimum euclidean distance to the obstacle (point as reference)
+    * @param position 2d reference position
     * @return The nearest possible distance to the obstacle
     */
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const = 0;
 
+  /**
+   * @brief Get the minimum euclidean distance to the obstacle (line as reference)
+   * @param line_start 2d position of the begin of the reference line
+   * @param line_end 2d position of the end of the reference line
+   * @return The nearest possible distance to the obstacle
+   */
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const = 0;
+  
 
   /**
    * @brief Get the closest point on the boundary of the obstacle w.r.t. a specified reference position
@@ -295,6 +304,12 @@ public:
   {
     return (position-pos_).norm();
   }
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return DistanceFromLineSegment(pos_, line_start, line_end);
+  }
     
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
@@ -407,6 +422,12 @@ public:
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const 
   {
     return DistanceFromLineSegment(position, start_, end_);
+  }
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return DistanceSegmentToSegment2d(start_, end_, line_start, line_end);
   }
 
   // implements getMinimumDistanceVec() of the base class
@@ -534,6 +555,10 @@ public:
 
   // implements getMinimumDistance() of the base class
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const;
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const;
+
   
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const;

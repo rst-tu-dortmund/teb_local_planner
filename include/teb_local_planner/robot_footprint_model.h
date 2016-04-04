@@ -308,6 +308,216 @@ private:
 
 
 
+/**
+ * @class LineRobotFootprint
+ * @brief Class that approximates the robot with line segment (zero-width)
+ */
+class LineRobotFootprint : public BaseRobotFootprintModel
+{
+public:
+  
+  /**
+    * @brief Default constructor of the abstract obstacle class
+    * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+    * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+    */
+  LineRobotFootprint(const geometry_msgs::Point& line_start, const geometry_msgs::Point& line_end)
+  {
+    setLine(line_start, line_end);
+  }
+  
+  /**
+  * @brief Default constructor of the abstract obstacle class (Eigen Version)
+  * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+  * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
+  */
+  LineRobotFootprint(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end)
+  {
+    setLine(line_start, line_end);
+  }
+  
+  /**
+   * @brief Virtual destructor.
+   */
+  virtual ~LineRobotFootprint() { }
+
+  /**
+   * @brief Set vertices of the contour/footprint
+   * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
+   */
+  void setLine(const geometry_msgs::Point& line_start, const geometry_msgs::Point& line_end)
+  {
+    line_start_.x() = line_start.x; 
+    line_start_.y() = line_start.y; 
+    line_end_.x() = line_end.x;
+    line_end_.y() = line_end.y;
+  }
+  
+  /**
+   * @brief Set vertices of the contour/footprint (Eigen version)
+   * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
+   */
+  void setLine(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end)
+  {
+    line_start_ = line_start; 
+    line_end_ = line_end;
+  }
+  
+  /**
+    * @brief Calculate the distance between the robot and an obstacle
+    * @param current_pose Current robot pose
+    * @param obstacle Pointer to the obstacle
+    * @return Euclidean distance to the robot
+    */
+  virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+  {
+    // here we are doing the transformation into the world frame manually
+    Eigen::Vector2d line_start_world(current_pose.x() + std::cos(current_pose.theta()) * line_start_.x(), current_pose.y() + std::sin(current_pose.theta()) * line_start_.y());
+    Eigen::Vector2d line_end_world(current_pose.x() + std::cos(current_pose.theta()) * line_end_.x(), current_pose.y() + std::sin(current_pose.theta()) * line_end_.y());
+    return obstacle->getMinimumDistance(line_start_world, line_end_world);
+  }
+
+  /**
+    * @brief Visualize the robot using a markers
+    * 
+    * Fill a marker message with all necessary information (type, pose, scale and color).
+    * The header, namespace, id and marker lifetime will be overwritten.
+    * @param current_pose Current robot pose
+    * @param[out] markers container of marker messages describing the robot shape
+    */
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
+  {   
+    std_msgs::ColorRGBA color;
+    color.a  = 0.5;
+    color.r  = 0.0;
+    color.g = 0.8;
+    color.b  = 0.0;
+  
+    markers.push_back(visualization_msgs::Marker());
+    visualization_msgs::Marker& marker = markers.front();
+    marker.type = visualization_msgs::Marker::LINE_STRIP;
+    current_pose.toPoseMsg(marker.pose); // all points are transformed into the robot frame!
+    
+    // line
+    geometry_msgs::Point line_start_world;
+    line_start_world.x = line_start_.x();
+    line_start_world.y = line_start_.y();
+    line_start_world.z = 0;
+    marker.points.push_back(line_start_world);
+    
+    geometry_msgs::Point line_end_world;
+    line_end_world.x = line_end_.x();
+    line_end_world.y = line_end_.y();
+    line_end_world.z = 0;
+    marker.points.push_back(line_end_world);
+
+    marker.scale.x = 0.1; 
+    marker.color = color;
+  }
+
+private:
+    
+  Eigen::Vector2d line_start_;
+  Eigen::Vector2d line_end_;
+  
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
+};
+
+
+
+/**
+ * @class PolygonRobotFootprint
+ * @brief Class that approximates the robot with a closed polygon
+ */
+class PolygonRobotFootprint : public BaseRobotFootprintModel
+{
+public:
+  
+  /**
+    * @brief Default constructor of the abstract obstacle class
+    * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
+    */
+  PolygonRobotFootprint(const std::vector<geometry_msgs::Point>& vertices) : vertices_(vertices) { }
+  
+  /**
+   * @brief Virtual destructor.
+   */
+  virtual ~PolygonRobotFootprint() { }
+
+  /**
+   * @brief Set vertices of the contour/footprint
+   * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
+   */
+  void setVertices(const std::vector<geometry_msgs::Point>& vertices) {vertices_ = vertices;}
+  
+  /**
+    * @brief Calculate the distance between the robot and an obstacle
+    * @param current_pose Current robot pose
+    * @param obstacle Pointer to the obstacle
+    * @return Euclidean distance to the robot
+    */
+  virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+  {
+//     Eigen::Vector2d dir = current_pose.orientationUnitVec();
+//     double dist_front = obstacle->getMinimumDistance(current_pose.position() + front_offset_*dir) - front_radius_;
+//     double dist_rear = obstacle->getMinimumDistance(current_pose.position() - rear_offset_*dir) - rear_radius_;
+//     return std::min(dist_front, dist_rear);
+    // TODO
+    return 0;
+  }
+
+  /**
+    * @brief Visualize the robot using a markers
+    * 
+    * Fill a marker message with all necessary information (type, pose, scale and color).
+    * The header, namespace, id and marker lifetime will be overwritten.
+    * @param current_pose Current robot pose
+    * @param[out] markers container of marker messages describing the robot shape
+    */
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
+  {
+    if (vertices_.empty())
+      return;
+    
+    std_msgs::ColorRGBA color;
+    color.a  = 0.5;
+    color.r  = 0.0;
+    color.g = 0.8;
+    color.b  = 0.0;
+  
+    markers.push_back(visualization_msgs::Marker());
+    visualization_msgs::Marker& marker = markers.front();
+    marker.type = visualization_msgs::Marker::LINE_STRIP;
+    current_pose.toPoseMsg(marker.pose);
+    
+    for (std::size_t i = 0; i < vertices_.size(); ++i)
+    {
+      geometry_msgs::Point point;
+      point.x = current_pose.x() + vertices_[i].x;
+      point.y = current_pose.x() + vertices_[i].y;
+      point.z = 0;
+      marker.points.push_back(point);
+    }
+    // add first point again in order to close the polygon
+    geometry_msgs::Point point;
+    point.x = current_pose.x() + vertices_.front().x;
+    point.y = current_pose.x() + vertices_.front().y;
+    point.z = 0;
+    marker.points.push_back(point);
+
+    marker.scale.x = 0.1; 
+    marker.color = color;
+
+  }
+
+private:
+    
+  std::vector<geometry_msgs::Point> vertices_;
+  
+};
+
 
 
 

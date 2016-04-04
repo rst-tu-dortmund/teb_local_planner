@@ -799,12 +799,14 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(cons
     return boost::make_shared<PointRobotFootprint>();
   }
     
+  // point  
   if (model_name.compare("point") == 0)
   {
     ROS_INFO("Footprint model 'point' loaded for trajectory optimization.");
     return boost::make_shared<PointRobotFootprint>();
   }
   
+  // circular
   if (model_name.compare("circular") == 0)
   {
     // get radius
@@ -819,6 +821,33 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(cons
     return boost::make_shared<CircularRobotFootprint>(radius);
   }
   
+  // line
+  if (model_name.compare("line") == 0)
+  {
+    // check parameters
+    if (!nh.hasParam("footprint_model/line_start") || !nh.hasParam("footprint_model/line_end"))
+    {
+      ROS_ERROR_STREAM("Footprint model 'line' cannot be loaded for trajectory optimization, since param '" << nh.getNamespace() 
+                       << "/footprint_model/line_start' and/or '.../line_end' do not exist. Using point-model instead.");
+      return boost::make_shared<PointRobotFootprint>();
+    }
+    // get line coordinates
+    std::vector<double> line_start, line_end;
+    nh.getParam("footprint_model/line_start", line_start);
+    nh.getParam("footprint_model/line_end", line_end);
+    if (line_start.size() != 2 || line_end.size() != 2)
+    {
+      ROS_ERROR_STREAM("Footprint model 'line' cannot be loaded for trajectory optimization, since param '" << nh.getNamespace() 
+                       << "/footprint_model/line_start' and/or '.../line_end' do not contain x and y coordinates (2D). Using point-model instead.");
+      return boost::make_shared<PointRobotFootprint>();
+    }
+    
+    ROS_INFO_STREAM("Footprint model 'line' (line_start: [" << line_start[0] << "," << line_start[1] <<"]m, line_end: ["
+                     << line_end[0] << "," << line_end[1] << "]m) loaded for trajectory optimization.");
+    return boost::make_shared<LineRobotFootprint>(Eigen::Map<const Eigen::Vector2d>(line_start.data()), Eigen::Map<const Eigen::Vector2d>(line_end.data()));
+  }
+  
+  // two circles
   if (model_name.compare("two_circles") == 0)
   {
     // check parameters
@@ -839,7 +868,7 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(cons
     return boost::make_shared<TwoCirclesRobotFootprint>(front_offset, front_radius, rear_offset, rear_radius);
   }
   
-  //return boost::make_shared<TwoCirclesRobotFootprint>(1, 0.5, 1, 0.5);
+  // otherwise
   ROS_WARN_STREAM("Unknown robot footprint model specified with parameter '" << nh.getNamespace() << "/footprint_model/type'. Using point model instead.");
   return boost::make_shared<PointRobotFootprint>();
 }
