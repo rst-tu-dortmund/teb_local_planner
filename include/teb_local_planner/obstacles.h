@@ -48,6 +48,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 #include <geometry_msgs/Polygon.h>
+#include <teb_local_planner/distance_calculations.h>
 
 
 namespace teb_local_planner
@@ -169,48 +170,6 @@ public:
 
   /** @name Helper Functions */
   //@{ 
-
-  /**
-    * @brief Helper function to calculate the distance between a line segment and a point
-    * @param point 2D point
-    * @param line_start 2D point representing the start of the line segment
-    * @param line_end 2D point representing the end of the line segment
-    * @return minimum distance to a given line segment
-    */
-  static double DistanceFromLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
-
-  /**
-    * @brief Helper function to obtain the closest point on a line segment w.r.t. a reference point
-    * @param point 2D point
-    * @param line_start 2D point representing the start of the line segment
-    * @param line_end 2D point representing the end of the line segment
-    * @return Closest point on the line segment
-    */
-  static Eigen::Vector2d ClosestPointOnLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
-
-  /**
-    * @brief Helper function to check whether two line segments intersects
-    * @param line1_start 2D point representing the start of the first line segment
-    * @param line1_end 2D point representing the end of the first line segment
-    * @param line2_start 2D point representing the start of the second line segment
-    * @param line2_end 2D point representing the end of the second line segment
-    * @param[out] intersection [optional] Write intersection point to destination (the value is only written, if both lines intersect, e.g. if the function returns \c true)
-    * @return \c true if both line segments intersect
-    */	
-  static bool CheckLineSegmentsIntersection(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
-						    const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end, Eigen::Vector2d* intersection = NULL);
-  
-    /**
-    * @brief Helper function to calculate the smallest distance between two line segments
-    * @param line1_start 2D point representing the start of the first line segment
-    * @param line1_end 2D point representing the end of the first line segment
-    * @param line2_start 2D point representing the start of the second line segment
-    * @param line2_end 2D point representing the end of the second line segment
-    * @return smallest distance between both segments
-    */  
-  static double DistanceSegmentToSegment2d(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
-                  const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end);
-
   
   /**
    * @brief Convert the obstacle to a polygon message
@@ -308,7 +267,7 @@ public:
   // implements getMinimumDistance() of the base class
   virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
   {
-    return DistanceFromLineSegment(pos_, line_start, line_end);
+    return distance_point_to_segment_2d(pos_, line_start, line_end);
   }
     
   // implements getMinimumDistanceVec() of the base class
@@ -415,25 +374,25 @@ public:
   // implements checkLineIntersection() of the base class
   virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const 
   {
-    return CheckLineSegmentsIntersection(line_start, line_end, start_, end_);
+    return check_line_segments_intersection_2d(line_start, line_end, start_, end_);
   }
 
   // implements getMinimumDistance() of the base class
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const 
   {
-    return DistanceFromLineSegment(position, start_, end_);
+    return distance_point_to_segment_2d(position, start_, end_);
   }
   
   // implements getMinimumDistance() of the base class
   virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
   {
-    return DistanceSegmentToSegment2d(start_, end_, line_start, line_end);
+    return distance_segment_to_segment_2d(start_, end_, line_start, line_end);
   }
 
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
   {
-    return ClosestPointOnLineSegment(position, start_, end_);
+    return closest_point_on_line_segment_2d(position, start_, end_);
   }
 
 

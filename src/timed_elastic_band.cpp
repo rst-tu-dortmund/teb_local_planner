@@ -399,7 +399,7 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const 
   for (unsigned int i = 0; i < sizePoses(); i++)
   {
     Eigen::Vector2d point = Pose(i).position();
-    double diff = Obstacle::DistanceFromLineSegment(point, ref_line_start, ref_line_end);
+    double diff = distance_point_to_segment_2d(point, ref_line_start, ref_line_end);
     dist_vec.push_back(diff);
   }
 
@@ -440,9 +440,9 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const PolygonObstacle::
     double diff = HUGE_VAL;
     for (int j = 0; j < (int) vertices.size()-1; ++j)
     {
-       diff = std::min(diff, Obstacle::DistanceFromLineSegment(point, vertices[j], vertices[j+1]));
+       diff = std::min(diff, distance_point_to_segment_2d(point, vertices[j], vertices[j+1]));
     }
-    diff = std::min(diff, Obstacle::DistanceFromLineSegment(point, vertices.back(), vertices.front()));
+    diff = std::min(diff, distance_point_to_segment_2d(point, vertices.back(), vertices.front()));
     dist_vec.push_back(diff);
   }
 
