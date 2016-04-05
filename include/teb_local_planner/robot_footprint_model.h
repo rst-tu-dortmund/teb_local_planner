@@ -463,11 +463,12 @@ public:
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
   {
     // here we are doing the transformation into the world frame manually
-    Point2dContainer polygon_world = vertices_;
+    Eigen::Vector2d orient(std::cos(current_pose.theta()), std::sin(current_pose.theta()));
+    Point2dContainer polygon_world(vertices_.size());
     for (std::size_t i=0; i<vertices_.size(); ++i)
     {
-      polygon_world[i].x() += std::cos(current_pose.theta()) * vertices_[i].x();
-      polygon_world[i].y() += std::sin(current_pose.theta()) * vertices_[i].y();
+      polygon_world[i].x() = current_pose.x() + orient.x() * vertices_[i].x();
+      polygon_world[i].y() = current_pose.y() + orient.y() * vertices_[i].y();
     }
     return obstacle->getMinimumDistance(polygon_world);
   }
