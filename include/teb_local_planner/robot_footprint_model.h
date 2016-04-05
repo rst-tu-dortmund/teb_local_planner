@@ -411,7 +411,7 @@ public:
     line_end_world.z = 0;
     marker.points.push_back(line_end_world);
 
-    marker.scale.x = 0.1; 
+    marker.scale.x = 0.05; 
     marker.color = color;
   }
 
@@ -435,11 +435,13 @@ class PolygonRobotFootprint : public BaseRobotFootprintModel
 {
 public:
   
+  
+  
   /**
     * @brief Default constructor of the abstract obstacle class
     * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
     */
-  PolygonRobotFootprint(const std::vector<geometry_msgs::Point>& vertices) : vertices_(vertices) { }
+  PolygonRobotFootprint(const Point2dContainer& vertices) : vertices_(vertices) { }
   
   /**
    * @brief Virtual destructor.
@@ -450,7 +452,7 @@ public:
    * @brief Set vertices of the contour/footprint
    * @param vertices footprint vertices (only x and y) around the robot center (0,0) (do not repeat the first and last vertex at the end)
    */
-  void setVertices(const std::vector<geometry_msgs::Point>& vertices) {vertices_ = vertices;}
+  void setVertices(const Point2dContainer& vertices) {vertices_ = vertices;}
   
   /**
     * @brief Calculate the distance between the robot and an obstacle
@@ -460,12 +462,14 @@ public:
     */
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
   {
-//     Eigen::Vector2d dir = current_pose.orientationUnitVec();
-//     double dist_front = obstacle->getMinimumDistance(current_pose.position() + front_offset_*dir) - front_radius_;
-//     double dist_rear = obstacle->getMinimumDistance(current_pose.position() - rear_offset_*dir) - rear_radius_;
-//     return std::min(dist_front, dist_rear);
-    // TODO
-    return 0;
+    // here we are doing the transformation into the world frame manually
+    Point2dContainer polygon_world = vertices_;
+    for (std::size_t i=0; i<vertices_.size(); ++i)
+    {
+      polygon_world[i].x() += std::cos(current_pose.theta()) * vertices_[i].x();
+      polygon_world[i].y() += std::sin(current_pose.theta()) * vertices_[i].y();
+    }
+    return obstacle->getMinimumDistance(polygon_world);
   }
 
   /**
@@ -490,31 +494,31 @@ public:
     markers.push_back(visualization_msgs::Marker());
     visualization_msgs::Marker& marker = markers.front();
     marker.type = visualization_msgs::Marker::LINE_STRIP;
-    current_pose.toPoseMsg(marker.pose);
+    current_pose.toPoseMsg(marker.pose); // all points are transformed into the robot frame!
     
     for (std::size_t i = 0; i < vertices_.size(); ++i)
     {
       geometry_msgs::Point point;
-      point.x = current_pose.x() + vertices_[i].x;
-      point.y = current_pose.x() + vertices_[i].y;
+      point.x = vertices_[i].x();
+      point.y = vertices_[i].y();
       point.z = 0;
       marker.points.push_back(point);
     }
     // add first point again in order to close the polygon
     geometry_msgs::Point point;
-    point.x = current_pose.x() + vertices_.front().x;
-    point.y = current_pose.x() + vertices_.front().y;
+    point.x = vertices_.front().x();
+    point.y = vertices_.front().y();
     point.z = 0;
     marker.points.push_back(point);
 
-    marker.scale.x = 0.1; 
+    marker.scale.x = 0.025; 
     marker.color = color;
 
   }
 
 private:
     
-  std::vector<geometry_msgs::Point> vertices_;
+  Point2dContainer vertices_;
   
 };
 

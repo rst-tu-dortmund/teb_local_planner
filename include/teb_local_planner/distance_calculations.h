@@ -45,6 +45,9 @@
 
 namespace teb_local_planner
 {
+  
+//! Abbrev. for a container storing 2d points
+typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > Point2dContainer;
 
   
 /**
@@ -152,6 +155,111 @@ inline double distance_segment_to_segment_2d(const Eigen::Ref<const Eigen::Vecto
   return *std::min_element(distances.begin(), distances.end());
 }
   
+  
+/**
+ * @brief Helper function to calculate the smallest distance between a point and a closed polygon
+ * @param point 2D point
+ * @param vertices Vertices describing the closed polygon (the first vertex is not repeated at the end)
+ * @return smallest distance between point and polygon
+*/    
+inline double distance_point_to_polygon_2d(const Eigen::Vector2d& point, const Point2dContainer& vertices)
+{
+  double dist = HUGE_VAL;
+    
+  // the polygon is a point
+  if (vertices.size() == 1)
+  {
+    return (point - vertices.front()).norm();
+  }
+    
+  // check each polygon edge
+  for (int i=0; i<(int)vertices.size()-1; ++i)
+  {
+      double new_dist = distance_point_to_segment_2d(point, vertices.at(i), vertices.at(i+1));
+//       double new_dist = calc_distance_point_to_segment( position,  vertices.at(i), vertices.at(i+1));
+      if (new_dist < dist)
+        dist = new_dist;
+  }
+
+  if (vertices.size()>2) // if not a line close polygon
+  {
+    double new_dist = distance_point_to_segment_2d(point, vertices.back(), vertices.front()); // check last edge
+    if (new_dist < dist)
+      return new_dist;
+  }
+  
+  return dist;
+}  
+
+/**
+ * @brief Helper function to calculate the smallest distance between a line segment and a closed polygon
+ * @param line_start 2D point representing the start of the line segment
+ * @param line_end 2D point representing the end of the line segment
+ * @param vertices Vertices describing the closed polygon (the first vertex is not repeated at the end)
+ * @return smallest distance between point and polygon
+*/    
+inline double distance_segment_to_polygon_2d(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, const Point2dContainer& vertices)
+{
+  double dist = HUGE_VAL;
+    
+  // the polygon is a point
+  if (vertices.size() == 1)
+  {
+    return distance_point_to_segment_2d(vertices.front(), line_start, line_end);
+  }
+    
+  // check each polygon edge
+  for (int i=0; i<(int)vertices.size()-1; ++i)
+  {
+      double new_dist = distance_segment_to_segment_2d(line_start, line_end, vertices.at(i), vertices.at(i+1));
+//       double new_dist = calc_distance_point_to_segment( position,  vertices.at(i), vertices.at(i+1));
+      if (new_dist < dist)
+        dist = new_dist;
+  }
+
+  if (vertices.size()>2) // if not a line close polygon
+  {
+    double new_dist = distance_segment_to_segment_2d(line_start, line_end, vertices.back(), vertices.front()); // check last edge
+    if (new_dist < dist)
+      return new_dist;
+  }
+  
+  return dist;
+}
+
+/**
+ * @brief Helper function to calculate the smallest distance between two closed polygons
+ * @param vertices1 Vertices describing the first closed polygon (the first vertex is not repeated at the end)
+ * @param vertices2 Vertices describing the second closed polygon (the first vertex is not repeated at the end)
+ * @return smallest distance between point and polygon
+*/    
+inline double distance_polygon_to_polygon_2d(const Point2dContainer& vertices1, const Point2dContainer& vertices2)
+{
+  double dist = HUGE_VAL;
+    
+  // the polygon1 is a point
+  if (vertices1.size() == 1)
+  {
+    return distance_point_to_polygon_2d(vertices1.front(), vertices2);
+  }
+    
+  // check each edge of polygon1
+  for (int i=0; i<(int)vertices1.size()-1; ++i)
+  {
+      double new_dist = distance_segment_to_polygon_2d(vertices1[i], vertices1[i+1], vertices2);
+      if (new_dist < dist)
+        dist = new_dist;
+  }
+
+  if (vertices1.size()>2) // if not a line close polygon1
+  {
+    double new_dist = distance_segment_to_polygon_2d(vertices1.back(), vertices1.front(), vertices2); // check last edge
+    if (new_dist < dist)
+      return new_dist;
+  }
+
+  return dist;
+}
   
   
   

@@ -240,7 +240,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       marker.action = visualization_msgs::Marker::ADD;
       marker.lifetime = ros::Duration(2.0);
       
-      for (PolygonObstacle::VertexContainer::const_iterator vertex = pobst->vertices().begin(); vertex != pobst->vertices().end(); ++vertex)
+      for (Point2dContainer::const_iterator vertex = pobst->vertices().begin(); vertex != pobst->vertices().end(); ++vertex)
       {
         geometry_msgs::Point point;
         point.x = vertex->x();

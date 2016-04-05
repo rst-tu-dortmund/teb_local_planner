@@ -421,7 +421,7 @@ unsigned int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const 
   return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
 }
 
-unsigned int TimedElasticBand::findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices, double* distance) const
+unsigned int TimedElasticBand::findClosestTrajectoryPose(const Point2dContainer& vertices, double* distance) const
 {
   if (vertices.empty())
     return 0;

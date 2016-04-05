@@ -283,6 +283,29 @@ protected:
    * @return Robot footprint model used for optimization
    */
   RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh);
+  
+  /** 
+   * @brief Set the footprint from the given XmlRpcValue.
+   * @remarks This method is copied from costmap_2d/footprint.h, since it is not declared public in all ros distros
+   * @remarks It is modified in order to return a container of Eigen::Vector2d instead of geometry_msgs::Point
+   * @param footprint_xmlrpc should be an array of arrays, where the top-level array should have 3 or more elements, and the
+   * sub-arrays should all have exactly 2 elements (x and y coordinates).
+   * @param full_param_name this is the full name of the rosparam from which the footprint_xmlrpc value came. 
+   * It is used only for reporting errors. 
+   * @return container of vertices describing the polygon
+   */
+  Point2dContainer makeFootprintFromXMLRPC(XmlRpc::XmlRpcValue& footprint_xmlrpc, const std::string& full_param_name);
+  
+  /** 
+   * @brief Get a number from the given XmlRpcValue.
+   * @remarks This method is copied from costmap_2d/footprint.h, since it is not declared public in all ros distros
+   * @remarks It is modified in order to return a container of Eigen::Vector2d instead of geometry_msgs::Point
+   * @param value double value type
+   * @param full_param_name this is the full name of the rosparam from which the footprint_xmlrpc value came. 
+   * It is used only for reporting errors. 
+   * @returns double value
+   */
+  double getNumberFromXMLRPC(XmlRpc::XmlRpcValue& value, const std::string& full_param_name);
 
   
 private:

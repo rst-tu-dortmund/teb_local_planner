@@ -130,6 +130,12 @@ public:
    */
   virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const = 0;
   
+  /**
+   * @brief Get the minimum euclidean distance to the obstacle (polygon as reference)
+   * @param polygon Vertices (2D points) describing a closed polygon
+   * @return The nearest possible distance to the obstacle
+   */
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const = 0;
 
   /**
    * @brief Get the closest point on the boundary of the obstacle w.r.t. a specified reference position
@@ -269,7 +275,13 @@ public:
   {
     return distance_point_to_segment_2d(pos_, line_start, line_end);
   }
-    
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_point_to_polygon_2d(pos_, polygon);
+  }
+  
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
   {
@@ -388,6 +400,12 @@ public:
   {
     return distance_segment_to_segment_2d(start_, end_, line_start, line_end);
   }
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_segment_to_polygon_2d(start_, end_, polygon);
+  }
 
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
@@ -451,10 +469,7 @@ public:
 class PolygonObstacle : public Obstacle
 {
 public:
-  
-  //! Abbrev. for a container storing vertices (2d points defining the edge points of the polygon)
-  typedef std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
-  
+    
   /**
     * @brief Default constructor of the polygon obstacle class
     */
@@ -513,11 +528,22 @@ public:
 
 
   // implements getMinimumDistance() of the base class
-  virtual double getMinimumDistance(const Eigen::Vector2d& position) const;
+  virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+  {
+    return distance_point_to_polygon_2d(position, vertices_);
+  }
   
   // implements getMinimumDistance() of the base class
-  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const;
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return distance_segment_to_polygon_2d(line_start, line_end, vertices_);
+  }
 
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_polygon_to_polygon_2d(polygon, polygon);
+  }
   
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const;
@@ -544,8 +570,8 @@ public:
   ///@{       
   
   // Access or modify polygon
-  const VertexContainer& vertices() const {return vertices_;} //!< Access vertices container (read-only)
-  VertexContainer& vertices() {return vertices_;} //!< Access vertices container
+  const Point2dContainer& vertices() const {return vertices_;} //!< Access vertices container (read-only)
+  Point2dContainer& vertices() {return vertices_;} //!< Access vertices container
   
   /**
     * @brief Add a vertex to the polygon (edge-point)
@@ -602,7 +628,7 @@ protected:
   void calcCentroid(); //!< Compute the centroid of the polygon (called inside finalizePolygon())
 
   
-  VertexContainer vertices_; //!< Store vertices defining the polygon (@see pushBackVertex)
+  Point2dContainer vertices_; //!< Store vertices defining the polygon (@see pushBackVertex)
   Eigen::Vector2d centroid_; //!< Store the centroid coordinates of the polygon (@see calcCentroid)
   
   bool finalized_; //!< Flat that keeps track if the polygon was finalized after adding all vertices
