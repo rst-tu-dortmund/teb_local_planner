@@ -61,7 +61,8 @@ else( WIN32 )
                             /usr/lib64
                             /usr/lib/x86_64-linux-gnu
                             /usr/lib/i386-linux-gnu
-                            /usr/local/lib )
+                            /usr/local/lib
+                            /usr/lib/arm-linux-gnueabihf/)
    ENDIF(APPLE)
 
    # Add cholmod include directory to collection include directories
