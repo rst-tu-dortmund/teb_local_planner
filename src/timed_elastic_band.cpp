@@ -330,7 +330,7 @@ bool TimedElasticBand::initTEBtoGoal(const std::vector<geometry_msgs::PoseStampe
         addPoseAndTimeDiff(plan[i].pose.position.x, plan[i].pose.position.y, yaw, dt);
     }
     
-    PoseSE2 goal(plan.back().pose.position.x, plan.back().pose.position.y, tf::getYaw(plan.back().pose.orientation));
+    PoseSE2 goal(plan.back().pose);
     
     // if number of samples is not larger than min_samples, insert manually
     if ( (int)sizePoses() < min_samples-1 )

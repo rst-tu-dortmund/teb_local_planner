@@ -105,8 +105,8 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
   if (tebs_.empty() && initial_plan_)
     addAndInitNewTeb(*initial_plan_);
       
-  PoseSE2 start(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw( initial_plan.front().pose.orientation) );
-  PoseSE2 goal(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw( initial_plan.back().pose.orientation) );
+  PoseSE2 start(initial_plan.front().pose);
+  PoseSE2 goal(initial_plan.back().pose);
   Eigen::Vector2d vel = start_vel ?  Eigen::Vector2d( start_vel->linear.x, start_vel->angular.z ) : Eigen::Vector2d::Zero();
   return plan(start, goal, vel, free_goal_vel);
 }
@@ -115,8 +115,8 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
 bool HomotopyClassPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel, bool free_goal_vel)
 {
   ROS_ASSERT_MSG(initialized_, "Call initialize() first.");
-  PoseSE2 start_pose(start.getOrigin().getX(), start.getOrigin().getY(), tf::getYaw( start.getRotation() ) );
-  PoseSE2 goal_pose(goal.getOrigin().getX(), goal.getOrigin().getY(), tf::getYaw( goal.getRotation() ) );
+  PoseSE2 start_pose(start);
+  PoseSE2 goal_pose(goal);
   Eigen::Vector2d vel = start_vel ?  Eigen::Vector2d( start_vel->linear.x, start_vel->angular.z ) : Eigen::Vector2d::Zero();
   return plan(start_pose, goal_pose, vel, free_goal_vel);
 }

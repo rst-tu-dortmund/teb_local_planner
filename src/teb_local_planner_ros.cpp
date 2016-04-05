@@ -217,7 +217,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // Get robot pose
   tf::Stamped<tf::Pose> robot_pose;
   costmap_ros_->getRobotPose(robot_pose);
-  robot_pose_ = PoseSE2(robot_pose.getOrigin().x(),robot_pose.getOrigin().y(), tf::getYaw(robot_pose.getRotation()));
+  robot_pose_ = PoseSE2(robot_pose);
     
   // Get robot velocity
   tf::Stamped<tf::Pose> robot_vel_tf;

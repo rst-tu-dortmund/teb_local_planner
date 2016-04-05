@@ -79,7 +79,7 @@ public:
       _position = position;
       _theta = theta;
   }
-	  
+  
   /**
     * @brief Construct pose using single components x, y, and the yaw angle
     * @param x x-coordinate
@@ -91,6 +91,28 @@ public:
       _position.coeffRef(0) = x;
       _position.coeffRef(1) = y;
       _theta = theta;
+  }
+  
+  /**
+   * @brief Construct pose using a geometry_msgs::Pose
+   * @param pose geometry_msgs::Pose object
+   */ 
+  PoseSE2(const geometry_msgs::Pose& pose)
+  {
+      _position.coeffRef(0) = pose.position.x;
+      _position.coeffRef(1) = pose.position.y;
+      _theta = tf::getYaw( pose.orientation );
+  }
+  
+  /**
+   * @brief Construct pose using a tf::Pose
+   * @param pose tf::Pose object
+   */ 
+  PoseSE2(const tf::Pose& pose)
+  {
+      _position.coeffRef(0) = pose.getOrigin().getX();
+      _position.coeffRef(1) = pose.getOrigin().getY();
+      _theta = tf::getYaw( pose.getRotation() );
   }
   
   /**

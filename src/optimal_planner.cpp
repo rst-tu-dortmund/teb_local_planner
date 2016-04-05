@@ -213,8 +213,8 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
   } 
   else // warm start
   {
-    PoseSE2 start_(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw(initial_plan.front().pose.orientation));
-    PoseSE2 goal_(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw(initial_plan.back().pose.orientation));
+    PoseSE2 start_(initial_plan.front().pose);
+    PoseSE2 goal_(initial_plan.back().pose);
     if (teb_.sizePoses()>0 && (goal_.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist) // actual warm start!
       teb_.updateAndPruneTEB(start_, goal_, cfg_->trajectory.min_samples); // update TEB
     else // goal too far away -> reinit
@@ -238,8 +238,8 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
 
 bool TebOptimalPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel, bool free_goal_vel)
 {
-  PoseSE2 start_(start.getOrigin().x(), start.getOrigin().y(), tf::getYaw(start.getRotation()));
-  PoseSE2 goal_(goal.getOrigin().x(), goal.getOrigin().y(), tf::getYaw(goal.getRotation()));
+  PoseSE2 start_(start);
+  PoseSE2 goal_(goal);
   Eigen::Vector2d vel = start_vel ? Eigen::Vector2d(start_vel->linear.x, start_vel->angular.z) : Eigen::Vector2d::Zero();
   return plan(start_, goal_, vel);
 }
