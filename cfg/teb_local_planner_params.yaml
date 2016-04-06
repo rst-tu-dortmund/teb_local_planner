@@ -9,6 +9,7 @@ TebLocalPlannerROS:
  dt_ref: 0.3
  dt_hysteresis: 0.1
  global_plan_overwrite_orientation: True
+ feasibility_check_no_poses: 5
     
  # Robot
          
@@ -19,7 +20,7 @@ TebLocalPlannerROS:
  acc_lim_theta: 0.5
  min_turning_radius: 0.0
  footprint_model: # types: "point", "circular", "two_circles", "line"
-   type: "two_circles"
+   type: "point"
    radius: 0.2 # for type "circular"
    front_offset: 0.2 # for type "two_circles"
    front_radius: 0.2 # for type "two_circles"
@@ -27,7 +28,8 @@ TebLocalPlannerROS:
    rear_radius: 0.2 # for type "two_circles"
    line_start: [-0.3, 0.0] # for type "line"
    line_end: [0.3, 0.0] # for type "line"
-    
+   vertices: [ [0.25, -0.05], [0.18, -0.05], [0.18, -0.18], [-0.19, -0.18], [-0.25, 0], [-0.19, 0.18], [0.18, 0.18], [0.18, 0.05], [0.25, 0.05] ] # for type "polygon"
+
  # GoalTolerance
     
  xy_goal_tolerance: 0.2
