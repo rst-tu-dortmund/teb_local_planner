@@ -79,8 +79,6 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("include_costmap_obstacles", obstacles.include_costmap_obstacles, obstacles.include_costmap_obstacles);
   nh.param("costmap_obstacles_front_only", obstacles.costmap_obstacles_front_only, obstacles.costmap_obstacles_front_only);
   nh.param("obstacle_poses_affected", obstacles.obstacle_poses_affected, obstacles.obstacle_poses_affected);
-  nh.param("line_obstacle_poses_affected", obstacles.line_obstacle_poses_affected, obstacles.line_obstacle_poses_affected);
-  nh.param("polygon_obstacle_poses_affected", obstacles.polygon_obstacle_poses_affected, obstacles.polygon_obstacle_poses_affected);
   nh.param("costmap_converter_plugin", obstacles.costmap_converter_plugin, obstacles.costmap_converter_plugin);
   nh.param("costmap_converter_spin_thread", obstacles.costmap_converter_spin_thread, obstacles.costmap_converter_spin_thread);
   
@@ -98,9 +96,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
   nh.param("weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
   nh.param("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
-  nh.param("weight_point_obstacle", optim.weight_point_obstacle, optim.weight_point_obstacle);
-  nh.param("weight_line_obstacle", optim.weight_line_obstacle, optim.weight_line_obstacle);
-  nh.param("weight_poly_obstacle", optim.weight_poly_obstacle, optim.weight_poly_obstacle);
+  nh.param("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
   nh.param("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);    
   nh.param("alternative_time_cost", optim.alternative_time_cost, optim.alternative_time_cost); 
   
@@ -118,6 +114,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph); 
   
   checkParameters();
+  checkDeprecated(nh);
 }
 
 void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
@@ -155,8 +152,6 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   obstacles.include_costmap_obstacles = cfg.include_costmap_obstacles;
   obstacles.costmap_obstacles_front_only = cfg.costmap_obstacles_front_only;
   obstacles.obstacle_poses_affected = cfg.obstacle_poses_affected;
-  obstacles.line_obstacle_poses_affected = cfg.line_obstacle_poses_affected;
-  obstacles.polygon_obstacle_poses_affected = cfg.polygon_obstacle_poses_affected;
 
   
   // Optimization
@@ -173,9 +168,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_kinematics_forward_drive = cfg.weight_kinematics_forward_drive;
   optim.weight_kinematics_turning_radius = cfg.weight_kinematics_turning_radius;
   optim.weight_optimaltime = cfg.weight_optimaltime;
-  optim.weight_point_obstacle = cfg.weight_point_obstacle;
-  optim.weight_line_obstacle = cfg.weight_line_obstacle;
-  optim.weight_poly_obstacle = cfg.weight_poly_obstacle;
+  optim.weight_obstacle = cfg.weight_obstacle;
   optim.weight_dynamic_obstacle = cfg.weight_dynamic_obstacle;
   optim.alternative_time_cost = cfg.alternative_time_cost;
   
@@ -238,5 +231,15 @@ void TebConfig::checkParameters() const
     ROS_WARN("TebLocalPlannerROS() Param Warning: parameter cmd_angle_instead_rotvel is non-zero but min_turning_radius is set to zero: undesired behavior. You are mixing a carlike and a diffdrive robot");
   
 }    
+
+void TebConfig::checkDeprecated(const ros::NodeHandle& nh) const
+{
+  if (nh.hasParam("line_obstacle_poses_affected") || nh.hasParam("polygon_obstacle_poses_affected"))
+    ROS_WARN("TebLocalPlannerROS() Param Warning: 'line_obstacle_poses_affected' and 'polygon_obstacle_poses_affected' are deprecated. They share now the common parameter 'obstacle_poses_affected'.");
+  
+  if (nh.hasParam("weight_point_obstacle") || nh.hasParam("weight_line_obstacle") || nh.hasParam("weight_poly_obstacle"))
+    ROS_WARN("TebLocalPlannerROS() Param Warning: 'weight_point_obstacle', 'weight_line_obstacle' and 'weight_poly_obstacle' are deprecated. They are replaced by the single param 'weight_obstacle'.");
+}
+
     
 } // namespace teb_local_planner

@@ -65,6 +65,7 @@
 #include <teb_local_planner/obstacles.h>
 #include <teb_local_planner/optimal_planner.h>
 #include <teb_local_planner/visualization.h>
+#include <teb_local_planner/robot_footprint_model.h>
 
 
 namespace teb_local_planner
@@ -130,9 +131,11 @@ public:
    * @brief Construct and initialize the HomotopyClassPlanner
    * @param cfg Const reference to the TebConfig class for internal parameters
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
+   * @param robot_model Shared pointer to the robot shape model used for optimization
    * @param visualization Shared pointer to the TebVisualization class (optional)
    */
-  HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, TebVisualizationPtr visualization = TebVisualizationPtr());
+  HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
+                       TebVisualizationPtr visualization = TebVisualizationPtr());
     
   /**
    * @brief Destruct the HomotopyClassPlanner.
@@ -143,11 +146,13 @@ public:
    * @brief Initialize the HomotopyClassPlanner
    * @param cfg Const reference to the TebConfig class for internal parameters
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
+   * @param robot_model Shared pointer to the robot shape model used for optimization
    * @param visualization Shared pointer to the TebVisualization class (optional)
    */
-  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, TebVisualizationPtr visualization = TebVisualizationPtr());
+  void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
+                  TebVisualizationPtr visualization = TebVisualizationPtr());
   
- 
+  
   
   /** @name Plan a trajectory */
   //@{
@@ -487,6 +492,7 @@ protected:
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   TebOptimalPlannerPtr best_teb_; //!< Store the current best teb.
+  RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
   
   const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
   

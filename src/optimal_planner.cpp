@@ -44,13 +44,13 @@ namespace teb_local_planner
 
 // ============== Implementation ===================
 
-TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), cost_(HUGE_VAL), initialized_(false), optimized_(false)
+TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), cost_(HUGE_VAL), robot_model_(new PointRobotFootprint()), initialized_(false), optimized_(false)
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual)
 {    
-  initialize(cfg, obstacles, visual);
+  initialize(cfg, obstacles, robot_model, visual);
 }
 
 TebOptimalPlanner::~TebOptimalPlanner()
@@ -63,13 +63,14 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual)
 {    
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
   
   cfg_ = &cfg;
   obstacles_ = obstacles;
+  robot_model_ = robot_model;
   cost_ = HUGE_VAL;
   setVisualization(visual);
   
@@ -94,6 +95,9 @@ void TebOptimalPlanner::visualize()
  
   visualization_->publishLocalPlanAndPoses(teb_);
   
+  if (teb_.sizePoses() > 0)
+    visualization_->publishRobotFootprintModel(teb_.Pose(0), *robot_model_);
+  
   if (cfg_->trajectory.publish_feedback)
     visualization_->publishFeedbackMessage(*this, *obstacles_);
  
@@ -116,9 +120,7 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_ACCELERATION_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationGoal>);
   factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
   factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
-  factory->registerType("EDGE_POINT_OBSTACLE", new g2o::HyperGraphElementCreator<EdgePointObstacle>);
-  factory->registerType("EDGE_LINE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeLineObstacle>);
-  factory->registerType("EDGE_POLYGON_OBSTACLE", new g2o::HyperGraphElementCreator<EdgePolygonObstacle>);
+  factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
   factory->registerType("EDGE_DYNAMIC_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeDynamicObstacle>);
   return;
 }
@@ -211,8 +213,8 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
   } 
   else // warm start
   {
-    PoseSE2 start_(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw(initial_plan.front().pose.orientation));
-    PoseSE2 goal_(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw(initial_plan.back().pose.orientation));
+    PoseSE2 start_(initial_plan.front().pose);
+    PoseSE2 goal_(initial_plan.back().pose);
     if (teb_.sizePoses()>0 && (goal_.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist) // actual warm start!
       teb_.updateAndPruneTEB(start_, goal_, cfg_->trajectory.min_samples); // update TEB
     else // goal too far away -> reinit
@@ -236,8 +238,8 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
 
 bool TebOptimalPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel, bool free_goal_vel)
 {
-  PoseSE2 start_(start.getOrigin().x(), start.getOrigin().y(), tf::getYaw(start.getRotation()));
-  PoseSE2 goal_(goal.getOrigin().x(), goal.getOrigin().y(), tf::getYaw(goal.getRotation()));
+  PoseSE2 start_(start);
+  PoseSE2 goal_(goal);
   Eigen::Vector2d vel = start_vel ? Eigen::Vector2d(start_vel->linear.x, start_vel->angular.z) : Eigen::Vector2d::Zero();
   return plan(start_, goal_, vel);
 }
@@ -364,7 +366,7 @@ void TebOptimalPlanner::AddTEBVertices()
 
 void TebOptimalPlanner::AddEdgesObstacles()
 {
-  if (cfg_->optim.weight_point_obstacle==0 || obstacles_==NULL )
+  if (cfg_->optim.weight_obstacle==0 || obstacles_==NULL )
     return; // if weight equals zero skip adding edges!
 
   for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
@@ -372,154 +374,53 @@ void TebOptimalPlanner::AddEdgesObstacles()
     if ((*obst)->isDynamic()) // we handle dynamic obstacles differently below
       continue; 
     
-    const PointObstacle* point_obst = dynamic_cast<const PointObstacle*>(obst->get());
-    const LineObstacle* line_obst = dynamic_cast<const LineObstacle*>(obst->get());
-    const PolygonObstacle* poly_obst = dynamic_cast<const PolygonObstacle*>(obst->get());
     unsigned int index;
-    if(point_obst)
-		{
-      if (cfg_->obstacles.obstacle_poses_affected >= teb_.sizePoses())
-        index =  teb_.sizePoses() / 2;
-      else
-        index = teb_.findClosestTrajectoryPose((*obst)->getCentroid());
-    }
-    else if(line_obst)
-    { 
-      if (cfg_->obstacles.line_obstacle_poses_affected >= teb_.sizePoses())
-        index = teb_.sizePoses() / 2;
-      else
-        index = teb_.findClosestTrajectoryPose(line_obst->start(), line_obst->end());
-    }
-    else if(poly_obst)
-    {
-      if (cfg_->obstacles.polygon_obstacle_poses_affected >= teb_.sizePoses())
-        index = teb_.sizePoses() / 2;
-      else
-        index = teb_.findClosestTrajectoryPose(poly_obst->vertices());
-    }
-    else
-    {
-      ROS_ERROR("Unknown obstacle type found, skipping...");
-      continue;
-    }
     
+    if (cfg_->obstacles.obstacle_poses_affected >= teb_.sizePoses())
+      index =  teb_.sizePoses() / 2;
+    else
+      index = teb_.findClosestTrajectoryPose(*(obst->get()));
+     
     
     // check if obstacle is outside index-range between start and goal
     if ( (index <= 1) || (index > teb_.sizePoses()-2) ) // start and goal are fixed and findNearestBandpoint finds first or last conf if intersection point is outside the range
 	    continue; 
     
-    if (point_obst)
+    Eigen::Matrix<double,1,1> information;
+    information.fill(cfg_->optim.weight_obstacle);
+    
+    EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
+    dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
+    dist_bandpt_obst->setInformation(information);
+    dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst->get());
+    optimizer_->addEdge(dist_bandpt_obst);
+
+    for (unsigned int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.obstacle_poses_affected/2); neighbourIdx++)
     {
-      Eigen::Matrix<double,1,1> information;
-      information.fill(cfg_->optim.weight_point_obstacle);
-      EdgePointObstacle* dist_bandpt_obst = new EdgePointObstacle;
-      dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
-      dist_bandpt_obst->setInformation(information);
-      dist_bandpt_obst->setObstaclePosition(point_obst->getCentroid());   
-      dist_bandpt_obst->setTebConfig(*cfg_);
-      optimizer_->addEdge(dist_bandpt_obst);
-
-      for (unsigned int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.obstacle_poses_affected/2); neighbourIdx++)
+      if (index+neighbourIdx < teb_.sizePoses())
       {
-        if (index+neighbourIdx < teb_.sizePoses())
-        {
-          EdgePointObstacle* dist_bandpt_obst_n_r = new EdgePointObstacle;
-          dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
-          dist_bandpt_obst_n_r->setInformation(information);
-          dist_bandpt_obst_n_r->setObstaclePosition(point_obst->getCentroid());
-          dist_bandpt_obst_n_r->setTebConfig(*cfg_);
-          optimizer_->addEdge(dist_bandpt_obst_n_r);
-        }
-        if ( (int) index - (int) neighbourIdx >= 0) // needs to be casted to int to allow negative values
-        {
-          EdgePointObstacle* dist_bandpt_obst_n_l = new EdgePointObstacle;
-          dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
-          dist_bandpt_obst_n_l->setInformation(information);
-          dist_bandpt_obst_n_l->setObstaclePosition(point_obst->getCentroid());
-          dist_bandpt_obst_n_l->setTebConfig(*cfg_);
-          optimizer_->addEdge(dist_bandpt_obst_n_l);
-        }
+        EdgeObstacle* dist_bandpt_obst_n_r = new EdgeObstacle;
+        dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
+        dist_bandpt_obst_n_r->setInformation(information);
+        dist_bandpt_obst_n_r->setParameters(*cfg_, robot_model_.get(), obst->get());
+        optimizer_->addEdge(dist_bandpt_obst_n_r);
       }
-      continue;
-    }
-
-    if (line_obst)
-    {
-      Eigen::Matrix<double,1,1> information;
-      information.fill(cfg_->optim.weight_line_obstacle);
-      EdgeLineObstacle* dist_bandpt_obst = new EdgeLineObstacle;
-      dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
-      dist_bandpt_obst->setInformation(information);
-      dist_bandpt_obst->setMeasurement(line_obst);
-      dist_bandpt_obst->setTebConfig(*cfg_);
-      optimizer_->addEdge(dist_bandpt_obst);
-
-      for (unsigned int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.line_obstacle_poses_affected/2); neighbourIdx++)
+      if ( (int) index - (int) neighbourIdx >= 0) // needs to be casted to int to allow negative values
       {
-        if (index+neighbourIdx < teb_.sizePoses())
-        {
-          EdgeLineObstacle* dist_bandpt_obst_n_r = new EdgeLineObstacle;
-          dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
-          dist_bandpt_obst_n_r->setInformation(information);
-          dist_bandpt_obst_n_r->setMeasurement(line_obst);
-          dist_bandpt_obst_n_r->setTebConfig(*cfg_);
-          optimizer_->addEdge(dist_bandpt_obst_n_r);
-        }
-        if ( (int) index - (int) neighbourIdx >= 0) // needs to be casted to int to allow negative values
-        {
-          EdgeLineObstacle* dist_bandpt_obst_n_l = new EdgeLineObstacle;
-          dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
-          dist_bandpt_obst_n_l->setInformation(information);
-          dist_bandpt_obst_n_l->setMeasurement(line_obst);
-          dist_bandpt_obst_n_l->setTebConfig(*cfg_);
-          optimizer_->addEdge(dist_bandpt_obst_n_l);
-        }
+        EdgeObstacle* dist_bandpt_obst_n_l = new EdgeObstacle;
+        dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
+        dist_bandpt_obst_n_l->setInformation(information);
+        dist_bandpt_obst_n_l->setParameters(*cfg_, robot_model_.get(), obst->get());
+        optimizer_->addEdge(dist_bandpt_obst_n_l);
       }
-      continue;
-    }
-
-    if (poly_obst)
-    {
-      Eigen::Matrix<double,1,1> information;
-      information.fill(cfg_->optim.weight_poly_obstacle);
-      EdgePolygonObstacle* dist_bandpt_obst = new EdgePolygonObstacle;
-      dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
-      dist_bandpt_obst->setInformation(information);
-      dist_bandpt_obst->setMeasurement(poly_obst);    
-      dist_bandpt_obst->setTebConfig(*cfg_);
-      optimizer_->addEdge(dist_bandpt_obst);
-
-      for (unsigned int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.polygon_obstacle_poses_affected/2); neighbourIdx++)
-      {
-        if (index+neighbourIdx < teb_.sizePoses())
-        {
-          EdgePolygonObstacle* dist_bandpt_obst_n_r = new EdgePolygonObstacle;
-          dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
-          dist_bandpt_obst_n_r->setInformation(information);
-          dist_bandpt_obst_n_r->setMeasurement(poly_obst);
-          dist_bandpt_obst_n_r->setTebConfig(*cfg_);
-          optimizer_->addEdge(dist_bandpt_obst_n_r);
-        }
-        if ( (int) index - (int) neighbourIdx >= 0) // needs to be casted to int to allow negative values
-        {
-          EdgePolygonObstacle* dist_bandpt_obst_n_l = new EdgePolygonObstacle;
-          dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
-          dist_bandpt_obst_n_l->setInformation(information);
-          dist_bandpt_obst_n_l->setMeasurement(poly_obst);
-          dist_bandpt_obst_n_l->setTebConfig(*cfg_);
-          optimizer_->addEdge(dist_bandpt_obst_n_l);
-        }
-      }
-	  
-      continue;
-    }
+    } 
 	  
   }
 }
 
 void TebOptimalPlanner::AddEdgesDynamicObstacles()
 {
-  if (cfg_->optim.weight_point_obstacle==0 || obstacles_==NULL )
+  if (cfg_->optim.weight_obstacle==0 || obstacles_==NULL )
     return; // if weight equals zero skip adding edges!
   
   Eigen::Matrix<double,1,1> information;
@@ -757,26 +658,19 @@ void TebOptimalPlanner::computeCurrentCost(bool alternative_time_cost)
       continue;
     }
     
-    EdgePointObstacle* edge_point_obstacle = dynamic_cast<EdgePointObstacle*>(*it);
-    if (edge_point_obstacle!=NULL)
+    EdgeObstacle* edge_obstacle = dynamic_cast<EdgeObstacle*>(*it);
+    if (edge_obstacle!=NULL)
     {
-      cost_ += pow(edge_point_obstacle->getError()[0],2);
-      continue;
-    }
-
-    EdgeLineObstacle* edge_line_obstacle = dynamic_cast<EdgeLineObstacle*>(*it);
-    if (edge_line_obstacle!=NULL)
-    {
-      cost_ += pow(edge_line_obstacle->getError()[0],2);
+      cost_ += pow(edge_obstacle->getError()[0],2);
       continue;
     }
     
-    EdgePolygonObstacle* edge_polygon_obstacle = dynamic_cast<EdgePolygonObstacle*>(*it);
-    if (edge_polygon_obstacle!=NULL)
+    EdgeDynamicObstacle* edge_dyn_obstacle = dynamic_cast<EdgeDynamicObstacle*>(*it);
+    if (edge_dyn_obstacle!=NULL)
     {
-      cost_ += pow(edge_polygon_obstacle->getError()[0],2);
+      cost_ += pow(edge_dyn_obstacle->getError()[0],2);
       continue;
-    }  
+    }
   }
   
   // delete temporary created graph

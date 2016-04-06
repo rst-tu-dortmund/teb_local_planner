@@ -117,6 +117,33 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
     teb_poses_pub_.publish(teb_poses);
 }
 
+
+
+void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns)
+{
+  if ( printErrorWhenNotInitialized() )
+    return;
+  
+  std::vector<visualization_msgs::Marker> markers;
+  robot_model.visualizeRobot(current_pose, markers);
+  if (markers.empty())
+    return;
+  
+  int idx = 0;
+  for (std::vector<visualization_msgs::Marker>::iterator marker_it = markers.begin(); marker_it != markers.end(); ++marker_it, ++idx)
+  {
+    marker_it->header.frame_id = cfg_->map_frame;
+    marker_it->header.stamp = ros::Time::now();
+    marker_it->action = visualization_msgs::Marker::ADD;
+    marker_it->ns = ns;
+    marker_it->id = idx;
+    marker_it->lifetime = ros::Duration(2.0);
+    teb_marker_pub_.publish(*marker_it);
+  }
+  
+}
+
+
 void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 {
   if ( printErrorWhenNotInitialized() )
@@ -213,7 +240,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       marker.action = visualization_msgs::Marker::ADD;
       marker.lifetime = ros::Duration(2.0);
       
-      for (PolygonObstacle::VertexContainer::const_iterator vertex = pobst->vertices().begin(); vertex != pobst->vertices().end(); ++vertex)
+      for (Point2dContainer::const_iterator vertex = pobst->vertices().begin(); vertex != pobst->vertices().end(); ++vertex)
       {
         geometry_msgs::Point point;
         point.x = vertex->x();

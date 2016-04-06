@@ -63,23 +63,24 @@ inline const Eigen::Vector2d& getVector2dFromHcGraph(HcGraphVertexType vert_desc
 
 
 
-HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), initialized_(false)
+HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), robot_model_(new PointRobotFootprint()), initialized_(false)
 {
 }
   
-HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual) : initial_plan_(NULL)
+HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual) : initial_plan_(NULL)
 {
-  initialize(cfg, obstacles, visual);
+  initialize(cfg, obstacles, robot_model, visual);
 }
 
 HomotopyClassPlanner::~HomotopyClassPlanner()
 {
 }
 
-void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual)
+void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual)
 {
   cfg_ = &cfg;
   obstacles_ = obstacles;
+  robot_model_ = robot_model;
   initialized_ = true;
   
   setVisualization(visual);
@@ -104,8 +105,8 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
   if (tebs_.empty() && initial_plan_)
     addAndInitNewTeb(*initial_plan_);
       
-  PoseSE2 start(initial_plan.front().pose.position.x, initial_plan.front().pose.position.y, tf::getYaw( initial_plan.front().pose.orientation) );
-  PoseSE2 goal(initial_plan.back().pose.position.x, initial_plan.back().pose.position.y, tf::getYaw( initial_plan.back().pose.orientation) );
+  PoseSE2 start(initial_plan.front().pose);
+  PoseSE2 goal(initial_plan.back().pose);
   Eigen::Vector2d vel = start_vel ?  Eigen::Vector2d( start_vel->linear.x, start_vel->angular.z ) : Eigen::Vector2d::Zero();
   return plan(start, goal, vel, free_goal_vel);
 }
@@ -114,8 +115,8 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
 bool HomotopyClassPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel, bool free_goal_vel)
 {
   ROS_ASSERT_MSG(initialized_, "Call initialize() first.");
-  PoseSE2 start_pose(start.getOrigin().getX(), start.getOrigin().getY(), tf::getYaw( start.getRotation() ) );
-  PoseSE2 goal_pose(goal.getOrigin().getX(), goal.getOrigin().getY(), tf::getYaw( goal.getRotation() ) );
+  PoseSE2 start_pose(start);
+  PoseSE2 goal_pose(goal);
   Eigen::Vector2d vel = start_vel ?  Eigen::Vector2d( start_vel->linear.x, start_vel->angular.z ) : Eigen::Vector2d::Zero();
   return plan(start_pose, goal_pose, vel, free_goal_vel);
 }
@@ -171,6 +172,9 @@ void HomotopyClassPlanner::visualize()
     if (best_teb)
     {
       visualization_->publishLocalPlanAndPoses(best_teb->teb());
+      
+      if (best_teb->teb().sizePoses() > 0) //TODO maybe store current pose (start) within plan method as class field.
+        visualization_->publishRobotFootprintModel(best_teb->teb().Pose(0), *robot_model_);
     
       // feedback message
       if (cfg_->trajectory.publish_feedback)
@@ -632,13 +636,13 @@ void HomotopyClassPlanner::exploreHomotopyClassesAndInitTebs(const PoseSE2& star
 
 void HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal)
 {
-  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
+  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_) ) );
   tebs_.back()->teb().initTEBtoGoal(start, goal, 0, cfg_->trajectory.dt_ref, cfg_->trajectory.min_samples);
 }
 
 void HomotopyClassPlanner::addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan)
 {
-  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_) ) );
+  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_) ) );
   tebs_.back()->teb().initTEBtoGoal(*initial_plan_, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples); 
 }
 

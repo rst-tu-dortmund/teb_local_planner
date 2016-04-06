@@ -125,12 +125,14 @@ int main( int argc, char** argv )
   // Setup visualization
   visual = TebVisualizationPtr(new TebVisualization(n, config));
   
+  // Setup robot shape model
+  RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n);
   
   // Setup planner (homotopy class planning or just the local teb planner)
   if (config.hcp.enable_homotopy_class_planning)
-    planner = PlannerInterfacePtr(new HomotopyClassPlanner(config, &obst_vector, visual));
+    planner = PlannerInterfacePtr(new HomotopyClassPlanner(config, &obst_vector, robot_model, visual));
   else
-    planner = PlannerInterfacePtr(new TebOptimalPlanner(config, &obst_vector, visual));
+    planner = PlannerInterfacePtr(new TebOptimalPlanner(config, &obst_vector, robot_model, visual));
   
 
   no_fixed_obstacles = obst_vector.size();

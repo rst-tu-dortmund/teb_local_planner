@@ -545,7 +545,7 @@ public:
    * @param[out] distance [optional] the resulting minimum distance
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const PolygonObstacle::VertexContainer& vertices, double* distance = NULL) const;
+  unsigned int findClosestTrajectoryPose(const Point2dContainer& vertices, double* distance = NULL) const;
 
   /**
    * @brief Find the closest point on the trajectory w.r.t to a provided obstacle type

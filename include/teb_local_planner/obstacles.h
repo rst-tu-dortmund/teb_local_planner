@@ -48,6 +48,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 #include <geometry_msgs/Polygon.h>
+#include <teb_local_planner/distance_calculations.h>
 
 
 namespace teb_local_planner
@@ -115,11 +116,26 @@ public:
   virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const = 0;
 
   /**
-    * @brief Get the minimum euclidean distance to the obstacle
+    * @brief Get the minimum euclidean distance to the obstacle (point as reference)
+    * @param position 2d reference position
     * @return The nearest possible distance to the obstacle
     */
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const = 0;
 
+  /**
+   * @brief Get the minimum euclidean distance to the obstacle (line as reference)
+   * @param line_start 2d position of the begin of the reference line
+   * @param line_end 2d position of the end of the reference line
+   * @return The nearest possible distance to the obstacle
+   */
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const = 0;
+  
+  /**
+   * @brief Get the minimum euclidean distance to the obstacle (polygon as reference)
+   * @param polygon Vertices (2D points) describing a closed polygon
+   * @return The nearest possible distance to the obstacle
+   */
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const = 0;
 
   /**
    * @brief Get the closest point on the boundary of the obstacle w.r.t. a specified reference position
@@ -160,48 +176,6 @@ public:
 
   /** @name Helper Functions */
   //@{ 
-
-  /**
-    * @brief Helper function to calculate the distance between a line segment and a point
-    * @param point 2D point
-    * @param line_start 2D point representing the start of the line segment
-    * @param line_end 2D point representing the end of the line segment
-    * @return minimum distance to a given line segment
-    */
-  static double DistanceFromLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
-
-  /**
-    * @brief Helper function to obtain the closest point on a line segment w.r.t. a reference point
-    * @param point 2D point
-    * @param line_start 2D point representing the start of the line segment
-    * @param line_end 2D point representing the end of the line segment
-    * @return Closest point on the line segment
-    */
-  static Eigen::Vector2d ClosestPointOnLineSegment(const Eigen::Ref<const Eigen::Vector2d>& point, const Eigen::Ref<const Eigen::Vector2d>& line_start, const Eigen::Ref<const Eigen::Vector2d>& line_end);
-
-  /**
-    * @brief Helper function to check whether two line segments intersects
-    * @param line1_start 2D point representing the start of the first line segment
-    * @param line1_end 2D point representing the end of the first line segment
-    * @param line2_start 2D point representing the start of the second line segment
-    * @param line2_end 2D point representing the end of the second line segment
-    * @param[out] intersection [optional] Write intersection point to destination (the value is only written, if both lines intersect, e.g. if the function returns \c true)
-    * @return \c true if both line segments intersect
-    */	
-  static bool CheckLineSegmentsIntersection(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
-						    const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end, Eigen::Vector2d* intersection = NULL);
-  
-    /**
-    * @brief Helper function to calculate the smallest distance between two line segments
-    * @param line1_start 2D point representing the start of the first line segment
-    * @param line1_end 2D point representing the end of the first line segment
-    * @param line2_start 2D point representing the start of the second line segment
-    * @param line2_end 2D point representing the end of the second line segment
-    * @return smallest distance between both segments
-    */  
-  static double DistanceSegmentToSegment2d(const Eigen::Ref<const Eigen::Vector2d>& line1_start, const Eigen::Ref<const Eigen::Vector2d>& line1_end, 
-                  const Eigen::Ref<const Eigen::Vector2d>& line2_start, const Eigen::Ref<const Eigen::Vector2d>& line2_end);
-
   
   /**
    * @brief Convert the obstacle to a polygon message
@@ -295,7 +269,19 @@ public:
   {
     return (position-pos_).norm();
   }
-    
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return distance_point_to_segment_2d(pos_, line_start, line_end);
+  }
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_point_to_polygon_2d(pos_, polygon);
+  }
+  
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
   {
@@ -400,19 +386,31 @@ public:
   // implements checkLineIntersection() of the base class
   virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const 
   {
-    return CheckLineSegmentsIntersection(line_start, line_end, start_, end_);
+    return check_line_segments_intersection_2d(line_start, line_end, start_, end_);
   }
 
   // implements getMinimumDistance() of the base class
   virtual double getMinimumDistance(const Eigen::Vector2d& position) const 
   {
-    return DistanceFromLineSegment(position, start_, end_);
+    return distance_point_to_segment_2d(position, start_, end_);
+  }
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return distance_segment_to_segment_2d(start_, end_, line_start, line_end);
+  }
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_segment_to_polygon_2d(start_, end_, polygon);
   }
 
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
   {
-    return ClosestPointOnLineSegment(position, start_, end_);
+    return closest_point_on_line_segment_2d(position, start_, end_);
   }
 
 
@@ -471,10 +469,7 @@ public:
 class PolygonObstacle : public Obstacle
 {
 public:
-  
-  //! Abbrev. for a container storing vertices (2d points defining the edge points of the polygon)
-  typedef std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > VertexContainer;
-  
+    
   /**
     * @brief Default constructor of the polygon obstacle class
     */
@@ -533,7 +528,22 @@ public:
 
 
   // implements getMinimumDistance() of the base class
-  virtual double getMinimumDistance(const Eigen::Vector2d& position) const;
+  virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+  {
+    return distance_point_to_polygon_2d(position, vertices_);
+  }
+  
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return distance_segment_to_polygon_2d(line_start, line_end, vertices_);
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_polygon_to_polygon_2d(polygon, polygon);
+  }
   
   // implements getMinimumDistanceVec() of the base class
   virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const;
@@ -560,8 +570,8 @@ public:
   ///@{       
   
   // Access or modify polygon
-  const VertexContainer& vertices() const {return vertices_;} //!< Access vertices container (read-only)
-  VertexContainer& vertices() {return vertices_;} //!< Access vertices container
+  const Point2dContainer& vertices() const {return vertices_;} //!< Access vertices container (read-only)
+  Point2dContainer& vertices() {return vertices_;} //!< Access vertices container
   
   /**
     * @brief Add a vertex to the polygon (edge-point)
@@ -618,7 +628,7 @@ protected:
   void calcCentroid(); //!< Compute the centroid of the polygon (called inside finalizePolygon())
 
   
-  VertexContainer vertices_; //!< Store vertices defining the polygon (@see pushBackVertex)
+  Point2dContainer vertices_; //!< Store vertices defining the polygon (@see pushBackVertex)
   Eigen::Vector2d centroid_; //!< Store the centroid coordinates of the polygon (@see calcCentroid)
   
   bool finalized_; //!< Flat that keeps track if the polygon was finalized after adding all vertices

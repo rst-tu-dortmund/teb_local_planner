@@ -134,6 +134,11 @@ public:
     */
   bool isGoalReached();
   
+  
+    
+  /** @name Public utility functions/methods */
+  //@{
+  
     /**
     * @brief  Transform a tf::Pose type into a Eigen::Vector2d containing the translational and angular velocities.
     * 
@@ -143,6 +148,38 @@ public:
     */
   static Eigen::Vector2d tfPoseToEigenVector2dTransRot(const tf::Pose& tf_vel);
 
+  /**
+   * @brief Get the current robot footprint/contour model
+   * @param nh const reference to the local ros::NodeHandle
+   * @return Robot footprint model used for optimization
+   */
+  static RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh);
+  
+    /** 
+   * @brief Set the footprint from the given XmlRpcValue.
+   * @remarks This method is copied from costmap_2d/footprint.h, since it is not declared public in all ros distros
+   * @remarks It is modified in order to return a container of Eigen::Vector2d instead of geometry_msgs::Point
+   * @param footprint_xmlrpc should be an array of arrays, where the top-level array should have 3 or more elements, and the
+   * sub-arrays should all have exactly 2 elements (x and y coordinates).
+   * @param full_param_name this is the full name of the rosparam from which the footprint_xmlrpc value came. 
+   * It is used only for reporting errors. 
+   * @return container of vertices describing the polygon
+   */
+  static Point2dContainer makeFootprintFromXMLRPC(XmlRpc::XmlRpcValue& footprint_xmlrpc, const std::string& full_param_name);
+  
+  /** 
+   * @brief Get a number from the given XmlRpcValue.
+   * @remarks This method is copied from costmap_2d/footprint.h, since it is not declared public in all ros distros
+   * @remarks It is modified in order to return a container of Eigen::Vector2d instead of geometry_msgs::Point
+   * @param value double value type
+   * @param full_param_name this is the full name of the rosparam from which the footprint_xmlrpc value came. 
+   * It is used only for reporting errors. 
+   * @returns double value
+   */
+  static double getNumberFromXMLRPC(XmlRpc::XmlRpcValue& value, const std::string& full_param_name);
+  
+  //@}
+  
 protected:
 
   /**
@@ -278,6 +315,10 @@ protected:
   double convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius = 0) const;
   
   
+
+
+  
+private:
   // Definition of member variables
 
   // external objects (store weak pointers)
