@@ -106,7 +106,7 @@ public:
     double min_obstacle_dist; //!< Minimum desired separation from obstacles
     double costmap_emergency_stop_dist; //!< Force stop moving if the distance to costmap obstacles is below the given threshold
     bool include_costmap_obstacles; //!< Specify whether the obstacles in the costmap should be taken into account directly
-    bool costmap_obstacles_front_only; //!< Limit the considered costmap obstacles to the front of the robot (much more efficient)
+    double costmap_obstacles_behind_robot_dist; //!< Limit the occupied local costmap obstacles taken into account for planning behind the robot (specify distance in meters)
     int obstacle_poses_affected; //!< The obstacle position is attached to the closest pose on the trajectory to reduce computational effort, but take a number of neighbors into account as well
     std::string costmap_converter_plugin; //!< Define a plugin name of the costmap_converter package (costmap cells are converted to points/lines/polygons)
     bool costmap_converter_spin_thread; //!< If \c true, the costmap converter invokes its callback queue in a different thread
@@ -212,7 +212,7 @@ public:
     obstacles.min_obstacle_dist = 0.5;
     obstacles.costmap_emergency_stop_dist = 0.3;
     obstacles.include_costmap_obstacles = true;
-    obstacles.costmap_obstacles_front_only = true;
+    obstacles.costmap_obstacles_behind_robot_dist = 0.5;
     obstacles.obstacle_poses_affected = 25;
     obstacles.costmap_converter_plugin = "";
     obstacles.costmap_converter_spin_thread = true;

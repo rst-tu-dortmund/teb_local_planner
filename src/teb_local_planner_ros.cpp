@@ -424,8 +424,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
       }
     }
     */
-    
-    Eigen::Vector2d robot2goal = robot_goal_.position() - robot_pose_.position();
+    Eigen::Vector2d robot_orient = robot_pose_.orientationUnitVec();
     
     for (unsigned int i=0; i<costmap_->getSizeInCellsX()-1; ++i)
     {
@@ -436,8 +435,9 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
           Eigen::Vector2d obs;
           costmap_->mapToWorld(i,j,obs.coeffRef(0), obs.coeffRef(1));
             
-          // check if obstacle is interesting (maybe more efficient if the indices are checked before, instead of testing all points inside the loop)
-          if ( cfg_.obstacles.costmap_obstacles_front_only && (obs-robot_pose_.position()).dot(robot2goal) < -0.2 )
+          // check if obstacle is interesting (e.g. not far behind the robot)
+          Eigen::Vector2d obs_dir = obs-robot_pose_.position();
+          if ( obs_dir.dot(robot_orient) < 0 && obs_dir.norm() > cfg_.obstacles.costmap_obstacles_behind_robot_dist  )
             continue;
             
           obstacles_.push_back(ObstaclePtr(new PointObstacle(obs)));
