@@ -302,6 +302,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // overwrite/update start of the transformed plan with the actual robot position (allows using the plan as initial trajectory)
   tf::poseTFToMsg(robot_pose, transformed_plan.front().pose);
     
+  // clear currently existing obstacles
+  obstacles_.clear();
   
   // Update obstacle container with costmap information or polygons provided by a costmap_converter plugin
   if (costmap_converter_)
@@ -406,8 +408,6 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
   // Add costmap obstacles if desired
   if (cfg_.obstacles.include_costmap_obstacles)
   {
-    // first clear current obstacle vector
-    obstacles_.clear();
   
     // now scan costmap for obstacles and add them to the obst_vector
     /*
@@ -452,9 +452,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
 {
   if (!costmap_converter_)
     return;
-  
-  obstacles_.clear();
-  
+    
   //Get obstacles from costmap converter
   costmap_converter::PolygonContainerConstPtr polygons =  costmap_converter_->getPolygons();
   if (!polygons)
@@ -489,7 +487,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
 {
   // Add custom obstacles obtained via message
   boost::mutex::scoped_lock l(custom_obst_mutex_);
-
+  
   if (!custom_obstacle_msg_.obstacles.empty())
   {
     // We only use the global header to specify the obstacle coordinate system instead of individual ones
