@@ -2,6 +2,27 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Different/custom robot footprints are now supported and subject to optimization (refer to the new tutorial!).
+* The new robot footprint is also visualized using the common marker topic.
+* The strategy of taking occupied costmap cells behind the robot into account has been improved.
+  These changes significantly improve navigation close to walls.
+* Parameter 'max_global_plan_lookahead_dist' added.
+  Previously, the complete subset of the global plan contained in the local costmap
+  was taken into account for choosing the current intermediate goal point. With this parameter, the maximum
+  length of the reference global plan can be limited. The actual global plan subset
+  is now computed using the logical conjunction of both local costmap size and 'max_global_plan_lookahead_dist'.
+* Bug fixes:
+  * Fixed a compilation issue on ARM architectures
+  * If custom obstacles are used, the container with old obstacles is now cleared properly. 
+* Parameter cleanup: 
+  * "weight_*_obstacle" parameters combined to single parameter "weight_obstacle".
+  * "*_obstacle_poses_affected" parameters combined to single parameter "obstacle_poses_affected". 
+  * Deprecated parameter 'costmap_emergency_stop_dist' removed.
+* Code cleanup
+
+
 0.2.3 (2016-02-01)
 ------------------
 * Marker lifetime changed
