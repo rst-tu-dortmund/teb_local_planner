@@ -245,7 +245,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   std::vector<geometry_msgs::PoseStamped> transformed_plan;
   int goal_idx;
   tf::StampedTransform tf_plan_to_global;
-  if (!transformGlobalPlan(*tf_, global_plan_, robot_pose, *costmap_, global_frame_, transformed_plan, &goal_idx, &tf_plan_to_global))
+  if (!transformGlobalPlan(*tf_, global_plan_, robot_pose, *costmap_, global_frame_, cfg_.trajectory.max_global_plan_lookahead_dist, 
+                           transformed_plan, &goal_idx, &tf_plan_to_global))
   {
     ROS_WARN("Could not transform the global plan to the frame of the controller");
     return false;
@@ -576,8 +577,8 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const tf::TransformListener& tf, const 
       
 
 bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan,
-		             const tf::Stamped<tf::Pose>& global_pose, const costmap_2d::Costmap2D& costmap, const std::string& global_frame,
-		             std::vector<geometry_msgs::PoseStamped>& transformed_plan, int* current_goal_idx, tf::StampedTransform* tf_plan_to_global) const
+                  const tf::Stamped<tf::Pose>& global_pose, const costmap_2d::Costmap2D& costmap, const std::string& global_frame, double max_plan_length,
+                  std::vector<geometry_msgs::PoseStamped>& transformed_plan, int* current_goal_idx, tf::StampedTransform* tf_plan_to_global) const
 {
   // this method is a slightly modified version of base_local_planner/goal_functions.h
 
@@ -633,9 +634,11 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
 
     tf::Stamped<tf::Pose> tf_pose;
     geometry_msgs::PoseStamped newer_pose;
+    
+    double plan_length = 0; // check cumulative Euclidean distance along the plan
 
     //now we'll transform until points are outside of our distance threshold
-    while(i < (int)global_plan.size() && sq_dist <= sq_dist_threshold)
+    while(i < (int)global_plan.size() && sq_dist <= sq_dist_threshold && (max_plan_length<=0 || plan_length <= max_plan_length))
     {
       const geometry_msgs::PoseStamped& pose = global_plan[i];
       tf::poseStampedMsgToTF(pose, tf_pose);
@@ -649,6 +652,10 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
       double x_diff = robot_pose.getOrigin().x() - global_plan[i].pose.position.x;
       double y_diff = robot_pose.getOrigin().y() - global_plan[i].pose.position.y;
       sq_dist = x_diff * x_diff + y_diff * y_diff;
+      
+      // caclulate distance to previous pose
+      if (i>0 && max_plan_length>0)
+        plan_length += distance_points2d(global_plan[i-1].pose.position, global_plan[i].pose.position);
 
       ++i;
     }

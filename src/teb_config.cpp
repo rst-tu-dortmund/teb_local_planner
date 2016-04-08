@@ -53,6 +53,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("dt_hysteresis", trajectory.dt_hysteresis, trajectory.dt_hysteresis);
   nh.param("min_samples", trajectory.min_samples, trajectory.min_samples);
   nh.param("global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation, trajectory.global_plan_overwrite_orientation);
+  nh.param("max_global_plan_lookahead_dist", trajectory.max_global_plan_lookahead_dist, trajectory.max_global_plan_lookahead_dist);
   nh.param("force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
   nh.param("feasibility_check_no_poses", trajectory.feasibility_check_no_poses, trajectory.feasibility_check_no_poses);
   nh.param("publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
@@ -125,6 +126,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   trajectory.dt_ref = cfg.dt_ref;
   trajectory.dt_hysteresis = cfg.dt_hysteresis;
   trajectory.global_plan_overwrite_orientation = cfg.global_plan_overwrite_orientation;
+  trajectory.max_global_plan_lookahead_dist = cfg.max_global_plan_lookahead_dist;
   trajectory.force_reinit_new_goal_dist = cfg.force_reinit_new_goal_dist;
   trajectory.feasibility_check_no_poses = cfg.feasibility_check_no_poses;
   trajectory.publish_feedback = cfg.publish_feedback;
