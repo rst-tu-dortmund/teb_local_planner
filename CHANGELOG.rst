@@ -17,8 +17,8 @@ Forthcoming
   * Fixed a compilation issue on ARM architectures
   * If custom obstacles are used, the container with old obstacles is now cleared properly. 
 * Parameter cleanup: 
-  * "weight_*_obstacle" parameters combined to single parameter "weight_obstacle".
-  * "*_obstacle_poses_affected" parameters combined to single parameter "obstacle_poses_affected". 
+  * "weight_X_obstacle" parameters combined to single parameter "weight_obstacle".
+  * "X_obstacle_poses_affected" parameters combined to single parameter "obstacle_poses_affected". 
   * Deprecated parameter 'costmap_emergency_stop_dist' removed.
 * Code cleanup
 
