@@ -63,15 +63,15 @@ TebLocalPlannerROS:
  weight_kinematics_turning_radius: 1
  weight_optimaltime: 1
  weight_obstacle: 50
- weight_dynamic_obstacle: 10
- alternative_time_cost: False
+ weight_dynamic_obstacle: 10 # not in use yet
+ alternative_time_cost: False # not in use yet
 
  # Homotopy Class Planner
 
  enable_homotopy_class_planning: True
  enable_multithreading: True
  simple_exploration: False
- max_number_classes: 5
+ max_number_classes: 4
  roadmap_graph_no_samples: 15
  roadmap_graph_area_width: 5
  h_signature_prescaler: 0.5
