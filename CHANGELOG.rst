@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.0 (2016-04-08)
+------------------
 * Different/custom robot footprints are now supported and subject to optimization (refer to the new tutorial!).
 * The new robot footprint is also visualized using the common marker topic.
 * The strategy of taking occupied costmap cells behind the robot into account has been improved.
