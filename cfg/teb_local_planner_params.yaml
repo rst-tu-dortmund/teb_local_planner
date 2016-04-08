@@ -39,7 +39,6 @@ TebLocalPlannerROS:
  # Obstacles
     
  min_obstacle_dist: 0.4
- costmap_emergency_stop_dist: 0.3
  include_costmap_obstacles: True
  costmap_obstacles_behind_robot_dist: 1.0
  obstacle_poses_affected: 30

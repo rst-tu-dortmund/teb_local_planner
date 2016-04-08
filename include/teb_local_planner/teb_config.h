@@ -104,7 +104,6 @@ public:
   struct Obstacles
   {
     double min_obstacle_dist; //!< Minimum desired separation from obstacles
-    double costmap_emergency_stop_dist; //!< Force stop moving if the distance to costmap obstacles is below the given threshold
     bool include_costmap_obstacles; //!< Specify whether the obstacles in the costmap should be taken into account directly
     double costmap_obstacles_behind_robot_dist; //!< Limit the occupied local costmap obstacles taken into account for planning behind the robot (specify distance in meters)
     int obstacle_poses_affected; //!< The obstacle position is attached to the closest pose on the trajectory to reduce computational effort, but take a number of neighbors into account as well
@@ -210,7 +209,6 @@ public:
     // Obstacles
     
     obstacles.min_obstacle_dist = 0.5;
-    obstacles.costmap_emergency_stop_dist = 0.3;
     obstacles.include_costmap_obstacles = true;
     obstacles.costmap_obstacles_behind_robot_dist = 0.5;
     obstacles.obstacle_poses_affected = 25;

@@ -408,22 +408,6 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
   // Add costmap obstacles if desired
   if (cfg_.obstacles.include_costmap_obstacles)
   {
-  
-    // now scan costmap for obstacles and add them to the obst_vector
-    /*
-    unsigned int window_range = static_cast<unsigned int>(tebConfig.costmap_emergency_stop_dist/costmap->getResolution());
-    unsigned int robot_xm;
-    unsigned int robot_ym;
-    costmap->worldToMap(robot_pose[0],robot_pose[1],robot_xm,robot_ym);
-    
-    for(unsigned int j=std::max((int)robot_xm - (int)window_range,0) ; j<=std::min(robot_xm+window_range,costmap->getSizeInCellsX()-1) ; j++)
-    {
-      for(unsigned int k=std::max((int)robot_ym-(int)window_range,0) ; k<=std::min(robot_ym+window_range,costmap->getSizeInCellsY()-1) ;	k++)
-      {
-        if(costmap->getCost(j,k) == costmap_2d::LETHAL_OBSTACLE) return true;
-      }
-    }
-    */
     Eigen::Vector2d robot_orient = robot_pose_.orientationUnitVec();
     
     for (unsigned int i=0; i<costmap_->getSizeInCellsX()-1; ++i)
@@ -444,7 +428,6 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
         }
       }
     }
-  
   }
 }
 

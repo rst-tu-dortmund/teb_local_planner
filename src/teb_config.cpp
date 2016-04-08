@@ -75,7 +75,6 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   
   // Obstacles
   nh.param("min_obstacle_dist", obstacles.min_obstacle_dist, obstacles.min_obstacle_dist);
-  nh.param("costmap_emergency_stop_dist", obstacles.costmap_emergency_stop_dist, obstacles.costmap_emergency_stop_dist);
   nh.param("include_costmap_obstacles", obstacles.include_costmap_obstacles, obstacles.include_costmap_obstacles);
   nh.param("costmap_obstacles_behind_robot_dist", obstacles.costmap_obstacles_behind_robot_dist, obstacles.costmap_obstacles_behind_robot_dist);
   nh.param("obstacle_poses_affected", obstacles.obstacle_poses_affected, obstacles.obstacle_poses_affected);
@@ -148,7 +147,6 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   
   // Obstacles
   obstacles.min_obstacle_dist = cfg.min_obstacle_dist;
-  obstacles.costmap_emergency_stop_dist = cfg.costmap_emergency_stop_dist;
   obstacles.include_costmap_obstacles = cfg.include_costmap_obstacles;
   obstacles.costmap_obstacles_behind_robot_dist = cfg.costmap_obstacles_behind_robot_dist;
   obstacles.obstacle_poses_affected = cfg.obstacle_poses_affected;
@@ -223,7 +221,6 @@ void TebConfig::checkParameters() const
   if (obstacles.costmap_obstacles_behind_robot_dist < 0)
     ROS_WARN("TebLocalPlannerROS() Param Warning: parameter 'costmap_obstacles_behind_robot_dist' should be positive or zero.");
     
-  
   // hcp: obstacle heading threshold
   if (hcp.obstacle_keypoint_offset>=1 || hcp.obstacle_keypoint_offset<=0)
     ROS_WARN("TebLocalPlannerROS() Param Warning: parameter obstacle_heading_threshold must be in the interval ]0,1[. 0=0deg opening angle, 1=90deg opening angle.");
@@ -247,6 +244,9 @@ void TebConfig::checkDeprecated(const ros::NodeHandle& nh) const
   
   if (nh.hasParam("costmap_obstacles_front_only"))
     ROS_WARN("TebLocalPlannerROS() Param Warning: 'costmap_obstacles_front_only' is deprecated. It is replaced by 'costmap_obstacles_behind_robot_dist' to define the actual area taken into account.");
+  
+  if (nh.hasParam("costmap_emergency_stop_dist"))
+    ROS_WARN("TebLocalPlannerROS() Param Warning: 'costmap_emergency_stop_dist' is deprecated. You can safely remove it from your parameter config.");
 }
 
     
