@@ -225,18 +225,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   robot_vel_ = tfPoseToEigenVector2dTransRot(robot_vel_tf);
   geometry_msgs::Twist robot_vel_twist;
   robot_vel_twist.linear.x = robot_vel_[0];
-  robot_vel_twist.angular.z = robot_vel_[1];
-    
-  // check if the received robot velocity is identically zero (not just closed to zero)
-  // in that case the probability is high, that the odom helper has not received any
-  // odom message on the given topic. Unfortunately, the odom helper does not have any exception for that case.
-  // We only check translational velocities here in order to query a warning message
-  if (robot_vel_tf.getOrigin().getX()==0 && robot_vel_tf.getOrigin().getY()==0)
-    ROS_WARN_ONCE("The robot velocity is zero w.r.t to the max. available precision. \
-    Often the odom topic is not specified correctly (e.g. with namespaces), please check that. \
-    Some robot drivers programmatically set the velocity to zero if it is below a certain treshold, in that case ignore this message. \
-    This message will be printed once.");
-    
+  robot_vel_twist.angular.z = robot_vel_[1];   
   
   // prune global plan to cut off parts of the past (spatially before the robot)
   pruneGlobalPlan(*tf_, robot_pose, global_plan_);
