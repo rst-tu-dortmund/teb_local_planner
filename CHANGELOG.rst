@@ -2,6 +2,17 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed wrong coordinate transformation in 'line' and 'polygon' footprint models.
+* Trajectory selection strategy in case of multiple topologies updated:
+  * The obstacle costs for selection can now be scaling separately.
+  * The cost regarding time optimality can now be replaced by the actual transition time.
+  * Added a hysteresis to cost comparison between a new and the previously selected trajectory.
+  * In the default parameter setting the strategy is similar to release 0.3.0.
+* Warning message removed that occured if an odom message with only zeros was received.
+
+
 0.3.0 (2016-04-08)
 ------------------
 * Different/custom robot footprints are now supported and subject to optimization (refer to the new tutorial!).
