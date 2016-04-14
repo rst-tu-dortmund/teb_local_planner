@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2016-04-14)
+------------------
 * Fixed wrong coordinate transformation in 'line' and 'polygon' footprint models.
 * Trajectory selection strategy in case of multiple topologies updated:
   * The obstacle costs for selection can now be scaling separately.
