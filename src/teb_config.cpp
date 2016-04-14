@@ -98,14 +98,15 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
   nh.param("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
   nh.param("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);    
-  nh.param("alternative_time_cost", optim.alternative_time_cost, optim.alternative_time_cost); 
   
   // Homotopy Class Planner
   nh.param("enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning); 
   nh.param("enable_multithreading", hcp.enable_multithreading, hcp.enable_multithreading); 
   nh.param("simple_exploration", hcp.simple_exploration, hcp.simple_exploration); 
   nh.param("max_number_classes", hcp.max_number_classes, hcp.max_number_classes); 
+  nh.param("selection_obst_cost_scale", hcp.selection_obst_cost_scale, hcp.selection_obst_cost_scale);
   nh.param("selection_cost_hysteresis", hcp.selection_cost_hysteresis, hcp.selection_cost_hysteresis); 
+  nh.param("selection_alternative_time_cost", hcp.selection_alternative_time_cost, hcp.selection_alternative_time_cost); 
   nh.param("roadmap_graph_samples", hcp.roadmap_graph_no_samples, hcp.roadmap_graph_no_samples); 
   nh.param("roadmap_graph_area_width", hcp.roadmap_graph_area_width, hcp.roadmap_graph_area_width); 
   nh.param("h_signature_prescaler", hcp.h_signature_prescaler, hcp.h_signature_prescaler); 
@@ -171,13 +172,14 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_optimaltime = cfg.weight_optimaltime;
   optim.weight_obstacle = cfg.weight_obstacle;
   optim.weight_dynamic_obstacle = cfg.weight_dynamic_obstacle;
-  optim.alternative_time_cost = cfg.alternative_time_cost;
   
   // Homotopy Class Planner
   hcp.enable_multithreading = cfg.enable_multithreading;
   hcp.simple_exploration = cfg.simple_exploration;
   hcp.max_number_classes = cfg.max_number_classes; 
   hcp.selection_cost_hysteresis = cfg.selection_cost_hysteresis;
+  hcp.selection_obst_cost_scale = cfg.selection_obst_cost_scale;
+  hcp.selection_alternative_time_cost = cfg.selection_alternative_time_cost;
   
   hcp.obstacle_keypoint_offset = cfg.obstacle_keypoint_offset;
   hcp.obstacle_heading_threshold = cfg.obstacle_heading_threshold;
@@ -251,6 +253,9 @@ void TebConfig::checkDeprecated(const ros::NodeHandle& nh) const
   
   if (nh.hasParam("costmap_emergency_stop_dist"))
     ROS_WARN("TebLocalPlannerROS() Param Warning: 'costmap_emergency_stop_dist' is deprecated. You can safely remove it from your parameter config.");
+  
+  if (nh.hasParam("alternative_time_cost"))
+    ROS_WARN("TebLocalPlannerROS() Param Warning: 'alternative_time_cost' is deprecated. It has been replaced by 'selection_alternative_time_cost'.");
 }
 
     

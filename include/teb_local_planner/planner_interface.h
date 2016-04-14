@@ -181,8 +181,10 @@ public:
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
    * @param[out] cost current cost value for each trajectory
    *                  [for a planner with just a single trajectory: size=1, vector will not be cleared]
+   * @param obst_cost_scale Specify extra scaling for obstacle costs
+   * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time
    */
-  virtual void computeCurrentCost(std::vector<double>& cost)
+  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false)
   {
   }      
                 

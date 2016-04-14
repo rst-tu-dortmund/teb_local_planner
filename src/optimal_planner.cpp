@@ -150,7 +150,8 @@ boost::shared_ptr<g2o::SparseOptimizer> TebOptimalPlanner::initOptimizer()
 }
 
 
-bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned int iterations_outerloop, bool compute_cost_afterwards)
+bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned int iterations_outerloop, bool compute_cost_afterwards,
+                                    double obst_cost_scale, bool alternative_time_cost)
 {
   if (cfg_->optim.optimization_activate==false) 
     return false;
@@ -176,7 +177,7 @@ bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned 
     optimized_ = true;
     
     if (compute_cost_afterwards && i==iterations_outerloop-1) // compute cost vec only in the last iteration
-      computeCurrentCost(cfg_->optim.alternative_time_cost);
+      computeCurrentCost(obst_cost_scale, alternative_time_cost);
       
     clearGraph();
   }
@@ -587,7 +588,7 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 }
 
 
-void TebOptimalPlanner::computeCurrentCost(bool alternative_time_cost)
+void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, bool alternative_time_cost)
 { 
   // check if graph is empty/exist  -> important if function is called between buildGraph and optimizeGraph/clearGraph
   bool graph_exist_flag(false);
@@ -605,74 +606,69 @@ void TebOptimalPlanner::computeCurrentCost(bool alternative_time_cost)
   
   optimizer_->computeInitialGuess();
   
-  // now we need pointers to all edges -> calculate error for each edge-type
-  // since we aren't storing edge pointers, we need to check every edge
-    
   cost_ = 0;
-  
+
   if (alternative_time_cost)
   {
-    cost_ += teb_.getSumOfAllTimeDiffs()*4; // normalize to cost magnitude! Value is obtained from a few measurements!
-    //TEST we use SumOfAllTimeDiffs() here, because edge cost depends on number of samples, which is not always the same for similar TEBs,
-    // since we are using an AutoResize Function with hysteresis. Unfortunately the sparse optimal_time edge cannot be normalized with the number of states.
+    cost_ += teb_.getSumOfAllTimeDiffs();
+    // TEST we use SumOfAllTimeDiffs() here, because edge cost depends on number of samples, which is not always the same for similar TEBs,
+    // since we are using an AutoResize Function with hysteresis.
   }
   
+  // now we need pointers to all edges -> calculate error for each edge-type
+  // since we aren't storing edge pointers, we need to check every edge
   for (std::vector<g2o::OptimizableGraph::Edge*>::const_iterator it = optimizer_->activeEdges().begin(); it!= optimizer_->activeEdges().end(); it++)
   {
     EdgeTimeOptimal* edge_time_optimal = dynamic_cast<EdgeTimeOptimal*>(*it);
     if (edge_time_optimal!=NULL && !alternative_time_cost)
     {
-      cost_ += pow(edge_time_optimal->getError()[0],2);
+      cost_ += edge_time_optimal->getError().squaredNorm();
       continue;
     }
 
     EdgeKinematicsDiffDrive* edge_kinematics_dd = dynamic_cast<EdgeKinematicsDiffDrive*>(*it);
     if (edge_kinematics_dd!=NULL)
     {
-      cost_ += pow(edge_kinematics_dd->getError()[0],2);
-      cost_ += pow(edge_kinematics_dd->getError()[1],2);
+      cost_ += edge_kinematics_dd->getError().squaredNorm();
       continue;
     }
     
     EdgeKinematicsCarlike* edge_kinematics_cl = dynamic_cast<EdgeKinematicsCarlike*>(*it);
     if (edge_kinematics_cl!=NULL)
     {
-      cost_ += pow(edge_kinematics_cl->getError()[0],2);
-      cost_ += pow(edge_kinematics_cl->getError()[1],2);
+      cost_ += edge_kinematics_cl->getError().squaredNorm();
       continue;
     }
     
     EdgeVelocity* edge_velocity = dynamic_cast<EdgeVelocity*>(*it);
     if (edge_velocity!=NULL)
     {
-      cost_ += pow(edge_velocity->getError()[0],2);
-      cost_ += pow(edge_velocity->getError()[1],2);
+      cost_ += edge_velocity->getError().squaredNorm();
       continue;
     }
     
     EdgeAcceleration* edge_acceleration = dynamic_cast<EdgeAcceleration*>(*it);
     if (edge_acceleration!=NULL)
     {
-      cost_ += pow(edge_acceleration->getError()[0],2);
-      cost_ += pow(edge_acceleration->getError()[1],2);
+      cost_ += edge_acceleration->getError().squaredNorm();
       continue;
     }
     
     EdgeObstacle* edge_obstacle = dynamic_cast<EdgeObstacle*>(*it);
     if (edge_obstacle!=NULL)
     {
-      cost_ += pow(edge_obstacle->getError()[0],2);
+      cost_ += edge_obstacle->getError().squaredNorm() * obst_cost_scale;
       continue;
     }
     
     EdgeDynamicObstacle* edge_dyn_obstacle = dynamic_cast<EdgeDynamicObstacle*>(*it);
     if (edge_dyn_obstacle!=NULL)
     {
-      cost_ += pow(edge_dyn_obstacle->getError()[0],2);
+      cost_ += edge_dyn_obstacle->getError().squaredNorm() * obst_cost_scale;
       continue;
     }
   }
-  
+
   // delete temporary created graph
   if (!graph_exist_flag) 
     clearGraph();
