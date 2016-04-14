@@ -1,3 +1,7 @@
+###############################################################################################################
+## NOTE: This file will be removed soon. Check teb_local_planner_tutorials package for most recent versions. ##
+###############################################################################################################
+
 global_costmap:
   global_frame: /map
   robot_base_frame: base_link
