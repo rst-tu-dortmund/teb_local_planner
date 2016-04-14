@@ -146,6 +146,7 @@ public:
     bool enable_multithreading; //!< Activate multiple threading for planning multiple trajectories in parallel.
     bool simple_exploration; //!< If true, distinctive trajectories are explored using a simple left-right approach (pass each obstacle on the left or right side) for path generation, otherwise sample possible roadmaps randomly in a specified region between start and goal.
     int max_number_classes; //!< Specify the maximum number of allowed alternative homotopy classes (limits computational effort)
+    double selection_cost_hysteresis; //!< Specify how much trajectory cost must a new candidate have w.r.t. a previously selected trajectory in order to be selected (selection if new_cost < old_cost*factor).
     
     int roadmap_graph_no_samples; //! < Specify the number of samples generated for creating the roadmap graph, if simple_exploration is turend off.
     double roadmap_graph_area_width; //!< Random keypoints/waypoints are sampled in a rectangular region between start and goal. Specify the width of that region in meters.
@@ -243,6 +244,7 @@ public:
     hcp.enable_multithreading = true;
     hcp.simple_exploration = false;
     hcp.max_number_classes = 5; 
+    hcp.selection_cost_hysteresis = 1.0;
     
     hcp.obstacle_keypoint_offset = 0.1;
     hcp.obstacle_heading_threshold = 0.45; 
