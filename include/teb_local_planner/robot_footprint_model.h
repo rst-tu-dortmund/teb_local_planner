@@ -372,8 +372,14 @@ public:
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
   {
     // here we are doing the transformation into the world frame manually
-    Eigen::Vector2d line_start_world(current_pose.x() + std::cos(current_pose.theta()) * line_start_.x(), current_pose.y() + std::sin(current_pose.theta()) * line_start_.y());
-    Eigen::Vector2d line_end_world(current_pose.x() + std::cos(current_pose.theta()) * line_end_.x(), current_pose.y() + std::sin(current_pose.theta()) * line_end_.y());
+    double cos_th = std::cos(current_pose.theta());
+    double sin_th = std::sin(current_pose.theta());
+    Eigen::Vector2d line_start_world;
+    line_start_world.x() = current_pose.x() + cos_th * line_start_.x() - sin_th * line_start_.y();
+    line_start_world.y() = current_pose.y() + sin_th * line_start_.x() + cos_th * line_start_.y();
+    Eigen::Vector2d line_end_world;
+    line_end_world.x() = current_pose.x() + cos_th * line_end_.x() - sin_th * line_end_.y();
+    line_end_world.y() = current_pose.y() + sin_th * line_end_.x() + cos_th * line_end_.y();
     return obstacle->getMinimumDistance(line_start_world, line_end_world);
   }
 
@@ -463,12 +469,13 @@ public:
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
   {
     // here we are doing the transformation into the world frame manually
-    Eigen::Vector2d orient(std::cos(current_pose.theta()), std::sin(current_pose.theta()));
+    double cos_th = std::cos(current_pose.theta());
+    double sin_th = std::sin(current_pose.theta());
     Point2dContainer polygon_world(vertices_.size());
     for (std::size_t i=0; i<vertices_.size(); ++i)
     {
-      polygon_world[i].x() = current_pose.x() + orient.x() * vertices_[i].x();
-      polygon_world[i].y() = current_pose.y() + orient.y() * vertices_[i].y();
+      polygon_world[i].x() = current_pose.x() + cos_th * vertices_[i].x() - sin_th * vertices_[i].y();
+      polygon_world[i].y() = current_pose.y() + sin_th * vertices_[i].x() + cos_th * vertices_[i].y();
     }
     return obstacle->getMinimumDistance(polygon_world);
   }
