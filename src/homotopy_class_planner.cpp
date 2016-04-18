@@ -142,7 +142,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   // Init new TEBs based on newly explored homotopy classes
   exploreHomotopyClassesAndInitTebs(start, goal, cfg_->obstacles.min_obstacle_dist);
   // update via-points if activated
-  updateReferenceTrajectoryWithViaPoints();
+  updateReferenceTrajectoryViaPoints();
   // Optimize all trajectories in alternative homotopy classes
   optimizeAllTEBs(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
   // Delete any detours
@@ -632,7 +632,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
 	
 }
  
-void HomotopyClassPlanner::updateReferenceTrajectoryWithViaPoints()
+void HomotopyClassPlanner::updateReferenceTrajectoryViaPoints()
 {
   if (!initial_plan_ || cfg_->trajectory.global_plan_via_point_sep < 0 || cfg_->optim.weight_via_point <= 0)
     return;

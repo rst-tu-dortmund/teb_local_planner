@@ -478,7 +478,7 @@ protected:
    * @brief Update the reference trajectory with via-points (and all via-points from alternative trajectories are removed)
    * @remarks Requires that the plan method is called with an initial plan provided and that via-points are enabled (config)
    */
-  void updateReferenceTrajectoryWithViaPoints();
+  void updateReferenceTrajectoryViaPoints();
   
   /**
    * @brief Depth First Search implementation to find all paths between the start and the specified goal vertex.
