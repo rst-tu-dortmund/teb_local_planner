@@ -109,7 +109,6 @@ inline double distance_points2d(const P1& point1, const P2& point2)
   return std::sqrt( std::pow(point2.x-point1.x,2) + std::pow(point2.y-point1.y,2) );
 }
 
-
 /** 
  * @brief Helper function that returns the const reference to a value defined by either its raw pointer type or const reference.
  * 

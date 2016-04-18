@@ -44,13 +44,13 @@ namespace teb_local_planner
 
 // ============== Implementation ===================
 
-TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), cost_(HUGE_VAL), robot_model_(new PointRobotFootprint()), initialized_(false), optimized_(false)
+TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), via_points_(NULL), cost_(HUGE_VAL), robot_model_(new PointRobotFootprint()), initialized_(false), optimized_(false)
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual)
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, ViaPointContainer* via_points)
 {    
-  initialize(cfg, obstacles, robot_model, visual);
+  initialize(cfg, obstacles, robot_model, visual, via_points);
 }
 
 TebOptimalPlanner::~TebOptimalPlanner()
@@ -63,7 +63,7 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, ViaPointContainer* via_points)
 {    
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
@@ -71,6 +71,7 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacle
   cfg_ = &cfg;
   obstacles_ = obstacles;
   robot_model_ = robot_model;
+  via_points_ = via_points;
   cost_ = HUGE_VAL;
   setVisualization(visual);
   
@@ -122,6 +123,7 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
   factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
   factory->registerType("EDGE_DYNAMIC_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeDynamicObstacle>);
+  factory->registerType("EDGE_VIA_POINT", new g2o::HyperGraphElementCreator<EdgeViaPoint>);
   return;
 }
 
@@ -443,6 +445,32 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
       dynobst_edge->setTebConfig(*cfg_);
       optimizer_->addEdge(dynobst_edge);
     }
+  }
+}
+
+void TebOptimalPlanner::AddEdgesViaPoints()
+{
+  if (cfg_->optim.weight_via_point==0 || via_points_==NULL )
+    return; // if weight equals zero skip adding edges!
+
+  for (ViaPointContainer::const_iterator vp_it = via_points_->begin(); vp_it != via_points_->end(); ++vp_it)
+  {
+    
+    unsigned int index = teb_.findClosestTrajectoryPose(*vp_it);
+     
+    
+    // check if point is outside index-range between start and goal
+    if ( (index <= 1) || (index > teb_.sizePoses()-2) ) // start and goal are fixed and findNearestBandpoint finds first or last conf if intersection point is outside the range
+      continue; 
+    
+    Eigen::Matrix<double,1,1> information;
+    information.fill(cfg_->optim.weight_via_point);
+    
+    EdgeViaPoint* edge_viapoint = new EdgeViaPoint;
+    edge_viapoint->setVertex(0,teb_.PoseVertex(index));
+    edge_viapoint->setInformation(information);
+    edge_viapoint->setParameters(*cfg_, &(*vp_it));
+    optimizer_->addEdge(edge_viapoint);    
   }
 }
 

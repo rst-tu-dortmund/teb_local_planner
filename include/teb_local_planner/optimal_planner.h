@@ -66,6 +66,7 @@
 #include <teb_local_planner/g2o_types/edge_time_optimal.h>
 #include <teb_local_planner/g2o_types/edge_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
+#include <teb_local_planner/g2o_types/edge_via_point.h>
 
 // messages
 #include <nav_msgs/Path.h>
@@ -85,6 +86,10 @@ typedef g2o::BlockSolver< g2o::BlockSolverTraits<-1, -1> >  TEBBlockSolver;
 //! Typedef for the linear solver utilized for optimization
 typedef g2o::LinearSolverCSparse<TEBBlockSolver::PoseMatrixType> TEBLinearSolver;
 //typedef g2o::LinearSolverCholmod<TEBBlockSolver::PoseMatrixType> TEBLinearSolver;
+
+//! Typedef for a container storing via-points
+typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > ViaPointContainer;
+
 
 /**
  * @class TebOptimalPlanner
@@ -110,11 +115,12 @@ public:
    * @brief Construct and initialize the TEB optimal planner.
    * @param cfg Const reference to the TebConfig class for internal parameters
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
-   * @param robot_model Shared pointer to the robot shape model used for optimization
+   * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
    * @param visual Shared pointer to the TebVisualization class (optional)
+   * @param via_points Container storing via-points (optional)
    */
   TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                    TebVisualizationPtr visual = TebVisualizationPtr());
+                    TebVisualizationPtr visual = TebVisualizationPtr(), ViaPointContainer* via_points = NULL);
   
   /**
    * @brief Destruct the optimal planner.
@@ -125,11 +131,12 @@ public:
     * @brief Initializes the optimal planner
     * @param cfg Const reference to the TebConfig class for internal parameters
     * @param obstacles Container storing all relevant obstacles (see Obstacle)
-    * @param robot_model Shared pointer to the robot shape model used for optimization
+    * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
     * @param visual Shared pointer to the TebVisualization class (optional)
+    * @param via_points Container storing via-points (optional)
     */
   void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                  TebVisualizationPtr visual = TebVisualizationPtr());
+                  TebVisualizationPtr visual = TebVisualizationPtr(), ViaPointContainer* via_points = NULL);
   
   
 
@@ -280,7 +287,25 @@ public:
    * @brief Access the internal obstacle container.
    * @return Const reference to the obstacle container
    */
-  const ObstContainer& getObstVector() const {return *obstacles_;};
+  const ObstContainer& getObstVector() const {return *obstacles_;}
+
+  //@}
+  
+  /** @name Take via-points into account */
+  //@{
+  
+  
+  /**
+   * @brief Assign a new set of via-points
+   * @details Any previously set container will be overwritten.
+   */
+  void setViaPoints(ViaPointContainer* via_points) {via_points_ = via_points;}
+  
+  /**
+   * @brief Access the internal via-point container.
+   * @return Const reference to the via-point container
+   */
+  const ViaPointContainer& getViaPoints() const {return *via_points_;}
 
   //@}
 	  
@@ -563,12 +588,19 @@ protected:
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles
-   * @see EdgePointObstacle
-   * @see EdgePolygonObstacle
+   * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
    */
   void AddEdgesObstacles();
+  
+  /**
+   * @brief Add all edges (local cost functions) related to minimizing the distance to via-points
+   * @see EdgeViaPoint
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesViaPoints();
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from dynamic (moving) obstacles.
@@ -608,6 +640,7 @@ protected:
   // external objects (store weak pointers)
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
+  ViaPointContainer* via_points_; //!< Store via points for planning
   
   double cost_; //!< Store cost value of the current hyper-graph
   
