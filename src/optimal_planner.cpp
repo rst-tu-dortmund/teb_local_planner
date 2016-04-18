@@ -292,6 +292,8 @@ bool TebOptimalPlanner::buildGraph()
   AddEdgesObstacles();
   AddEdgesDynamicObstacles();
   
+  AddEdgesViaPoints();
+  
   AddEdgesVelocity();
   
   AddEdgesAcceleration();

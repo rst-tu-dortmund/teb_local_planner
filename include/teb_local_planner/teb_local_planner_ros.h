@@ -209,6 +209,15 @@ protected:
 
 
   /**
+   * @brief Update internal via-point container based on the current reference plan
+   * @remarks All previous via-points will be cleared.
+   * @param transformed_plan (local) portion of the global plan (which is already transformed to the planning frame)
+   * @param min_separation minimum separation between two consecutive via-points
+   */
+  void updateViaPointsContainer(const std::vector<geometry_msgs::PoseStamped>& transformed_plan, double min_separation);
+  
+  
+  /**
     * @brief Callback for the dynamic_reconfigure node.
     * 
     * This callback allows to modify parameters dynamically at runtime without restarting the node
@@ -329,6 +338,7 @@ private:
   // internal objects (memory management owned)
   PlannerInterfacePtr planner_; //!< Instance of the underlying optimal planner class
   ObstContainer obstacles_; //!< Obstacle vector that should be considered during local trajectory optimization
+  ViaPointContainer via_points_; //!< Container of via-points that should be considered during local trajectory optimization
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   tf::TransformListener* tf_; //!< pointer to Transform Listener
   base_local_planner::CostmapModel* costmap_model_;  

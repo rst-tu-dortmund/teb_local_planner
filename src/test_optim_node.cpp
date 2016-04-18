@@ -52,6 +52,7 @@ using namespace teb_local_planner; // it is ok here to import everything for tes
 PlannerInterfacePtr planner;
 TebVisualizationPtr visual;
 std::vector<ObstaclePtr> obst_vector;
+ViaPointContainer via_points;
 TebConfig config;
 boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg;
 ros::Subscriber custom_obst_sub;
@@ -122,6 +123,9 @@ int main( int argc, char** argv )
   marker_server.applyChanges();
   
   
+  // Add via points
+  //via_points.push_back( Eigen::Vector2d( 0.0, 1.5 ) );
+  
   // Setup visualization
   visual = TebVisualizationPtr(new TebVisualization(n, config));
   
@@ -132,7 +136,7 @@ int main( int argc, char** argv )
   if (config.hcp.enable_homotopy_class_planning)
     planner = PlannerInterfacePtr(new HomotopyClassPlanner(config, &obst_vector, robot_model, visual));
   else
-    planner = PlannerInterfacePtr(new TebOptimalPlanner(config, &obst_vector, robot_model, visual));
+    planner = PlannerInterfacePtr(new TebOptimalPlanner(config, &obst_vector, robot_model, visual, &via_points));
   
 
   no_fixed_obstacles = obst_vector.size();

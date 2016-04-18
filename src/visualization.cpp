@@ -146,7 +146,7 @@ void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, c
 
 void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 {
-  if ( printErrorWhenNotInitialized() )
+  if ( obstacles.empty() || printErrorWhenNotInitialized() )
     return;
   
   // Visualize point obstacles
@@ -271,6 +271,39 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
   }
 }
 
+
+void TebVisualization::publishViaPoints(const std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> >& via_points, const std::string& ns) const
+{
+  if ( via_points.empty() || printErrorWhenNotInitialized() )
+    return;
+  
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = cfg_->map_frame;
+  marker.header.stamp = ros::Time::now();
+  marker.ns = ns;
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::POINTS;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.lifetime = ros::Duration(2.0);
+  
+  for (std::size_t i=0; i < via_points.size(); ++i)
+  {
+    geometry_msgs::Point point;
+    point.x = via_points[i].x();
+    point.y = via_points[i].y();
+    point.z = 0;
+    marker.points.push_back(point);
+  }
+  
+  marker.scale.x = 0.1;
+  marker.scale.y = 0.1;
+  marker.color.a = 1.0;
+  marker.color.r = 0.0;
+  marker.color.g = 0.0;
+  marker.color.b = 1.0;
+
+  teb_marker_pub_.publish( marker );
+}
 
 void TebVisualization::publishTebContainer(const TebOptPlannerContainer& teb_planner, const std::string& ns)
 {
