@@ -120,7 +120,7 @@ public:
    * @param via_points Container storing via-points (optional)
    */
   TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                    TebVisualizationPtr visual = TebVisualizationPtr(), ViaPointContainer* via_points = NULL);
+                    TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
   
   /**
    * @brief Destruct the optimal planner.
@@ -136,7 +136,7 @@ public:
     * @param via_points Container storing via-points (optional)
     */
   void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                  TebVisualizationPtr visual = TebVisualizationPtr(), ViaPointContainer* via_points = NULL);
+                  TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
   
   
 
@@ -279,6 +279,7 @@ public:
   
   /**
    * @brief Assign a new set of obstacles
+   * @param obst_vector pointer to an obstacle container (can also be a nullptr)
    * @remarks This method overrids the obstacle container optinally assigned in the constructor.
    */
   void setObstVector(ObstContainer* obst_vector) {obstacles_ = obst_vector;}
@@ -297,9 +298,10 @@ public:
   
   /**
    * @brief Assign a new set of via-points
+   * @param via_points pointer to a via_point container (can also be a nullptr)
    * @details Any previously set container will be overwritten.
    */
-  void setViaPoints(ViaPointContainer* via_points) {via_points_ = via_points;}
+  void setViaPoints(const ViaPointContainer* via_points) {via_points_ = via_points;}
   
   /**
    * @brief Access the internal via-point container.
@@ -640,7 +642,7 @@ protected:
   // external objects (store weak pointers)
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
-  ViaPointContainer* via_points_; //!< Store via points for planning
+  const ViaPointContainer* via_points_; //!< Store via points for planning
   
   double cost_; //!< Store cost value of the current hyper-graph
   

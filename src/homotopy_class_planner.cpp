@@ -59,27 +59,33 @@ inline const Eigen::Vector2d& getVector2dFromHcGraph(HcGraphVertexType vert_desc
   return graph[vert_descriptor].pos;
 };
   
+//!< Inline function used for calculateHSignature() in combination with geometry_msgs::PoseStamped   
+inline std::complex<long double> getCplxFromMsgPoseStamped(const geometry_msgs::PoseStamped& pose)
+{
+  return std::complex<long double>(pose.pose.position.x, pose.pose.position.y);
+};
 
 
-
-
-HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), initial_plan_(NULL), robot_model_(new PointRobotFootprint()), initialized_(false)
+HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), via_points_(NULL), initial_plan_(NULL), robot_model_(new PointRobotFootprint()), initialized_(false)
 {
 }
   
-HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual) : initial_plan_(NULL)
+HomotopyClassPlanner::HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model,
+                                           TebVisualizationPtr visual, const ViaPointContainer* via_points) : initial_plan_(NULL)
 {
-  initialize(cfg, obstacles, robot_model, visual);
+  initialize(cfg, obstacles, robot_model, visual, via_points);
 }
 
 HomotopyClassPlanner::~HomotopyClassPlanner()
 {
 }
 
-void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual)
+void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model,
+                                      TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {
   cfg_ = &cfg;
   obstacles_ = obstacles;
+  via_points_ = via_points;
   robot_model_ = robot_model;
   initialized_ = true;
   
@@ -100,11 +106,16 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
   
   // store initial plan for further initializations (must be valid for the lifetime of this object or clearPlanner() is called!)
   initial_plan_ = &initial_plan;
+  // store the h signature of the initial plan to enable searching a matching teb later.
+  if (!initial_plan_ && cfg_->trajectory.global_plan_via_point_sep >= 0 && cfg_->optim.weight_via_point > 0)
+    initial_plan_h_sig_ = calculateHSignature(initial_plan.begin(), initial_plan.end(), getCplxFromMsgPoseStamped, obstacles_, cfg_->hcp.h_signature_prescaler);
+  else
+    initial_plan_h_sig_ = std::complex<long double>(0.0, 0.0);
   
   // if no teb has been planned before or if they have been deleted, use the initial plan as candidate
   if (tebs_.empty() && initial_plan_)
     addAndInitNewTeb(*initial_plan_);
-      
+    
   PoseSE2 start(initial_plan.front().pose);
   PoseSE2 goal(initial_plan.back().pose);
   Eigen::Vector2d vel = start_vel ?  Eigen::Vector2d( start_vel->linear.x, start_vel->angular.z ) : Eigen::Vector2d::Zero();
@@ -130,6 +141,8 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
     
   // Init new TEBs based on newly explored homotopy classes
   exploreHomotopyClassesAndInitTebs(start, goal, cfg_->obstacles.min_obstacle_dist);
+  // update via-points if activated
+  updateReferenceTrajectoryWithViaPoints();
   // Optimize all trajectories in alternative homotopy classes
   optimizeAllTEBs(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
   // Delete any detours
@@ -137,6 +150,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   // Select which candidate (based on alternative homotopy classes) should be used
   selectBestTeb();
 
+  initial_plan_ = NULL; // clear pointer to any previous initial plan (any previous plan is useless regarding the h-signature);
   return true;
 } 
  
@@ -458,7 +472,7 @@ void HomotopyClassPlanner::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
       
       // check if H-Signature is already known
       // and init new TEB if no duplicate was found
-      if ( addHSignatureIfNew(H, cfg_->hcp.h_signature_threshold) )
+      if ( addHSignatureIfNew(H) )
       {
         addAndInitNewTeb(visited.begin(), visited.end(), boost::bind(getVector2dFromHcGraph, _1, boost::cref(graph_)), start_orientation, goal_orientation);
       }
@@ -486,7 +500,7 @@ for ( boost::tie(it,end) = boost::adjacent_vertices(back,g); it!=end; ++it)
  
 
 
-bool HomotopyClassPlanner::addHSignatureIfNew(const std::complex<long double>& H, double threshold)
+bool HomotopyClassPlanner::addHSignatureIfNew(const std::complex<long double>& H)
 {	  
   if (!std::isfinite(H.real()) || !std::isfinite(H.imag()))
   {
@@ -498,10 +512,8 @@ bool HomotopyClassPlanner::addHSignatureIfNew(const std::complex<long double>& H
   // iterate existing h-signatures and check if there is an existing H-Signature similar to the new one
   for (std::vector< std::complex<long double> >::const_iterator it = h_signatures_.begin(); it != h_signatures_.end(); ++it)
   {
-    double diff_real = std::abs(it->real() - H.real());
-    double diff_imag = std::abs(it->imag() - H.imag());
-    if (diff_real<=threshold && diff_imag<=threshold)
-      return false; // Found! Homotopy class already exists, therefore nothing added	
+    if (isHSignatureSimilar(*it, H, cfg_->hcp.h_signature_threshold))
+      return false; // Found! Homotopy class already exists, therefore nothing added  
   }
 
   // Homotopy class not found -> Add to class-list, return that the h-signature is new
@@ -564,7 +576,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
     
     // WORKAROUND until the commented code below works
     // Here we do not compare cost values. Just first come first serve...
-    bool new_flag = addHSignatureIfNew(H, cfg_->hcp.h_signature_threshold);
+    bool new_flag = addHSignatureIfNew(H);
     if (!new_flag)
     {
       it_teb = tebs_.erase(it_teb);
@@ -618,6 +630,27 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
 //     }
 //   }
 	
+}
+ 
+void HomotopyClassPlanner::updateReferenceTrajectoryWithViaPoints()
+{
+  if (!initial_plan_ || cfg_->trajectory.global_plan_via_point_sep < 0 || cfg_->optim.weight_via_point <= 0)
+    return;
+  
+  if(h_signatures_.size() < tebs_.size())
+  {
+    ROS_ERROR("HomotopyClassPlanner::updateReferenceTrajectoryWithViaPoints(): Number of h-signatures does not match number of trajectories.");
+    return;
+  }
+  
+  // enable via-points for teb in the same hommotopy class as the initial_plan and deactivate it for all other ones
+  for (std::size_t i=0; i < h_signatures_.size(); ++i)
+  {
+    if (isHSignatureSimilar(h_signatures_[i], initial_plan_h_sig_, cfg_->hcp.h_signature_threshold))
+      tebs_[i]->setViaPoints(via_points_);
+    else
+      tebs_[i]->setViaPoints(NULL);
+  }
 }
  
  

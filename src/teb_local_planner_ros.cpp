@@ -105,7 +105,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
     {
-      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, robot_model, visualization_));
+      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, robot_model, visualization_, &via_points_));
       ROS_INFO("Parallel planning in distinctive topologies enabled.");
     }
     else

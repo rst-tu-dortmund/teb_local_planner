@@ -48,7 +48,7 @@ TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), via_point
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, ViaPointContainer* via_points)
+TebOptimalPlanner::TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
   initialize(cfg, obstacles, robot_model, visual, via_points);
 }
@@ -63,7 +63,7 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, ViaPointContainer* via_points)
+void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
