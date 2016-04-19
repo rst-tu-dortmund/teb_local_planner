@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.0 (2016-04-19)
+------------------
 * The teb_local_planner supports a path-following mode (w.r.t. the global plan) and via-points now.
   This allows the user to adapt the tradeoff between time-optimality and path-following.
   Check out the new tutorial: "Following the Global Plan (Via-Points)".
