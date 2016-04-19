@@ -140,7 +140,7 @@ public:
    */
   virtual void clearPlanner() = 0;
     
-   /**
+  /**
    * @brief Visualize planner specific stuff.
    * Overwrite this method to provide an interface to perform all planner related visualizations at once.
    */ 

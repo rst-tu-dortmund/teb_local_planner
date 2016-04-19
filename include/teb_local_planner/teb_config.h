@@ -73,6 +73,7 @@ public:
     double dt_hysteresis; //!< Hysteresis for automatic resizing depending on the current temporal resolution (dt): usually 10% of dt_ref
     int min_samples; //!< Minimum number of samples (should be always greater than 2)
     bool global_plan_overwrite_orientation; //!< Overwrite orientation of local subgoals provided by the global planner
+    double global_plan_via_point_sep; //!< Min. separation between each two consecutive via-points extracted from the global plan (if negative: disabled)
     double max_global_plan_lookahead_dist; //!< Specify maximum length (cumulative Euclidean distances) of the subset of the global plan taken into account for optimization [if <=0: disabled; the length is also bounded by the local costmap size!]
     double force_reinit_new_goal_dist; //!< Reinitialize the trajectory if a previous goal is updated with a seperation of more than the specified value in meters (skip hot-starting)
     int feasibility_check_no_poses; //!< Specify up to which pose on the predicted plan the feasibility should be checked each sampling interval.
@@ -135,6 +136,7 @@ public:
     double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t transition time
     double weight_obstacle; //!< Optimization weight for satisfying a minimum separation from obstacles
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles    
+    double weight_via_point; //!< Optimization weight for minimizing the distance to via-points
   } optim; //!< Optimization related parameters
   
   
@@ -146,6 +148,7 @@ public:
     int max_number_classes; //!< Specify the maximum number of allowed alternative homotopy classes (limits computational effort)
     double selection_cost_hysteresis; //!< Specify how much trajectory cost must a new candidate have w.r.t. a previously selected trajectory in order to be selected (selection if new_cost < old_cost*factor).
     double selection_obst_cost_scale; //!< Extra scaling of obstacle cost terms just for selecting the 'best' candidate.
+    double selection_viapoint_cost_scale; //!< Extra scaling of via-point cost terms just for selecting the 'best' candidate.
     bool selection_alternative_time_cost; //!< If true, time cost is replaced by the total transition time.
     
     int roadmap_graph_no_samples; //! < Specify the number of samples generated for creating the roadmap graph, if simple_exploration is turend off.
@@ -155,6 +158,8 @@ public:
     
     double obstacle_keypoint_offset; //!< If simple_exploration is turned on, this parameter determines the distance on the left and right side of the obstacle at which a new keypoint will be cretead (in addition to min_obstacle_dist).
     double obstacle_heading_threshold; //!< Specify the value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account for exploration [0,1]
+    
+    bool viapoints_all_candidates; //!< If true, all trajectories of different topologies are attached to the current set of via-points, otherwise only the trajectory sharing the same one as the initial/global plan.
     
     bool visualize_hc_graph; //!< Visualize the graph that is created for exploring new homotopy classes.
   } hcp;
@@ -186,6 +191,7 @@ public:
     trajectory.dt_hysteresis = 0.1;
     trajectory.min_samples = 3;
     trajectory.global_plan_overwrite_orientation = true;
+    trajectory.global_plan_via_point_sep = -1;
     trajectory.max_global_plan_lookahead_dist = 1;
     trajectory.force_reinit_new_goal_dist = 1;
     trajectory.feasibility_check_no_poses = 5;
@@ -236,6 +242,7 @@ public:
     optim.weight_optimaltime = 1;
     optim.weight_obstacle = 10;
     optim.weight_dynamic_obstacle = 10;
+    optim.weight_via_point = 1;
     
     // Homotopy Class Planner
    
@@ -244,7 +251,8 @@ public:
     hcp.simple_exploration = false;
     hcp.max_number_classes = 5; 
     hcp.selection_cost_hysteresis = 1.0;
-    hcp.selection_obst_cost_scale = 1.0;
+    hcp.selection_obst_cost_scale = 100.0;
+    hcp.selection_viapoint_cost_scale = 1.0;
     hcp.selection_alternative_time_cost = false;
         
     hcp.obstacle_keypoint_offset = 0.1;
@@ -253,6 +261,8 @@ public:
     hcp.roadmap_graph_area_width = 6; // [m]
     hcp.h_signature_prescaler = 1;
     hcp.h_signature_threshold = 0.1;
+    
+    hcp.viapoints_all_candidates = true;
     
     hcp.visualize_hc_graph = false;
 

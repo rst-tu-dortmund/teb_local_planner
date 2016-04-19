@@ -144,6 +144,12 @@ public:
   void publishObstacles(const ObstContainer& obstacles) const;
   
   /**
+   * @brief Publish via-points to the ros topic \e ../../teb_markers
+   * @param via_points via-point container
+   */
+  void publishViaPoints(const std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> >& via_points, const std::string& ns = "ViaPoints") const;
+  
+  /**
    * @brief Publish a boost::adjacency_list (boost's graph datatype) via markers.
    * @remarks Make sure that vertices of the graph contain a member \c pos as \c Eigen::Vector2d type
    *	      to query metric position values.

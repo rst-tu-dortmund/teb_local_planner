@@ -105,12 +105,12 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
     {
-      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, robot_model, visualization_));
+      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, robot_model, visualization_, &via_points_));
       ROS_INFO("Parallel planning in distinctive topologies enabled.");
     }
     else
     {
-      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(cfg_, &obstacles_, robot_model, visualization_));
+      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(cfg_, &obstacles_, robot_model, visualization_, &via_points_));
       ROS_INFO("Parallel planning in distinctive topologies disabled.");
     }
     
@@ -303,6 +303,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   
   // also consider custom obstacles (must be called after other updates, since the container is not cleared)
   updateObstacleContainerWithCustomObstacles();
+  
+  // update via-points container
+  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_via_point_sep);
     
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
@@ -316,7 +319,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     ROS_WARN("teb_local_planner was not able to obtain a local plan for the current setting.");
     return false;
   }
-  
+    
   // Undo temporary horizon reduction
   if (horizon_reduced_ && (ros::Time::now()-horizon_reduced_stamp_).toSec() >= 10 && !planner_->isHorizonReductionAppropriate(transformed_plan)) // 10s are hardcoded for now...
   {
@@ -374,8 +377,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // Now visualize everything		    
   planner_->visualize();
   visualization_->publishObstacles(obstacles_);
+  visualization_->publishViaPoints(via_points_);
   visualization_->publishGlobalPlan(global_plan_);
-  
   return true;
 }
 
@@ -510,6 +513,26 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
   }
 }
 
+void TebLocalPlannerROS::updateViaPointsContainer(const std::vector<geometry_msgs::PoseStamped>& transformed_plan, double min_separation)
+{
+  via_points_.clear();
+  
+  if (min_separation<0)
+    return;
+  
+  std::size_t prev_idx = 0;
+  for (std::size_t i=1; i < transformed_plan.size(); ++i) // skip first one, since we do not need any point before the first min_separation [m]
+  {
+    // check separation to the previous via-point inserted
+    if (distance_points2d( transformed_plan[prev_idx].pose.position, transformed_plan[i].pose.position ) < min_separation)
+      continue;
+    
+    // add via-point
+    via_points_.push_back( Eigen::Vector2d( transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y ) );
+    prev_idx = i;
+  }
+  
+}
       
 Eigen::Vector2d TebLocalPlannerROS::tfPoseToEigenVector2dTransRot(const tf::Pose& tf_vel)
 {

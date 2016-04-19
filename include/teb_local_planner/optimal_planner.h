@@ -66,6 +66,7 @@
 #include <teb_local_planner/g2o_types/edge_time_optimal.h>
 #include <teb_local_planner/g2o_types/edge_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
+#include <teb_local_planner/g2o_types/edge_via_point.h>
 
 // messages
 #include <nav_msgs/Path.h>
@@ -85,6 +86,10 @@ typedef g2o::BlockSolver< g2o::BlockSolverTraits<-1, -1> >  TEBBlockSolver;
 //! Typedef for the linear solver utilized for optimization
 typedef g2o::LinearSolverCSparse<TEBBlockSolver::PoseMatrixType> TEBLinearSolver;
 //typedef g2o::LinearSolverCholmod<TEBBlockSolver::PoseMatrixType> TEBLinearSolver;
+
+//! Typedef for a container storing via-points
+typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > ViaPointContainer;
+
 
 /**
  * @class TebOptimalPlanner
@@ -110,11 +115,12 @@ public:
    * @brief Construct and initialize the TEB optimal planner.
    * @param cfg Const reference to the TebConfig class for internal parameters
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
-   * @param robot_model Shared pointer to the robot shape model used for optimization
+   * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
    * @param visual Shared pointer to the TebVisualization class (optional)
+   * @param via_points Container storing via-points (optional)
    */
   TebOptimalPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                    TebVisualizationPtr visual = TebVisualizationPtr());
+                    TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
   
   /**
    * @brief Destruct the optimal planner.
@@ -125,11 +131,12 @@ public:
     * @brief Initializes the optimal planner
     * @param cfg Const reference to the TebConfig class for internal parameters
     * @param obstacles Container storing all relevant obstacles (see Obstacle)
-    * @param robot_model Shared pointer to the robot shape model used for optimization
+    * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
     * @param visual Shared pointer to the TebVisualization class (optional)
+    * @param via_points Container storing via-points (optional)
     */
   void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                  TebVisualizationPtr visual = TebVisualizationPtr());
+                  TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
   
   
 
@@ -221,14 +228,15 @@ public:
    * @param iterations_innerloop Number of iterations for the actual solver loop
    * @param iterations_outerloop Specifies how often the trajectory should be resized followed by the inner solver loop.
    * @param compute_cost_afterwards if \c true Calculate the cost vector according to computeCurrentCost(),
-   * 				    the vector can be accessed afterwards using getCurrentCost().
+   *         the vector can be accessed afterwards using getCurrentCost().
    * @param obst_cost_scale Specify extra scaling for obstacle costs (only used if \c compute_cost_afterwards is true)
+   * @param viapoint_cost_scale Specify extra scaling for via-point costs (only used if \c compute_cost_afterwards is true)
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time 
    *          (only used if \c compute_cost_afterwards is true).
    * @return \c true if the optimization terminates successfully, \c false otherwise
    */	  
   bool optimizeTEB(unsigned int iterations_innerloop, unsigned int iterations_outerloop, bool compute_cost_afterwards = false,
-                   double obst_cost_scale=1.0, bool alternative_time_cost=false);
+                   double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
   
   //@}
   
@@ -272,6 +280,7 @@ public:
   
   /**
    * @brief Assign a new set of obstacles
+   * @param obst_vector pointer to an obstacle container (can also be a nullptr)
    * @remarks This method overrids the obstacle container optinally assigned in the constructor.
    */
   void setObstVector(ObstContainer* obst_vector) {obstacles_ = obst_vector;}
@@ -280,7 +289,26 @@ public:
    * @brief Access the internal obstacle container.
    * @return Const reference to the obstacle container
    */
-  const ObstContainer& getObstVector() const {return *obstacles_;};
+  const ObstContainer& getObstVector() const {return *obstacles_;}
+
+  //@}
+  
+  /** @name Take via-points into account */
+  //@{
+  
+  
+  /**
+   * @brief Assign a new set of via-points
+   * @param via_points pointer to a via_point container (can also be a nullptr)
+   * @details Any previously set container will be overwritten.
+   */
+  void setViaPoints(const ViaPointContainer* via_points) {via_points_ = via_points;}
+  
+  /**
+   * @brief Access the internal via-point container.
+   * @return Const reference to the via-point container
+   */
+  const ViaPointContainer& getViaPoints() const {return *via_points_;}
 
   //@}
 	  
@@ -376,21 +404,23 @@ public:
    * @see getCurrentCost
    * @see optimizeTEB
    * @param obst_cost_scale Specify extra scaling for obstacle costs.
+   * @param viapoint_cost_scale Specify extra scaling for via points.
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time.
    * @return TebCostVec containing the cost values
    */
-  void computeCurrentCost(double obst_cost_scale=1.0, bool alternative_time_cost=false);
+  void computeCurrentCost(double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
   
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
    * @param[out] cost current cost value for each trajectory
    *                  [for a planner with just a single trajectory: size=1, vector will not be cleared]
    * @param obst_cost_scale Specify extra scaling for obstacle costs
+   * @param viapoint_cost_scale Specify extra scaling for via points.
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time
    */
-  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false)
+  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false)
   {
-    computeCurrentCost(obst_cost_scale, alternative_time_cost);
+    computeCurrentCost(obst_cost_scale, viapoint_cost_scale, alternative_time_cost);
     cost.push_back( getCurrentCost() );
   }
   
@@ -563,12 +593,19 @@ protected:
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles
-   * @see EdgePointObstacle
-   * @see EdgePolygonObstacle
+   * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
    */
   void AddEdgesObstacles();
+  
+  /**
+   * @brief Add all edges (local cost functions) related to minimizing the distance to via-points
+   * @see EdgeViaPoint
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesViaPoints();
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from dynamic (moving) obstacles.
@@ -608,6 +645,7 @@ protected:
   // external objects (store weak pointers)
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
+  const ViaPointContainer* via_points_; //!< Store via points for planning
   
   double cost_; //!< Store cost value of the current hyper-graph
   

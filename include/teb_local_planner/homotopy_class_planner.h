@@ -131,11 +131,12 @@ public:
    * @brief Construct and initialize the HomotopyClassPlanner
    * @param cfg Const reference to the TebConfig class for internal parameters
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
-   * @param robot_model Shared pointer to the robot shape model used for optimization
+   * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
    * @param visualization Shared pointer to the TebVisualization class (optional)
+   * @param via_points Container storing via-points (optional)
    */
   HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                       TebVisualizationPtr visualization = TebVisualizationPtr());
+                       TebVisualizationPtr visualization = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
     
   /**
    * @brief Destruct the HomotopyClassPlanner.
@@ -146,11 +147,12 @@ public:
    * @brief Initialize the HomotopyClassPlanner
    * @param cfg Const reference to the TebConfig class for internal parameters
    * @param obstacles Container storing all relevant obstacles (see Obstacle)
-   * @param robot_model Shared pointer to the robot shape model used for optimization
+   * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
    * @param visualization Shared pointer to the TebVisualization class (optional)
+   * @param via_points Container storing via-points (optional)
    */
   void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
-                  TebVisualizationPtr visualization = TebVisualizationPtr());
+                  TebVisualizationPtr visualization = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
   
   
   
@@ -396,9 +398,25 @@ public:
    * @param[out] cost current cost value for each trajectory
    *                  [for a planner with just a single trajectory: size=1, vector will not be cleared]
    * @param obst_cost_scale Specify extra scaling for obstacle costs
+   * @param viapoint_cost_scale Specify extra scaling for via points.
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time
    */
-  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false);  
+  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);  
+  
+  /**
+   * @brief Check if two h-signatures are similar (w.r.t. a certain threshold)
+   * @param h1 first h-signature
+   * @param h2 second h-signature
+   * @return \c true if both h-signatures are similar, false otherwise.
+   */
+  inline static bool isHSignatureSimilar(const std::complex<long double>& h1, const std::complex<long double>& h2, double threshold)
+  {
+      double diff_real = std::abs(h2.real() - h1.real());
+      double diff_imag = std::abs(h2.imag() - h1.imag());
+      if (diff_real<=threshold && diff_imag<=threshold)
+        return true; // Found! Homotopy class already exists, therefore nothing added  
+      return false;
+  }
     
 protected:
   
@@ -442,12 +460,10 @@ protected:
   /**
    * @brief Internal helper function that adds a h-signature to the list of known h-signatures only if it is unique.
    * @param H h-signature that should be tested
-   * @param threshold Two h-signuteres are assumed to be equal, if both the difference of real parts and complex parts are below \c threshold.
    * @return \c true if the h-signature was added and no duplicate was found, \c false otherwise
    */    
-  bool addHSignatureIfNew(const std::complex<long double>& H, double threshold);
-
- 
+  bool addHSignatureIfNew(const std::complex<long double>& H);
+  
   /**
    * @brief Renew all found h-signatures for the new planning step based on existing TEBs. Optionally detours can be discarded.
    * 
@@ -458,6 +474,16 @@ protected:
    * @param delete_detours if this param is \c true, all existing TEBs are cleared from detour-candidates by utilizing deleteTebDetours(). 
    */
   void renewAndAnalyzeOldTebs(bool delete_detours);
+  
+  /**
+   * @brief Associate trajectories with via-points
+   * 
+   * If \c all_trajectories is true, all trajectory candidates are connected with the set of via_points, 
+   * otherwise only the trajectory sharing the homotopy class of the initial/global plan (and all via-points from alternative trajectories are removed)
+   * @remarks Requires that the plan method is called with an initial plan provided and that via-points are enabled (config)
+   * @param all_trajectories see method description
+   */
+  void updateReferenceTrajectoryViaPoints(bool all_trajectories);
   
   /**
    * @brief Depth First Search implementation to find all paths between the start and the specified goal vertex.
@@ -489,6 +515,7 @@ protected:
     
   // external objects (store weak pointers)
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
+  const ViaPointContainer* via_points_; //!< Store the current list of via-points
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   
   // internal objects (memory management owned)
@@ -497,6 +524,7 @@ protected:
   RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
   
   const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
+  std::complex<long double> initial_plan_h_sig_; //!< Store the h_signature of the initial plan
   
   TebOptPlannerContainer tebs_; //!< Container that stores multiple local teb planners (for alternative homotopy classes) and their corresponding costs
   

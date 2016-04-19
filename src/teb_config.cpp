@@ -53,6 +53,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("dt_hysteresis", trajectory.dt_hysteresis, trajectory.dt_hysteresis);
   nh.param("min_samples", trajectory.min_samples, trajectory.min_samples);
   nh.param("global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation, trajectory.global_plan_overwrite_orientation);
+  nh.param("global_plan_via_point_sep", trajectory.global_plan_via_point_sep, trajectory.global_plan_via_point_sep);
   nh.param("max_global_plan_lookahead_dist", trajectory.max_global_plan_lookahead_dist, trajectory.max_global_plan_lookahead_dist);
   nh.param("force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
   nh.param("feasibility_check_no_poses", trajectory.feasibility_check_no_poses, trajectory.feasibility_check_no_poses);
@@ -98,6 +99,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
   nh.param("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
   nh.param("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);    
+  nh.param("weight_via_point", optim.weight_via_point, optim.weight_via_point);
   
   // Homotopy Class Planner
   nh.param("enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning); 
@@ -105,6 +107,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("simple_exploration", hcp.simple_exploration, hcp.simple_exploration); 
   nh.param("max_number_classes", hcp.max_number_classes, hcp.max_number_classes); 
   nh.param("selection_obst_cost_scale", hcp.selection_obst_cost_scale, hcp.selection_obst_cost_scale);
+  nh.param("selection_viapoint_cost_scale", hcp.selection_viapoint_cost_scale, hcp.selection_viapoint_cost_scale);
   nh.param("selection_cost_hysteresis", hcp.selection_cost_hysteresis, hcp.selection_cost_hysteresis); 
   nh.param("selection_alternative_time_cost", hcp.selection_alternative_time_cost, hcp.selection_alternative_time_cost); 
   nh.param("roadmap_graph_samples", hcp.roadmap_graph_no_samples, hcp.roadmap_graph_no_samples); 
@@ -113,6 +116,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("h_signature_threshold", hcp.h_signature_threshold, hcp.h_signature_threshold); 
   nh.param("obstacle_keypoint_offset", hcp.obstacle_keypoint_offset, hcp.obstacle_keypoint_offset); 
   nh.param("obstacle_heading_threshold", hcp.obstacle_heading_threshold, hcp.obstacle_heading_threshold); 
+  nh.param("viapoints_all_candidates", hcp.viapoints_all_candidates, hcp.viapoints_all_candidates);
   nh.param("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph); 
   
   checkParameters();
@@ -128,6 +132,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   trajectory.dt_ref = cfg.dt_ref;
   trajectory.dt_hysteresis = cfg.dt_hysteresis;
   trajectory.global_plan_overwrite_orientation = cfg.global_plan_overwrite_orientation;
+  trajectory.global_plan_via_point_sep = cfg.global_plan_via_point_sep;
   trajectory.max_global_plan_lookahead_dist = cfg.max_global_plan_lookahead_dist;
   trajectory.force_reinit_new_goal_dist = cfg.force_reinit_new_goal_dist;
   trajectory.feasibility_check_no_poses = cfg.feasibility_check_no_poses;
@@ -172,6 +177,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_optimaltime = cfg.weight_optimaltime;
   optim.weight_obstacle = cfg.weight_obstacle;
   optim.weight_dynamic_obstacle = cfg.weight_dynamic_obstacle;
+  optim.weight_via_point = cfg.weight_via_point;
   
   // Homotopy Class Planner
   hcp.enable_multithreading = cfg.enable_multithreading;
@@ -179,6 +185,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   hcp.max_number_classes = cfg.max_number_classes; 
   hcp.selection_cost_hysteresis = cfg.selection_cost_hysteresis;
   hcp.selection_obst_cost_scale = cfg.selection_obst_cost_scale;
+  hcp.selection_viapoint_cost_scale = cfg.selection_viapoint_cost_scale;
   hcp.selection_alternative_time_cost = cfg.selection_alternative_time_cost;
   
   hcp.obstacle_keypoint_offset = cfg.obstacle_keypoint_offset;
@@ -187,6 +194,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   hcp.roadmap_graph_area_width = cfg.roadmap_graph_area_width;
   hcp.h_signature_prescaler = cfg.h_signature_prescaler;
   hcp.h_signature_threshold = cfg.h_signature_threshold;
+  hcp.viapoints_all_candidates = cfg.viapoints_all_candidates;
   hcp.visualize_hc_graph = cfg.visualize_hc_graph;
   
   checkParameters();
