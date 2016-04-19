@@ -148,6 +148,7 @@ public:
     int max_number_classes; //!< Specify the maximum number of allowed alternative homotopy classes (limits computational effort)
     double selection_cost_hysteresis; //!< Specify how much trajectory cost must a new candidate have w.r.t. a previously selected trajectory in order to be selected (selection if new_cost < old_cost*factor).
     double selection_obst_cost_scale; //!< Extra scaling of obstacle cost terms just for selecting the 'best' candidate.
+    double selection_viapoint_cost_scale; //!< Extra scaling of via-point cost terms just for selecting the 'best' candidate.
     bool selection_alternative_time_cost; //!< If true, time cost is replaced by the total transition time.
     
     int roadmap_graph_no_samples; //! < Specify the number of samples generated for creating the roadmap graph, if simple_exploration is turend off.
@@ -251,6 +252,7 @@ public:
     hcp.max_number_classes = 5; 
     hcp.selection_cost_hysteresis = 1.0;
     hcp.selection_obst_cost_scale = 1.0;
+    hcp.selection_viapoint_cost_scale = 1.0;
     hcp.selection_alternative_time_cost = false;
         
     hcp.obstacle_keypoint_offset = 0.1;

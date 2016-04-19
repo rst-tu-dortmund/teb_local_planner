@@ -153,7 +153,7 @@ boost::shared_ptr<g2o::SparseOptimizer> TebOptimalPlanner::initOptimizer()
 
 
 bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned int iterations_outerloop, bool compute_cost_afterwards,
-                                    double obst_cost_scale, bool alternative_time_cost)
+                                    double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)
 {
   if (cfg_->optim.optimization_activate==false) 
     return false;
@@ -179,7 +179,7 @@ bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned 
     optimized_ = true;
     
     if (compute_cost_afterwards && i==iterations_outerloop-1) // compute cost vec only in the last iteration
-      computeCurrentCost(obst_cost_scale, alternative_time_cost);
+      computeCurrentCost(obst_cost_scale, viapoint_cost_scale, alternative_time_cost);
       
     clearGraph();
   }
@@ -618,7 +618,7 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 }
 
 
-void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, bool alternative_time_cost)
+void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)
 { 
   // check if graph is empty/exist  -> important if function is called between buildGraph and optimizeGraph/clearGraph
   bool graph_exist_flag(false);
@@ -695,6 +695,13 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, bool alternat
     if (edge_dyn_obstacle!=NULL)
     {
       cost_ += edge_dyn_obstacle->getError().squaredNorm() * obst_cost_scale;
+      continue;
+    }
+    
+    EdgeViaPoint* edge_viapoint = dynamic_cast<EdgeViaPoint*>(*it);
+    if (edge_viapoint!=NULL)
+    {
+      cost_ += edge_viapoint->getError().squaredNorm() * viapoint_cost_scale;
       continue;
     }
   }

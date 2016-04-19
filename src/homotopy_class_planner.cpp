@@ -723,7 +723,8 @@ void HomotopyClassPlanner::optimizeAllTEBs(unsigned int iter_innerloop, unsigned
     for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
     {
       teb_threads.create_thread( boost::bind(&TebOptimalPlanner::optimizeTEB, it_teb->get(), iter_innerloop, iter_outerloop,
-                                             true, cfg_->hcp.selection_obst_cost_scale, cfg_->hcp.selection_alternative_time_cost) );
+                                             true, cfg_->hcp.selection_obst_cost_scale, cfg_->hcp.selection_viapoint_cost_scale,
+                                             cfg_->hcp.selection_alternative_time_cost) );
     }
     teb_threads.join_all();
   }
@@ -732,7 +733,7 @@ void HomotopyClassPlanner::optimizeAllTEBs(unsigned int iter_innerloop, unsigned
     for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
     {
       it_teb->get()->optimizeTEB(iter_innerloop,iter_outerloop, true, cfg_->hcp.selection_obst_cost_scale, 
-                                 cfg_->hcp.selection_alternative_time_cost); // compute cost as well inside optimizeTEB (last argument = true)
+                                 cfg_->hcp.selection_viapoint_cost_scale, cfg_->hcp.selection_alternative_time_cost); // compute cost as well inside optimizeTEB (last argument = true)
     }
   }
 } 
@@ -831,11 +832,11 @@ bool HomotopyClassPlanner::isHorizonReductionAppropriate(const std::vector<geome
   return best->isHorizonReductionAppropriate(initial_plan);
 }
 
-void HomotopyClassPlanner::computeCurrentCost(std::vector<double>& cost, double obst_cost_scale, bool alternative_time_cost)
+void HomotopyClassPlanner::computeCurrentCost(std::vector<double>& cost, double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)
 {
   for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
   {
-    it_teb->get()->computeCurrentCost(cost, obst_cost_scale, alternative_time_cost);
+    it_teb->get()->computeCurrentCost(cost, obst_cost_scale, viapoint_cost_scale, alternative_time_cost);
   } 
 }
  

@@ -228,14 +228,15 @@ public:
    * @param iterations_innerloop Number of iterations for the actual solver loop
    * @param iterations_outerloop Specifies how often the trajectory should be resized followed by the inner solver loop.
    * @param compute_cost_afterwards if \c true Calculate the cost vector according to computeCurrentCost(),
-   * 				    the vector can be accessed afterwards using getCurrentCost().
+   *         the vector can be accessed afterwards using getCurrentCost().
    * @param obst_cost_scale Specify extra scaling for obstacle costs (only used if \c compute_cost_afterwards is true)
+   * @param viapoint_cost_scale Specify extra scaling for via-point costs (only used if \c compute_cost_afterwards is true)
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time 
    *          (only used if \c compute_cost_afterwards is true).
    * @return \c true if the optimization terminates successfully, \c false otherwise
    */	  
   bool optimizeTEB(unsigned int iterations_innerloop, unsigned int iterations_outerloop, bool compute_cost_afterwards = false,
-                   double obst_cost_scale=1.0, bool alternative_time_cost=false);
+                   double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
   
   //@}
   
@@ -403,21 +404,23 @@ public:
    * @see getCurrentCost
    * @see optimizeTEB
    * @param obst_cost_scale Specify extra scaling for obstacle costs.
+   * @param viapoint_cost_scale Specify extra scaling for via points.
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time.
    * @return TebCostVec containing the cost values
    */
-  void computeCurrentCost(double obst_cost_scale=1.0, bool alternative_time_cost=false);
+  void computeCurrentCost(double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
   
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
    * @param[out] cost current cost value for each trajectory
    *                  [for a planner with just a single trajectory: size=1, vector will not be cleared]
    * @param obst_cost_scale Specify extra scaling for obstacle costs
+   * @param viapoint_cost_scale Specify extra scaling for via points.
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time
    */
-  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false)
+  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false)
   {
-    computeCurrentCost(obst_cost_scale, alternative_time_cost);
+    computeCurrentCost(obst_cost_scale, viapoint_cost_scale, alternative_time_cost);
     cost.push_back( getCurrentCost() );
   }
   

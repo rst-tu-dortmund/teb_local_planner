@@ -398,9 +398,10 @@ public:
    * @param[out] cost current cost value for each trajectory
    *                  [for a planner with just a single trajectory: size=1, vector will not be cleared]
    * @param obst_cost_scale Specify extra scaling for obstacle costs
+   * @param viapoint_cost_scale Specify extra scaling for via points.
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time
    */
-  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false);  
+  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);  
   
   /**
    * @brief Check if two h-signatures are similar (w.r.t. a certain threshold)
