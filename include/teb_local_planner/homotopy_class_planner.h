@@ -475,10 +475,14 @@ protected:
   void renewAndAnalyzeOldTebs(bool delete_detours);
   
   /**
-   * @brief Update the reference trajectory with via-points (and all via-points from alternative trajectories are removed)
+   * @brief Associate trajectories with via-points
+   * 
+   * If \c all_trajectories is true, all trajectory candidates are connected with the set of via_points, 
+   * otherwise only the trajectory sharing the homotopy class of the initial/global plan (and all via-points from alternative trajectories are removed)
    * @remarks Requires that the plan method is called with an initial plan provided and that via-points are enabled (config)
+   * @param all_trajectories see method description
    */
-  void updateReferenceTrajectoryViaPoints();
+  void updateReferenceTrajectoryViaPoints(bool all_trajectories);
   
   /**
    * @brief Depth First Search implementation to find all paths between the start and the specified goal vertex.

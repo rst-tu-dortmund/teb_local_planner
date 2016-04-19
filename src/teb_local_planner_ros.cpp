@@ -319,7 +319,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     ROS_WARN("teb_local_planner was not able to obtain a local plan for the current setting.");
     return false;
   }
-  
+    
   // Undo temporary horizon reduction
   if (horizon_reduced_ && (ros::Time::now()-horizon_reduced_stamp_).toSec() >= 10 && !planner_->isHorizonReductionAppropriate(transformed_plan)) // 10s are hardcoded for now...
   {

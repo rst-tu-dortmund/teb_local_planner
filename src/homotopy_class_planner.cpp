@@ -107,7 +107,7 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
   // store initial plan for further initializations (must be valid for the lifetime of this object or clearPlanner() is called!)
   initial_plan_ = &initial_plan;
   // store the h signature of the initial plan to enable searching a matching teb later.
-  if (!initial_plan_ && cfg_->trajectory.global_plan_via_point_sep >= 0 && cfg_->optim.weight_via_point > 0)
+  if (initial_plan_ && cfg_->trajectory.global_plan_via_point_sep >= 0 && cfg_->optim.weight_via_point > 0)
     initial_plan_h_sig_ = calculateHSignature(initial_plan.begin(), initial_plan.end(), getCplxFromMsgPoseStamped, obstacles_, cfg_->hcp.h_signature_prescaler);
   else
     initial_plan_h_sig_ = std::complex<long double>(0.0, 0.0);
@@ -142,7 +142,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   // Init new TEBs based on newly explored homotopy classes
   exploreHomotopyClassesAndInitTebs(start, goal, cfg_->obstacles.min_obstacle_dist);
   // update via-points if activated
-  updateReferenceTrajectoryViaPoints();
+  updateReferenceTrajectoryViaPoints(cfg_->hcp.viapoints_all_candidates);
   // Optimize all trajectories in alternative homotopy classes
   optimizeAllTEBs(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
   // Delete any detours
@@ -632,9 +632,9 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
 	
 }
  
-void HomotopyClassPlanner::updateReferenceTrajectoryViaPoints()
+void HomotopyClassPlanner::updateReferenceTrajectoryViaPoints(bool all_trajectories)
 {
-  if (!initial_plan_ || cfg_->trajectory.global_plan_via_point_sep < 0 || cfg_->optim.weight_via_point <= 0)
+  if ( (!all_trajectories && !initial_plan_) || cfg_->trajectory.global_plan_via_point_sep < 0 || cfg_->optim.weight_via_point <= 0)
     return;
   
   if(h_signatures_.size() < tebs_.size())
@@ -643,13 +643,24 @@ void HomotopyClassPlanner::updateReferenceTrajectoryViaPoints()
     return;
   }
   
-  // enable via-points for teb in the same hommotopy class as the initial_plan and deactivate it for all other ones
-  for (std::size_t i=0; i < h_signatures_.size(); ++i)
+  if (all_trajectories)
   {
-    if (isHSignatureSimilar(h_signatures_[i], initial_plan_h_sig_, cfg_->hcp.h_signature_threshold))
-      tebs_[i]->setViaPoints(via_points_);
-    else
-      tebs_[i]->setViaPoints(NULL);
+    // enable via-points for all tebs
+    for (std::size_t i=0; i < h_signatures_.size(); ++i)
+    {
+        tebs_[i]->setViaPoints(via_points_);
+    }
+  }
+  else
+  {
+    // enable via-points for teb in the same hommotopy class as the initial_plan and deactivate it for all other ones
+    for (std::size_t i=0; i < h_signatures_.size(); ++i)
+    {
+      if (isHSignatureSimilar(h_signatures_[i], initial_plan_h_sig_, cfg_->hcp.h_signature_threshold))
+        tebs_[i]->setViaPoints(via_points_);
+      else
+        tebs_[i]->setViaPoints(NULL);
+    }
   }
 }
  

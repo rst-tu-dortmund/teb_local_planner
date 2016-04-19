@@ -158,6 +158,8 @@ public:
     double obstacle_keypoint_offset; //!< If simple_exploration is turned on, this parameter determines the distance on the left and right side of the obstacle at which a new keypoint will be cretead (in addition to min_obstacle_dist).
     double obstacle_heading_threshold; //!< Specify the value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account for exploration [0,1]
     
+    bool viapoints_all_candidates; //!< If true, all trajectories of different topologies are attached to the current set of via-points, otherwise only the trajectory sharing the same one as the initial/global plan.
+    
     bool visualize_hc_graph; //!< Visualize the graph that is created for exploring new homotopy classes.
   } hcp;
   
@@ -257,6 +259,8 @@ public:
     hcp.roadmap_graph_area_width = 6; // [m]
     hcp.h_signature_prescaler = 1;
     hcp.h_signature_threshold = 0.1;
+    
+    hcp.viapoints_all_candidates = true;
     
     hcp.visualize_hc_graph = false;
 

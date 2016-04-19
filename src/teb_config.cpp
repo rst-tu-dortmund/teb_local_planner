@@ -115,6 +115,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("h_signature_threshold", hcp.h_signature_threshold, hcp.h_signature_threshold); 
   nh.param("obstacle_keypoint_offset", hcp.obstacle_keypoint_offset, hcp.obstacle_keypoint_offset); 
   nh.param("obstacle_heading_threshold", hcp.obstacle_heading_threshold, hcp.obstacle_heading_threshold); 
+  nh.param("viapoints_all_candidates", hcp.viapoints_all_candidates, hcp.viapoints_all_candidates);
   nh.param("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph); 
   
   checkParameters();
@@ -191,6 +192,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   hcp.roadmap_graph_area_width = cfg.roadmap_graph_area_width;
   hcp.h_signature_prescaler = cfg.h_signature_prescaler;
   hcp.h_signature_threshold = cfg.h_signature_threshold;
+  hcp.viapoints_all_candidates = cfg.viapoints_all_candidates;
   hcp.visualize_hc_graph = cfg.visualize_hc_graph;
   
   checkParameters();
