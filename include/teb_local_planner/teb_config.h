@@ -251,7 +251,7 @@ public:
     hcp.simple_exploration = false;
     hcp.max_number_classes = 5; 
     hcp.selection_cost_hysteresis = 1.0;
-    hcp.selection_obst_cost_scale = 1.0;
+    hcp.selection_obst_cost_scale = 100.0;
     hcp.selection_viapoint_cost_scale = 1.0;
     hcp.selection_alternative_time_cost = false;
         
