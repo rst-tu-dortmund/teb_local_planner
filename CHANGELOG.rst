@@ -2,6 +2,15 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* The teb_local_planner supports a path-following mode (w.r.t. the global plan) and via-points now.
+  This allows the user to adapt the tradeoff between time-optimality and path-following.
+  Check out the new tutorial: "Following the Global Plan (Via-Points)".
+* All external configuration and launch files are removed, since they are part
+  of the new teb_local_planner_tutorials package.
+
+
 0.3.1 (2016-04-14)
 ------------------
 * Fixed wrong coordinate transformation in 'line' and 'polygon' footprint models.
