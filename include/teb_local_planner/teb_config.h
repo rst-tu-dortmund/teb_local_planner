@@ -136,7 +136,7 @@ public:
     double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t transition time
     double weight_obstacle; //!< Optimization weight for satisfying a minimum separation from obstacles
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles    
-    double weight_via_point; //!< Optimization weight for minimizing the distance to via-points
+    double weight_viapoint; //!< Optimization weight for minimizing the distance to via-points
   } optim; //!< Optimization related parameters
   
   
@@ -242,7 +242,7 @@ public:
     optim.weight_optimaltime = 1;
     optim.weight_obstacle = 10;
     optim.weight_dynamic_obstacle = 10;
-    optim.weight_via_point = 1;
+    optim.weight_viapoint = 1;
     
     // Homotopy Class Planner
    

@@ -99,7 +99,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
   nh.param("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
   nh.param("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);    
-  nh.param("weight_via_point", optim.weight_via_point, optim.weight_via_point);
+  nh.param("weight_viapoint", optim.weight_viapoint, optim.weight_viapoint);
   
   // Homotopy Class Planner
   nh.param("enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning); 
@@ -177,7 +177,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_optimaltime = cfg.weight_optimaltime;
   optim.weight_obstacle = cfg.weight_obstacle;
   optim.weight_dynamic_obstacle = cfg.weight_dynamic_obstacle;
-  optim.weight_via_point = cfg.weight_via_point;
+  optim.weight_viapoint = cfg.weight_viapoint;
   
   // Homotopy Class Planner
   hcp.enable_multithreading = cfg.enable_multithreading;

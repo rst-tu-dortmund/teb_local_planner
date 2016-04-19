@@ -107,7 +107,7 @@ bool HomotopyClassPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& i
   // store initial plan for further initializations (must be valid for the lifetime of this object or clearPlanner() is called!)
   initial_plan_ = &initial_plan;
   // store the h signature of the initial plan to enable searching a matching teb later.
-  if (initial_plan_ && cfg_->trajectory.global_plan_via_point_sep >= 0 && cfg_->optim.weight_via_point > 0)
+  if (initial_plan_ && cfg_->trajectory.global_plan_via_point_sep >= 0 && cfg_->optim.weight_viapoint > 0)
     initial_plan_h_sig_ = calculateHSignature(initial_plan.begin(), initial_plan.end(), getCplxFromMsgPoseStamped, obstacles_, cfg_->hcp.h_signature_prescaler);
   else
     initial_plan_h_sig_ = std::complex<long double>(0.0, 0.0);
@@ -634,7 +634,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
  
 void HomotopyClassPlanner::updateReferenceTrajectoryViaPoints(bool all_trajectories)
 {
-  if ( (!all_trajectories && !initial_plan_) || cfg_->trajectory.global_plan_via_point_sep < 0 || cfg_->optim.weight_via_point <= 0)
+  if ( (!all_trajectories && !initial_plan_) || cfg_->trajectory.global_plan_via_point_sep < 0 || cfg_->optim.weight_viapoint <= 0)
     return;
   
   if(h_signatures_.size() < tebs_.size())

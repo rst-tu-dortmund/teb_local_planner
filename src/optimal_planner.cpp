@@ -452,7 +452,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
 
 void TebOptimalPlanner::AddEdgesViaPoints()
 {
-  if (cfg_->optim.weight_via_point==0 || via_points_==NULL )
+  if (cfg_->optim.weight_viapoint==0 || via_points_==NULL )
     return; // if weight equals zero skip adding edges!
 
   for (ViaPointContainer::const_iterator vp_it = via_points_->begin(); vp_it != via_points_->end(); ++vp_it)
@@ -466,7 +466,7 @@ void TebOptimalPlanner::AddEdgesViaPoints()
       continue; 
     
     Eigen::Matrix<double,1,1> information;
-    information.fill(cfg_->optim.weight_via_point);
+    information.fill(cfg_->optim.weight_viapoint);
     
     EdgeViaPoint* edge_viapoint = new EdgeViaPoint;
     edge_viapoint->setVertex(0,teb_.PoseVertex(index));
