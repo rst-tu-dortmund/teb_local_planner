@@ -56,6 +56,7 @@ ViaPointContainer via_points;
 TebConfig config;
 boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg;
 ros::Subscriber custom_obst_sub;
+ros::Subscriber clicked_points_sub;
 unsigned int no_fixed_obstacles;
 
 // =========== Function declarations =============
@@ -65,7 +66,7 @@ void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level);
 void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg);
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb);
 void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
-
+void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg);
 
 
 // =============== Main function =================
@@ -88,6 +89,9 @@ int main( int argc, char** argv )
   
   // setup callback for custom obstacles
   custom_obst_sub = n.subscribe("obstacles", 1, CB_customObstacle);
+  
+  // setup callback for clicked points (in rviz) that are considered as via-points
+  clicked_points_sub = n.subscribe("/clicked_point", 5, CB_clicked_points);
   
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
@@ -156,6 +160,7 @@ void CB_publishCycle(const ros::TimerEvent& e)
 {
   planner->visualize();
   visual->publishObstacles(obst_vector);
+  visual->publishViaPoints(via_points);
 }
 
 void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level)
@@ -250,4 +255,15 @@ void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
       obst_vector.push_back(ObstaclePtr(polyobst));
     }
   }
+}
+
+
+void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg)
+{
+  // we assume for simplicity that the fixed frame is already the map/planning frame
+  // consider clicked points as via-points
+  via_points.push_back( Eigen::Vector2d(point_msg->point.x, point_msg->point.y) );
+  ROS_INFO_STREAM("Via-point (" << point_msg->point.x << "," << point_msg->point.y << ") added.");
+  if (config.trajectory.global_plan_via_point_sep <0 || config.optim.weight_via_point<=0)
+    ROS_WARN("Note, via-points are deactivated, since 'global_plan_via_point_sep' < 0 || 'weight_via_point' <= 0");
 }
