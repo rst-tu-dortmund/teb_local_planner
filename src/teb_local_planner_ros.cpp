@@ -305,7 +305,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   updateObstacleContainerWithCustomObstacles();
   
   // update via-points container
-  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_via_point_sep);
+  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
     
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
