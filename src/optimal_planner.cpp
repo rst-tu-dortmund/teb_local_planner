@@ -116,6 +116,7 @@ void TebOptimalPlanner::registerG2OTypes()
 
   factory->registerType("EDGE_TIME_OPTIMAL", new g2o::HyperGraphElementCreator<EdgeTimeOptimal>);
   factory->registerType("EDGE_VELOCITY", new g2o::HyperGraphElementCreator<EdgeVelocity>);
+  factory->registerType("EDGE_VELOCITY_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic>);
   factory->registerType("EDGE_ACCELERATION", new g2o::HyperGraphElementCreator<EdgeAcceleration>);
   factory->registerType("EDGE_ACCELERATION_START", new g2o::HyperGraphElementCreator<EdgeAccelerationStart>);
   factory->registerType("EDGE_ACCELERATION_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationGoal>);
@@ -478,24 +479,52 @@ void TebOptimalPlanner::AddEdgesViaPoints()
 
 void TebOptimalPlanner::AddEdgesVelocity()
 {
-  if (cfg_->optim.weight_max_vel_x==0 && cfg_->optim.weight_max_vel_theta==0)
-    return; // if weight equals zero skip adding edges!
-
-  std::size_t NoBandpts(teb_.sizePoses());
-  Eigen::Matrix<double,2,2> information;
-  information.fill(0);
-  information(0,0) = cfg_->optim.weight_max_vel_x;
-  information(1,1) = cfg_->optim.weight_max_vel_theta;
-
-  for (std::size_t i=0; i < NoBandpts - 1; ++i)
+  if (cfg_->robot.max_vel_y == 0) // non-holonomic robot
   {
-    EdgeVelocity* velocity_edge = new EdgeVelocity;
-    velocity_edge->setVertex(0,teb_.PoseVertex(i));
-    velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
-    velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-    velocity_edge->setInformation(information);
-    velocity_edge->setTebConfig(*cfg_);
-    optimizer_->addEdge(velocity_edge);
+    if (cfg_->optim.weight_max_vel_x==0 && cfg_->optim.weight_max_vel_theta==0)
+      return; // if weight equals zero skip adding edges!
+
+    std::size_t n = teb_.sizePoses();
+    Eigen::Matrix<double,2,2> information;
+    information(0,0) = cfg_->optim.weight_max_vel_x;
+    information(1,1) = cfg_->optim.weight_max_vel_theta;
+    information(0,1) = 0.0;
+    information(1,0) = 0.0;
+
+    for (std::size_t i=0; i < n - 1; ++i)
+    {
+      EdgeVelocity* velocity_edge = new EdgeVelocity;
+      velocity_edge->setVertex(0,teb_.PoseVertex(i));
+      velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
+      velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
+      velocity_edge->setInformation(information);
+      velocity_edge->setTebConfig(*cfg_);
+      optimizer_->addEdge(velocity_edge);
+    }
+  }
+  else // holonomic-robot
+  {
+    if (cfg_->optim.weight_max_vel_x==0)
+      return; // if weight equals zero skip adding edges!
+      
+    std::size_t n = teb_.sizePoses();
+    Eigen::Matrix<double,3,3> information;
+    information.fill(0);
+    information(0,0) = cfg_->optim.weight_max_vel_x;
+    information(1,1) = cfg_->optim.weight_max_vel_x;
+    information(2,2) = cfg_->optim.weight_max_vel_theta;
+
+    for (std::size_t i=0; i < n - 1; ++i)
+    {
+      EdgeVelocityHolonomic* velocity_edge = new EdgeVelocityHolonomic;
+      velocity_edge->setVertex(0,teb_.PoseVertex(i));
+      velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
+      velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
+      velocity_edge->setInformation(information);
+      velocity_edge->setTebConfig(*cfg_);
+      optimizer_->addEdge(velocity_edge);
+    } 
+    
   }
 }
 
@@ -504,7 +533,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   if (cfg_->optim.weight_acc_lim_x==0 && cfg_->optim.weight_acc_lim_theta==0) 
     return; // if weight equals zero skip adding edges!
 
-  std::size_t NoBandpts(teb_.sizePoses());
+  std::size_t n = teb_.sizePoses();
   Eigen::Matrix<double,2,2> information;
   information.fill(0);
   information(0,0) = cfg_->optim.weight_acc_lim_x;
@@ -524,7 +553,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   }
 
   // now add the usual acceleration edge for each tuple of three teb poses
-  for (std::size_t i=0; i < NoBandpts - 2; ++i)
+  for (std::size_t i=0; i < n - 2; ++i)
   {
     EdgeAcceleration* acceleration_edge = new EdgeAcceleration;
     acceleration_edge->setVertex(0,teb_.PoseVertex(i));
@@ -541,8 +570,8 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   if (vel_goal_.first)
   {
     EdgeAccelerationGoal* acceleration_edge = new EdgeAccelerationGoal;
-    acceleration_edge->setVertex(0,teb_.PoseVertex(NoBandpts-2));
-    acceleration_edge->setVertex(1,teb_.PoseVertex(NoBandpts-1));
+    acceleration_edge->setVertex(0,teb_.PoseVertex(n-2));
+    acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
     acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
     acceleration_edge->setGoalVelocity(vel_goal_.second);
     acceleration_edge->setInformation(information);

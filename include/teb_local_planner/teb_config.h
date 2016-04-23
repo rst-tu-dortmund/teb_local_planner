@@ -86,6 +86,7 @@ public:
   {
     double max_vel_x; //!< Maximum translational velocity of the robot
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
+    double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
     double max_vel_theta; //!< Maximum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
@@ -202,6 +203,7 @@ public:
          
     robot.max_vel_x = 0.4;
     robot.max_vel_x_backwards = 0.2;
+    robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_theta = 0.5;
