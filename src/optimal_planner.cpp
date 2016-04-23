@@ -741,25 +741,51 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoi
 }
 
 
-void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pose2, double dt, double& v, double& omega) const
+void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pose2, double dt, double& vx, double& vy, double& omega) const
 {
+  if (dt == 0)
+  {
+    vx = 0;
+    vy = 0;
+    omega = 0;
+    return;
+  }
+  
   Eigen::Vector2d deltaS = pose2.position() - pose1.position();
-  Eigen::Vector2d conf1dir( cos(pose1.theta()), sin(pose1.theta()) );
-  // translational velocity
-  double dir = deltaS.dot(conf1dir);
-  v = (double) g2o::sign(dir) * deltaS.norm()/dt;
+  
+  if (cfg_->robot.max_vel_y == 0) // nonholonomic robot
+  {
+    Eigen::Vector2d conf1dir( cos(pose1.theta()), sin(pose1.theta()) );
+    // translational velocity
+    double dir = deltaS.dot(conf1dir);
+    vx = (double) g2o::sign(dir) * deltaS.norm()/dt;
+    vy = 0;
+  }
+  else // holonomic robot
+  {
+    // transform pose 2 into the current robot frame (pose1)
+    // for velocities only the rotation of the direction vector is necessary.
+    // (map->pose1-frame: inverse 2d rotation matrix)
+    double cos_theta1 = std::cos(pose1.theta());
+    double sin_theta1 = std::sin(pose1.theta());
+    double p1_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
+    double p1_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
+    vx = p1_dx / dt;
+    vy = p1_dy / dt;    
+  }
   
   // rotational velocity
   double orientdiff = g2o::normalize_theta(pose2.theta() - pose1.theta());
   omega = orientdiff/dt;
 }
 
-bool TebOptimalPlanner::getVelocityCommand(double& v, double& omega) const
+bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega) const
 {
   if (teb_.sizePoses()<2)
   {
     ROS_ERROR("TebOptimalPlanner::getVelocityCommand(): The trajectory contains less than 2 poses. Make sure to init and optimize/plan the trajectory fist.");
-    v = 0;
+    vx = 0;
+    vy = 0;
     omega = 0;
     return false;
   }
@@ -768,13 +794,14 @@ bool TebOptimalPlanner::getVelocityCommand(double& v, double& omega) const
   if (dt<=0)
   {	
     ROS_ERROR("TebOptimalPlanner::getVelocityCommand() - timediff<=0 is invalid!");
-    v = 0;
+    vx = 0;
+    vy = 0;
     omega = 0;
     return false;
   }
 	  
   // Get velocity from the first two configurations
-  extractVelocity(teb_.Pose(0), teb_.Pose(1), dt, v, omega);
+  extractVelocity(teb_.Pose(0), teb_.Pose(1), dt, vx, vy, omega);
   return true;
 }
 
@@ -783,7 +810,7 @@ void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::Twist>& ve
   int n = (int) teb_.sizePoses();
   velocity_profile.resize( n+1 );
 
-  // start velocity
+  // start velocity  // TODO: omni robot VY
   velocity_profile.front().linear.y = velocity_profile.front().linear.z = 0;
   velocity_profile.front().angular.x = velocity_profile.front().angular.y = 0;  
   velocity_profile.front().linear.x = vel_start_.second.x();
@@ -793,10 +820,10 @@ void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::Twist>& ve
   {
     velocity_profile[i].linear.y = velocity_profile[i].linear.z = 0;
     velocity_profile[i].angular.x = velocity_profile[i].angular.y = 0;
-    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), velocity_profile[i].linear.x, velocity_profile[i].angular.z);
+    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), velocity_profile[i].linear.x, velocity_profile[i].linear.y, velocity_profile[i].angular.z);
   }
   
-  // goal velocity
+  // goal velocity // TODO: omni robot VY
   velocity_profile.back().linear.y = velocity_profile.back().linear.z = 0;
   velocity_profile.back().angular.x = velocity_profile.back().angular.y = 0;  
   velocity_profile.back().linear.x = vel_goal_.second.x();
@@ -832,10 +859,11 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
     teb_.Pose(i).toPoseMsg(point.pose);
     point.velocity.linear.y = point.velocity.linear.z = 0;
     point.velocity.angular.x = point.velocity.angular.y = 0;
-    double vel1, vel2, omega1, omega2;
-    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), vel1, omega1);
-    extractVelocity(teb_.Pose(i), teb_.Pose(i+1), teb_.TimeDiff(i), vel2, omega2);
-    point.velocity.linear.x = 0.5*(vel1+vel2);
+    double vel1_x, vel1_y, vel2_x, vel2_y, omega1, omega2;
+    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), vel1_x, vel1_y, omega1);
+    extractVelocity(teb_.Pose(i), teb_.Pose(i+1), teb_.TimeDiff(i), vel2_x, vel2_y, omega2);
+    point.velocity.linear.x = 0.5*(vel1_x+vel2_x);
+    point.velocity.linear.y = 0.5*(vel1_y+vel2_y);
     point.velocity.angular.z = 0.5*(omega1+omega2);    
     point.time_from_start.fromSec(curr_time);
     

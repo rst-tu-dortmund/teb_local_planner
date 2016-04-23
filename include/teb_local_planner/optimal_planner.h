@@ -202,11 +202,12 @@ public:
   /**
    * @brief Get the velocity command from a previously optimized plan to control the robot at the current sampling interval.
    * @warning Call plan() first and check if the generated plan is feasible.
-   * @param[out] v translational velocity [m/s]
+   * @param[out] vx translational velocity [m/s]
+   * @param[out] vy strafing velocity which can be nonzero for holonomic robots[m/s] 
    * @param[out] omega rotational velocity [rad/s]
    * @return \c true if command is valid, \c false otherwise
    */
-  virtual bool getVelocityCommand(double& v, double& omega) const;
+  virtual bool getVelocityCommand(double& vx, double& vy, double& omega) const;
   
   
   /**
@@ -433,19 +434,20 @@ public:
    */
   double getCurrentCost() const {return cost_;}
   
-  
+    
   /**
-   * @brief Extract the velocity from consecutive poses and a time difference
+   * @brief Extract the velocity from consecutive poses and a time difference (including strafing velocity for holonomic robots)
    * 
    * The velocity is extracted using finite differences.
    * The direction of the translational velocity is also determined.
    * @param pose1 pose at time k
    * @param pose2 consecutive pose at time k+1
    * @param dt actual time difference between k and k+1 (must be >0 !!!)
-   * @param[out] v translational velocity
+   * @param[out] vx translational velocity
+   * @param[out] vy strafing velocity which can be nonzero for holonomic robots
    * @param[out] omega rotational velocity
    */
-  inline void extractVelocity(const PoseSE2& pose1, const PoseSE2& pose2, double dt, double& v, double& omega) const;
+  inline void extractVelocity(const PoseSE2& pose1, const PoseSE2& pose2, double dt, double& vx, double& vy, double& omega) const;
   
   /**
    * @brief Compute the velocity profile of the trajectory

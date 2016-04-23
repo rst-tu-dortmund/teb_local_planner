@@ -299,13 +299,16 @@ protected:
    * The limit of the translational velocity for backwards driving can be changed independently.
    * Do not choose max_vel_x_backwards <= 0. If no backward driving is desired, change the optimization weight for
    * penalizing backwards driving instead.
-   * @param[in,out] v The translational velocity that should be saturated.
+   * @param[in,out] vx The translational velocity that should be saturated.
+   * @param[in,out] vy Strafing velocity which can be nonzero for holonomic robots
    * @param[in,out] omega The angular velocity that should be saturated.
    * @param max_vel_x Maximum translational velocity for forward driving
+   * @param max_vel_y Maximum strafing velocity (for holonomic robots)
    * @param max_vel_theta Maximum (absolute) angular velocity
    * @param max_vel_x_backwards Maximum translational velocity for backwards driving
    */
-  void saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards) const;
+  void saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y,
+                        double max_vel_theta, double max_vel_x_backwards) const;
 
   
   /**

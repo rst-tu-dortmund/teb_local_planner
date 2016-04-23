@@ -154,17 +154,18 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   return true;
 } 
  
-bool HomotopyClassPlanner::getVelocityCommand(double& v, double& omega) const
+bool HomotopyClassPlanner::getVelocityCommand(double& vx, double& vy, double& omega) const
 {
   TebOptimalPlannerConstPtr best_teb = bestTeb();
   if (!best_teb)
   {
-    v = 0;
+    vx = 0;
+    vy = 0;
     omega = 0;
     return false;
   }
  
-  return best_teb->getVelocityCommand(v, omega); 
+  return best_teb->getVelocityCommand(vx, vy, omega); 
 }
 
 

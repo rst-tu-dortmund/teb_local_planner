@@ -126,11 +126,12 @@ public:
   /**
    * @brief Get the velocity command from a previously optimized plan to control the robot at the current sampling interval.
    * @warning Call plan() first and check if the generated plan is feasible.
-   * @param[out] v translational velocity [m/s]
+   * @param[out] vx translational velocity [m/s]
+   * @param[out] vy strafing velocity which can be nonzero for holonomic robots [m/s] 
    * @param[out] omega rotational velocity [rad/s]
    * @return \c true if command is valid, \c false otherwise
    */
-  virtual bool getVelocityCommand(double& v, double& omega) const = 0;
+  virtual bool getVelocityCommand(double& vx, double& vy, double& omega) const = 0;
   
   //@}
   
