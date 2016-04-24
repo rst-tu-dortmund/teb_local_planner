@@ -538,7 +538,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
 
   std::size_t n = teb_.sizePoses();  
     
-  if (cfg_->robot.max_vel_y == 0) // non-holonomic robot
+  if (cfg_->robot.max_vel_y == 0 || cfg_->robot.acc_lim_y == 0) // non-holonomic robot
   {
     Eigen::Matrix<double,2,2> information;
     information.fill(0);
