@@ -155,7 +155,7 @@ public:
    * 	  see bool TimedElasticBand::updateAndPruneTEB
    * 	- Afterwards optimize the recently initialized or updated trajectory by calling optimizeTEB() and invoking g2o
    * @param initial_plan vector of geometry_msgs::PoseStamped
-   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
+   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x, linear.y (holonomic) and angular.z are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *		      otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
@@ -173,7 +173,7 @@ public:
    * 	- Afterwards optimize the recently initialized or updated trajectory by calling optimizeTEB() and invoking g2o
    * @param start tf::Pose containing the start pose of the trajectory
    * @param goal tf::Pose containing the goal pose of the trajectory
-   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
+   * @param start_vel Current start velocity (e.g. the velocity of the robot, only linear.x, linear.y (holonomic) and angular.z are used)
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *		      otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
@@ -191,12 +191,12 @@ public:
    * 	- Afterwards optimize the recently initialized or updated trajectory by calling optimizeTEB() and invoking g2o
    * @param start PoseSE2 containing the start pose of the trajectory
    * @param goal PoseSE2 containing the goal pose of the trajectory
-   * @param start_vel Initial velocity at the start pose (2D vector containing the translational and angular velocity).
+   * @param start_vel Initial velocity at the start pose (twist message containing the translational and angular velocity).
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *		      otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
-  virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const Eigen::Vector2d& start_vel, bool free_goal_vel=false);
+  virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
   
   
   /**
@@ -245,26 +245,21 @@ public:
   /** @name Desired initial and final velocity */
   //@{
   
-  /**
-   * @brief Set the initial velocity at the trajectory's start pose (e.g. the robot's velocity).
-   * @remarks Calling this function is not neccessary if the initial velocity is passed via the plan() method
-   * @param vel_start 2D vector containing the translational and angular velocity 
-   */
-  void setVelocityStart(const Eigen::Ref<const Eigen::Vector2d>& vel_start);
   
   /**
    * @brief Set the initial velocity at the trajectory's start pose (e.g. the robot's velocity) [twist overload].
    * @remarks Calling this function is not neccessary if the initial velocity is passed via the plan() method
-   * @param vel_start Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used)
+   * @param vel_start Current start velocity (e.g. the velocity of the robot, only linear.x and angular.z are used,
+   *                  for holonomic robots also linear.y)
    */
   void setVelocityStart(const geometry_msgs::Twist& vel_start);
   
   /**
    * @brief Set the desired final velocity at the trajectory's goal pose.
    * @remarks Call this function only if a non-zero velocity is desired and if \c free_goal_vel is set to \c false in plan()
-   * @param vel_goal 2D vector containing the translational and angular final velocity 
+   * @param vel_goal twist message containing the translational and angular final velocity 
    */
-  void setVelocityGoal(const Eigen::Ref<const Eigen::Vector2d>& vel_goal);
+  void setVelocityGoal(const geometry_msgs::Twist& vel_goal);
   
   /**
    * @brief Set the desired final velocity at the trajectory's goal pose to be the maximum velocity limit
@@ -656,8 +651,8 @@ protected:
   TimedElasticBand teb_; //!< Actual trajectory object
   RobotFootprintModelPtr robot_model_; //!< Robot model
   boost::shared_ptr<g2o::SparseOptimizer> optimizer_; //!< g2o optimizer for trajectory optimization
-  std::pair<bool, Eigen::Vector2d> vel_start_; //!< Store the initial velocity at the start pose
-  std::pair<bool, Eigen::Vector2d> vel_goal_; //!< Store the final velocity at the goal pose
+  std::pair<bool, geometry_msgs::Twist> vel_start_; //!< Store the initial velocity at the start pose
+  std::pair<bool, geometry_msgs::Twist> vel_goal_; //!< Store the final velocity at the goal pose
 
   bool initialized_; //!< Keeps track about the correct initialization of this class
   bool optimized_; //!< This variable is \c true as long as the last optimization has been completed successful

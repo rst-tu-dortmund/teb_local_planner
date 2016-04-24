@@ -116,12 +116,12 @@ public:
    * Provide this method to create and optimize a trajectory that is initialized between a given start and goal pose.
    * @param start PoseSE2 containing the start pose of the trajectory
    * @param goal PoseSE2 containing the goal pose of the trajectory
-   * @param start_vel Initial velocity at the start pose (2D vector containing the translational and angular velocity).
+   * @param start_vel Initial velocity at the start pose (twist msg containing the translational and angular velocity).
    * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed,
    *        otherwise the final velocity will be zero (default: false)
    * @return \c true if planning was successful, \c false otherwise
    */
-  virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const Eigen::Vector2d& start_vel, bool free_goal_vel=false) = 0;
+  virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false) = 0;
   
   /**
    * @brief Get the velocity command from a previously optimized plan to control the robot at the current sampling interval.

@@ -361,7 +361,7 @@ private:
   
   PoseSE2 robot_pose_; //!< Store current robot pose
   PoseSE2 robot_goal_; //!< Store current robot goal
-  Eigen::Vector2d robot_vel_; //!< Store current robot translational and angular velocity (v, omega)
+  geometry_msgs::Twist robot_vel_; //!< Store current robot translational and angular velocity (vx, vy, omega)
   bool goal_reached_; //!< store whether the goal is reached or not
   bool horizon_reduced_; //!< store flag whether the horizon should be reduced temporary
   ros::Time horizon_reduced_stamp_; //!< Store at which time stamp the horizon reduction was requested

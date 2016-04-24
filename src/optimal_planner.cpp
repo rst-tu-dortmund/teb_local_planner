@@ -76,10 +76,14 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacle
   setVisualization(visual);
   
   vel_start_.first = true;
-  vel_start_.second.setZero();
+  vel_start_.second.linear.x = 0;
+  vel_start_.second.linear.y = 0;
+  vel_start_.second.angular.z = 0;
 
   vel_goal_.first = true;
-  vel_goal_.second.setZero();
+  vel_goal_.second.linear.x = 0;
+  vel_goal_.second.linear.y = 0;
+  vel_goal_.second.angular.z = 0;
   initialized_ = true;
 }
 
@@ -188,20 +192,16 @@ bool TebOptimalPlanner::optimizeTEB(unsigned int iterations_innerloop, unsigned 
   return true;
 }
 
-void TebOptimalPlanner::setVelocityStart(const Eigen::Ref<const Eigen::Vector2d>& vel_start)
-{
-  vel_start_.first = true;
-  vel_start_.second = vel_start;
-}
 
 void TebOptimalPlanner::setVelocityStart(const geometry_msgs::Twist& vel_start)
 {
   vel_start_.first = true;
-  vel_start_.second.coeffRef(0) = vel_start.linear.x;
-  vel_start_.second.coeffRef(1) = vel_start.angular.z;
+  vel_start_.second.linear.x = vel_start.linear.x;
+  vel_start_.second.linear.y = vel_start.linear.y;
+  vel_start_.second.angular.z = vel_start.angular.z;
 }
 
-void TebOptimalPlanner::setVelocityGoal(const Eigen::Ref<const Eigen::Vector2d>& vel_goal)
+void TebOptimalPlanner::setVelocityGoal(const geometry_msgs::Twist& vel_goal)
 {
   vel_goal_.first = true;
   vel_goal_.second = vel_goal;
@@ -244,11 +244,10 @@ bool TebOptimalPlanner::plan(const tf::Pose& start, const tf::Pose& goal, const 
 {
   PoseSE2 start_(start);
   PoseSE2 goal_(goal);
-  Eigen::Vector2d vel = start_vel ? Eigen::Vector2d(start_vel->linear.x, start_vel->angular.z) : Eigen::Vector2d::Zero();
-  return plan(start_, goal_, vel);
+  return plan(start_, goal_, start_vel);
 }
 
-bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const Eigen::Vector2d& start_vel, bool free_goal_vel)
+bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_vel, bool free_goal_vel)
 {	
   ROS_ASSERT_MSG(initialized_, "Call initialize() first.");
   if (!teb_.isInit())
@@ -267,7 +266,8 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const Ei
       teb_.initTEBtoGoal(start, goal, 0, 1, cfg_->trajectory.min_samples);
     }
   }
-  setVelocityStart(start_vel);
+  if (start_vel)
+    setVelocityStart(*start_vel);
   if (free_goal_vel)
     setVelocityGoalFree();
   else
@@ -810,24 +810,26 @@ void TebOptimalPlanner::getVelocityProfile(std::vector<geometry_msgs::Twist>& ve
   int n = (int) teb_.sizePoses();
   velocity_profile.resize( n+1 );
 
-  // start velocity  // TODO: omni robot VY
-  velocity_profile.front().linear.y = velocity_profile.front().linear.z = 0;
+  // start velocity 
+  velocity_profile.front().linear.z = 0;
   velocity_profile.front().angular.x = velocity_profile.front().angular.y = 0;  
-  velocity_profile.front().linear.x = vel_start_.second.x();
-  velocity_profile.front().angular.z = vel_start_.second.y();
+  velocity_profile.front().linear.x = vel_start_.second.linear.x;
+  velocity_profile.front().linear.y = vel_start_.second.linear.y;
+  velocity_profile.front().angular.z = vel_start_.second.angular.z;
   
   for (int i=1; i<n; ++i)
   {
-    velocity_profile[i].linear.y = velocity_profile[i].linear.z = 0;
+    velocity_profile[i].linear.z = 0;
     velocity_profile[i].angular.x = velocity_profile[i].angular.y = 0;
     extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), velocity_profile[i].linear.x, velocity_profile[i].linear.y, velocity_profile[i].angular.z);
   }
   
-  // goal velocity // TODO: omni robot VY
-  velocity_profile.back().linear.y = velocity_profile.back().linear.z = 0;
+  // goal velocity
+  velocity_profile.back().linear.z = 0;
   velocity_profile.back().angular.x = velocity_profile.back().angular.y = 0;  
-  velocity_profile.back().linear.x = vel_goal_.second.x();
-  velocity_profile.back().angular.z = vel_goal_.second.y();
+  velocity_profile.back().linear.x = vel_goal_.second.linear.x;
+  velocity_profile.back().linear.y = vel_goal_.second.linear.y;
+  velocity_profile.back().angular.z = vel_goal_.second.angular.z;
 }
 
 void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& trajectory) const
@@ -844,10 +846,11 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
   // start
   TrajectoryPointMsg& start = trajectory.front();
   teb_.Pose(0).toPoseMsg(start.pose);
-  start.velocity.linear.y = start.velocity.linear.z = 0;
+  start.velocity.linear.z = 0;
   start.velocity.angular.x = start.velocity.angular.y = 0;
-  start.velocity.linear.x = vel_start_.second.x();
-  start.velocity.angular.z = vel_start_.second.y();
+  start.velocity.linear.x = vel_start_.second.linear.x;
+  start.velocity.linear.y = vel_start_.second.linear.y;
+  start.velocity.angular.z = vel_start_.second.angular.z;
   start.time_from_start.fromSec(curr_time);
   
   curr_time += teb_.TimeDiff(0);
@@ -857,7 +860,7 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
   {
     TrajectoryPointMsg& point = trajectory[i];
     teb_.Pose(i).toPoseMsg(point.pose);
-    point.velocity.linear.y = point.velocity.linear.z = 0;
+    point.velocity.linear.z = 0;
     point.velocity.angular.x = point.velocity.angular.y = 0;
     double vel1_x, vel1_y, vel2_x, vel2_y, omega1, omega2;
     extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), vel1_x, vel1_y, omega1);
@@ -873,10 +876,11 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
   // goal
   TrajectoryPointMsg& goal = trajectory.back();
   teb_.BackPose().toPoseMsg(goal.pose);
-  goal.velocity.linear.y = goal.velocity.linear.z = 0;
+  goal.velocity.linear.z = 0;
   goal.velocity.angular.x = goal.velocity.angular.y = 0;
-  goal.velocity.linear.x = vel_goal_.second.x();
-  goal.velocity.angular.z = vel_goal_.second.y();
+  goal.velocity.linear.x = vel_goal_.second.linear.x;
+  goal.velocity.linear.y = vel_goal_.second.linear.y;
+  goal.velocity.angular.z = vel_goal_.second.angular.z;
   goal.time_from_start.fromSec(curr_time);
 }
 

@@ -89,6 +89,7 @@ public:
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
     double max_vel_theta; //!< Maximum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
+    double acc_lim_y; //!< Maximum strafing acceleration of the robot
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
     double min_turning_radius; //!< Minimum turning radius of a carlike robot (diff-drive robot: zero); 
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
@@ -206,6 +207,7 @@ public:
     robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
     robot.acc_lim_x = 0.5;
+    robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
     robot.min_turning_radius = 0;
     robot.wheelbase = 1.0;

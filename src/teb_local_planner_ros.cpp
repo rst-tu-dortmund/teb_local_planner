@@ -223,10 +223,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // Get robot velocity
   tf::Stamped<tf::Pose> robot_vel_tf;
   odom_helper_.getRobotVel(robot_vel_tf);
-  robot_vel_ = tfPoseToEigenVector2dTransRot(robot_vel_tf);
-  geometry_msgs::Twist robot_vel_twist;
-  robot_vel_twist.linear.x = robot_vel_[0];
-  robot_vel_twist.angular.z = robot_vel_[1];   
+  robot_vel_.linear.x = robot_vel_tf.getOrigin().getX();
+  robot_vel_.linear.y = robot_vel_tf.getOrigin().getY();
+  robot_vel_.angular.z = tf::getYaw(robot_vel_tf.getRotation());
   
   // prune global plan to cut off parts of the past (spatially before the robot)
   pruneGlobalPlan(*tf_, robot_pose, global_plan_);
@@ -313,7 +312,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     
   // Now perform the actual planning
 //   bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_.goal_tolerance.free_goal_vel); // straight line init
-  bool success = planner_->plan(transformed_plan, &robot_vel_twist, cfg_.goal_tolerance.free_goal_vel);
+  bool success = planner_->plan(transformed_plan, &robot_vel_, cfg_.goal_tolerance.free_goal_vel);
   if (!success)
   {
     planner_->clearPlanner(); // force reinitialization for next time
