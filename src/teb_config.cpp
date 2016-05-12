@@ -63,8 +63,10 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   // Robot
   nh.param("max_vel_x", robot.max_vel_x, robot.max_vel_x);
   nh.param("max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
+  nh.param("max_vel_y", robot.max_vel_y, robot.max_vel_y);
   nh.param("max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
   nh.param("acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
+  nh.param("acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
   nh.param("acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
   nh.param("min_turning_radius", robot.min_turning_radius, robot.min_turning_radius);
   nh.param("wheelbase", robot.wheelbase, robot.wheelbase);
@@ -89,9 +91,9 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("optimization_activate", optim.optimization_activate, optim.optimization_activate);
   nh.param("optimization_verbose", optim.optimization_verbose, optim.optimization_verbose);
   nh.param("penalty_epsilon", optim.penalty_epsilon, optim.penalty_epsilon);
-  nh.param("weight_max_vel_x", optim.weight_max_vel_x, optim.weight_max_vel_x);
+  nh.param("weight_max_vel_xy", optim.weight_max_vel_xy, optim.weight_max_vel_xy);
   nh.param("weight_max_vel_theta", optim.weight_max_vel_theta, optim.weight_max_vel_theta);
-  nh.param("weight_acc_lim_x", optim.weight_acc_lim_x, optim.weight_acc_lim_x);
+  nh.param("weight_acc_lim_xy", optim.weight_acc_lim_xy, optim.weight_acc_lim_xy);
   nh.param("weight_acc_lim_theta", optim.weight_acc_lim_theta, optim.weight_acc_lim_theta);
   nh.param("weight_kinematics_nh", optim.weight_kinematics_nh, optim.weight_kinematics_nh);
   nh.param("weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
@@ -142,8 +144,10 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   // Robot     
   robot.max_vel_x = cfg.max_vel_x;
   robot.max_vel_x_backwards = cfg.max_vel_x_backwards;
+  robot.max_vel_y = cfg.max_vel_y;
   robot.max_vel_theta = cfg.max_vel_theta;
   robot.acc_lim_x = cfg.acc_lim_x;
+  robot.acc_lim_y = cfg.acc_lim_y;
   robot.acc_lim_theta = cfg.acc_lim_theta;
   robot.min_turning_radius = cfg.min_turning_radius;
   robot.wheelbase = cfg.wheelbase;
@@ -167,9 +171,9 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.optimization_activate = cfg.optimization_activate;
   optim.optimization_verbose = cfg.optimization_verbose;
   optim.penalty_epsilon = cfg.penalty_epsilon;
-  optim.weight_max_vel_x = cfg.weight_max_vel_x;
+  optim.weight_max_vel_xy = cfg.weight_max_vel_xy;
   optim.weight_max_vel_theta = cfg.weight_max_vel_theta;
-  optim.weight_acc_lim_x = cfg.weight_acc_lim_x;
+  optim.weight_acc_lim_xy = cfg.weight_acc_lim_xy;
   optim.weight_acc_lim_theta = cfg.weight_acc_lim_theta;
   optim.weight_kinematics_nh = cfg.weight_kinematics_nh;
   optim.weight_kinematics_forward_drive = cfg.weight_kinematics_forward_drive;
@@ -264,6 +268,12 @@ void TebConfig::checkDeprecated(const ros::NodeHandle& nh) const
   
   if (nh.hasParam("alternative_time_cost"))
     ROS_WARN("TebLocalPlannerROS() Param Warning: 'alternative_time_cost' is deprecated. It has been replaced by 'selection_alternative_time_cost'.");
+  
+  if (nh.hasParam("weight_max_vel_x"))
+    ROS_WARN("TebLocalPlannerROS() Param Warning: 'weight_max_vel_x' is deprecated. It has been replaced by 'weight_max_vel_xy' in order to also account for holonomic drives.");
+
+  if (nh.hasParam("weight_acc_lim_x"))
+    ROS_WARN("TebLocalPlannerROS() Param Warning: 'weight_acc_lim_x' is deprecated. It has been replaced by 'weight_acc_lim_xy' in order to also account for holonomic drives.");
 }
 
     
