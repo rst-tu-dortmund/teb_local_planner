@@ -756,7 +756,7 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
   if (vx > max_vel_x)
     vx = max_vel_x;
   
-  // limit starfing velocity
+  // limit strafing velocity
   if (vy > max_vel_y)
     vy = max_vel_y;
   else if (vy < -max_vel_y)

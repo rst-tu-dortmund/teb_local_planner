@@ -675,8 +675,10 @@ public:
     double vel2_x = p2_dx / dt2->dt();
     double vel2_y = p2_dy / dt2->dt();
     
-    double acc_x  = (vel2_x - vel1_x)*2 / ( dt1->dt() + dt2->dt() );
-    double acc_y  = (vel2_y - vel1_y)*2 / ( dt1->dt() + dt2->dt() );
+    double dt12 = dt1->dt() + dt2->dt();
+    
+    double acc_x  = (vel2_x - vel1_x)*2 / dt12;
+    double acc_y  = (vel2_y - vel1_y)*2 / dt12;
    
     _error[0] = penaltyBoundToInterval(acc_x,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
     _error[1] = penaltyBoundToInterval(acc_y,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
@@ -684,7 +686,7 @@ public:
     // ANGULAR ACCELERATION
     double omega1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt1->dt();
     double omega2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt2->dt();
-    double acc_rot  = (omega2 - omega1)*2 / ( dt1->dt() + dt2->dt() );
+    double acc_rot  = (omega2 - omega1)*2 / dt12;
       
     _error[2] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 

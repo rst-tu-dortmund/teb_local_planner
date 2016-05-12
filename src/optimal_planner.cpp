@@ -484,12 +484,12 @@ void TebOptimalPlanner::AddEdgesVelocity()
 {
   if (cfg_->robot.max_vel_y == 0) // non-holonomic robot
   {
-    if (cfg_->optim.weight_max_vel_x==0 && cfg_->optim.weight_max_vel_theta==0)
+    if (cfg_->optim.weight_max_vel_xy==0 && cfg_->optim.weight_max_vel_theta==0)
       return; // if weight equals zero skip adding edges!
 
     std::size_t n = teb_.sizePoses();
     Eigen::Matrix<double,2,2> information;
-    information(0,0) = cfg_->optim.weight_max_vel_x;
+    information(0,0) = cfg_->optim.weight_max_vel_xy;
     information(1,1) = cfg_->optim.weight_max_vel_theta;
     information(0,1) = 0.0;
     information(1,0) = 0.0;
@@ -507,14 +507,14 @@ void TebOptimalPlanner::AddEdgesVelocity()
   }
   else // holonomic-robot
   {
-    if (cfg_->optim.weight_max_vel_x==0)
+    if (cfg_->optim.weight_max_vel_xy==0)
       return; // if weight equals zero skip adding edges!
       
     std::size_t n = teb_.sizePoses();
     Eigen::Matrix<double,3,3> information;
     information.fill(0);
-    information(0,0) = cfg_->optim.weight_max_vel_x;
-    information(1,1) = cfg_->optim.weight_max_vel_x;
+    information(0,0) = cfg_->optim.weight_max_vel_xy;
+    information(1,1) = cfg_->optim.weight_max_vel_xy;
     information(2,2) = cfg_->optim.weight_max_vel_theta;
 
     for (std::size_t i=0; i < n - 1; ++i)
@@ -533,7 +533,7 @@ void TebOptimalPlanner::AddEdgesVelocity()
 
 void TebOptimalPlanner::AddEdgesAcceleration()
 {
-  if (cfg_->optim.weight_acc_lim_x==0 && cfg_->optim.weight_acc_lim_theta==0) 
+  if (cfg_->optim.weight_acc_lim_xy==0 && cfg_->optim.weight_acc_lim_theta==0) 
     return; // if weight equals zero skip adding edges!
 
   std::size_t n = teb_.sizePoses();  
@@ -542,7 +542,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   {
     Eigen::Matrix<double,2,2> information;
     information.fill(0);
-    information(0,0) = cfg_->optim.weight_acc_lim_x;
+    information(0,0) = cfg_->optim.weight_acc_lim_xy;
     information(1,1) = cfg_->optim.weight_acc_lim_theta;
     
     // check if an initial velocity should be taken into accound
@@ -589,8 +589,8 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   {
     Eigen::Matrix<double,3,3> information;
     information.fill(0);
-    information(0,0) = cfg_->optim.weight_acc_lim_x;
-    information(1,1) = cfg_->optim.weight_acc_lim_x;
+    information(0,0) = cfg_->optim.weight_acc_lim_xy;
+    information(1,1) = cfg_->optim.weight_acc_lim_xy;
     information(2,2) = cfg_->optim.weight_acc_lim_theta;
     
     // check if an initial velocity should be taken into accound

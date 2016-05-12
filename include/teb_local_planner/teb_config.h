@@ -128,9 +128,9 @@ public:
     
     double penalty_epsilon; //!< Add a small safety margin to penalty functions for hard-constraint approximations
     
-    double weight_max_vel_x; //!< Optimization weight for satisfying the maximum allowed translational velocity
+    double weight_max_vel_xy; //!< Optimization weight for satisfying the maximum allowed translational velocity
     double weight_max_vel_theta; //!< Optimization weight for satisfying the maximum allowed angular velocity
-    double weight_acc_lim_x; //!< Optimization weight for satisfying the maximum allowed translational acceleration
+    double weight_acc_lim_xy; //!< Optimization weight for satisfying the maximum allowed translational acceleration
     double weight_acc_lim_theta; //!< Optimization weight for satisfying the maximum allowed angular acceleration
     double weight_kinematics_nh; //!< Optimization weight for satisfying the non-holonomic kinematics
     double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities, only diffdrive robot)
@@ -236,9 +236,9 @@ public:
     optim.optimization_activate = true;
     optim.optimization_verbose = false;
     optim.penalty_epsilon = 0.1;
-    optim.weight_max_vel_x = 2; //1
+    optim.weight_max_vel_xy = 2; //1
     optim.weight_max_vel_theta = 1;
-    optim.weight_acc_lim_x = 1;
+    optim.weight_acc_lim_xy = 1;
     optim.weight_acc_lim_theta = 1;
     optim.weight_kinematics_nh = 1000;
     optim.weight_kinematics_forward_drive = 1;
