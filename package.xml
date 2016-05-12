@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>teb_local_planner</name>
   <version>0.4.0</version>
   <description>
-	The teb_local_planner package implements a plugin
-	to the base_local_planner of the 2D navigation stack.
-	The underlying method called Timed Elastic Band locally optimizes
-	the robot's trajectory with respect to trajectory execution time,
-	separation from obstacles and compliance with kinodynamic constraints at runtime.	
+    The teb_local_planner package implements a plugin
+    to the base_local_planner of the 2D navigation stack.
+    The underlying method called Timed Elastic Band locally optimizes
+    the robot's trajectory with respect to trajectory execution time,
+    separation from obstacles and compliance with kinodynamic constraints at runtime.	
   </description>
 
 
@@ -21,43 +21,30 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>base_local_planner</build_depend>
-  <build_depend>costmap_2d</build_depend>
-  <build_depend>costmap_converter</build_depend>
   <build_depend>cmake_modules</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>interactive_markers</build_depend>
-  <build_depend>libg2o</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>nav_core</build_depend>
-  <build_depend>nav_msgs</build_depend>
-  <build_depend>pluginlib</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>tf_conversions</build_depend>
-  <build_depend>visualization_msgs</build_depend>
+  
+  <build_export_depend>message_runtime</build_export_depend>
+  <exec_depend>message_runtime</exec_depend>
+  
+  <depend>base_local_planner</depend>
+  <depend>costmap_2d</depend>
+  <depend>costmap_converter</depend>
 
-  <run_depend>base_local_planner</run_depend>
-  <run_depend>costmap_2d</run_depend>
-  <run_depend>costmap_converter</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>interactive_markers</run_depend>
-  <run_depend>libg2o</run_depend>
-  <run_depend>message_runtime</run_depend>
-  <run_depend>nav_core</run_depend>
-  <run_depend>nav_msgs</run_depend>
-  <run_depend>pluginlib</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>tf_conversions</run_depend>
-  <run_depend>visualization_msgs</run_depend>
-
+  <depend>dynamic_reconfigure</depend>
+  <depend>geometry_msgs</depend>
+  <depend>interactive_markers</depend>
+  <depend>libg2o</depend>
+  <depend>nav_core</depend>
+  <depend>nav_msgs</depend>
+  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf_conversions</depend>
+  <depend>visualization_msgs</depend>
 
   <export>
-	<nav_core plugin="${prefix}/teb_local_planner_plugin.xml"/>
+    <nav_core plugin="${prefix}/teb_local_planner_plugin.xml"/>
   </export>
 </package>
