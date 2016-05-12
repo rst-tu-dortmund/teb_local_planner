@@ -56,7 +56,6 @@ env:
     - ROS_PARALLEL_JOBS='-j8 -l6'
   matrix:
     - ROS_DISTRO=indigo
-    - ROS_DISTRO=jade
 
 
 ################################################################################
