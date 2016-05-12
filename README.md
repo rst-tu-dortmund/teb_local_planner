@@ -7,9 +7,9 @@ separation from obstacles and compliance with kinodynamic constraints at runtime
 
 Refer to http://wiki.ros.org/teb_local_planner for more information and tutorials.
 
-Build status of the *jade-devel* branch:
-- ROS Buildfarm: [![Jade Build Status](http://build.ros.org/buildStatus/icon?job=Jdev__teb_local_planner__ubuntu_trusty_amd64)](http://build.ros.org/job/Jdev__teb_local_planner__ubuntu_trusty_amd64/)
-- Travis: [![Build Status](https://travis-ci.org/rst-tu-dortmund/teb_local_planner.svg?branch=jade-devel)](https://travis-ci.org/rst-tu-dortmund/teb_local_planner)
+Build status of the *kinetic-devel* branch:
+- ROS Buildfarm: Not yet available
+- Travis: [![Build Status](https://travis-ci.org/rst-tu-dortmund/teb_local_planner.svg?branch=kinetic-devel)](https://travis-ci.org/rst-tu-dortmund/teb_local_planner)
 
 
 ### Papers Describing the Approach
