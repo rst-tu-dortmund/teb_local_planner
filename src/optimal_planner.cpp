@@ -456,18 +456,28 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
 
 void TebOptimalPlanner::AddEdgesViaPoints()
 {
-  if (cfg_->optim.weight_viapoint==0 || via_points_==NULL )
+  if (cfg_->optim.weight_viapoint==0 || via_points_==NULL || via_points_->empty() )
     return; // if weight equals zero skip adding edges!
 
+  int start_pose_idx = 0;
+  
+  int n = (int)teb_.sizePoses();
+  if (n<3) // we do not have any degrees of freedom for reaching via-points
+    return;
+  
   for (ViaPointContainer::const_iterator vp_it = via_points_->begin(); vp_it != via_points_->end(); ++vp_it)
   {
     
-    unsigned int index = teb_.findClosestTrajectoryPose(*vp_it);
+    unsigned int index = teb_.findClosestTrajectoryPose(*vp_it, NULL, start_pose_idx);
+    if (cfg_->trajectory.via_points_ordered)
+      start_pose_idx = index+2; // skip a point to have a DOF inbetween for further via-points
      
-    
-    // check if point is outside index-range between start and goal
-    if ( (index <= 1) || (index > teb_.sizePoses()-2) ) // start and goal are fixed and findNearestBandpoint finds first or last conf if intersection point is outside the range
-      continue; 
+    // check if point conicides with goal or is located behind it
+    if ( index > n-2 ) 
+      index = n-2; // set to a pose before the goal, since we can move it away!
+    // check if point coincides with start or is located before it
+    if ( index < 1)
+      index = 1;
     
     Eigen::Matrix<double,1,1> information;
     information.fill(cfg_->optim.weight_viapoint);
@@ -476,7 +486,7 @@ void TebOptimalPlanner::AddEdgesViaPoints()
     edge_viapoint->setVertex(0,teb_.PoseVertex(index));
     edge_viapoint->setInformation(information);
     edge_viapoint->setParameters(*cfg_, &(*vp_it));
-    optimizer_->addEdge(edge_viapoint);    
+    optimizer_->addEdge(edge_viapoint);   
   }
 }
 

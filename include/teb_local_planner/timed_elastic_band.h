@@ -502,7 +502,7 @@ public:
   //@{
   
   /**
-   * @brief Find the closest point on the trajectory w.r.t to a provided reference point.
+   * @brief Find the closest point on the trajectory w.r.t. to a provided reference point.
    * 
    * This function can be useful to find the part of a trajectory that is close to an obstacle.
    * 
@@ -512,12 +512,13 @@ public:
    * 
    * @param ref_point reference point (2D position vector)
    * @param[out] distance [optional] the resulting minimum distance
+   * @param begin_idx start search at this pose index
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point, double* distance = NULL) const;
+  int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point, double* distance = NULL, int begin_idx=0) const;
 
   /**
-   * @brief Find the closest point on the trajectory w.r.t to a provided reference line.
+   * @brief Find the closest point on the trajectory w.r.t. to a provided reference line.
    * 
    * This function can be useful to find the part of a trajectory that is close to an (line) obstacle.
    * 
@@ -530,10 +531,10 @@ public:
    * @param[out] distance [optional] the resulting minimum distance
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end, double* distance = NULL) const;
+  int findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end, double* distance = NULL) const;
 
   /**
-   * @brief Find the closest point on the trajectory w.r.t to a provided reference polygon.
+   * @brief Find the closest point on the trajectory w.r.t. to a provided reference polygon.
    * 
    * This function can be useful to find the part of a trajectory that is close to an (polygon) obstacle.
    * 
@@ -545,7 +546,7 @@ public:
    * @param[out] distance [optional] the resulting minimum distance
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const Point2dContainer& vertices, double* distance = NULL) const;
+  int findClosestTrajectoryPose(const Point2dContainer& vertices, double* distance = NULL) const;
 
   /**
    * @brief Find the closest point on the trajectory w.r.t to a provided obstacle type
@@ -558,7 +559,7 @@ public:
    * @param[out] distance [optional] the resulting minimum distance
    * @return Index to the closest pose in the pose sequence
    */
-  unsigned int findClosestTrajectoryPose(const Obstacle& obstacle, double* distance = NULL) const;
+  int findClosestTrajectoryPose(const Obstacle& obstacle, double* distance = NULL) const;
   
   
   /**
