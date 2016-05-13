@@ -526,7 +526,7 @@ void TebLocalPlannerROS::updateViaPointsContainer(const std::vector<geometry_msg
     // check separation to the previous via-point inserted
     if (distance_points2d( transformed_plan[prev_idx].pose.position, transformed_plan[i].pose.position ) < min_separation)
       continue;
-    
+        
     // add via-point
     via_points_.push_back( Eigen::Vector2d( transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y ) );
     prev_idx = i;
@@ -629,26 +629,28 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
 
     int i = 0;
     double sq_dist_threshold = dist_threshold * dist_threshold;
-    double sq_dist = 0;
-
+    double sq_dist = 1e10;
+    
     //we need to loop to a point on the plan that is within a certain distance of the robot
     while(i < (int)global_plan.size())
     {
       double x_diff = robot_pose.getOrigin().x() - global_plan[i].pose.position.x;
       double y_diff = robot_pose.getOrigin().y() - global_plan[i].pose.position.y;
-      sq_dist = x_diff * x_diff + y_diff * y_diff;
-      if (sq_dist <= sq_dist_threshold) 
+      double new_sq_dist = x_diff * x_diff + y_diff * y_diff;
+      if (new_sq_dist > sq_dist && sq_dist < sq_dist_threshold) // find first distance that is greater
       {
+        sq_dist = new_sq_dist;
         break;
       }
+      sq_dist = new_sq_dist;
       ++i;
     }
-
+    
     tf::Stamped<tf::Pose> tf_pose;
     geometry_msgs::PoseStamped newer_pose;
     
     double plan_length = 0; // check cumulative Euclidean distance along the plan
-
+    
     //now we'll transform until points are outside of our distance threshold
     while(i < (int)global_plan.size() && sq_dist <= sq_dist_threshold && (max_plan_length<=0 || plan_length <= max_plan_length))
     {

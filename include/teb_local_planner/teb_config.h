@@ -74,6 +74,7 @@ public:
     int min_samples; //!< Minimum number of samples (should be always greater than 2)
     bool global_plan_overwrite_orientation; //!< Overwrite orientation of local subgoals provided by the global planner
     double global_plan_viapoint_sep; //!< Min. separation between each two consecutive via-points extracted from the global plan (if negative: disabled)
+    bool via_points_ordered; //!< If true, the planner adheres to the order of via-points in the storage container
     double max_global_plan_lookahead_dist; //!< Specify maximum length (cumulative Euclidean distances) of the subset of the global plan taken into account for optimization [if <=0: disabled; the length is also bounded by the local costmap size!]
     double force_reinit_new_goal_dist; //!< Reinitialize the trajectory if a previous goal is updated with a seperation of more than the specified value in meters (skip hot-starting)
     int feasibility_check_no_poses; //!< Specify up to which pose on the predicted plan the feasibility should be checked each sampling interval.
@@ -192,6 +193,7 @@ public:
     trajectory.min_samples = 3;
     trajectory.global_plan_overwrite_orientation = true;
     trajectory.global_plan_viapoint_sep = -1;
+    trajectory.via_points_ordered = false;
     trajectory.max_global_plan_lookahead_dist = 1;
     trajectory.force_reinit_new_goal_dist = 1;
     trajectory.feasibility_check_no_poses = 5;
