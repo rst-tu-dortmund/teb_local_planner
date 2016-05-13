@@ -264,6 +264,6 @@ void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg)
   // consider clicked points as via-points
   via_points.push_back( Eigen::Vector2d(point_msg->point.x, point_msg->point.y) );
   ROS_INFO_STREAM("Via-point (" << point_msg->point.x << "," << point_msg->point.y << ") added.");
-  if (config.trajectory.global_plan_viapoint_sep <0 || config.optim.weight_viapoint<=0)
-    ROS_WARN("Note, via-points are deactivated, since 'global_plan_via_point_sep' < 0 || 'weight_via_point' <= 0");
+  if (config.optim.weight_viapoint<=0)
+    ROS_WARN("Note, via-points are deactivated, since 'weight_via_point' <= 0");
 }
