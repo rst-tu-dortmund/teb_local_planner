@@ -69,12 +69,6 @@ TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costma
 
 TebLocalPlannerROS::~TebLocalPlannerROS()
 {
-  if (dynamic_recfg_!=NULL)
-    delete dynamic_recfg_;
-  if (tf_!=NULL)
-    delete tf_;
-  if (costmap_model_!=NULL)
-    delete costmap_model_;
 }
 
 void TebLocalPlannerROS::reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level)
@@ -115,11 +109,11 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     }
     
     // init other variables
-    tf_ = new tf::TransformListener;
+    tf_ = tf;
     costmap_ros_ = costmap_ros;
     costmap_ = costmap_ros_->getCostmap(); // locking should be done in MoveBase.
     
-    costmap_model_ = new base_local_planner::CostmapModel(*costmap_);
+    costmap_model_ = boost::make_shared<base_local_planner::CostmapModel>(*costmap_);
 
     global_frame_ = costmap_ros_->getGlobalFrameID();
     cfg_.map_frame = global_frame_; // TODO
@@ -158,7 +152,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     odom_helper_.setOdomTopic(cfg_.odom_topic);
 
     // setup dynamic reconfigure
-    dynamic_recfg_ = new dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>(nh);
+    dynamic_recfg_ = boost::make_shared< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> >(nh);
     dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(&TebLocalPlannerROS::reconfigureCB, this, _1, _2);
     dynamic_recfg_->setCallback(cb);
         
@@ -328,7 +322,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   }
      
   // Check feasibility (but within the first few states only)
-  bool feasible = planner_->isTrajectoryFeasible(costmap_model_, footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_.trajectory.feasibility_check_no_poses);
+  bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_.trajectory.feasibility_check_no_poses);
   if (!feasible)
   {
     cmd_vel.linear.x = 0;
