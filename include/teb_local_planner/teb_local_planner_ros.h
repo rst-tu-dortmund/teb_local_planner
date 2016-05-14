@@ -334,14 +334,14 @@ private:
   // external objects (store weak pointers)
   costmap_2d::Costmap2DROS* costmap_ros_; //!< Pointer to the costmap ros wrapper, received from the navigation stack
   costmap_2d::Costmap2D* costmap_; //!< Pointer to the 2d costmap (obtained from the costmap ros wrapper)
-  
+  tf::TransformListener* tf_; //!< pointer to Transform Listener
+    
   // internal objects (memory management owned)
   PlannerInterfacePtr planner_; //!< Instance of the underlying optimal planner class
   ObstContainer obstacles_; //!< Obstacle vector that should be considered during local trajectory optimization
   ViaPointContainer via_points_; //!< Container of via-points that should be considered during local trajectory optimization
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
-  tf::TransformListener* tf_; //!< pointer to Transform Listener
-  base_local_planner::CostmapModel* costmap_model_;  
+  boost::shared_ptr<base_local_planner::CostmapModel> costmap_model_;  
   TebConfig cfg_; //!< Config class that stores and manages all related parameters
   
   std::vector<geometry_msgs::PoseStamped> global_plan_; //!< Store the current global plan
@@ -351,7 +351,7 @@ private:
   pluginlib::ClassLoader<costmap_converter::BaseCostmapToPolygons> costmap_converter_loader_; //!< Load costmap converter plugins at runtime
   boost::shared_ptr<costmap_converter::BaseCostmapToPolygons> costmap_converter_; //!< Store the current costmap_converter  
 
-  dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>* dynamic_recfg_; //!< Dynamic reconfigure server to allow config modifications at runtime
+  boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg_; //!< Dynamic reconfigure server to allow config modifications at runtime
   ros::Subscriber custom_obst_sub_; //!< Subscriber for custom obstacles received via a ObstacleMsg.
   boost::mutex custom_obst_mutex_; //!< Mutex that locks the obstacle array (multi-threaded)
   ObstacleMsg custom_obstacle_msg_; //!< Copy of the most recent obstacle message
