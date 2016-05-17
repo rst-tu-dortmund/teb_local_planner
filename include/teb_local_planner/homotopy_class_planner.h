@@ -45,7 +45,17 @@
 #include <vector>
 #include <iterator>
 
-#include <boost/graph/adjacency_list.hpp>
+#ifdef BOOST_NO_CXX11_DEFAULTED_FUNCTIONS
+  #include <boost/graph/adjacency_list.hpp>
+#else
+  // Workaround for a bug in boost graph library (concerning directed graphs), boost version 1.48:
+  // boost::add_vertex requires a move constructor/assignment operator in one of the underlying boost objects if C++11 is activated,
+  // but they are missing. The compiler fails due to an implicit deletion. We just deactivate C++11 default functions for now.
+  #define BOOST_NO_CXX11_DEFAULTED_FUNCTIONS
+  #include <boost/graph/adjacency_list.hpp>
+  #undef BOOST_NO_CXX11_DEFAULTED_FUNCTIONS
+#endif
+
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/shared_ptr.hpp>
