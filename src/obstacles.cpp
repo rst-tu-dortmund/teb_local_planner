@@ -128,37 +128,49 @@ void PolygonObstacle::calcCentroid()
 
 Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position) const
 {
-  assert(!vertices_.empty());
-  
-  // the polygon is a point
+ // the polygon is a point
   if (noVertices() == 1)
   {
     return vertices_.front();
   }
   
-  Eigen::Vector2d closest_pt, new_pt;
-  double dist = HUGE_VAL;
-  
-  // check each polygon edge
-  for (int i=0; i<(int)vertices_.size()-1; ++i)
+  if (noVertices() > 1)
   {
-    new_pt = closest_point_on_line_segment_2d(position, vertices_.at(i), vertices_.at(i+1));
-    double new_dist = (new_pt-position).norm();
-    if (new_dist < dist)
+    
+    Eigen::Vector2d new_pt = closest_point_on_line_segment_2d(position, vertices_.at(0), vertices_.at(1));
+    
+    if (noVertices() > 2) // real polygon and not a line
     {
-      dist = new_dist;
-      closest_pt = new_pt;
+      double dist = (new_pt-position).norm();
+      Eigen::Vector2d closest_pt = new_pt;
+      
+      // check each polygon edge
+      for (int i=1; i<(int)noVertices()-1; ++i) // skip the first one, since we already checked it (new_pt)
+      {
+        new_pt = closest_point_on_line_segment_2d(position, vertices_.at(i), vertices_.at(i+1));
+        double new_dist = (new_pt-position).norm();
+        if (new_dist < dist)
+        {
+          dist = new_dist;
+          closest_pt = new_pt;
+        }
+      }
+      // afterwards we check the edge between goal and start (close polygon)
+      new_pt = closest_point_on_line_segment_2d(position, vertices_.back(), vertices_.front());
+      double new_dist = (new_pt-position).norm();
+      if (new_dist < dist)
+        return new_pt;
+      else
+        return closest_pt;
+    }
+    else
+    {
+      return new_pt; // closest point on line segment
     }
   }
-  if (noVertices()>2) // if not a line close polygon
-  {
-    new_pt = closest_point_on_line_segment_2d(position, vertices_.back(), vertices_.front());
-    double new_dist = (new_pt-position).norm();
-    if (new_dist < dist)
-      return new_pt;
-  }
   
-  return closest_pt;
+  ROS_ERROR("PolygonObstacle::getClosestPoint() cannot find any closest point. Polygon ill-defined?");
+  return Eigen::Vector2d::Zero(); // todo: maybe boost::optional?
 }
 
 

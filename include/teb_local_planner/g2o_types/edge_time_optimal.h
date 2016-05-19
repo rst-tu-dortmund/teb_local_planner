@@ -115,7 +115,6 @@ public:
   void linearizeOplus()
   {
     ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeTimeOptimal()");
-    const VertexTimeDiff* vi = static_cast<const VertexTimeDiff*>(_vertices[0]);
     _jacobianOplusXi( 0 , 0 ) = 1;
   }
 #endif

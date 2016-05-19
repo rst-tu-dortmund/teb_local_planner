@@ -66,7 +66,8 @@ inline std::complex<long double> getCplxFromMsgPoseStamped(const geometry_msgs::
 };
 
 
-HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), via_points_(NULL), initial_plan_(NULL), robot_model_(new PointRobotFootprint()), initialized_(false)
+HomotopyClassPlanner::HomotopyClassPlanner() : obstacles_(NULL), via_points_(NULL),  cfg_(NULL), robot_model_(new PointRobotFootprint()),
+                                               initial_plan_(NULL), initialized_(false)
 {
 }
   
