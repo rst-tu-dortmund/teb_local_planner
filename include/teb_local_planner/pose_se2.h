@@ -297,6 +297,7 @@ public:
   {
     _position += rhs._position;
     _theta = g2o::normalize_theta(_theta + rhs._theta);
+    return *this;
   }
   
   /**
@@ -317,6 +318,7 @@ public:
   {
     _position -= rhs._position;
     _theta = g2o::normalize_theta(_theta - rhs._theta);
+    return *this;
   }
   
   /**

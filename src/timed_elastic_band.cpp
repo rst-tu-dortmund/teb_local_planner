@@ -130,7 +130,7 @@ void TimedElasticBand::deletePose(unsigned int index)
 void TimedElasticBand::deletePoses(unsigned int index, unsigned int number)
 {
 	ROS_ASSERT(index+number<=pose_vec_.size());
-	for (int i = index; i<index+number; ++i)
+	for (unsigned int i = index; i<index+number; ++i)
 		delete pose_vec_.at(i);
 	pose_vec_.erase(pose_vec_.begin()+index, pose_vec_.begin()+index+number);
 }
@@ -145,7 +145,7 @@ void TimedElasticBand::deleteTimeDiff(unsigned int index)
 void TimedElasticBand::deleteTimeDiffs(unsigned int index, unsigned int number)
 {
 	ROS_ASSERT(index+number<=timediff_vec_.size());
-	for (int i = index; i<index+number; ++i)
+	for (unsigned int i = index; i<index+number; ++i)
 		delete timediff_vec_.at(i);
 	timediff_vec_.erase(timediff_vec_.begin()+index, timediff_vec_.begin()+index+number);
 }
@@ -217,7 +217,7 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
       
       ++i; // skip the newly inserted pose
     }
-    else if(TimeDiff(i) < dt_ref - dt_hysteresis && sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
+    else if(TimeDiff(i) < dt_ref - dt_hysteresis && (int)sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
     {
       //ROS_DEBUG("teb_local_planner: autoResize() deleting bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
       

@@ -317,7 +317,7 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
     return false;	
   }
   
-  if (!teb_.isInit() || teb_.sizePoses()<cfg_->trajectory.min_samples)
+  if (!teb_.isInit() || (int)teb_.sizePoses()<cfg_->trajectory.min_samples)
   {
     ROS_WARN("optimizeGraph(): TEB is empty or has too less elements. Skipping optimization.");
     if (clear_after) clearGraph();
@@ -381,7 +381,7 @@ void TebOptimalPlanner::AddEdgesObstacles()
     
     unsigned int index;
     
-    if (cfg_->obstacles.obstacle_poses_affected >= teb_.sizePoses())
+    if (cfg_->obstacles.obstacle_poses_affected >= (int)teb_.sizePoses())
       index =  teb_.sizePoses() / 2;
     else
       index = teb_.findClosestTrajectoryPose(*(obst->get()));
@@ -464,7 +464,7 @@ void TebOptimalPlanner::AddEdgesViaPoints()
   for (ViaPointContainer::const_iterator vp_it = via_points_->begin(); vp_it != via_points_->end(); ++vp_it)
   {
     
-    unsigned int index = teb_.findClosestTrajectoryPose(*vp_it, NULL, start_pose_idx);
+    int index = teb_.findClosestTrajectoryPose(*vp_it, NULL, start_pose_idx);
     if (cfg_->trajectory.via_points_ordered)
       start_pose_idx = index+2; // skip a point to have a DOF inbetween for further via-points
      
@@ -840,7 +840,7 @@ bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* c
   if (look_ahead_idx < 0 || look_ahead_idx >= (int) teb().sizePoses())
     look_ahead_idx = (int) teb().sizePoses()-1;
   
-  for (unsigned int i=0; i <= look_ahead_idx; ++i)
+  for (int i=0; i <= look_ahead_idx; ++i)
   {           
     if ( costmap_model->footprintCost(teb().Pose(i).x(), teb().Pose(i).y(), teb().Pose(i).theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 )
       return false;
@@ -898,8 +898,8 @@ bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry
   }
     
   // check ratio: distance along the inital plan and distance of the trajectory (maybe too much is cut off)
-  std::size_t idx=0; // first get point close to the robot (should be fast if the global path is already pruned!)
-  for (; idx < initial_plan.size(); ++idx)
+  int idx=0; // first get point close to the robot (should be fast if the global path is already pruned!)
+  for (; idx < (int)initial_plan.size(); ++idx)
   {
     if ( std::sqrt(std::pow(initial_plan[idx].pose.position.x-teb_.Pose(0).x(), 2) + std::pow(initial_plan[idx].pose.position.y-teb_.Pose(0).y(), 2)) )
       break;
@@ -914,7 +914,7 @@ bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry
   
   // check distances along the teb trajectory (by the way, we also check if the distance between two poses is > obst_dist)
   double teb_length = 0;
-  for (int i = 1; i < teb_.sizePoses(); ++i )
+  for (int i = 1; i < (int)teb_.sizePoses(); ++i )
   {
     double dist = (teb_.Pose(i).position() - teb_.Pose(i-1).position()).norm();
     if (dist > 0.95*cfg_->obstacles.min_obstacle_dist)
