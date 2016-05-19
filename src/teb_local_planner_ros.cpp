@@ -61,8 +61,9 @@ namespace teb_local_planner
 {
   
 
-TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costmap_model_(NULL), dynamic_recfg_(NULL), goal_reached_(false), horizon_reduced_(false),
-                                           initialized_(false), costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons")
+TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costmap_model_(NULL),
+                                           costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
+                                            dynamic_recfg_(NULL), goal_reached_(false), horizon_reduced_(false), initialized_(false)
 {
 }
 
@@ -430,7 +431,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
   if (!polygons)
     return;
   
-  for (int i=0; i<polygons->size(); ++i)
+  for (std::size_t i=0; i<polygons->size(); ++i)
   {
     if (polygons->at(i).points.size()==1) // Point
     {
@@ -444,7 +445,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
     else if (polygons->at(i).points.size()>2) // Real polygon
     {
         PolygonObstacle* polyobst = new PolygonObstacle;
-        for (int j=0; j<polygons->at(i).points.size(); ++j)
+        for (std::size_t j=0; j<polygons->at(i).points.size(); ++j)
         {
             polyobst->pushBackVertex(polygons->at(i).points[j].x, polygons->at(i).points[j].y);
         }
@@ -596,7 +597,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
 
   try 
   {
-    if (!global_plan.size() > 0)
+    if (global_plan.empty())
     {
       ROS_ERROR("Received plan with zero length");
       *current_goal_idx = 0;

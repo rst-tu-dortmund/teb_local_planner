@@ -66,7 +66,7 @@ inline std::complex<long double> getCplxFromMsgPoseStamped(const geometry_msgs::
 };
 
 
-HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), via_points_(NULL), initial_plan_(NULL), robot_model_(new PointRobotFootprint()), initialized_(false)
+HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), via_points_(NULL), robot_model_(new PointRobotFootprint()), initial_plan_(NULL), initialized_(false)
 {
 }
   
@@ -714,7 +714,7 @@ void HomotopyClassPlanner::updateAllTEBs(const PoseSE2* start, const PoseSE2* go
 }
 
  
-void HomotopyClassPlanner::optimizeAllTEBs(unsigned int iter_innerloop, unsigned int iter_outerloop)
+void HomotopyClassPlanner::optimizeAllTEBs(int iter_innerloop, int iter_outerloop)
 {
   // optimize TEBs in parallel since they are independend of each other
   if (cfg_->hcp.enable_multithreading)

@@ -340,7 +340,7 @@ public:
    * @param iter_innerloop Number of inner iterations (see TebOptimalPlanner::optimizeTEB())
    * @param iter_outerloop Number of outer iterations (see TebOptimalPlanner::optimizeTEB())
    */
-  void optimizeAllTEBs(unsigned int iter_innerloop, unsigned int iter_outerloop);
+  void optimizeAllTEBs(int iter_innerloop, int iter_outerloop);
   
   /**
    * @brief In case of multiple, internally stored, alternative trajectories, select the best one according to their cost values.
@@ -525,9 +525,9 @@ protected:
   
     
   // external objects (store weak pointers)
+  const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
   const ViaPointContainer* via_points_; //!< Store the current list of via-points
-  const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)

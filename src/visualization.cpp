@@ -101,7 +101,7 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
     teb_poses.header.stamp = teb_path.header.stamp;
     
     // fill path msgs with teb configurations
-    for (unsigned int i=0; i < teb.sizePoses(); i++)
+    for (int i=0; i < teb.sizePoses(); i++)
     {
       geometry_msgs::PoseStamped pose;
       pose.header.frame_id = teb_path.header.frame_id;
@@ -184,7 +184,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
   
   // Visualize line obstacles
   {
-    unsigned int idx = 0;
+    std::size_t idx = 0;
     for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
     {	
       boost::shared_ptr<LineObstacle> pobst = boost::dynamic_pointer_cast<LineObstacle>(*obst);   
@@ -224,7 +224,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 
   // Visualize polygon obstacles
   {
-    unsigned int idx = 0;
+    std::size_t idx = 0;
     for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
     {	
       boost::shared_ptr<PolygonObstacle> pobst = boost::dynamic_pointer_cast<PolygonObstacle>(*obst);   

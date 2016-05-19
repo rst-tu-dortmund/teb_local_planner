@@ -80,7 +80,7 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
       // we insert middle points now (increase start by 1 and decrease goal by 1)
       std::advance(path_start,1);
       std::advance(path_end,-1);
-      unsigned int idx=0;
+      int idx=0;
       for (; path_start != path_end; ++path_start) // insert middle-points
       {
 	//Eigen::Vector2d point_to_goal = path.back()-*it;
@@ -139,10 +139,10 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
       PoseSE2 goal(goal_position, goal_orient);
       
       // if number of samples is not larger than min_samples, insert manually
-      if ( (int)sizePoses() < min_samples-1 )
+      if ( sizePoses() < min_samples-1 )
       {
         ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
-        while ((int)sizePoses() < min_samples-1) // subtract goal point that will be added later
+        while (sizePoses() < min_samples-1) // subtract goal point that will be added later
         {
           // simple strategy: interpolate between the current pose and the goal
           addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), timestep ); // let the optimier correct the timestep (TODO: better initialization	
@@ -156,7 +156,7 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
     else // size!=0
     {
       ROS_WARN("Cannot init TEB between given configuration and goal, because TEB vectors are not empty or TEB is already initialized (call this function before adding states yourself)!");
-      ROS_WARN("Number of TEB configurations: %d, Number of TEB timediffs: %d",(unsigned int) sizePoses(),(unsigned int) sizeTimeDiffs());
+      ROS_WARN("Number of TEB configurations: %d, Number of TEB timediffs: %d", sizePoses(), sizeTimeDiffs());
       return false;
     }
     return true;

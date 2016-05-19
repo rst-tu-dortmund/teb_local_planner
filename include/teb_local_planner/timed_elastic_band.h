@@ -131,7 +131,7 @@ public:
    * @param index element position inside the internal TimeDiffSequence
    * @return reference to the time difference at pos \c index
    */
-  double& TimeDiff(unsigned int index)
+  double& TimeDiff(int index)
   {
     ROS_ASSERT(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index)->dt();
@@ -142,7 +142,7 @@ public:
    * @param index element position inside the internal TimeDiffSequence
    * @return const reference to the time difference at pos \c index
    */
-  const double& TimeDiff(unsigned int index) const
+  const double& TimeDiff(int index) const
   {
     ROS_ASSERT(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index)->dt();
@@ -153,7 +153,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @return reference to the pose at pos \c index
    */
-  PoseSE2& Pose(unsigned int index) 
+  PoseSE2& Pose(int index) 
   {
     ROS_ASSERT(index<sizePoses());
     return pose_vec_.at(index)->pose();
@@ -164,7 +164,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @return const reference to the pose at pos \c index
    */
-  const PoseSE2& Pose(unsigned int index) const 
+  const PoseSE2& Pose(int index) const 
   {
     ROS_ASSERT(index<sizePoses());
     return pose_vec_.at(index)->pose();
@@ -195,7 +195,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @return Weak raw pointer to the pose vertex at pos \c index
    */ 
-  VertexPose* PoseVertex(unsigned int index) 
+  VertexPose* PoseVertex(int index) 
   {
     ROS_ASSERT(index<sizePoses());
     return pose_vec_.at(index);
@@ -206,7 +206,7 @@ public:
    * @param index element position inside the internal TimeDiffSequence
    * @return Weak raw pointer to the timediff vertex at pos \c index
    */  
-  VertexTimeDiff* TimeDiffVertex(unsigned int index) 
+  VertexTimeDiff* TimeDiffVertex(int index) 
   {
     ROS_ASSERT(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index);
@@ -290,7 +290,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @param pose PoseSE2 element to insert into the internal PoseSequence
    */
-  void insertPose(unsigned int index, const PoseSE2& pose);
+  void insertPose(int index, const PoseSE2& pose);
   
   /**
    * @brief Insert a new pose vertex at pos. \c index to the pose sequence
@@ -298,7 +298,7 @@ public:
    * @param position 2D vector representing the position part
    * @param theta yaw-angle representing the orientation part
    */
-  void insertPose(unsigned int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta);
+  void insertPose(int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta);
   
   /**
    * @brief Insert a new pose vertex at pos. \c index to the pose sequence
@@ -307,40 +307,40 @@ public:
    * @param y y-coordinate of the position part
    * @param theta yaw-angle representing the orientation part
    */
-  void insertPose(unsigned int index, double x, double y, double theta);
+  void insertPose(int index, double x, double y, double theta);
   
   /**
    * @brief Insert a new timediff vertex at pos. \c index to the timediff sequence
    * @param index element position inside the internal TimeDiffSequence
    * @param dt timediff value
    */   
-  void insertTimeDiff(unsigned int index, double dt);
+  void insertTimeDiff(int index, double dt);
     
   /**
    * @brief Delete pose at pos. \c index in the pose sequence
    * @param index element position inside the internal PoseSequence
    */
-  void deletePose(unsigned int index);
+  void deletePose(int index);
   
   /**
    * @brief Delete multiple (\c number) poses starting at pos. \c index in the pose sequence
    * @param index first element position inside the internal PoseSequence
    * @param number number of elements that should be deleted
    */
-  void deletePoses(unsigned int index, unsigned int number);
+  void deletePoses(int index, int number);
 
   /**
    * @brief Delete pose at pos. \c index in the timediff sequence
    * @param index element position inside the internal TimeDiffSequence
    */
-  void deleteTimeDiff(unsigned int index);
+  void deleteTimeDiff(int index);
 	
   /**
    * @brief Delete multiple (\c number) time differences starting at pos. \c index in the timediff sequence
    * @param index first element position inside the internal TimeDiffSequence
    * @param number number of elements that should be deleted
    */
-  void deleteTimeDiffs(unsigned int index, unsigned int number);
+  void deleteTimeDiffs(int index, int number);
   
   //@}
   
@@ -480,14 +480,14 @@ public:
    * @param index index to the pose vertex
    * @param status if \c true, the vertex will be fixed, otherwise unfixed
    */
-  void setPoseVertexFixed(unsigned int index, bool status);
+  void setPoseVertexFixed(int index, bool status);
   
   /**
    * @brief Set a timediff vertex at pos \c index of the timediff sequence to be fixed or unfixed during optimization.
    * @param index index to the timediff vertex
    * @param status if \c true, the vertex will be fixed, otherwise unfixed
    */
-  void setTimeDiffVertexFixed(unsigned int index, bool status);
+  void setTimeDiffVertexFixed(int index, bool status);
   
   /**
    * @brief clear all poses and timediffs from the trajectory.
@@ -565,12 +565,12 @@ public:
   /**
    * @brief Get the length of the internal pose sequence
    */
-  std::size_t sizePoses() const {return pose_vec_.size();};
+  int sizePoses() const {return (int)pose_vec_.size();};
   
   /**
    * @brief Get the length of the internal timediff sequence
    */
-  std::size_t sizeTimeDiffs() const {return timediff_vec_.size();};
+  int sizeTimeDiffs() const {return (int)timediff_vec_.size();};
   
   /**
    * @brief Check whether the trajectory is initialized (nonzero pose and timediff sequences)

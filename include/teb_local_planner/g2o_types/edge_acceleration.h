@@ -667,8 +667,8 @@ public:
     double p1_dx =  cos_theta1*diff1.x() + sin_theta1*diff1.y();
     double p1_dy = -sin_theta1*diff1.x() + cos_theta1*diff1.y();
     // transform pose3 into robot frame pose2 (inverse 2d rotation matrix)
-    double p2_dx =  cos_theta1*diff2.x() + sin_theta1*diff2.y();
-    double p2_dy = -sin_theta1*diff2.x() + cos_theta1*diff2.y();
+    double p2_dx =  cos_theta2*diff2.x() + sin_theta2*diff2.y();
+    double p2_dy = -sin_theta2*diff2.x() + cos_theta2*diff2.y();
     
     double vel1_x = p1_dx / dt1->dt();
     double vel1_y = p1_dy / dt1->dt();

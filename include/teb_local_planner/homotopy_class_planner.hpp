@@ -53,7 +53,7 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
     
     // guess values for f0
     // paper proposes a+b=N-1 && |a-b|<=1, 1...N obstacles
-    int m = obstacles->size()-1;
+    int m = (int)obstacles->size()-1;
     
     if (m>5)
       m = 5;  // hardcoded, but this was working in my test cases... TODO further tests requried
@@ -86,13 +86,13 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
       cplx z1 = fun_cplx_point(*path_start);
       cplx z2 = fun_cplx_point(*boost::next(path_start));
 
-      for (unsigned int l=0; l<obstacles->size(); ++l) // iterate all obstacles
+      for (std::size_t l=0; l<obstacles->size(); ++l) // iterate all obstacles
       {
         cplx obst_l = obstacles->at(l)->getCentroidCplx();
         cplx f0 = (long double) prescaler * std::pow(obst_l-map_bottom_left,a) * std::pow(obst_l-map_top_right,b);
         // denum contains product with all obstacles exepct j==l
         cplx Al = f0;
-        for (unsigned int j=0; j<obstacles->size(); ++j)
+        for (std::size_t j=0; j<obstacles->size(); ++j)
         {
           if (j==l) 
               continue;
