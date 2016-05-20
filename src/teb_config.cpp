@@ -115,6 +115,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("selection_alternative_time_cost", hcp.selection_alternative_time_cost, hcp.selection_alternative_time_cost); 
   nh.param("roadmap_graph_samples", hcp.roadmap_graph_no_samples, hcp.roadmap_graph_no_samples); 
   nh.param("roadmap_graph_area_width", hcp.roadmap_graph_area_width, hcp.roadmap_graph_area_width); 
+  nh.param("roadmap_graph_area_length_scale", hcp.roadmap_graph_area_length_scale, hcp.roadmap_graph_area_length_scale);
   nh.param("h_signature_prescaler", hcp.h_signature_prescaler, hcp.h_signature_prescaler); 
   nh.param("h_signature_threshold", hcp.h_signature_threshold, hcp.h_signature_threshold); 
   nh.param("obstacle_keypoint_offset", hcp.obstacle_keypoint_offset, hcp.obstacle_keypoint_offset); 
@@ -198,6 +199,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   hcp.obstacle_heading_threshold = cfg.obstacle_heading_threshold;
   hcp.roadmap_graph_no_samples = cfg.roadmap_graph_no_samples;
   hcp.roadmap_graph_area_width = cfg.roadmap_graph_area_width;
+  hcp.roadmap_graph_area_length_scale = cfg.roadmap_graph_area_length_scale;
   hcp.h_signature_prescaler = cfg.h_signature_prescaler;
   hcp.h_signature_threshold = cfg.h_signature_threshold;
   hcp.viapoints_all_candidates = cfg.viapoints_all_candidates;

@@ -156,6 +156,7 @@ public:
     
     int roadmap_graph_no_samples; //! < Specify the number of samples generated for creating the roadmap graph, if simple_exploration is turend off.
     double roadmap_graph_area_width; //!< Random keypoints/waypoints are sampled in a rectangular region between start and goal. Specify the width of that region in meters.
+    double roadmap_graph_area_length_scale; //!< The length of the rectangular region is determined by the distance between start and goal. This parameter further scales the distance such that the geometric center remains equal!
     double h_signature_prescaler; //!< Scale number of obstacle value in order to allow huge number of obstacles. Do not choose it extremly low, otherwise obstacles cannot be distinguished from each other (0.2<H<=1).
     double h_signature_threshold; //!< Two h-signatures are assumed to be equal, if both the difference of real parts and complex parts are below the specified threshold.
     
@@ -265,6 +266,7 @@ public:
     hcp.obstacle_heading_threshold = 0.45; 
     hcp.roadmap_graph_no_samples = 15;
     hcp.roadmap_graph_area_width = 6; // [m]
+    hcp.roadmap_graph_area_length_scale = 1.0;
     hcp.h_signature_prescaler = 1;
     hcp.h_signature_threshold = 0.1;
     

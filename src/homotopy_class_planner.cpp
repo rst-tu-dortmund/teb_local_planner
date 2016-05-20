@@ -357,13 +357,17 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   
   double area_width = cfg_->hcp.roadmap_graph_area_width;
     
-  boost::random::uniform_real_distribution<double> distribution_x(0, start_goal_dist);  
+  boost::random::uniform_real_distribution<double> distribution_x(0, start_goal_dist * cfg_->hcp.roadmap_graph_area_length_scale);  
   boost::random::uniform_real_distribution<double> distribution_y(0, area_width); 
   
   double phi = atan2(diff.coeffRef(1),diff.coeffRef(0)); // rotate area by this angle
   Eigen::Rotation2D<double> rot_phi(phi);
   
-  Eigen::Vector2d area_origin = start.position() - 0.5*area_width*normal; // bottom left corner of the origin
+  Eigen::Vector2d area_origin;
+  if (cfg_->hcp.roadmap_graph_area_length_scale != 1.0)
+    area_origin = start.position() + 0.5*(1.0-cfg_->hcp.roadmap_graph_area_length_scale)*start_goal_dist*diff.normalized() - 0.5*area_width*normal; // bottom left corner of the origin
+  else
+    area_origin = start.position() - 0.5*area_width*normal; // bottom left corner of the origin
   
   // Insert Vertices
   HcGraphVertexType start_vtx = boost::add_vertex(graph_); // start vertex
