@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.1 (2016-05-20)
+------------------
 * Wrong parameter namespace for *costmap_converter* plugins fixed
 * Compiler warnings fixed
 * Workaround for compilation issues that are caused by a bug in boost 1.58
