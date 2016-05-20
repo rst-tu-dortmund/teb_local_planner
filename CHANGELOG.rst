@@ -2,6 +2,17 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Wrong parameter namespace for *costmap_converter* plugins fixed
+* Compiler warnings fixed
+* Workaround for compilation issues that are caused by a bug in boost 1.58
+  concerning the graph library (missing move constructor/assignment operator
+  in boost source).
+* Using *tf*-listener from *move_base* instead of an isolated one
+* Via-point support improved
+
+
 0.4.0 (2016-04-19)
 ------------------
 * The teb_local_planner supports a path-following mode (w.r.t. the global plan) and via-points now.
