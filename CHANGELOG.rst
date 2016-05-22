@@ -2,6 +2,24 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Extended support to holonomic robots
+* Wrong parameter namespace for *costmap_converter* plugins fixed
+* Added the option to scale the length of the hcp sampling area
+* Compiler warnings fixed.
+* Workaround for compilation issues that are caused by a bug in boost 1.58
+  concerning the graph library (missing move constructor/assignment operator
+  in boost source).
+* Using *tf_listener* from *move_base* now.
+* Via-point support improved.
+  Added the possibility to take the actual order of via-points into account.
+  Additionally, via-points beyond start and goal are now included.
+* Obsolete include of the angles package header removed
+* Update to package.xml version 2
+* Some other minor fixes.
+
+
 0.4.0 (2016-04-19)
 ------------------
 * The teb_local_planner supports a path-following mode (w.r.t. the global plan) and via-points now.
