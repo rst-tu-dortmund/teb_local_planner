@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.0 (2016-05-22)
+------------------
 * Extended support to holonomic robots
 * Wrong parameter namespace for *costmap_converter* plugins fixed
 * Added the option to scale the length of the hcp sampling area
