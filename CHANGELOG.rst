@@ -2,6 +2,11 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Debian ARM64 library path added to SuiteSparse cmake find-script (resolves ARM compilation issue)
+
+
 0.6.0 (2016-05-22)
 ------------------
 * Extended support to holonomic robots
