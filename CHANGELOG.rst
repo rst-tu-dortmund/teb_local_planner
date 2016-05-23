@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.1 (2016-05-23)
+------------------
 * Debian ARM64 library path added to SuiteSparse cmake find-script (resolves ARM compilation issue)
 
 
