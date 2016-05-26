@@ -284,8 +284,9 @@ public:
    * @param start Current start pose (e.g. pose of the robot)
    * @param goal Goal pose (e.g. robot's goal)
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
+   * @param @param start_velocity start velocity (optional)
    */
-  void exploreHomotopyClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst);
+  void exploreHomotopyClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel);
 
   
   /**
@@ -305,24 +306,27 @@ public:
    * @param fun_position unary function that returns the Eigen::Vector2d object
    * @param start_orientation Orientation of the first pose of the trajectory (optional, otherwise use goal heading)
    * @param goal_orientation Orientation of the last pose of the trajectory (optional, otherwise use goal heading)
+   * @param start_velocity start velocity (optional)
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun unyary function that transforms the dereferenced iterator into an Eigen::Vector2d
    */
   template<typename BidirIter, typename Fun>
-  void addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation); 
+  void addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity); 
   
   /**
    * @brief Add a new Teb to the internal trajectory container and initialize it with a simple straight line between a given start and goal
    * @param start start pose
    * @param goal goal pose
+   * @param start_velocity start velocity (optional)
    */
-  void addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal); 
+  void addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity); 
   
     /**
    * @brief Add a new Teb to the internal trajectory container and initialize it using a PoseStamped container
    * @param initial_plan container of poses (start and goal orientation should be valid!)
+   * @param start_velocity start velocity (optional)
    */
-  void addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan);
+  void addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity);
   
   /**
    * @brief Update TEBs with new pose, goal and current velocity.
@@ -447,8 +451,9 @@ protected:
    * @param goal Goal pose to find paths to (e.g. the robot's goal).
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
    * @param obstacle_heading_threshold Value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account [0,1]
+   * @param start_velocity start velocity (optional)
    */
-  void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold);
+  void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity);
   
   /**
    * @brief Create a graph and sample points in the global frame that can be used to explore new possible paths between start and goal.
@@ -464,16 +469,24 @@ protected:
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
    * @param no_samples number of random samples
    * @param obstacle_heading_threshold Value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account [0,1]
+   * @param start_velocity start velocity (optional)
    */  
-  void createProbRoadmapGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, int no_samples, double obstacle_heading_threshold);
+  void createProbRoadmapGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, int no_samples, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity);
   
+  /**
+   * @brief Check if a h-signature exists already.
+   * @param H h-signature that should be tested
+   * @return \c true if the h-signature is found, \c false otherwise
+   */ 
+  bool hasHSignature(const std::complex<long double>& H) const;
   
   /**
    * @brief Internal helper function that adds a h-signature to the list of known h-signatures only if it is unique.
    * @param H h-signature that should be tested
+   * @param lock if \c true, exclude the H-signature from deletion, e.g. in deleteTebDetours().
    * @return \c true if the h-signature was added and no duplicate was found, \c false otherwise
    */    
-  bool addHSignatureIfNew(const std::complex<long double>& H);
+  bool addHSignatureIfNew(const std::complex<long double>& H, bool lock=false);
   
   /**
    * @brief Renew all found h-signatures for the new planning step based on existing TEBs. Optionally detours can be discarded.
@@ -506,8 +519,9 @@ protected:
    * @param goal Desired goal vertex
    * @param start_orientation Orientation of the first trajectory pose, required to initialize the trajectory/TEB
    * @param goal_orientation Orientation of the goal trajectory pose, required to initialize the trajectory/TEB
+   * @param start_velocity start velocity (optional)
    */
-  void DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation, double goal_orientation);
+  void DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity);
  
   /**
    * @brief Clear any existing graph of the homotopy class search
@@ -541,7 +555,8 @@ protected:
   
   HcGraph graph_; //!< Store the graph that is utilized to find alternative homotopy classes.
  
-  std::vector< std::complex<long double> > h_signatures_; //!< Store all known h-signatures to allow checking for duplicates after finding and adding new ones.
+  std::vector< std::pair<std::complex<long double>, bool> > h_signatures_; //!< Store all known h-signatures to allow checking for duplicates after finding and adding new ones. 
+									  //   The second parameter denotes whether to exclude the h-signature from detour deletion or not (true: keep).
   
   boost::random::mt19937 rnd_generator_; //!< Random number generator used by createProbRoadmapGraph to sample graph keypoints.   
       
