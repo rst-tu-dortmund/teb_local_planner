@@ -548,28 +548,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
       it_teb = tebs_.erase(it_teb); // delete candidate and set iterator to the next valid candidate
       continue;
     }
-   
-    // TEST: check if the following strategy performs well
-    // if the obstacle region is really close to the TEB (far below the saftey distance), the TEB will get heavily jabbed (pushed away) -> the obstacle error is very high!
-    // Smoothing this effect takes a long time. Here we first detect this artefact and then initialize a new path from the homotopy-planner in renewHomotopyClassesAndInitNewTEB()!
-    bool flag=false;
-    for(ObstContainer::const_iterator it_obst = obstacles_->begin(); it_obst != obstacles_->end(); ++it_obst)
-    {
-      double dist = HUGE_VAL;
-      it_teb->get()->teb().findClosestTrajectoryPose(*(it_obst->get()), &dist);
-      if (dist < 0.06)
-      {
-        ROS_DEBUG("getAndFilterHomotopyClassesTEB() - TEB and Intersection Point are at the same place, erasing candidate.");	
-        flag=true;
-        break;
-      }
-    }
-    if (flag)
-    {
-      it_teb = tebs_.erase(it_teb); // delete candidate and set iterator to the next valid candidate
-      continue;
-    }
- 
+
     // calculate H Signature for the current candidate
     std::complex<long double> H = calculateHSignature(it_teb->get()->teb().poses().begin(), it_teb->get()->teb().poses().end(), getCplxFromVertexPosePtr ,obstacles_, cfg_->hcp.h_signature_prescaler);
     
