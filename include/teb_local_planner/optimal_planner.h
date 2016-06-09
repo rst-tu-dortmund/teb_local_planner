@@ -590,11 +590,22 @@ protected:
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles
+   * @warning do not combine with AddEdgesInflatedObstacles
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
    */
   void AddEdgesObstacles();
+  
+  
+  /**
+   * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles 
+   * @warning do not combine with AddEdgesObstacles
+   * @see EdgeInflatedObstacle
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesInflatedObstacles();
   
   /**
    * @brief Add all edges (local cost functions) related to minimizing the distance to via-points
@@ -615,6 +626,7 @@ protected:
 
   /**
    * @brief Add all edges (local cost functions) for satisfying kinematic constraints of a differential drive robot
+   * @warning do not combine with AddEdgesKinematicsCarlike()
    * @see AddEdgesKinematicsCarlike
    * @see buildGraph
    * @see optimizeGraph
@@ -623,6 +635,7 @@ protected:
   
   /**
    * @brief Add all edges (local cost functions) for satisfying kinematic constraints of a carlike robot
+   * @warning do not combine with AddEdgesKinematicsDiffDrive()
    * @see AddEdgesKinematicsDiffDrive
    * @see buildGraph
    * @see optimizeGraph

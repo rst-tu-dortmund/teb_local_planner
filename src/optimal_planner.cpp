@@ -130,6 +130,7 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
   factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
   factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
+  factory->registerType("EDGE_INFLATED_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeInflatedObstacle>);
   factory->registerType("EDGE_DYNAMIC_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeDynamicObstacle>);
   factory->registerType("EDGE_VIA_POINT", new g2o::HyperGraphElementCreator<EdgeViaPoint>);
   return;
@@ -293,8 +294,12 @@ bool TebOptimalPlanner::buildGraph()
   AddTEBVertices();
   
   // add Edges (local cost functions)
-  AddEdgesObstacles();
-  AddEdgesDynamicObstacles();
+  if (cfg_->obstacles.inflation_dist > cfg_->obstacles.min_obstacle_dist)
+    AddEdgesInflatedObstacles();
+  else
+    AddEdgesObstacles();
+  
+  //AddEdgesDynamicObstacles();
   
   AddEdgesViaPoints();
   
@@ -378,6 +383,9 @@ void TebOptimalPlanner::AddEdgesObstacles()
   if (cfg_->optim.weight_obstacle==0 || obstacles_==NULL )
     return; // if weight equals zero skip adding edges!
 
+  Eigen::Matrix<double,1,1> information;
+  information.fill(cfg_->optim.weight_obstacle);
+    
   for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
   {
     if ((*obst)->isDynamic()) // we handle dynamic obstacles differently below
@@ -394,10 +402,7 @@ void TebOptimalPlanner::AddEdgesObstacles()
     // check if obstacle is outside index-range between start and goal
     if ( (index <= 1) || (index > teb_.sizePoses()-2) ) // start and goal are fixed and findNearestBandpoint finds first or last conf if intersection point is outside the range
 	    continue; 
-    
-    Eigen::Matrix<double,1,1> information;
-    information.fill(cfg_->optim.weight_obstacle);
-    
+        
     EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
     dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
     dist_bandpt_obst->setInformation(information);
@@ -426,6 +431,63 @@ void TebOptimalPlanner::AddEdgesObstacles()
 	  
   }
 }
+
+void TebOptimalPlanner::AddEdgesInflatedObstacles()
+{
+  if (cfg_->optim.weight_obstacle==0 || obstacles_==NULL )
+    return; // if weight equals zero skip adding edges!
+
+  Eigen::Matrix<double,2,2> information;
+  information(0,0) = cfg_->optim.weight_obstacle;
+  information(1,1) = cfg_->optim.weight_inflation;
+  information(0,1) = information(1,0) = 0;
+    
+  for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
+  {
+    if ((*obst)->isDynamic()) // we handle dynamic obstacles differently below
+      continue; 
+    
+    int index;
+    
+    if (cfg_->obstacles.obstacle_poses_affected >= teb_.sizePoses())
+      index =  teb_.sizePoses() / 2;
+    else
+      index = teb_.findClosestTrajectoryPose(*(obst->get()));
+     
+    
+    // check if obstacle is outside index-range between start and goal
+    if ( (index <= 1) || (index > teb_.sizePoses()-2) ) // start and goal are fixed and findNearestBandpoint finds first or last conf if intersection point is outside the range
+            continue; 
+        
+    EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
+    dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
+    dist_bandpt_obst->setInformation(information);
+    dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst->get());
+    optimizer_->addEdge(dist_bandpt_obst);
+
+    for (int neighbourIdx=0; neighbourIdx < floor(cfg_->obstacles.obstacle_poses_affected/2); neighbourIdx++)
+    {
+      if (index+neighbourIdx < teb_.sizePoses())
+      {
+        EdgeInflatedObstacle* dist_bandpt_obst_n_r = new EdgeInflatedObstacle;
+        dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
+        dist_bandpt_obst_n_r->setInformation(information);
+        dist_bandpt_obst_n_r->setParameters(*cfg_, robot_model_.get(), obst->get());
+        optimizer_->addEdge(dist_bandpt_obst_n_r);
+      }
+      if ( index - neighbourIdx >= 0) // needs to be casted to int to allow negative values
+      {
+        EdgeInflatedObstacle* dist_bandpt_obst_n_l = new EdgeInflatedObstacle;
+        dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
+        dist_bandpt_obst_n_l->setInformation(information);
+        dist_bandpt_obst_n_l->setParameters(*cfg_, robot_model_.get(), obst->get());
+        optimizer_->addEdge(dist_bandpt_obst_n_l);
+      }
+    } 
+          
+  }
+}
+
 
 void TebOptimalPlanner::AddEdgesDynamicObstacles()
 {
@@ -782,6 +844,14 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoi
     if (edge_obstacle!=NULL)
     {
       cost_ += edge_obstacle->getError().squaredNorm() * obst_cost_scale;
+      continue;
+    }
+    
+    EdgeInflatedObstacle* edge_inflated_obstacle = dynamic_cast<EdgeInflatedObstacle*>(*it);
+    if (edge_inflated_obstacle!=NULL)
+    {
+      cost_ += std::sqrt(std::pow(edge_inflated_obstacle->getError()[0],2) * obst_cost_scale 
+               + std::pow(edge_inflated_obstacle->getError()[1],2));
       continue;
     }
     
