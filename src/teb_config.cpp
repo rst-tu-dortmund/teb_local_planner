@@ -78,6 +78,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   
   // Obstacles
   nh.param("min_obstacle_dist", obstacles.min_obstacle_dist, obstacles.min_obstacle_dist);
+  nh.param("inflation_dist", obstacles.inflation_dist, obstacles.inflation_dist);
   nh.param("include_costmap_obstacles", obstacles.include_costmap_obstacles, obstacles.include_costmap_obstacles);
   nh.param("costmap_obstacles_behind_robot_dist", obstacles.costmap_obstacles_behind_robot_dist, obstacles.costmap_obstacles_behind_robot_dist);
   nh.param("obstacle_poses_affected", obstacles.obstacle_poses_affected, obstacles.obstacle_poses_affected);
@@ -99,6 +100,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
   nh.param("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
   nh.param("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
+  nh.param("weight_inflation", optim.weight_inflation, optim.weight_inflation);
   nh.param("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);    
   nh.param("weight_viapoint", optim.weight_viapoint, optim.weight_viapoint);
   
@@ -158,6 +160,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   
   // Obstacles
   obstacles.min_obstacle_dist = cfg.min_obstacle_dist;
+  obstacles.inflation_dist = cfg.inflation_dist;
   obstacles.include_costmap_obstacles = cfg.include_costmap_obstacles;
   obstacles.costmap_obstacles_behind_robot_dist = cfg.costmap_obstacles_behind_robot_dist;
   obstacles.obstacle_poses_affected = cfg.obstacle_poses_affected;
@@ -178,6 +181,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_kinematics_turning_radius = cfg.weight_kinematics_turning_radius;
   optim.weight_optimaltime = cfg.weight_optimaltime;
   optim.weight_obstacle = cfg.weight_obstacle;
+  optim.weight_inflation = cfg.weight_inflation;
   optim.weight_dynamic_obstacle = cfg.weight_dynamic_obstacle;
   optim.weight_viapoint = cfg.weight_viapoint;
   
