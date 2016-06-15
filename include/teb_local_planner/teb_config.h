@@ -222,7 +222,7 @@ public:
     // Obstacles
     
     obstacles.min_obstacle_dist = 0.5;
-    obstacles.inflation_dist = 0.6;
+    obstacles.inflation_dist = 0.0;
     obstacles.include_costmap_obstacles = true;
     obstacles.costmap_obstacles_behind_robot_dist = 0.5;
     obstacles.obstacle_poses_affected = 25;
