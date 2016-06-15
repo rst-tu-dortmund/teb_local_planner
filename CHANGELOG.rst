@@ -2,6 +2,16 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed bug causing the goal to disappear in case the robot arrives with non-zero orientation error.
+* Inflation mode for obstacles added (disabled by default).
+* The homotopy class of the global plan is now always forced to be initialized as trajectory.
+* The initial velocity of the robot is now taken into account correctly for
+  all candidate trajectories.
+* Removed a check in which the last remaining candidate trajectory was rejected if it was close to an obstacle.
+  This fix addresses issue `#7 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/7>`_
+
 0.5.0 (2016-05-20)
 ------------------
 * Wrong parameter namespace for *costmap_converter* plugins fixed
