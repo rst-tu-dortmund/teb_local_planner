@@ -187,7 +187,7 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
   global_plan_ = orig_global_plan;
 
   // we do not clear the local planner here, since setPlan is called frequently whenever the global planner updates the plan.
-  // the local planner checks whether it is required to reinitializes the trajectory or not within each velocity computation step.  
+  // the local planner checks whether it is required to reinitialize the trajectory or not within each velocity computation step.  
             
   // reset goal_reached_ flag
   goal_reached_ = false;
@@ -224,8 +224,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   
   // prune global plan to cut off parts of the past (spatially before the robot)
   pruneGlobalPlan(*tf_, robot_pose, global_plan_);
-  
-  // Transform global plan to the frame of interest (w.r.t to the local costmap)
+
+  // Transform global plan to the frame of interest (w.r.t. the local costmap)
   std::vector<geometry_msgs::PoseStamped> transformed_plan;
   int goal_idx;
   tf::StampedTransform tf_plan_to_global;
@@ -235,22 +235,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     ROS_WARN("Could not transform the global plan to the frame of the controller");
     return false;
   }
-  
-  // Check if the horizon should be reduced this run
-  if (horizon_reduced_)
-  {
-    // reduce to 50 percent:
-    int horizon_reduction = goal_idx/2;
-    // we have a small overhead here, since we already transformed 50% more of the trajectory.
-    // But that's ok for now, since we do not need to make transformGlobalPlan more complex 
-    // and a reduced horizon should occur just rarely.
-    int new_goal_idx_transformed_plan = int(transformed_plan.size()) - horizon_reduction - 1;
-    goal_idx -= horizon_reduction;
-    if (new_goal_idx_transformed_plan>0 && goal_idx >= 0)
-      transformed_plan.erase(transformed_plan.begin()+new_goal_idx_transformed_plan, transformed_plan.end());
-    else goal_idx += horizon_reduction; // this should not happy, but safety first ;-)
-  }
-  
+
   // check if global goal is reached
   tf::Stamped<tf::Pose> global_goal;
   tf::poseStampedMsgToTF(global_plan_.back(), global_goal);
@@ -265,8 +250,27 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return true;
   }
   
+  // Shorten horizon if requested
+  if (horizon_reduced_)
+  {
+    // reduce to 50 percent:
+    int horizon_reduction = goal_idx/2;
+    // we have a small overhead here, since we already transformed 50% more of the trajectory.
+    // But that's ok for now, since we do not need to make transformGlobalPlan more complex 
+    // and a reduced horizon should occur just rarely.
+    int new_goal_idx_transformed_plan = int(transformed_plan.size()) - horizon_reduction - 1;
+    goal_idx -= horizon_reduction;
+    if (new_goal_idx_transformed_plan>0 && goal_idx >= 0)
+      transformed_plan.erase(transformed_plan.begin()+new_goal_idx_transformed_plan, transformed_plan.end());
+    else goal_idx += horizon_reduction; // this should not happen, but safety first ;-)
+  }
+    
   // Return false if the transformed global plan is empty
-  if (transformed_plan.empty()) return false;
+  if (transformed_plan.empty())
+  {
+    ROS_WARN("Transformed plan is empty. Cannot determine a local plan.");
+    return false;
+  }
               
   // Get current goal point (last point of the transformed plan)
   tf::Stamped<tf::Pose> goal_point;
@@ -285,7 +289,11 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   }
 
   // overwrite/update start of the transformed plan with the actual robot position (allows using the plan as initial trajectory)
-  tf::poseTFToMsg(robot_pose, transformed_plan.front().pose);
+  if (transformed_plan.size()==1) // plan only contains the goal
+  {
+    transformed_plan.insert(transformed_plan.begin(), geometry_msgs::PoseStamped()); // insert start (not yet initialized)
+  }
+  tf::poseTFToMsg(robot_pose, transformed_plan.front().pose); // update start;
     
   // clear currently existing obstacles
   obstacles_.clear();
@@ -670,10 +678,29 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
 
       ++i;
     }
+        
+    // if we are really close to the goal (<sq_dist_threshold) and the goal is not yet reached (e.g. orientation error >>0)
+    // the resulting transformed plan can be empty. In that case we explicitly inject the global goal.
+    if (transformed_plan.empty())
+    {
+      tf::poseStampedMsgToTF(global_plan.back(), tf_pose);
+      tf_pose.setData(plan_to_global_transform * tf_pose);
+      tf_pose.stamp_ = plan_to_global_transform.stamp_;
+      tf_pose.frame_id_ = global_frame;
+      tf::poseStampedTFToMsg(tf_pose, newer_pose);
+
+      transformed_plan.push_back(newer_pose);
+      
+      // Return the index of the current goal point (inside the distance threshold)
+      if (current_goal_idx) *current_goal_idx = int(global_plan.size())-1;
+    }
+    else
+    {
+      // Return the index of the current goal point (inside the distance threshold)
+      if (current_goal_idx) *current_goal_idx = i-1; // subtract 1, since i was increased once before leaving the loop
+    }
     
-    // Modification for teb_local_planner:
-    // Return the index of the current goal point (inside the distance threshold)
-    if (current_goal_idx) *current_goal_idx = i-1; // minus 1, since i was increased once before leaving the loop
+    // Return the transformation from the global plan to the global planning frame if desired
     if (tf_plan_to_global) *tf_plan_to_global = plan_to_global_transform;
   }
   catch(tf::LookupException& ex)
