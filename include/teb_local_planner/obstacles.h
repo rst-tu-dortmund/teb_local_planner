@@ -542,7 +542,7 @@ public:
   // implements getMinimumDistance() of the base class
   virtual double getMinimumDistance(const Point2dContainer& polygon) const
   {
-    return distance_polygon_to_polygon_2d(polygon, polygon);
+    return distance_polygon_to_polygon_2d(polygon, vertices_);
   }
   
   // implements getMinimumDistanceVec() of the base class
