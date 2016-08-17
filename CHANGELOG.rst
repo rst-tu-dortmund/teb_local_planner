@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.3 (2016-08-17)
+------------------
 * Changed the f0 function for calculating the H-Signature.
   The new one seems to be more robust for a much larger number of obstacles
   after some testing.
