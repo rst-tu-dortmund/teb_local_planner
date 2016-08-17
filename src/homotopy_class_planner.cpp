@@ -370,24 +370,26 @@ void HomotopyClassPlanner::createProbRoadmapGraph(const PoseSE2& start, const Po
   for (int i=0; i < no_samples; ++i)
   {
     Eigen::Vector2d sample;
-    bool coll_free;
-    do // sample as long as a collision free sample is found
-    {
+//     bool coll_free;
+//     do // sample as long as a collision free sample is found
+//     {
       // Sample coordinates
       sample = area_origin + rot_phi*Eigen::Vector2d(distribution_x(rnd_generator_), distribution_y(rnd_generator_));
       
       // Test for collision
-      coll_free = true;
-      for (ObstContainer::const_iterator it_obst = obstacles_->begin(); it_obst != obstacles_->end(); ++it_obst)
-      {
-        if ( (*it_obst)->checkCollision(sample, dist_to_obst)) // TODO really keep dist_to_obst here?
-        {
-          coll_free = false;
-          break;
-        }
-      }
-
-    } while (!coll_free && ros::ok());
+      // we do not care for collision checking here to improve efficiency, since we perform resampling repeatedly.
+      // occupied vertices are ignored in the edge insertion state since they always violate the edge-obstacle collision check.
+//       coll_free = true;
+//       for (ObstContainer::const_iterator it_obst = obstacles_->begin(); it_obst != obstacles_->end(); ++it_obst)
+//       {
+//         if ( (*it_obst)->checkCollision(sample, dist_to_obst)) // TODO really keep dist_to_obst here?
+//         {
+//           coll_free = false;
+//           break;
+//         }
+//       }
+// 
+//     } while (!coll_free && ros::ok());
     
     // Add new vertex
     HcGraphVertexType v = boost::add_vertex(graph_);
