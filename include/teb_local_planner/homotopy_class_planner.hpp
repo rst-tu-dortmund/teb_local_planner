@@ -55,11 +55,6 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
     // paper proposes a+b=N-1 && |a-b|<=1, 1...N obstacles
     int m = obstacles->size()-1;
     
-    if (m>5)
-      m = 5;  // hardcoded, but this was working in my test cases... TODO further tests requried
-    
-  //   m = round(double(m) * prescaler);
-
     int a = (int) std::ceil(double(m)/2.0);
     int b = m-a;
     
@@ -71,11 +66,20 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
     // TODO: one could move the map determination outside this function, since it remains constant for the whole planning interval
     cplx start = fun_cplx_point(*path_start);
     cplx end = fun_cplx_point(*path_end); // path_end points to the last point now after calling std::advance before
-    double dist = std::sqrt( std::norm(end - start) ); 
-    if (dist < 3.0)
-      dist = 3.0; // set minimum bound on distance (we do not want to have numerical instabilities) and 3.0 performs fine...
-    cplx map_bottom_left(start.real(), start.imag()-dist);
-    cplx map_top_right(start.real()+dist, start.imag()+dist);
+    cplx delta = end-start;
+    cplx normal(-delta.imag(), delta.real());
+    cplx map_bottom_left;
+    cplx map_top_right;
+    if (std::abs(delta) < 3.0)
+    { // set minimum bound on distance (we do not want to have numerical instabilities) and 3.0 performs fine...
+      map_bottom_left = start + cplx(0, -3);
+      map_top_right = start + cplx(3, 3);
+    }
+    else
+    {
+      map_bottom_left = start - normal;
+      map_top_right = start + delta + normal;
+    }
     
     cplx H = 0;
     std::vector<double> imag_proposals(5);
@@ -89,7 +93,9 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
       for (unsigned int l=0; l<obstacles->size(); ++l) // iterate all obstacles
       {
         cplx obst_l = obstacles->at(l)->getCentroidCplx();
-        cplx f0 = (long double) prescaler * std::pow(obst_l-map_bottom_left,a) * std::pow(obst_l-map_top_right,b);
+        //cplx f0 = (long double) prescaler * std::pow(obst_l-map_bottom_left,a) * std::pow(obst_l-map_top_right,b);
+        cplx f0 = (long double) prescaler * (long double)a*(obst_l-map_bottom_left) * (long double)b*(obst_l-map_top_right);
+        
         // denum contains product with all obstacles exepct j==l
         cplx Al = f0;
         for (unsigned int j=0; j<obstacles->size(); ++j)
@@ -98,7 +104,8 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
               continue;
           cplx obst_j = obstacles->at(j)->getCentroidCplx();
           cplx diff = obst_l - obst_j;
-          if (diff.real()!=0 || diff.imag()!=0)
+          //if (diff.real()!=0 || diff.imag()!=0)
+          if (std::abs(diff)<0.05) // skip really close obstacles
               Al /= diff;
           else
             continue;
@@ -110,11 +117,12 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
           continue;
         double log_real = std::log(diff2)-std::log(diff1);
         // complex ln has more than one solution -> choose minimum abs angle -> paper
-        imag_proposals.at(0) = std::arg(z2-obst_l)-std::arg(z1-obst_l);
-        imag_proposals.at(1) = std::arg(z2-obst_l)-std::arg(z1-obst_l)+2*M_PI;
-        imag_proposals.at(2) = std::arg(z2-obst_l)-std::arg(z1-obst_l)-2*M_PI;
-        imag_proposals.at(3) = std::arg(z2-obst_l)-std::arg(z1-obst_l)+4*M_PI;
-        imag_proposals.at(4) = std::arg(z2-obst_l)-std::arg(z1-obst_l)-4*M_PI;
+        double arg_diff = std::arg(z2-obst_l)-std::arg(z1-obst_l);
+        imag_proposals.at(0) = arg_diff;
+        imag_proposals.at(1) = arg_diff+2*M_PI;
+        imag_proposals.at(2) = arg_diff-2*M_PI;
+        imag_proposals.at(3) = arg_diff+4*M_PI;
+        imag_proposals.at(4) = arg_diff-4*M_PI;
         double log_imag = *std::min_element(imag_proposals.begin(),imag_proposals.end(),smaller_than_abs);
         cplx log_value(log_real,log_imag);
         //cplx log_value = std::log(z2-obst_l)-std::log(z1-obst_l); // the principal solution doesn't seem to work
