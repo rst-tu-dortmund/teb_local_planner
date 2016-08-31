@@ -402,7 +402,7 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
   feedback_pub_.publish(msg);
 }
 
-inline bool TebVisualization::printErrorWhenNotInitialized() const
+bool TebVisualization::printErrorWhenNotInitialized() const
 {
   if (!initialized_)
   {
