@@ -150,25 +150,25 @@ void TimedElasticBand::deleteTimeDiffs(int index, int number)
   timediff_vec_.erase(timediff_vec_.begin()+index, timediff_vec_.begin()+index+number);
 }
 
-inline void TimedElasticBand::insertPose(int index, const PoseSE2& pose)
+void TimedElasticBand::insertPose(int index, const PoseSE2& pose)
 {
   VertexPose* pose_vertex = new VertexPose(pose);
   pose_vec_.insert(pose_vec_.begin()+index, pose_vertex);
 }
 
-inline void TimedElasticBand::insertPose(int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta)
+void TimedElasticBand::insertPose(int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta)
 {
   VertexPose* pose_vertex = new VertexPose(position, theta);
   pose_vec_.insert(pose_vec_.begin()+index, pose_vertex);
 }
 
-inline void TimedElasticBand::insertPose(int index, double x, double y, double theta)
+void TimedElasticBand::insertPose(int index, double x, double y, double theta)
 {
   VertexPose* pose_vertex = new VertexPose(x, y, theta);
   pose_vec_.insert(pose_vec_.begin()+index, pose_vertex);
 }
 
-inline void TimedElasticBand::insertTimeDiff(int index, double dt)
+void TimedElasticBand::insertTimeDiff(int index, double dt)
 {
   VertexTimeDiff* timediff_vertex = new VertexTimeDiff(dt);
   timediff_vec_.insert(timediff_vec_.begin()+index, timediff_vertex);
