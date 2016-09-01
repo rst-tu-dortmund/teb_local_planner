@@ -53,7 +53,7 @@ std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter pa
     
     // guess values for f0
     // paper proposes a+b=N-1 && |a-b|<=1, 1...N obstacles
-    int m = (int)obstacles->size()-1;
+    int m = std::max( (int)obstacles->size()-1, 5 );  // for only a few obstacles we need a min threshold in order to get significantly high H-Signatures
     
     int a = (int) std::ceil(double(m)/2.0);
     int b = m-a;
