@@ -129,6 +129,7 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicStart>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicGoal>);
+  factory->registerType("EDGE_STEERING_RATE", new g2o::HyperGraphElementCreator<EdgeSteeringRate>);
   factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
   factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
   factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
@@ -308,6 +309,8 @@ bool TebOptimalPlanner::buildGraph()
   AddEdgesVelocity();
   
   AddEdgesAcceleration();
+  
+  AddEdgesSteeringRate();
 
   AddEdgesTimeOptimal();	
   
@@ -887,6 +890,28 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
   }  
 }
 
+void TebOptimalPlanner::AddEdgesSteeringRate()
+{
+    if (cfg_->robot.max_steering_rate==0 || cfg_->optim.weight_max_steering_rate==0)
+        return; // if weight equals zero skip adding edges!
+        
+    // create edge for satisfiying kinematic constraints
+    Eigen::Matrix<double,1,1> information_steering_rate;
+    information_steering_rate(0, 0) = cfg_->optim.weight_max_steering_rate;  
+        
+    for (int i=0; i < teb_.sizePoses()-2; i++) // ignore twiced start only
+    {
+        EdgeSteeringRate* steering_rate_edge = new EdgeSteeringRate;
+        steering_rate_edge->setVertex(0,teb_.PoseVertex(i));
+        steering_rate_edge->setVertex(1,teb_.PoseVertex(i+1));      
+        steering_rate_edge->setVertex(2,teb_.PoseVertex(i+2));   
+        steering_rate_edge->setVertex(3,teb_.TimeDiffVertex(i)); 
+        steering_rate_edge->setVertex(4,teb_.TimeDiffVertex(i+1)); 
+        steering_rate_edge->setInformation(information_steering_rate);
+        steering_rate_edge->setTebConfig(*cfg_);
+        optimizer_->addEdge(steering_rate_edge);
+    }
+}
 
 void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)
 { 

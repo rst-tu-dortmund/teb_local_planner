@@ -641,6 +641,14 @@ protected:
    */
   void AddEdgesKinematicsCarlike();
   
+  /**
+   * @brief Add all edges (local cost functions) for satisfying a maximum steering rate of a carlike robot
+   * @warning requires a valid wheelbase parameter value!
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesSteeringRate();
+  
   //@}
   
   

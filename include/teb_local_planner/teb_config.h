@@ -94,6 +94,7 @@ public:
     double acc_lim_y; //!< Maximum strafing acceleration of the robot
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
     double min_turning_radius; //!< Minimum turning radius of a carlike robot (diff-drive robot: zero); 
+    double max_steering_rate; //!< Maximum bound of the steering wheel (requires the definition of the wheelbase) [deactivate: zero]
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
     bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
   } robot; //!< Robot related parameters
@@ -143,6 +144,7 @@ public:
     double weight_kinematics_nh; //!< Optimization weight for satisfying the non-holonomic kinematics
     double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities, only diffdrive robot)
     double weight_kinematics_turning_radius; //!< Optimization weight for enforcing a minimum turning radius (carlike robots)
+    double weight_max_steering_rate; //!< Optimization weight for enforcing a maximum steering rate (carlike robots)
     double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t transition time
     double weight_obstacle; //!< Optimization weight for satisfying a minimum separation from obstacles
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
@@ -222,6 +224,7 @@ public:
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
     robot.min_turning_radius = 0;
+    robot.max_steering_rate = 0;
     robot.wheelbase = 1.0;
     robot.cmd_angle_instead_rotvel = false;
     
@@ -261,6 +264,7 @@ public:
     optim.weight_kinematics_nh = 1000;
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_kinematics_turning_radius = 1;
+    optim.weight_max_steering_rate = 1;
     optim.weight_optimaltime = 1;
     optim.weight_obstacle = 10;
     optim.weight_inflation = 0.1;
