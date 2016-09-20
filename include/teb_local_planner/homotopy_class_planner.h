@@ -432,6 +432,37 @@ public:
         return true; // Found! Homotopy class already exists, therefore nothing added  
       return false;
   }
+  
+   
+  /**
+   * @brief Access config (read-only)
+   * @return const pointer to the config instance
+   */
+  const TebConfig* config() const {return cfg_;}  
+    
+  /**
+   * @brief Access current obstacle container (read-only)
+   * @return const pointer to the obstacle container instance
+   */ 
+  const ObstContainer* obstacles() const {return obstacles_;}
+  
+  /**
+   * @brief Returns true if the planner is initialized
+   */
+  bool isInitialized() const {return initialized_;}
+  
+  /**
+   * @brief Clear any existing graph of the homotopy class search
+   */
+  void clearGraph() {graph_.clear();}
+  
+  /**
+   * @brief find the index of the currently best TEB in the container
+   * @remarks bestTeb() should be preferred whenever possible
+   * @return index of the best TEB obtained with bestTEB(), if no TEB is avaiable, it returns -1.
+   */
+  int bestTebIdx() const;
+  
     
 protected:
   
@@ -522,19 +553,7 @@ protected:
    * @param start_velocity start velocity (optional)
    */
   void DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity);
- 
-  /**
-   * @brief Clear any existing graph of the homotopy class search
-   */
-  void clearGraph() {graph_.clear();}
-  
-  /**
-   * @brief find the index of the currently best TEB in the container
-   * @remarks bestTeb() should be preferred whenever possible
-   * @return index of the best TEB obtained with bestTEB(), if no TEB is avaiable, it returns -1.
-   */
-  int bestTebIdx() const;
-  
+   
   //@}
   
     
