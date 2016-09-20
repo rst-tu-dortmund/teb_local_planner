@@ -46,9 +46,8 @@
 
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/teb_config.h>
-
-#include "g2o/core/base_binary_edge.h"
 
 #include <cmath>
 
@@ -71,7 +70,7 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesKinematics, EdgeKinematicsCarlike
  * @remarks Do not forget to call setTebConfig()
  */    
-class EdgeKinematicsDiffDrive : public g2o::BaseBinaryEdge<2, double, VertexPose, VertexPose>
+class EdgeKinematicsDiffDrive : public BaseTebBinaryEdge<2, double, VertexPose, VertexPose>
 {
 public:
   
@@ -81,24 +80,8 @@ public:
   EdgeKinematicsDiffDrive()
   {
       this->setMeasurement(0.);
-      _vertices[0] = _vertices[1] = NULL;
   }
   
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeKinematicsDiffDrive()
-  {
-    for(unsigned int i=0;i<2;i++) 
-    {
-      if(_vertices[i])
-        _vertices[i]->edges().erase(this);
-    }
-  }
-
   /**
    * @brief Actual cost function
    */    
@@ -166,53 +149,7 @@ public:
   }
 #endif
 #endif
-    
-  /**
-  * @brief Compute and return error / cost value.
-  * 
-  * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-  * @return 2D Cost / error vector [nh cost, backward drive dir cost]^T
-  */     
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-
-  /**
-   * @brief Read values from input stream
-   */    
-  virtual bool read(std::istream& is)
-  {
-    is >> _measurement;
-    //inverseMeasurement() = measurement() * -1;
-    is >> information()(0,0);
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */    
-  virtual bool write(std::ostream& os) const
-  {
-    //os << measurement() << " ";
-    os << information()(0,0) << " Error NH-Constraint: " << _error[0] << ", Error PosDriveDir: " << _error[1];
-    return os.good();
-  }
-
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */ 
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-
-protected:
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
-  
+      
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
 };
@@ -242,7 +179,7 @@ public:
  *          the user might add an extra margin to the min_turning_radius param.
  * @remarks Do not forget to call setTebConfig()
  */    
-class EdgeKinematicsCarlike : public g2o::BaseBinaryEdge<2, double, VertexPose, VertexPose>
+class EdgeKinematicsCarlike : public BaseTebBinaryEdge<2, double, VertexPose, VertexPose>
 {
 public:
   
@@ -252,24 +189,8 @@ public:
   EdgeKinematicsCarlike()
   {
       this->setMeasurement(0.);
-      _vertices[0] = _vertices[1] = NULL;
   }
   
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeKinematicsCarlike()
-  {
-    for(unsigned int i=0;i<2;i++) 
-    {
-      if(_vertices[i])
-        _vertices[i]->edges().erase(this);
-    }
-  }
-
   /**
    * @brief Actual cost function
    */    
@@ -295,52 +216,6 @@ public:
 
     ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeKinematicsCarlike::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
-    
-  /**
-  * @brief Compute and return error / cost value.
-  * 
-  * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-  * @return 2D Cost / error vector [nh cost, backward drive dir cost]^T
-  */     
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-
-  /**
-   * @brief Read values from input stream
-   */    
-  virtual bool read(std::istream& is)
-  {
-    is >> _measurement;
-    //inverseMeasurement() = measurement() * -1;
-    is >> information()(0,0);
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */    
-  virtual bool write(std::ostream& os) const
-  {
-    //os << measurement() << " ";
-    os << information()(0,0) << " Error NH-Constraint: " << _error[0] << ", Error PosDriveDir: " << _error[1];
-    return os.good();
-  }
-
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */ 
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-
-protected:
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
