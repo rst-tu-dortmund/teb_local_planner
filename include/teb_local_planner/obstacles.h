@@ -478,6 +478,14 @@ public:
     centroid_.setConstant(NAN);
   }
   
+  /**
+   * @brief Construct polygon obstacle with a list of vertices
+   */
+  PolygonObstacle(const Point2dContainer& vertices) : Obstacle(), vertices_(vertices)
+  {
+    finalizePolygon();
+  }
+  
   
   /* FIXME Not working at the moment due to the aligned allocator version of std::vector
     * And it is C++11 code that is disabled atm to ensure compliance with ROS indigo/jade
