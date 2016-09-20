@@ -131,7 +131,7 @@ int main( int argc, char** argv )
   //via_points.push_back( Eigen::Vector2d( 0.0, 1.5 ) );
   
   // Setup visualization
-  visual = TebVisualizationPtr(new TebVisualization(n, config));
+  visual = TebVisualizationPtr(new TebVisualization(n, config.map_frame));
   
   // Setup robot shape model
   RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n);
