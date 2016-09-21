@@ -206,14 +206,15 @@ public:
     _error[0] = fabs( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
 
     // limit minimum turning radius
-    double omega_t = g2o::normalize_theta( conf2->theta() - conf1->theta() );
-    if (omega_t == 0)
+    double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+    if (angle_diff == 0)
       _error[1] = 0; // straight line motion
+    else if (cfg_->trajectory.exact_arc_length) // use exact computation of the radius
+      _error[1] = penaltyBoundFromBelow(fabs(deltaS.norm()/(2*sin(angle_diff/2))), cfg_->robot.min_turning_radius, 0.0);
     else
-      _error[1] = penaltyBoundFromBelow(deltaS.norm() / fabs(omega_t), cfg_->robot.min_turning_radius, 0.0); 
+      _error[1] = penaltyBoundFromBelow(deltaS.norm() / fabs(angle_diff), cfg_->robot.min_turning_radius, 0.0); 
     // This edge is not affected by the epsilon parameter, the user might add an exra margin to the min_turning_radius parameter.
     
-
     ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeKinematicsCarlike::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
   
