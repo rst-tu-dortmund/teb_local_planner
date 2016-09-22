@@ -597,15 +597,14 @@ protected:
    */
   void AddEdgesObstacles();
   
-  
   /**
-   * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles 
-   * @warning do not combine with AddEdgesObstacles
-   * @see EdgeInflatedObstacle
+   * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles (legacy association strategy)
+   * @warning do not combine with AddEdgesInflatedObstacles
+   * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
    */
-  void AddEdgesInflatedObstacles();
+  void AddEdgesObstaclesLegacy();
   
   /**
    * @brief Add all edges (local cost functions) related to minimizing the distance to via-points
