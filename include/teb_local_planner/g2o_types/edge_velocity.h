@@ -265,7 +265,14 @@ public:
 
 
 
-
+/**
+ * @class EdgeSteeringRate
+ * @brief Edge defining the cost function for limiting the steering rate w.r.t. the current wheelbase parameter
+ *
+ * The edge depends on four vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2} \Delta T_i \f$ .
+ * @remarks This edge requires the TebConfig::Robot::whelbase parameter to be set.
+ * @remarks Do not forget to call setTebConfig()
+ */ 
 class EdgeSteeringRate : public BaseTebMultiEdge<1, double>
 {
 public:
@@ -283,7 +290,7 @@ public:
    */  
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocity()");
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeSteeringRate()");
     const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexPose* conf3 = static_cast<const VertexPose*>(_vertices[2]);
@@ -319,7 +326,7 @@ public:
     _error[0] = penaltyBoundToInterval(g2o::normalize_theta(phi2 - phi1)*2 / (dt1->dt() + dt2->dt()), cfg_->robot.max_steering_rate, 0.0); 
     
  
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeSteeringRate::computeError() _error[0]\n",_error[0]);
   }
   
 public:
@@ -328,6 +335,113 @@ public:
 
 };
 
+//! Corresponds to EdgeSteeringRate but with initial steering angle for the predecessor configuration
+class EdgeSteeringRateStart : public BaseTebMultiEdge<1, double>
+{
+public:
+  
+  /**
+   * @brief Construct edge.
+   */	      
+  EdgeSteeringRateStart()
+  {
+    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
+  }
+  
+  /**
+   * @brief Actual cost function
+   */  
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeSteeringRateStart()");
+    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
+    
+    const double dist = (conf2->estimate().position() - conf1->estimate().position()).norm();
+    const double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+        
+    double phi;
+    if (dist == 0)
+        phi = 0;
+    else
+    {
+        if (cfg_->trajectory.exact_arc_length)
+            phi = std::atan(cfg_->robot.wheelbase / dist * 2*sin(angle_diff/2));
+        else
+            phi = std::atan(cfg_->robot.wheelbase / dist * angle_diff);
+    }
+
+    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(_measurement - phi) / dt->dt(), cfg_->robot.max_steering_rate, 0.0); 
+    
+ 
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeSteeringRateStart::computeError() _error[0]\n",_error[0]);
+  }
+  
+  void setInitialSteeringAngle(double steering_angle)
+  {
+      _measurement = steering_angle;
+  }
+  
+public:
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+//! Corresponds to EdgeSteeringRate but with initial steering angle for the successor configuration
+class EdgeSteeringRateGoal : public BaseTebMultiEdge<1, double>
+{
+public:
+  
+  /**
+   * @brief Construct edge.
+   */	      
+  EdgeSteeringRateGoal()
+  {
+    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
+  }
+  
+  /**
+   * @brief Actual cost function
+   */  
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeSteeringRateGoal()");
+    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
+    
+    const double dist = (conf2->estimate().position() - conf1->estimate().position()).norm();
+    const double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+        
+    double phi;
+    if (dist == 0)
+        phi = 0;
+    else
+    {
+        if (cfg_->trajectory.exact_arc_length)
+            phi = std::atan(cfg_->robot.wheelbase / dist * 2*sin(angle_diff/2));
+        else
+            phi = std::atan(cfg_->robot.wheelbase / dist * angle_diff);
+    }
+
+    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(phi - _measurement) / dt->dt(), cfg_->robot.max_steering_rate, 0.0); 
+    
+ 
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeSteeringRateGoal::computeError() _error[0]\n",_error[0]);
+  }
+  
+  void setGoalSteeringAngle(double steering_angle)
+  {
+      _measurement = steering_angle;
+  }
+  
+public:
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
 
 
 

@@ -130,6 +130,8 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicStart>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicGoal>);
   factory->registerType("EDGE_STEERING_RATE", new g2o::HyperGraphElementCreator<EdgeSteeringRate>);
+  factory->registerType("EDGE_STEERING_RATE_START", new g2o::HyperGraphElementCreator<EdgeSteeringRateStart>);
+  factory->registerType("EDGE_STEERING_RATE_GOAL", new g2o::HyperGraphElementCreator<EdgeSteeringRateGoal>);
   factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
   factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
   factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
@@ -898,8 +900,26 @@ void TebOptimalPlanner::AddEdgesSteeringRate()
     // create edge for satisfiying kinematic constraints
     Eigen::Matrix<double,1,1> information_steering_rate;
     information_steering_rate(0, 0) = cfg_->optim.weight_max_steering_rate;  
+    
+    int n = teb_.sizePoses();
+    
+    // check if an initial velocity should be taken into accound (we apply the same for the steering rate)
+    if (vel_start_.first)
+    {
+      EdgeSteeringRateStart* steering_rate_edge = new EdgeSteeringRateStart;
+      steering_rate_edge->setVertex(0,teb_.PoseVertex(0));
+      steering_rate_edge->setVertex(1,teb_.PoseVertex(1));
+      steering_rate_edge->setVertex(2,teb_.TimeDiffVertex(0));
+      if (vel_start_.second.linear.x==0.0)
+        steering_rate_edge->setInitialSteeringAngle(0.0);
+      else
+        steering_rate_edge->setInitialSteeringAngle(std::atan(cfg_->robot.wheelbase/vel_start_.second.linear.x * vel_start_.second.angular.z) );
+      steering_rate_edge->setInformation(information_steering_rate);
+      steering_rate_edge->setTebConfig(*cfg_);
+      optimizer_->addEdge(steering_rate_edge);
+    }
         
-    for (int i=0; i < teb_.sizePoses()-2; i++) // ignore twiced start only
+    for (int i=0; i < n-2; i++) // ignore twiced start only
     {
         EdgeSteeringRate* steering_rate_edge = new EdgeSteeringRate;
         steering_rate_edge->setVertex(0,teb_.PoseVertex(i));
@@ -911,6 +931,22 @@ void TebOptimalPlanner::AddEdgesSteeringRate()
         steering_rate_edge->setTebConfig(*cfg_);
         optimizer_->addEdge(steering_rate_edge);
     }
+    
+    // check if a goal velocity should be taken into accound (we apply the same for the steering rate)
+    if (vel_goal_.first)
+    {
+      EdgeSteeringRateGoal* steering_rate_edge = new EdgeSteeringRateGoal;
+      steering_rate_edge->setVertex(0,teb_.PoseVertex(n-2));
+      steering_rate_edge->setVertex(1,teb_.PoseVertex(n-1));
+      steering_rate_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
+      if (vel_goal_.second.linear.x==0.0)
+        steering_rate_edge->setGoalSteeringAngle(0.0);
+      else
+        steering_rate_edge->setGoalSteeringAngle(std::atan(cfg_->robot.wheelbase/vel_goal_.second.linear.x * vel_goal_.second.angular.z) );
+      steering_rate_edge->setInformation(information_steering_rate);
+      steering_rate_edge->setTebConfig(*cfg_);
+      optimizer_->addEdge(steering_rate_edge);
+    }  
 }
 
 void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)
