@@ -93,12 +93,22 @@ public:
     const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
-    double vel = deltaS.norm() / deltaT->estimate();
+    
+    const Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
+    
+    double dist = deltaS.norm();
+    const double angle_diff = g2o::normalize_theta(conf2->theta() - conf1->theta());
+    if (cfg_->trajectory.exact_arc_length && angle_diff != 0)
+    {
+        double radius =  dist/(2*sin(angle_diff/2));
+        dist = fabs( angle_diff * radius ); // actual arg length!
+    }
+    double vel = dist / deltaT->estimate();
+    
 //     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
     vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
     
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
+    const double omega = angle_diff / deltaT->estimate();
   
     _error[0] = penaltyBoundToInterval(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
     _error[1] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);

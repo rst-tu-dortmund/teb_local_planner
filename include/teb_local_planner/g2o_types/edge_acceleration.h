@@ -100,10 +100,31 @@ public:
     const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
 
     // VELOCITY & ACCELERATION
-    Eigen::Vector2d diff1 = pose2->position() - pose1->position();
-    Eigen::Vector2d diff2 = pose3->position() - pose2->position();
-    double vel1 = diff1.norm() / dt1->dt();
-    double vel2 = diff2.norm() / dt2->dt();
+    const Eigen::Vector2d diff1 = pose2->position() - pose1->position();
+    const Eigen::Vector2d diff2 = pose3->position() - pose2->position();
+        
+    double dist1 = diff1.norm();
+    double dist2 = diff2.norm();
+    const double angle_diff1 = g2o::normalize_theta(pose2->theta() - pose1->theta());
+    const double angle_diff2 = g2o::normalize_theta(pose3->theta() - pose2->theta());
+    
+    if (cfg_->trajectory.exact_arc_length) // use exact arc length instead of Euclidean approximation
+    {
+        if (angle_diff1 != 0)
+        {
+            const double radius =  dist1/(2*sin(angle_diff1/2));
+            dist1 = fabs( angle_diff1 * radius ); // actual arg length!
+        }
+        if (angle_diff2 != 0)
+        {
+            const double radius =  dist2/(2*sin(angle_diff2/2));
+            dist2 = fabs( angle_diff2 * radius ); // actual arg length!
+        }
+    }
+    
+    double vel1 = dist1 / dt1->dt();
+    double vel2 = dist2 / dt2->dt();
+    
     
     // consider directions
 //     vel1 *= g2o::sign(diff1[0]*cos(pose1->theta()) + diff1[1]*sin(pose1->theta())); 
@@ -111,15 +132,15 @@ public:
     vel1 *= fast_sigmoid( 100*(diff1.x()*cos(pose1->theta()) + diff1.y()*sin(pose1->theta())) ); 
     vel2 *= fast_sigmoid( 100*(diff2.x()*cos(pose2->theta()) + diff2.y()*sin(pose2->theta())) ); 
     
-    double acc_lin  = (vel2 - vel1)*2 / ( dt1->dt() + dt2->dt() );
+    const double acc_lin  = (vel2 - vel1)*2 / ( dt1->dt() + dt2->dt() );
    
 
     _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
     
     // ANGULAR ACCELERATION
-    double omega1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt1->dt();
-    double omega2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt2->dt();
-    double acc_rot  = (omega2 - omega1)*2 / ( dt1->dt() + dt2->dt() );
+    const double omega1 = angle_diff1 / dt1->dt();
+    const double omega2 = angle_diff2 / dt2->dt();
+    const double acc_rot  = (omega2 - omega1)*2 / ( dt1->dt() + dt2->dt() );
       
     _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
@@ -292,22 +313,30 @@ public:
     const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
     // VELOCITY & ACCELERATION
-    Eigen::Vector2d diff = pose2->position() - pose1->position();
-    double vel1 = _measurement->linear.x;
-    double vel2 = diff.norm() / dt->dt();
+    const Eigen::Vector2d diff = pose2->position() - pose1->position();
+    double dist = diff.norm();
+    const double angle_diff = g2o::normalize_theta(pose2->theta() - pose1->theta());
+    if (cfg_->trajectory.exact_arc_length && angle_diff != 0)
+    {
+        const double radius =  dist/(2*sin(angle_diff/2));
+        dist = fabs( angle_diff * radius ); // actual arg length!
+    }
+    
+    const double vel1 = _measurement->linear.x;
+    double vel2 = dist / dt->dt();
 
     // consider directions
     //vel2 *= g2o::sign(diff[0]*cos(pose1->theta()) + diff[1]*sin(pose1->theta())); 
     vel2 *= fast_sigmoid( 100*(diff.x()*cos(pose1->theta()) + diff.y()*sin(pose1->theta())) ); 
     
-    double acc_lin  = (vel2 - vel1) / dt->dt();
+    const double acc_lin  = (vel2 - vel1) / dt->dt();
     
     _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
     
     // ANGULAR ACCELERATION
-    double omega1 = _measurement->angular.z;
-    double omega2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
-    double acc_rot  = (omega2 - omega1) / dt->dt();
+    const double omega1 = _measurement->angular.z;
+    const double omega2 = angle_diff / dt->dt();
+    const double acc_rot  = (omega2 - omega1) / dt->dt();
       
     _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
@@ -376,22 +405,30 @@ public:
 
     // VELOCITY & ACCELERATION
 
-    Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();    
-    double vel1 = diff.norm() / dt->dt();
-    double vel2 = _measurement->linear.x;
+    const Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();  
+    double dist = diff.norm();
+    const double angle_diff = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta());
+    if (cfg_->trajectory.exact_arc_length  && angle_diff != 0)
+    {
+        double radius =  dist/(2*sin(angle_diff/2));
+        dist = fabs( angle_diff * radius ); // actual arg length!
+    }
+    
+    double vel1 = dist / dt->dt();
+    const double vel2 = _measurement->linear.x;
     
     // consider directions
     //vel1 *= g2o::sign(diff[0]*cos(pose_pre_goal->theta()) + diff[1]*sin(pose_pre_goal->theta())); 
     vel1 *= fast_sigmoid( 100*(diff.x()*cos(pose_pre_goal->theta()) + diff.y()*sin(pose_pre_goal->theta())) ); 
     
-    double acc_lin  = (vel2 - vel1) / dt->dt();
+    const double acc_lin  = (vel2 - vel1) / dt->dt();
 
     _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
     
     // ANGULAR ACCELERATION
-    double omega1 = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta()) / dt->dt();
-    double omega2 = _measurement->angular.z;
-    double acc_rot  = (omega2 - omega1) / dt->dt();
+    const double omega1 = angle_diff / dt->dt();
+    const double omega2 = _measurement->angular.z;
+    const double acc_rot  = (omega2 - omega1) / dt->dt();
       
     _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
