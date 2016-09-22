@@ -234,7 +234,7 @@ public:
     obstacles.min_obstacle_dist = 0.5;
     obstacles.inflation_dist = 0.6;
     obstacles.include_costmap_obstacles = true;
-    obstacles.costmap_obstacles_behind_robot_dist = 0.5;
+    obstacles.costmap_obstacles_behind_robot_dist = 1.5;
     obstacles.obstacle_poses_affected = 25;
     obstacles.legacy_obstacle_association = false;
     obstacles.obstacle_association_force_inclusion_factor = 1.5;
