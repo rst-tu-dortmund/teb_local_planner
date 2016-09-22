@@ -290,102 +290,37 @@ public:
     const VertexTimeDiff* dt1 = static_cast<const VertexTimeDiff*>(_vertices[3]);
     const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
     
-    double dist1 = (conf2->estimate().position() - conf1->estimate().position()).norm();
-    double dist2 = (conf3->estimate().position() - conf2->estimate().position()).norm();
-    double omega_t1 = g2o::normalize_theta( conf2->theta() - conf1->theta() );
-    double omega_t2 = g2o::normalize_theta( conf3->theta() - conf2->theta() );
-    
+    const double dist1 = (conf2->estimate().position() - conf1->estimate().position()).norm();
+    const double dist2 = (conf3->estimate().position() - conf2->estimate().position()).norm();
+    const double angle_diff1 = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+    const double angle_diff2 = g2o::normalize_theta( conf3->theta() - conf2->theta() );
+        
     double phi1, phi2;
     if (dist1 == 0)
         phi1 = 0; // TODO previous phi?
     else
-        phi1 = std::atan(cfg_->robot.wheelbase / dist1 * omega_t1);
+    {
+        if (cfg_->trajectory.exact_arc_length)
+            phi1 = std::atan(cfg_->robot.wheelbase / dist1 * 2*sin(angle_diff1/2));
+        else
+            phi1 = std::atan(cfg_->robot.wheelbase / dist1 * angle_diff1);
+    }
+    
     if (dist2 == 0)
         phi2 = 0;
     else
-        phi2 = std::atan(cfg_->robot.wheelbase / dist2 * omega_t2);
-        
+    {
+        if (cfg_->trajectory.exact_arc_length)
+            phi2 = std::atan(cfg_->robot.wheelbase / dist2 * 2*sin(angle_diff2/2));
+        else
+            phi2 = std::atan(cfg_->robot.wheelbase / dist2 * angle_diff2);
+    }
 
     _error[0] = penaltyBoundToInterval(g2o::normalize_theta(phi2 - phi1)*2 / (dt1->dt() + dt2->dt()), cfg_->robot.max_steering_rate, 0.0); 
     
  
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
-
-#ifdef USE_ANALYTIC_JACOBI
-#if 0 //TODO the hardcoded jacobian does not include the changing direction (just the absolute value)
-      // Change accordingly...
-
-  /**
-   * @brief Jacobi matrix of the cost function specified in computeError().
-   */
-  void linearizeOplus()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocity()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-    double dist = deltaS.norm();
-    double aux1 = dist*deltaT->estimate();
-    double aux2 = 1/deltaT->estimate();
-    
-    double vel = dist * aux2;
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) * aux2;
-    
-    double dev_border_vel = penaltyBoundToIntervalDerivative(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
-    double dev_border_omega = penaltyBoundToIntervalDerivative(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
-    
-    _jacobianOplus[0].resize(2,3); // conf1
-    _jacobianOplus[1].resize(2,3); // conf2
-    _jacobianOplus[2].resize(2,1); // deltaT
-    
-//  if (aux1==0) aux1=1e-6;
-//  if (aux2==0) aux2=1e-6;
-    
-    if (dev_border_vel!=0)
-    {
-      double aux3 = dev_border_vel / aux1;
-      _jacobianOplus[0](0,0) = -deltaS[0] * aux3; // vel x1
-      _jacobianOplus[0](0,1) = -deltaS[1] * aux3; // vel y1	
-      _jacobianOplus[1](0,0) = deltaS[0] * aux3; // vel x2
-      _jacobianOplus[1](0,1) = deltaS[1] * aux3; // vel y2
-      _jacobianOplus[2](0,0) = -vel * aux2 * dev_border_vel; // vel deltaT
-    }
-    else
-    {
-      _jacobianOplus[0](0,0) = 0; // vel x1
-      _jacobianOplus[0](0,1) = 0; // vel y1	
-      _jacobianOplus[1](0,0) = 0; // vel x2
-      _jacobianOplus[1](0,1) = 0; // vel y2	
-      _jacobianOplus[2](0,0) = 0; // vel deltaT
-    }
-    
-    if (dev_border_omega!=0)
-    {
-      double aux4 = aux2 * dev_border_omega;
-      _jacobianOplus[2](1,0) = -omega * aux4; // omega deltaT
-      _jacobianOplus[0](1,2) = -aux4; // omega angle1
-      _jacobianOplus[1](1,2) = aux4; // omega angle2
-    }
-    else
-    {
-      _jacobianOplus[2](1,0) = 0; // omega deltaT
-      _jacobianOplus[0](1,2) = 0; // omega angle1
-      _jacobianOplus[1](1,2) = 0; // omega angle2			
-    }
-
-    _jacobianOplus[0](1,0) = 0; // omega x1
-    _jacobianOplus[0](1,1) = 0; // omega y1
-    _jacobianOplus[1](1,0) = 0; // omega x2
-    _jacobianOplus[1](1,1) = 0; // omega y2
-    _jacobianOplus[0](0,2) = 0; // vel angle1
-    _jacobianOplus[1](0,2) = 0; // vel angle2
-  }
-#endif
-#endif
- 
   
 public:
   
