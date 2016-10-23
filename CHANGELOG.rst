@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.4 (2016-10-23)
+------------------
 * New default obstacle association strategy:
   During optimization graph creation, for each pose of the trajectory a
   relevance detection is performed before considering the obstacle
