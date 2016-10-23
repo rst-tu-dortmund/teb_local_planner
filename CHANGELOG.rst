@@ -2,6 +2,17 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Changed the f0 function for calculating the H-Signature.
+  The new one seems to be more robust for a much larger number of obstacles
+  after some testing.
+* HomotopyClassPlanner: vertex-collision check removed since collisions will be determined in the edge-collision check again
+* Fixed distance calculation polygon-to-polygon-obstacle
+* Enlarged upper bounds on goal position and orientation tolerances
+  in dynamic_reconfigure. Fixes `#13 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/13>`_.
+* cmake config exports now "include directories" of external packages for dependent projects
+
 0.5.1 (2016-06-15)
 ------------------
 * Fixed bug causing the goal to disappear in case the robot arrives with non-zero orientation error.
