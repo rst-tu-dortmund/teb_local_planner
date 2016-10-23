@@ -2,6 +2,36 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* New default obstacle association strategy:
+  During optimization graph creation, for each pose of the trajectory a
+  relevance detection is performed before considering the obstacle
+  during optimization. New parameters are introduced. The
+  old strategy is kept as 'legacy' strategy (see parameters).
+* Computation of velocities, acceleration and turning radii extended:
+  Added an option to compute the actual arc length
+  instead of using the Euclidean distance approximation (see parameter `exact_arc_length`.
+* Added intermediate edge layer for unary, binary and multi edges in order to reduce code redundancy.
+* Script for visualizing velocity profile updated to accept the feedback topic name via rosparam server
+* Removed TebConfig dependency in TebVisualization
+* PolygonObstacle can now be constructed using a vertices container
+* HomotopyClassPlanner public interface extended
+* Changed H-Signature computation to work 'again' with few obstacles such like 1 or 2
+* Removed inline flags in visualization.cpp
+* Removed inline flags in timed_elastic_band.cpp.
+  Fixes `#15 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/15>`_.
+* Increased bounds of many variables in dynamic_reconfigure. 
+  Resolves `#14 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/14>`_.
+  The particular variables are maximum velocities, maximum accelerations,
+  minimum turning radius,...
+  Note: optimization weights and dt_ref as well as dt_hyst are not
+  tuned for velocities and accelerations beyond
+  the default values (e.g. >1 m/s). Just increasing the maximum velocity
+  bounds without adjusting the other parameters leads to an insufficient behavior.
+* Default parameter value update: 'costmap_obstacles_behind_robot_dist'
+* Additional minor fixes.
+
 0.6.3 (2016-08-17)
 ------------------
 * Changed the f0 function for calculating the H-Signature.
