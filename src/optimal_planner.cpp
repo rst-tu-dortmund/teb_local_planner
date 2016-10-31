@@ -172,12 +172,14 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
   bool success = false;
   optimized_ = false;
   
+  double weight_multiplier = 1.0;
+  
   for(int i=0; i<iterations_outerloop; ++i)
   {
     if (cfg_->trajectory.teb_autosize)
       teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples);
 
-    success = buildGraph();
+    success = buildGraph(weight_multiplier);
     if (!success) 
     {
         clearGraph();
@@ -195,6 +197,8 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
       computeCurrentCost(obst_cost_scale, viapoint_cost_scale, alternative_time_cost);
       
     clearGraph();
+    
+    weight_multiplier *= cfg_->optim.weight_adapt_factor;
   }
 
   return true;
@@ -286,7 +290,7 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const ge
 }
 
 
-bool TebOptimalPlanner::buildGraph()
+bool TebOptimalPlanner::buildGraph(double weight_multiplier)
 {
   if (!optimizer_->edges().empty() || !optimizer_->vertices().empty())
   {
@@ -299,9 +303,9 @@ bool TebOptimalPlanner::buildGraph()
   
   // add Edges (local cost functions)
   if (cfg_->obstacles.legacy_obstacle_association)
-    AddEdgesObstaclesLegacy();
+    AddEdgesObstaclesLegacy(weight_multiplier);
   else
-    AddEdgesObstacles();
+    AddEdgesObstacles(weight_multiplier);
   
   //AddEdgesDynamicObstacles();
   
@@ -381,19 +385,19 @@ void TebOptimalPlanner::AddTEBVertices()
 }
 
 
-void TebOptimalPlanner::AddEdgesObstacles()
+void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
 {
-  if (cfg_->optim.weight_obstacle==0 || obstacles_==nullptr )
+  if (cfg_->optim.weight_obstacle==0 || weight_multiplier==0 || obstacles_==nullptr )
     return; // if weight equals zero skip adding edges!
     
   
   bool inflated = cfg_->obstacles.inflation_dist > cfg_->obstacles.min_obstacle_dist;
 
   Eigen::Matrix<double,1,1> information;
-  information.fill(cfg_->optim.weight_obstacle);
+  information.fill(cfg_->optim.weight_obstacle * weight_multiplier);
   
   Eigen::Matrix<double,2,2> information_inflated;
-  information_inflated(0,0) = cfg_->optim.weight_obstacle;
+  information_inflated(0,0) = cfg_->optim.weight_obstacle * weight_multiplier;
   information_inflated(1,1) = cfg_->optim.weight_inflation;
   information_inflated(0,1) = information(1,0) = 0;
     
@@ -510,16 +514,16 @@ void TebOptimalPlanner::AddEdgesObstacles()
 }
 
 
-void TebOptimalPlanner::AddEdgesObstaclesLegacy()
+void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
 {
-  if (cfg_->optim.weight_obstacle==0 || obstacles_==NULL )
+  if (cfg_->optim.weight_obstacle==0 || weight_multiplier==0 || obstacles_==nullptr)
     return; // if weight equals zero skip adding edges!
 
   Eigen::Matrix<double,1,1> information; 
-  information.fill(cfg_->optim.weight_obstacle);
+  information.fill(cfg_->optim.weight_obstacle * weight_multiplier);
     
   Eigen::Matrix<double,2,2> information_inflated;
-  information_inflated(0,0) = cfg_->optim.weight_obstacle;
+  information_inflated(0,0) = cfg_->optim.weight_obstacle * weight_multiplier;
   information_inflated(1,1) = cfg_->optim.weight_inflation;
   information_inflated(0,1) = information(1,0) = 0;
   

@@ -148,6 +148,8 @@ public:
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles    
     double weight_viapoint; //!< Optimization weight for minimizing the distance to via-points
+    
+    double weight_adapt_factor; //!< Some special weights (currently 'weight_obstacle') are repeatedly scaled by this factor in each outer TEB iteration (weight_new = weight_old*factor); Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions of the underlying optimization problem.
   } optim; //!< Optimization related parameters
   
   
@@ -266,6 +268,8 @@ public:
     optim.weight_inflation = 0.1;
     optim.weight_dynamic_obstacle = 10;
     optim.weight_viapoint = 1;
+    
+    optim.weight_adapt_factor = 2.0;
     
     // Homotopy Class Planner
    

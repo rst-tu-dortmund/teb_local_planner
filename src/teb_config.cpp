@@ -111,6 +111,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_inflation", optim.weight_inflation, optim.weight_inflation);
   nh.param("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);    
   nh.param("weight_viapoint", optim.weight_viapoint, optim.weight_viapoint);
+  nh.param("weight_adapt_factor", optim.weight_adapt_factor, optim.weight_adapt_factor);
   
   // Homotopy Class Planner
   nh.param("enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning); 
@@ -201,6 +202,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_inflation = cfg.weight_inflation;
   optim.weight_dynamic_obstacle = cfg.weight_dynamic_obstacle;
   optim.weight_viapoint = cfg.weight_viapoint;
+  optim.weight_adapt_factor = cfg.weight_adapt_factor;
   
   // Homotopy Class Planner
   hcp.enable_multithreading = cfg.enable_multithreading;
@@ -269,6 +271,10 @@ void TebConfig::checkParameters() const
   
   if (robot.cmd_angle_instead_rotvel && robot.min_turning_radius==0)
     ROS_WARN("TebLocalPlannerROS() Param Warning: parameter cmd_angle_instead_rotvel is non-zero but min_turning_radius is set to zero: undesired behavior. You are mixing a carlike and a diffdrive robot");
+  
+  // positive weight_adapt_factor
+  if (optim.weight_adapt_factor < 1.0)
+      ROS_WARN("TebLocalPlannerROS() Param Warning: parameter weight_adapt_factor shoud be >= 1.0");
   
 }    
 

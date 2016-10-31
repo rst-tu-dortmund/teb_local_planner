@@ -523,9 +523,12 @@ protected:
    * For more details refer to the literature cited in the TebOptimalPlanner class description.
    * @see optimizeGraph
    * @see clearGraph
+   * @param weight_multiplier Specify a weight multipler for selected weights in optimizeGraph
+   *                          This might be used for weight adapation strategies.
+   *                          Currently, only obstacle collision weights are considered.
    * @return \c true, if the graph was created successfully, \c false otherwise.
    */
-  bool buildGraph();
+  bool buildGraph(double weight_multiplier=1.0);
   
   /**
    * @brief Optimize the previously constructed hyper-graph to deform / optimize the TEB.
@@ -539,7 +542,7 @@ protected:
    * @param clear_after Clear the graph after optimization.
    * @return \c true, if optimization terminates successfully, \c false otherwise.
    */
-  bool optimizeGraph(int no_iterations,bool clear_after=true);
+  bool optimizeGraph(int no_iterations, bool clear_after=true);
   
   /**
    * @brief Clear an existing internal hyper-graph.
@@ -594,8 +597,9 @@ protected:
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
+   * @param weight_multiplier Specify an additional weight multipler (in addition to the the config weight)
    */
-  void AddEdgesObstacles();
+  void AddEdgesObstacles(double weight_multiplier=1.0);
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles (legacy association strategy)
@@ -603,8 +607,9 @@ protected:
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
+   * @param weight_multiplier Specify an additional weight multipler (in addition to the the config weight)
    */
-  void AddEdgesObstaclesLegacy();
+  void AddEdgesObstaclesLegacy(double weight_multiplier=1.0);
   
   /**
    * @brief Add all edges (local cost functions) related to minimizing the distance to via-points
