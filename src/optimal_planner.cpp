@@ -168,8 +168,10 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
 {
   if (cfg_->optim.optimization_activate==false) 
     return false;
+  
   bool success = false;
   optimized_ = false;
+  
   for(int i=0; i<iterations_outerloop; ++i)
   {
     if (cfg_->trajectory.teb_autosize)
@@ -1137,8 +1139,8 @@ void TebOptimalPlanner::getFullTrajectory(std::vector<TrajectoryPointMsg>& traje
 bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
                                              double inscribed_radius, double circumscribed_radius, int look_ahead_idx)
 {
-  if (look_ahead_idx < 0 || look_ahead_idx >= (int) teb().sizePoses())
-    look_ahead_idx = (int)teb().sizePoses() - 1;
+  if (look_ahead_idx < 0 || look_ahead_idx >= teb().sizePoses())
+    look_ahead_idx = teb().sizePoses() - 1;
   
   for (int i=0; i <= look_ahead_idx; ++i)
   {           

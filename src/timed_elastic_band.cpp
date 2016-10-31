@@ -546,7 +546,7 @@ void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
     // (remove already passed states)
     double dist_cache = (new_start->position()- Pose(0).position()).norm();
     double dist;
-    int lookahead = std::min<int>( int(sizePoses())-min_samples, 10); // satisfy min_samples, otherwise max 10 samples
+    int lookahead = std::min<int>( sizePoses()-min_samples, 10); // satisfy min_samples, otherwise max 10 samples
 
     int nearest_idx = 0;
     for (int i = 1; i<=lookahead; ++i)
@@ -564,7 +564,7 @@ void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
     if (nearest_idx>0)
     {
       // nearest_idx is equal to the number of samples to be removed (since it counts from 0 ;-) )
-      // WARNING delete starting at pose 1, and overwrite the original pose(0) wiht new_start, since pose(0) is fixed during optimization!
+      // WARNING delete starting at pose 1, and overwrite the original pose(0) with new_start, since Pose(0) is fixed during optimization!
       deletePoses(1, nearest_idx);  // delete first states such that the closest state is the new first one
       deleteTimeDiffs(1, nearest_idx); // delete corresponding time differences
     }
