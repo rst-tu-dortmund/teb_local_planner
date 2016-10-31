@@ -149,7 +149,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     // Get footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
     costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);    
-
+    
     // init the odom helper to receive the robot's velocity from odom messages
     odom_helper_.setOdomTopic(cfg_.odom_topic);
 
@@ -157,6 +157,9 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     dynamic_recfg_ = boost::make_shared< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> >(nh);
     dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(&TebLocalPlannerROS::reconfigureCB, this, _1, _2);
     dynamic_recfg_->setCallback(cb);
+    
+    // validate optimization footprint and costmap footprint
+    validateFootprints(robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_.obstacles.min_obstacle_dist);
         
     // setup callback for custom obstacles
     custom_obst_sub_ = nh.subscribe("obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
@@ -815,6 +818,16 @@ double TebLocalPlannerROS::convertTransRotVelToSteeringAngle(double v, double om
 
   return std::atan(wheelbase / radius);
 }
+     
+
+void TebLocalPlannerROS::validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist)
+{
+    ROS_WARN_COND(opt_inscribed_radius + min_obst_dist < costmap_inscribed_radius,
+                  "The inscribed radius of the footprint specified for TEB optimization (%f) + min_obstacle_dist (%f) are smaller "
+                  "than the inscribed radius of the robot's footprint in the costmap parameters (%f, including 'footprint_padding'). "
+                  "Infeasible optimziation results might occur frequently!", opt_inscribed_radius, min_obst_dist, costmap_inscribed_radius);
+}
+    
      
      
 void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)

@@ -326,7 +326,16 @@ protected:
    */
   double convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius = 0) const;
   
-  
+  /**
+   * @brief Validate current parameter values of the footprint for optimization, obstacle distance and the costmap footprint
+   * 
+   * This method prints warnings if validation fails.
+   * @remarks Currently, we only validate the inscribed radius of the footprints
+   * @param opt_inscribed_radius Inscribed radius of the RobotFootprintModel for optimization
+   * @param costmap_inscribed_radius Inscribed radius of the footprint model used for the costmap
+   * @param min_obst_dist desired distance to obstacles
+   */
+  void validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist);
 
 
   
