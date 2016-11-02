@@ -76,6 +76,7 @@
 #include <teb_local_planner/optimal_planner.h>
 #include <teb_local_planner/visualization.h>
 #include <teb_local_planner/robot_footprint_model.h>
+#include <teb_local_planner/equivalence_relations.h>
 
 
 namespace teb_local_planner
@@ -108,7 +109,7 @@ typedef boost::graph_traits<HcGraph>::adjacency_iterator HcGraphAdjecencyIterato
  * @brief Local planner that explores alternative homotopy classes, create a plan for each alternative
  *	  and finally return the robot controls for the current best path (repeated in each sampling interval)
  * 
- * Homotopy classes are explored using the help a search-graph. \n
+ * Equivalence classes (e.g. homotopy) are explored using the help of a search-graph. \n
  * A couple of possible candidates are sampled / generated and filtered afterwards such that only a single candidate
  * per homotopy class remain. Filtering is applied using the H-Signature, a homotopy (resp. homology) invariant: \n
  *      - S. Bhattacharya et al.: Search-based Path Planning with Homotopy Class Constraints, AAAI, 2010
@@ -133,7 +134,6 @@ public:
 
   /**
    * @brief Default constructor
-   * 
    */
   HomotopyClassPlanner();
   
@@ -272,12 +272,12 @@ public:
     
  
   /**
-   * @brief Explore paths in new homotopy classes and initialize TEBs from them.
+   * @brief Explore paths in new equivalence classes (e.g. homotopy classes) and initialize TEBs from them.
    * 
    * This "all-in-one" method creates a graph with position keypoints from which
    * feasible paths (with clearance from obstacles) are extracted. \n
-   * All obtained paths are filted to only keep a single path for each homotopy class. \n
-   * Each time a new homotopy class is explored (by means of \b no previous trajectory/TEB remain in that homotopy class),
+   * All obtained paths are filted to only keep a single path for each equivalence class. \n
+   * Each time a new equivalence class is explored (by means of \b no previous trajectory/TEB remain in that equivalence class),
    * a new trajectory/TEB will be initialized. \n
    *
    * Everything is prepared now for the optimization step: see optimizeAllTEBs().
@@ -286,7 +286,7 @@ public:
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
    * @param @param start_velocity start velocity (optional)
    */
-  void exploreHomotopyClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel);
+  void exploreEquivalenceClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel);
 
   
   /**
@@ -362,7 +362,7 @@ public:
     * 
     * Clear all previously found H-signatures, paths, tebs and the hcgraph.
     */
-  void clearPlanner() {graph_.clear(); h_signatures_.clear(); tebs_.clear(); initial_plan_ = NULL;}
+  void clearPlanner() {graph_.clear(); equivalence_classes_.clear(); tebs_.clear(); initial_plan_ = NULL;}
   
   /**
    * @brief Check if the planner suggests a shorter horizon (e.g. to resolve problems)
@@ -376,31 +376,20 @@ public:
   virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;
   
   /**
-   * @brief Calculate the H-Signature of a path
+   * @brief Calculate the equivalence class of a path
    * 
-   * The H-Signature depends on the obstacle configuration and can be utilized
-   * to check whether two trajectores rely to the same homotopy class.
-   * Refer to: \n
-   * 	- S. Bhattacharya et al.: Search-based Path Planning with Homotopy Class Constraints, AAAI, 2010
-   * 
-   * The implemented function accepts generic path descriptions that are restricted to the following structure: \n
-   * The path is composed of points T and is represented by a std::vector< T > or similar type (std::list, std::deque, ...). \n
-   * Provide a unary function with the following signature <c> std::complex< long double > (const T& point_type) </c>
-   * that returns a complex value for the position (Re(*)=x, Im(*)=y).
-   * 
-   * T could also be a pointer type, if the passed function also accepts a const T* point_Type.
+   * Currently, only the H-signature (refer to HSignature) is implemented.
    * 
    * @param path_start Iterator to the first element in the path
    * @param path_end Iterator to the last element in the path
    * @param obstacles obstacle container
    * @param fun_cplx_point function accepting the dereference iterator type and that returns the position as complex number.
-   * @param prescaler Change this value only if you observe problems with an huge amount of obstacles: interval (0,1]
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun function of the form std::complex< long double > (const T& point_type)
-   * @return complex H-Signature value
+   * @return pointer to the equivalence class base type
    */  
   template<typename BidirIter, typename Fun>
-  static std::complex<long double> calculateHSignature(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles = NULL, double prescaler = 1);
+  EquivalenceClassPtr calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles = NULL);
   
   /**
    * @brief Read-only access to the internal trajectory container.
@@ -506,18 +495,18 @@ protected:
   
   /**
    * @brief Check if a h-signature exists already.
-   * @param H h-signature that should be tested
+   * @param eq_class equivalence class that should be tested
    * @return \c true if the h-signature is found, \c false otherwise
    */ 
-  bool hasHSignature(const std::complex<long double>& H) const;
+  bool hasEquivalenceClass(const EquivalenceClassPtr& eq_class) const;
   
   /**
-   * @brief Internal helper function that adds a h-signature to the list of known h-signatures only if it is unique.
-   * @param H h-signature that should be tested
+   * @brief Internal helper function that adds a new equivalence class to the list of known classes only if it is unique.
+   * @param eq_class equivalence class that should be tested
    * @param lock if \c true, exclude the H-signature from deletion, e.g. in deleteTebDetours().
    * @return \c true if the h-signature was added and no duplicate was found, \c false otherwise
    */    
-  bool addHSignatureIfNew(const std::complex<long double>& H, bool lock=false);
+  bool addEquivalenceClassIfNew(const EquivalenceClassPtr& eq_class, bool lock=false);
   
   /**
    * @brief Renew all found h-signatures for the new planning step based on existing TEBs. Optionally detours can be discarded.
@@ -568,14 +557,14 @@ protected:
   RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
   
   const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
-  std::complex<long double> initial_plan_h_sig_; //!< Store the h_signature of the initial plan
+  EquivalenceClassPtr initial_plan_eq_class; //!< Store the h_signature of the initial plan
   
-  TebOptPlannerContainer tebs_; //!< Container that stores multiple local teb planners (for alternative homotopy classes) and their corresponding costs
+  TebOptPlannerContainer tebs_; //!< Container that stores multiple local teb planners (for alternative equivalence classes) and their corresponding costs
   
   HcGraph graph_; //!< Store the graph that is utilized to find alternative homotopy classes.
  
-  std::vector< std::pair<std::complex<long double>, bool> > h_signatures_; //!< Store all known h-signatures to allow checking for duplicates after finding and adding new ones. 
-									  //   The second parameter denotes whether to exclude the h-signature from detour deletion or not (true: keep).
+  std::vector< std::pair<EquivalenceClassPtr, bool> > equivalence_classes_; //!< Store all known quivalence classes (e.g. h-signatures) to allow checking for duplicates after finding and adding new ones. 
+                                                                            //   The second parameter denotes whether to exclude the class from detour deletion or not (true: force keeping).
   
   boost::random::mt19937 rnd_generator_; //!< Random number generator used by createProbRoadmapGraph to sample graph keypoints.   
       
