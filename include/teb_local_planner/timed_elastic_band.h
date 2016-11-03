@@ -603,6 +603,19 @@ public:
    */
   bool detectDetoursBackwards(double threshold=0) const;
   
+  /**
+   * @brief Check if all trajectory points are contained in a specific region
+   * 
+   * The specific region is a circle around the current robot position (Pose(0)) with given radius \c radius.
+   * This method investigates a different radius for points behind the robot if \c max_dist_behind_robot >= 0.
+   * @param radius radius of the region with the robot position (Pose(0)) as center
+   * @param max_dist_behind_robot A separate radius for trajectory points behind the robot, activated if 0 or positive
+   * @param skip_poses If >0: the specified number of poses are skipped for the test, e.g. Pose(0), Pose(0+skip_poses+1), Pose(2*skip_poses+2), ... are tested.
+   * @return \c true, if all tested trajectory points are inside the specified region, \c false otherwise.
+   */
+  bool isTrajectoryInsideRegion(double radius, double max_dist_behind_robot=-1, int skip_poses=0);
+  
+  
   
   //@}
 	

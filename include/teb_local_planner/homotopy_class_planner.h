@@ -309,24 +309,27 @@ public:
    * @param start_velocity start velocity (optional)
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun unyary function that transforms the dereferenced iterator into an Eigen::Vector2d
+   * @return Shared pointer to the newly created teb optimal planner
    */
   template<typename BidirIter, typename Fun>
-  void addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity); 
+  TebOptimalPlannerPtr addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity); 
   
   /**
    * @brief Add a new Teb to the internal trajectory container and initialize it with a simple straight line between a given start and goal
    * @param start start pose
    * @param goal goal pose
    * @param start_velocity start velocity (optional)
+   * @return Shared pointer to the newly created teb optimal planner
    */
-  void addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity); 
+  TebOptimalPlannerPtr addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity); 
   
-    /**
+  /**
    * @brief Add a new Teb to the internal trajectory container and initialize it using a PoseStamped container
    * @param initial_plan container of poses (start and goal orientation should be valid!)
    * @param start_velocity start velocity (optional)
+   * @return Shared pointer to the newly created teb optimal planner
    */
-  void addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity);
+  TebOptimalPlannerPtr addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity);
   
   /**
    * @brief Update TEBs with new pose, goal and current velocity.
@@ -345,6 +348,12 @@ public:
    * @param iter_outerloop Number of outer iterations (see TebOptimalPlanner::optimizeTEB())
    */
   void optimizeAllTEBs(int iter_innerloop, int iter_outerloop);
+  
+  /**
+   * @brief Returns a shared pointer to the TEB related to the initial plan
+   * @return A non-empty shared ptr is returned if a match was found; Otherwise the shared ptr is empty.
+   */
+  TebOptimalPlannerPtr getInitialPlanTEB();
   
   /**
    * @brief In case of multiple, internally stored, alternative trajectories, select the best one according to their cost values.
@@ -557,13 +566,15 @@ protected:
   RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
   
   const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
-  EquivalenceClassPtr initial_plan_eq_class; //!< Store the h_signature of the initial plan
+  EquivalenceClassPtr initial_plan_eq_class_; //!< Store the equivalence class of the initial plan
+  TebOptimalPlannerPtr initial_plan_teb_; //!< Store pointer to the TEB related to the initial plan (use method getInitialPlanTEB() since it checks if initial_plan_teb_ is still included in tebs_.)
   
   TebOptPlannerContainer tebs_; //!< Container that stores multiple local teb planners (for alternative equivalence classes) and their corresponding costs
   
   HcGraph graph_; //!< Store the graph that is utilized to find alternative homotopy classes.
  
-  std::vector< std::pair<EquivalenceClassPtr, bool> > equivalence_classes_; //!< Store all known quivalence classes (e.g. h-signatures) to allow checking for duplicates after finding and adding new ones. 
+  using EquivalenceClassContainer = std::vector< std::pair<EquivalenceClassPtr, bool> >;
+  EquivalenceClassContainer equivalence_classes_; //!< Store all known quivalence classes (e.g. h-signatures) to allow checking for duplicates after finding and adding new ones. 
                                                                             //   The second parameter denotes whether to exclude the class from detour deletion or not (true: force keeping).
   
   boost::random::mt19937 rnd_generator_; //!< Random number generator used by createProbRoadmapGraph to sample graph keypoints.   

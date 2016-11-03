@@ -580,6 +580,37 @@ void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
 };
 
 
+bool TimedElasticBand::isTrajectoryInsideRegion(double radius, double max_dist_behind_robot, int skip_poses)
+{
+    if (sizePoses()<=0)
+        return true;
+    
+    double radius_sq = radius*radius;
+    double max_dist_behind_robot_sq = max_dist_behind_robot*max_dist_behind_robot;
+    Eigen::Vector2d robot_orient = Pose(0).orientationUnitVec();
+    
+    for (int i=1; i<sizePoses(); i=i+skip_poses+1)
+    {
+        Eigen::Vector2d dist_vec = Pose(i).position()-Pose(0).position();
+        double dist_sq = dist_vec.squaredNorm();
+        
+        if (dist_sq > radius_sq)
+        {
+            ROS_INFO("outside robot");
+            return false;
+        }
+        
+        // check behind the robot with a different distance, if specified (or >=0)
+        if (max_dist_behind_robot >= 0 && dist_vec.dot(robot_orient) < 0 && dist_sq > max_dist_behind_robot_sq)
+        {
+            ROS_INFO("outside robot behind");
+            return false;
+        }
+        
+    }
+    return true;
+}
+
 
 
 
