@@ -268,6 +268,24 @@ public:
     return PoseSE2( (pose1._position + pose2._position)/2 , g2o::average_angle(pose1._theta, pose2._theta) );
   }
   
+  /**
+    * @brief Rotate pose globally
+    * 
+    * Compute [pose_x, pose_y] = Rot(\c angle) * [pose_x, pose_y].
+    * if \c adjust_theta, pose_theta is also rotated by \c angle
+    * @param angle the angle defining the 2d rotation
+    * @param adjust_theta if \c true, the orientation theta is also rotated
+    */ 
+  void rotateGlobal(double angle, bool adjust_theta=true)
+  {
+    double new_x = std::cos(angle)*_position.x() - std::sin(angle)*_position.y();
+    double new_y = std::sin(angle)*_position.x() + std::cos(angle)*_position.y();
+    _position.x() = new_x;
+    _position.y() = new_y;
+    if (adjust_theta)
+        _theta = g2o::normalize_theta(_theta+angle);
+  }
+  
   ///@}
   
   
