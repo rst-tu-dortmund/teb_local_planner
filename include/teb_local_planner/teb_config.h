@@ -73,6 +73,7 @@ public:
     double dt_hysteresis; //!< Hysteresis for automatic resizing depending on the current temporal resolution (dt): usually 10% of dt_ref
     int min_samples; //!< Minimum number of samples (should be always greater than 2)
     bool global_plan_overwrite_orientation; //!< Overwrite orientation of local subgoals provided by the global planner
+    bool allow_init_with_backwards_motion; //!< If true, the underlying trajectories might be initialized with backwards motions in case the goal is behind the start within the local costmap (this is only recommended if the robot is equipped with rear sensors)
     double global_plan_viapoint_sep; //!< Min. separation between each two consecutive via-points extracted from the global plan (if negative: disabled)
     bool via_points_ordered; //!< If true, the planner adheres to the order of via-points in the storage container
     double max_global_plan_lookahead_dist; //!< Specify maximum length (cumulative Euclidean distances) of the subset of the global plan taken into account for optimization [if <=0: disabled; the length is also bounded by the local costmap size!]
@@ -206,6 +207,7 @@ public:
     trajectory.dt_hysteresis = 0.1;
     trajectory.min_samples = 3;
     trajectory.global_plan_overwrite_orientation = true;
+    trajectory.allow_init_with_backwards_motion = false;
     trajectory.global_plan_viapoint_sep = -1;
     trajectory.via_points_ordered = false;
     trajectory.max_global_plan_lookahead_dist = 1;

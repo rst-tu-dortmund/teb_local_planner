@@ -362,10 +362,11 @@ public:
    * @param goal PoseSE2 defining the goal of the trajectory (final pose)
    * @param diststep euclidean distance between two consecutive poses (if 0, no intermediate samples are inserted despite min_samples)
    * @param timestep intialization for the timediff between two consecutive poses
-	 * @param min_samples Minimum number of samples that should be initialized at least
+   * @param min_samples Minimum number of samples that should be initialized at least
+   * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot
    * @return true if everything was fine, false otherwise
    */
-  bool initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep=0, double timestep=1, int min_samples = 3);
+  bool initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep=0, double timestep=1, int min_samples = 3, bool guess_backwards_motion = false);
   
   
   /**
@@ -395,7 +396,8 @@ public:
    * @param max_acc_theta specify to satisfy a maxmimum angular acceleration and decceleration (optional)
    * @param start_orientation Orientation of the first pose of the trajectory (optional, otherwise use goal heading)
    * @param goal_orientation Orientation of the last pose of the trajectory (optional, otherwise use goal heading)
-	 * @param min_samples Minimum number of samples that should be initialized at least
+   * @param min_samples Minimum number of samples that should be initialized at least
+   * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun unyary function that transforms the dereferenced iterator into an Eigen::Vector2d
    * @return true if everything was fine, false otherwise
@@ -404,7 +406,7 @@ public:
   template<typename BidirIter, typename Fun>
   bool initTEBtoGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
 		      boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
-		      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples = 3);  
+		      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples = 3, bool guess_backwards_motion = false);  
   
   /**
    * @brief Initialize a trajectory from a reference pose sequence (positions and orientations).
@@ -417,10 +419,11 @@ public:
    * @param dt specify a uniform time difference between two consecutive poses
    * @param estimate_orient if \c true, calculate orientation using the straight line distance vector between consecutive poses
    *                        (only copy start and goal orientation; recommended if no orientation data is available).
-	 * @param min_samples Minimum number of samples that should be initialized at least
+   * @param min_samples Minimum number of samples that should be initialized at least
+   * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot (this parameter is used only if \c estimate_orient is enabled.
    * @return true if everything was fine, false otherwise
    */
-  bool initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient=false, int min_samples = 3);
+  bool initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
   
   //@}
   
