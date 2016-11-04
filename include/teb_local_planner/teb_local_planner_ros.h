@@ -336,6 +336,9 @@ protected:
    * @param min_obst_dist desired distance to obstacles
    */
   void validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist);
+  
+  
+  void configureBackupModes(std::vector<geometry_msgs::PoseStamped>& transformed_plan,  int& goal_idx);
 
 
   
@@ -373,6 +376,7 @@ private:
   bool goal_reached_; //!< store whether the goal is reached or not
   bool horizon_reduced_; //!< store flag whether the horizon should be reduced temporary
   ros::Time horizon_reduced_stamp_; //!< Store at which time stamp the horizon reduction was requested
+  int no_infeasible_plans_; //!< Store how many times in a row the planner failed to find a feasible plan.
   
   std::vector<geometry_msgs::Point> footprint_spec_; //!< Store the footprint of the robot 
   double robot_inscribed_radius_; //!< The radius of the inscribed circle of the robot (collision possible)
