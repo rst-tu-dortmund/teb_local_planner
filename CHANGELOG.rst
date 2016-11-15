@@ -2,6 +2,23 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* The trajectory is now initialized backwards for goals close to and behind the robot.
+  Parameter 'allow_init_with_backwards_motion' added.
+* Updated the TEB selection in the HomotopyClassPlanner.
+  * A new parameter is introduced to prefer the equivalence class of the initial plan
+  * Fixed some bugs related to the deletion of candidates and for keeping the equivalence class of the initial plan.
+* Weight adaptation added for obstacles edges.
+  Added parameter 'weight_adapt_factor'.
+  Obstacle weights are repeatedly scaled by this factor in each outer TEB iteration.
+  Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions.
+* Added a warning if the optim footprint + min_obstacle_dist is smaller than the costmap footprint.
+  Validation is performed by only comparing the inscribed radii of the footprints.
+* Revision/extension of the reduced-horizon backup mode which is triggered in case infeasible trajectories are detected.
+* Changed HSignature to a generic equivalence class
+* Minor changes
+
 0.6.4 (2016-10-23)
 ------------------
 * New default obstacle association strategy:
