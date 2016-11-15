@@ -374,8 +374,7 @@ private:
   PoseSE2 robot_goal_; //!< Store current robot goal
   geometry_msgs::Twist robot_vel_; //!< Store current robot translational and angular velocity (vx, vy, omega)
   bool goal_reached_; //!< store whether the goal is reached or not
-  bool horizon_reduced_; //!< store flag whether the horizon should be reduced temporary
-  ros::Time horizon_reduced_stamp_; //!< Store at which time stamp the horizon reduction was requested
+  ros::Time time_last_infeasible_plan_; //!< Store at which time stamp the last infeasible plan was detected
   int no_infeasible_plans_; //!< Store how many times in a row the planner failed to find a feasible plan.
   
   std::vector<geometry_msgs::Point> footprint_spec_; //!< Store the footprint of the robot 

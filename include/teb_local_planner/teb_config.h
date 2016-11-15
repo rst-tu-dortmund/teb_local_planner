@@ -82,6 +82,7 @@ public:
     int feasibility_check_no_poses; //!< Specify up to which pose on the predicted plan the feasibility should be checked each sampling interval.
     bool publish_feedback; //!< Publish planner feedback containing the full trajectory and a list of active obstacles (should be enabled only for evaluation or debugging purposes)
     bool shrink_horizon_backup; //!< Allows the planner to shrink the horizon temporary (50%) in case of automatically detected issues.
+    double shrink_horizon_min_duration; //!< Specify minimum duration for the reduced horizon in case an infeasible trajectory is detected.
   } trajectory; //!< Trajectory related parameters
     
   //! Robot related parameters
@@ -216,6 +217,7 @@ public:
     trajectory.feasibility_check_no_poses = 5;
     trajectory.publish_feedback = false;
     trajectory.shrink_horizon_backup = true;
+    trajectory.shrink_horizon_min_duration = 10;
     
     // Robot
          
