@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.5 (2016-11-15)
+------------------
 * The trajectory is now initialized backwards for goals close to and behind the robot.
   Parameter 'allow_init_with_backwards_motion' added.
 * Updated the TEB selection in the HomotopyClassPlanner.
