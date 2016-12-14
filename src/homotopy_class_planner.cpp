@@ -933,6 +933,15 @@ bool HomotopyClassPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel
   return best->isTrajectoryFeasible(costmap_model,footprint_spec, inscribed_radius, circumscribed_radius, look_ahead_idx);
 }
 
+void HomotopyClassPlanner::setPreferredTurningDir(RotType dir)
+{
+  // set preferred turning dir for all TEBs
+  for (TebOptPlannerContainer::const_iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
+  {
+    (*it_teb)->setPreferredTurningDir(dir); 
+  }
+}
+
 bool HomotopyClassPlanner::isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const
 {
   TebOptimalPlannerPtr best = bestTeb();

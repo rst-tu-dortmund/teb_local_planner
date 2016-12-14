@@ -49,8 +49,8 @@ namespace teb_local_planner
 
 #define SMALL_NUM 0.00000001
 
-
-
+//! Symbols for left/none/right rotations      
+enum class RotType { left, none, right };
 
 /** 
  * @brief Check whether two variables (double) are close to each other
