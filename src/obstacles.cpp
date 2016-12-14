@@ -38,6 +38,7 @@
 
 #include <teb_local_planner/obstacles.h>
 #include <ros/console.h>
+#include <ros/assert.h>
 // #include <teb_local_planner/misc.h>
 
 namespace teb_local_planner
@@ -82,7 +83,7 @@ void PolygonObstacle::calcCentroid()
     
   // calculate centroid (see wikipedia http://de.wikipedia.org/wiki/Geometrischer_Schwerpunkt#Polygon)
   double A = 0;  // A = 0.5 * sum_0_n-1 (x_i * y_{i+1} - x_{i+1} * y_i)
-  for (int i=0; i<(int)noVertices()-1; ++i)
+  for (int i=0; i < noVertices()-1; ++i)
   {
     A += vertices_.at(i).coeffRef(0) * vertices_.at(i+1).coeffRef(1) - vertices_.at(i+1).coeffRef(0) * vertices_.at(i).coeffRef(1);
   }
@@ -91,7 +92,7 @@ void PolygonObstacle::calcCentroid()
   
   if (A!=0)
   {
-    for (int i=0; i<(int)noVertices()-1; ++i)
+    for (int i=0; i < noVertices()-1; ++i)
     {
       double aux = (vertices_.at(i).coeffRef(0) * vertices_.at(i+1).coeffRef(1) - vertices_.at(i+1).coeffRef(0) * vertices_.at(i).coeffRef(1));
       centroid_ +=  ( vertices_.at(i) + vertices_.at(i+1) )*aux;
@@ -105,10 +106,10 @@ void PolygonObstacle::calcCentroid()
     // seach for the two outer points of the line with the maximum distance inbetween
     int i_cand = 0;
     int j_cand = 0;
-    double min_dist = HUGE_VAL;
-    for (int i=0; i<(int)noVertices(); ++i)
+    double min_dist = std::numeric_limits<double>::max();
+    for (int i=0; i< noVertices(); ++i)
     {
-      for (int j=i+1; j<(int)noVertices(); ++j) // start with j=i+1
+      for (int j=i+1; j< noVertices(); ++j) // start with j=i+1
       {
         double dist = (vertices_[j] - vertices_[i]).norm();
         if (dist < min_dist)
@@ -128,7 +129,7 @@ void PolygonObstacle::calcCentroid()
 
 Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position) const
 {
- // the polygon is a point
+  // the polygon is a point
   if (noVertices() == 1)
   {
     return vertices_.front();
@@ -145,7 +146,7 @@ Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position
       Eigen::Vector2d closest_pt = new_pt;
       
       // check each polygon edge
-      for (int i=1; i<(int)noVertices()-1; ++i) // skip the first one, since we already checked it (new_pt)
+      for (int i=1; i<noVertices()-1; ++i) // skip the first one, since we already checked it (new_pt)
       {
         new_pt = closest_point_on_line_segment_2d(position, vertices_.at(i), vertices_.at(i+1));
         double new_dist = (new_pt-position).norm();
@@ -168,7 +169,7 @@ Eigen::Vector2d PolygonObstacle::getClosestPoint(const Eigen::Vector2d& position
       return new_pt; // closest point on line segment
     }
   }
-  
+
   ROS_ERROR("PolygonObstacle::getClosestPoint() cannot find any closest point. Polygon ill-defined?");
   return Eigen::Vector2d::Zero(); // todo: maybe boost::optional?
 }
@@ -178,7 +179,7 @@ bool PolygonObstacle::checkLineIntersection(const Eigen::Vector2d& line_start, c
 {
   // Simple strategy, check all edge-line intersections until an intersection is found...
   // check each polygon edge
-  for (unsigned int i=0; i<vertices_.size()-1; ++i)
+  for (int i=0; i<noVertices()-1; ++i)
   {
     if ( check_line_segments_intersection_2d(line_start, line_end, vertices_.at(i), vertices_.at(i+1)) ) 
       return true;

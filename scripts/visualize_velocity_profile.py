@@ -39,6 +39,7 @@ def velocity_plotter():
   rospy.init_node("visualize_velocity_profile", anonymous=True)
   
   topic_name = "/test_optim_node/teb_feedback"
+  topic_name = rospy.get_param('~feedback_topic', topic_name)
   rospy.Subscriber(topic_name, FeedbackMsg, feedback_callback, queue_size = 1) # define feedback topic here!
 
   rospy.loginfo("Visualizing velocity profile published on '%s'.",topic_name) 

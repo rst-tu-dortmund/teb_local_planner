@@ -46,10 +46,10 @@
 
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/vertex_timediff.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/g2o_types/penalties.h>
 #include <teb_local_planner/teb_config.h>
 
-#include <g2o/core/base_multi_edge.h>
 
 #include <iostream>
 
@@ -72,7 +72,7 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesVelocity
  * @remarks Do not forget to call setTebConfig()
  */  
-class EdgeVelocity : public g2o::BaseMultiEdge<2, double>
+class EdgeVelocity : public BaseTebMultiEdge<2, double>
 {
 public:
   
@@ -82,24 +82,8 @@ public:
   EdgeVelocity()
   {
     this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
-    for(unsigned int i=0;i<3;i++) _vertices[i] = NULL;
   }
   
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */  
-  virtual ~EdgeVelocity()
-  {
-    for(unsigned int i=0;i<3;i++)
-    {
-      if(_vertices[i])
-	_vertices[i]->edges().erase(this);
-    }
-  }
-
   /**
    * @brief Actual cost function
    */  
@@ -109,12 +93,22 @@ public:
     const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
-    double vel = deltaS.norm() / deltaT->estimate();
+    
+    const Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
+    
+    double dist = deltaS.norm();
+    const double angle_diff = g2o::normalize_theta(conf2->theta() - conf1->theta());
+    if (cfg_->trajectory.exact_arc_length && angle_diff != 0)
+    {
+        double radius =  dist/(2*sin(angle_diff/2));
+        dist = fabs( angle_diff * radius ); // actual arg length!
+    }
+    double vel = dist / deltaT->estimate();
+    
 //     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
     vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
     
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
+    const double omega = angle_diff / deltaT->estimate();
   
     _error[0] = penaltyBoundToInterval(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
     _error[1] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
@@ -196,57 +190,83 @@ public:
 #endif
 #endif
  
-  /**
-   * @brief Compute and return error / cost value.
-   * 
-   * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-   * @return 2D Cost / error vector [translational vel cost, angular vel cost]^T
-   */ 
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-
-  /**
-   * @brief Read values from input stream
-   */  
-  virtual bool read(std::istream& is)
-  {
-    is >> _measurement;
-    is >> information()(0,0);
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */  
-  virtual bool write(std::ostream& os) const
-  {
-    //os << measurement() << " ";
-    os << information()(0,0) << " Error Vel: " << _error[0] << ", Error Omega: " << _error[1];
-    return os.good();
-  }
-
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */    
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-
-protected:
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
-  
   
 public:
   
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
+
+
+
+
+
+
+/**
+ * @class EdgeVelocityHolonomic
+ * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
+ * 
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [vx,vy,omega]^T ) \cdot weight \f$. \n
+ * \e vx denotes the translational velocity w.r.t. x-axis (computed using finite differneces). \n
+ * \e vy denotes the translational velocity w.r.t. y-axis (computed using finite differneces). \n
+ * \e omega is calculated using the difference quotient of both yaw angles followed by a normalization to [-pi, pi]. \n
+ * \e weight can be set using setInformation(). \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
+ * The dimension of the error / cost vector is 3: the first component represents the translational velocity w.r.t. x-axis,
+ * the second one w.r.t. the y-axis and the third one the rotational velocity.
+ * @see TebOptimalPlanner::AddEdgesVelocity
+ * @remarks Do not forget to call setTebConfig()
+ */  
+class EdgeVelocityHolonomic : public BaseTebMultiEdge<3, double>
+{
+public:
+  
+  /**
+   * @brief Construct edge.
+   */       
+  EdgeVelocityHolonomic()
+  {
+    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
+  }
+  
+  /**
+   * @brief Actual cost function
+   */  
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic()");
+    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
+    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
+    
+    double cos_theta1 = std::cos(conf1->theta());
+    double sin_theta1 = std::sin(conf1->theta()); 
+    
+    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
+    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
+    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
+    
+    double vx = r_dx / deltaT->estimate();
+    double vy = r_dy / deltaT->estimate();
+    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
+    
+    _error[0] = penaltyBoundToInterval(vx, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(vy, cfg_->robot.max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
+    _error[2] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]) && std::isfinite(_error[2]),
+                   "EdgeVelocityHolonomic::computeError() _error[0]=%f _error[1]=%f _error[2]=%f\n",_error[0],_error[1],_error[2]);
+  }
+ 
+  
+public:
+  
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
 
 } // end namespace
 

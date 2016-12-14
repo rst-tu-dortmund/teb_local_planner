@@ -43,106 +43,26 @@ namespace teb_local_planner
   
   
 template<typename BidirIter, typename Fun>
-std::complex<long double> HomotopyClassPlanner::calculateHSignature(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles, double prescaler)
+EquivalenceClassPtr HomotopyClassPlanner::calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles)
 {
-    if (obstacles->empty()) 
-      return std::complex<double>(0,0);
-   
-   
-    ROS_ASSERT_MSG(prescaler>0.1 && prescaler<=1, "Only a prescaler on the interval (0.1,1] ist allowed.");
-    
-    // guess values for f0
-    // paper proposes a+b=N-1 && |a-b|<=1, 1...N obstacles
-    int m = obstacles->size()-1;
-    
-    int a = (int) std::ceil(double(m)/2.0);
-    int b = m-a;
-    
-    std::advance(path_end, -1); // reduce path_end by 1 (since we check line segments between those path points
-    
-    typedef std::complex<long double> cplx;
-    // guess map size (only a really really coarse guess is required
-    // use distance from start to goal as distance to each direction
-    // TODO: one could move the map determination outside this function, since it remains constant for the whole planning interval
-    cplx start = fun_cplx_point(*path_start);
-    cplx end = fun_cplx_point(*path_end); // path_end points to the last point now after calling std::advance before
-    cplx delta = end-start;
-    cplx normal(-delta.imag(), delta.real());
-    cplx map_bottom_left;
-    cplx map_top_right;
-    if (std::abs(delta) < 3.0)
-    { // set minimum bound on distance (we do not want to have numerical instabilities) and 3.0 performs fine...
-      map_bottom_left = start + cplx(0, -3);
-      map_top_right = start + cplx(3, 3);
-    }
-    else
-    {
-      map_bottom_left = start - normal;
-      map_top_right = start + delta + normal;
-    }
-    
-    cplx H = 0;
-    std::vector<double> imag_proposals(5);
-     
-    // iterate path
-    while(path_start != path_end)
-    {
-      cplx z1 = fun_cplx_point(*path_start);
-      cplx z2 = fun_cplx_point(*boost::next(path_start));
-
-      for (unsigned int l=0; l<obstacles->size(); ++l) // iterate all obstacles
-      {
-        cplx obst_l = obstacles->at(l)->getCentroidCplx();
-        //cplx f0 = (long double) prescaler * std::pow(obst_l-map_bottom_left,a) * std::pow(obst_l-map_top_right,b);
-        cplx f0 = (long double) prescaler * (long double)a*(obst_l-map_bottom_left) * (long double)b*(obst_l-map_top_right);
-        
-        // denum contains product with all obstacles exepct j==l
-        cplx Al = f0;
-        for (unsigned int j=0; j<obstacles->size(); ++j)
-        {
-          if (j==l) 
-              continue;
-          cplx obst_j = obstacles->at(j)->getCentroidCplx();
-          cplx diff = obst_l - obst_j;
-          //if (diff.real()!=0 || diff.imag()!=0)
-          if (std::abs(diff)<0.05) // skip really close obstacles
-              Al /= diff;
-          else
-            continue;
-        }
-        // compute log value
-        double diff2 = std::abs(z2-obst_l);
-        double diff1 = std::abs(z1-obst_l);
-        if (diff2 == 0 || diff1 == 0)
-          continue;
-        double log_real = std::log(diff2)-std::log(diff1);
-        // complex ln has more than one solution -> choose minimum abs angle -> paper
-        double arg_diff = std::arg(z2-obst_l)-std::arg(z1-obst_l);
-        imag_proposals.at(0) = arg_diff;
-        imag_proposals.at(1) = arg_diff+2*M_PI;
-        imag_proposals.at(2) = arg_diff-2*M_PI;
-        imag_proposals.at(3) = arg_diff+4*M_PI;
-        imag_proposals.at(4) = arg_diff-4*M_PI;
-        double log_imag = *std::min_element(imag_proposals.begin(),imag_proposals.end(),smaller_than_abs);
-        cplx log_value(log_real,log_imag);
-        //cplx log_value = std::log(z2-obst_l)-std::log(z1-obst_l); // the principal solution doesn't seem to work
-        H += Al*log_value;  
-      }
-      ++path_start;
-    }
-    return H;
+   // Currently we only support the HSignature
+   HSignature* H = new HSignature(*cfg_);
+   H->calculateHSignature(path_start, path_end, fun_cplx_point, obstacles);
+   return EquivalenceClassPtr(H);
 }
 
 
 template<typename BidirIter, typename Fun>
-void HomotopyClassPlanner::addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position,
-                                            double start_orientation, double goal_orientation, boost::optional<const Eigen::Vector2d&> start_velocity)
+TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity)
 {
   tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_) ) );
   tebs_.back()->teb().initTEBtoGoal(path_start, path_end, fun_position, cfg_->robot.max_vel_x, cfg_->robot.max_vel_theta, 
-                                    cfg_->robot.acc_lim_x, cfg_->robot.acc_lim_theta, start_orientation, goal_orientation, cfg_->trajectory.min_samples);
+                                    cfg_->robot.acc_lim_x, cfg_->robot.acc_lim_theta, start_orientation, goal_orientation, cfg_->trajectory.min_samples,
+                                    cfg_->trajectory.allow_init_with_backwards_motion);
   if (start_velocity)
     tebs_.back()->setVelocityStart(*start_velocity);
+  
+  return tebs_.back();
 }
   
 } // namespace teb_local_planner

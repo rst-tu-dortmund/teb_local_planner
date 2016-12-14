@@ -131,7 +131,7 @@ int main( int argc, char** argv )
   //via_points.push_back( Eigen::Vector2d( 0.0, 1.5 ) );
   
   // Setup visualization
-  visual = TebVisualizationPtr(new TebVisualization(n, config));
+  visual = TebVisualizationPtr(new TebVisualization(n, config.map_frame));
   
   // Setup robot shape model
   RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n);
@@ -152,7 +152,7 @@ int main( int argc, char** argv )
 // Planning loop
 void CB_mainCycle(const ros::TimerEvent& e)
 {
-  planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0), Eigen::Vector2d(0,0)); // hardcoded start and goal for testing purposes
+  planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0)); // hardcoded start and goal for testing purposes
 }
 
 // Visualization loop
