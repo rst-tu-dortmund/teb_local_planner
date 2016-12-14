@@ -825,6 +825,7 @@ void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::PoseSta
     
     // reduced horizon backup mode
     if (cfg_.trajectory.shrink_horizon_backup && 
+        goal_idx < (int)transformed_plan.size()-1 && // we do not reduce if the goal is already selected (because the orientation might change -> can introduce oscillations)
        (no_infeasible_plans_>0 || (current_time - time_last_infeasible_plan_).toSec() < cfg_.trajectory.shrink_horizon_min_duration )) // keep short horizon for at least a few seconds
     {
         ROS_INFO_COND(no_infeasible_plans_==1, "Activating reduced horizon backup mode for at least %.2f sec (infeasible trajectory detected).", cfg_.trajectory.shrink_horizon_min_duration);
