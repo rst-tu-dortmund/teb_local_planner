@@ -52,6 +52,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("dt_ref", trajectory.dt_ref, trajectory.dt_ref);
   nh.param("dt_hysteresis", trajectory.dt_hysteresis, trajectory.dt_hysteresis);
   nh.param("min_samples", trajectory.min_samples, trajectory.min_samples);
+  nh.param("max_samples", trajectory.max_samples, trajectory.max_samples);
   nh.param("global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation, trajectory.global_plan_overwrite_orientation);
   nh.param("allow_init_with_backwards_motion", trajectory.allow_init_with_backwards_motion, trajectory.allow_init_with_backwards_motion);
   nh.param("global_plan_via_point_sep", trajectory.global_plan_viapoint_sep, trajectory.global_plan_viapoint_sep);

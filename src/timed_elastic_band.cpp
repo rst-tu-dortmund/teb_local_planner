@@ -200,12 +200,12 @@ void TimedElasticBand::setTimeDiffVertexFixed(int index, bool status)
 }
 
 
-void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples)
+void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples)
 {
   /// iterate through all TEB states only once and add/remove states!
   for(int i=0; i < sizeTimeDiffs(); ++i) // TimeDiff connects Point(i) with Point(i+1)
   {
-    if(TimeDiff(i) > dt_ref + dt_hysteresis)
+    if(TimeDiff(i) > dt_ref + dt_hysteresis && sizeTimeDiffs()<max_samples)
     {
       //ROS_DEBUG("teb_local_planner: autoResize() inserting new bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
       
@@ -217,7 +217,7 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
       
       ++i; // skip the newly inserted pose
     }
-    else if(TimeDiff(i) < dt_ref - dt_hysteresis && (int)sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
+    else if(TimeDiff(i) < dt_ref - dt_hysteresis && sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
     {
       //ROS_DEBUG("teb_local_planner: autoResize() deleting bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
       

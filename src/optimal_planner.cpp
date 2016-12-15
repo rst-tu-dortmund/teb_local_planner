@@ -177,7 +177,7 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
   for(int i=0; i<iterations_outerloop; ++i)
   {
     if (cfg_->trajectory.teb_autosize)
-      teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples);
+      teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples, cfg_->trajectory.max_samples);
 
     success = buildGraph(weight_multiplier);
     if (!success) 
@@ -399,7 +399,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
   Eigen::Matrix<double,2,2> information_inflated;
   information_inflated(0,0) = cfg_->optim.weight_obstacle * weight_multiplier;
   information_inflated(1,1) = cfg_->optim.weight_inflation;
-  information_inflated(0,1) = information(1,0) = 0;
+  information_inflated(0,1) = information_inflated(1,0) = 0;
     
   // iterate all teb points (skip first and last)
   for (int i=1; i < teb_.sizePoses()-1; ++i)
