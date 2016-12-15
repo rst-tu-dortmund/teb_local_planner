@@ -473,9 +473,10 @@ public:
    * Each call only one new sample (pose-dt-pair) is inserted or removed.
    * @param dt_ref reference temporal resolution
    * @param dt_hysteresis hysteresis to avoid oscillations
-	 * @param min_samples minimum number of samples that should be remain in the trajectory after resizing
+   * @param min_samples minimum number of samples that should be remain in the trajectory after resizing
+   * @param max_samples maximum number of samples that should not be exceeded during resizing
    */    
-  void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3);
+  void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3, int max_samples=1000);
   
   
   /**
