@@ -82,8 +82,6 @@ public:
     double force_reinit_new_goal_dist; //!< Reinitialize the trajectory if a previous goal is updated with a seperation of more than the specified value in meters (skip hot-starting)
     int feasibility_check_no_poses; //!< Specify up to which pose on the predicted plan the feasibility should be checked each sampling interval.
     bool publish_feedback; //!< Publish planner feedback containing the full trajectory and a list of active obstacles (should be enabled only for evaluation or debugging purposes)
-    bool shrink_horizon_backup; //!< Allows the planner to shrink the horizon temporary (50%) in case of automatically detected issues.
-    double shrink_horizon_min_duration; //!< Specify minimum duration for the reduced horizon in case an infeasible trajectory is detected.
   } trajectory; //!< Trajectory related parameters
     
   //! Robot related parameters
@@ -151,6 +149,7 @@ public:
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles    
     double weight_viapoint; //!< Optimization weight for minimizing the distance to via-points
+    double weight_prefer_rotdir; //!< Optimization weight for preferring a specific turning direction (-> currently only activated if an oscillation is detected, see 'oscillation_recovery'
     
     double weight_adapt_factor; //!< Some special weights (currently 'weight_obstacle') are repeatedly scaled by this factor in each outer TEB iteration (weight_new = weight_old*factor); Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions of the underlying optimization problem.
   } optim; //!< Optimization related parameters
@@ -182,6 +181,17 @@ public:
     bool visualize_hc_graph; //!< Visualize the graph that is created for exploring new homotopy classes.
   } hcp;
   
+  //! Recovery/backup related parameters
+  struct Recovery
+  {
+    bool shrink_horizon_backup; //!< Allows the planner to shrink the horizon temporary (50%) in case of automatically detected issues.
+    double shrink_horizon_min_duration; //!< Specify minimum duration for the reduced horizon in case an infeasible trajectory is detected.
+    bool oscillation_recovery; //!< Try to detect and resolve oscillations between multiple solutions in the same equivalence class (robot frequently switches between left/right/forward/backwards)
+    double oscillation_v_eps; //!< Threshold for the average normalized linear velocity: if oscillation_v_eps and oscillation_omega_eps are not exceeded both, a possible oscillation is detected
+    double oscillation_omega_eps; //!< Threshold for the average normalized angular velocity: if oscillation_v_eps and oscillation_omega_eps are not exceeded both, a possible oscillation is detected
+    double oscillation_recovery_min_duration; //!< Minumum duration [sec] for which the recovery mode is activated after an oscillation is detected.
+    double oscillation_filter_duration; //!< Filter length/duration [sec] for the detection of oscillations
+  } recovery; //!< Parameters related to recovery and backup strategies
 
  /**
   * @brief Construct the TebConfig using default values.
@@ -218,8 +228,6 @@ public:
     trajectory.force_reinit_new_goal_dist = 1;
     trajectory.feasibility_check_no_poses = 5;
     trajectory.publish_feedback = false;
-    trajectory.shrink_horizon_backup = true;
-    trajectory.shrink_horizon_min_duration = 10;
     
     // Robot
          
@@ -275,6 +283,7 @@ public:
     optim.weight_inflation = 0.1;
     optim.weight_dynamic_obstacle = 10;
     optim.weight_viapoint = 1;
+    optim.weight_prefer_rotdir = 50;
     
     optim.weight_adapt_factor = 2.0;
     
@@ -301,6 +310,16 @@ public:
     hcp.viapoints_all_candidates = true;
     
     hcp.visualize_hc_graph = false;
+    
+    // Recovery
+    
+    recovery.shrink_horizon_backup = true;
+    recovery.shrink_horizon_min_duration = 10;
+    recovery.oscillation_recovery = true;
+    recovery.oscillation_v_eps = 0.1;
+    recovery.oscillation_omega_eps = 0.1;
+    recovery.oscillation_recovery_min_duration = 10;
+    recovery.oscillation_filter_duration = 10;
 
 
   }

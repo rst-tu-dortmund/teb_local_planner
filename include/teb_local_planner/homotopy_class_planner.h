@@ -371,7 +371,18 @@ public:
     * 
     * Clear all previously found H-signatures, paths, tebs and the hcgraph.
     */
-  void clearPlanner() {graph_.clear(); equivalence_classes_.clear(); tebs_.clear(); initial_plan_ = NULL;}
+  virtual void clearPlanner() {graph_.clear(); equivalence_classes_.clear(); tebs_.clear(); initial_plan_ = NULL;}
+  
+    
+  /**
+   * @brief Prefer a desired initial turning direction (by penalizing the opposing one)
+   * 
+   * A desired (initial) turning direction might be specified in case the planned trajectory oscillates between two 
+   * solutions (in the same equivalence class!) with similar cost. Check the parameters in order to adjust the weight of the penalty.
+   * Initial means that the penalty is applied only to the first few poses of the trajectory.
+   * @param dir This parameter might be RotType::left (prefer left), RotType::right (prefer right) or RotType::none (prefer none)
+   */
+  virtual void setPreferredTurningDir(RotType dir);
   
   /**
    * @brief Check if the planner suggests a shorter horizon (e.g. to resolve problems)

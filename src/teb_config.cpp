@@ -62,8 +62,6 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
   nh.param("feasibility_check_no_poses", trajectory.feasibility_check_no_poses, trajectory.feasibility_check_no_poses);
   nh.param("publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
-  nh.param("shrink_horizon_backup", trajectory.shrink_horizon_backup, trajectory.shrink_horizon_backup);
-  nh.param("shrink_horizon_min_duration", trajectory.shrink_horizon_min_duration, trajectory.shrink_horizon_min_duration);
   
   // Robot
   nh.param("max_vel_x", robot.max_vel_x, robot.max_vel_x);
@@ -114,6 +112,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_inflation", optim.weight_inflation, optim.weight_inflation);
   nh.param("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);    
   nh.param("weight_viapoint", optim.weight_viapoint, optim.weight_viapoint);
+  nh.param("weight_prefer_rotdir", optim.weight_prefer_rotdir, optim.weight_prefer_rotdir);
   nh.param("weight_adapt_factor", optim.weight_adapt_factor, optim.weight_adapt_factor);
   
   // Homotopy Class Planner
@@ -136,6 +135,16 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("viapoints_all_candidates", hcp.viapoints_all_candidates, hcp.viapoints_all_candidates);
   nh.param("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph); 
   
+  // Recovery
+  
+  nh.param("shrink_horizon_backup", recovery.shrink_horizon_backup, recovery.shrink_horizon_backup);
+  nh.param("shrink_horizon_min_duration", recovery.shrink_horizon_min_duration, recovery.shrink_horizon_min_duration);
+  nh.param("oscillation_recovery", recovery.oscillation_recovery, recovery.oscillation_recovery);
+  nh.param("oscillation_v_eps", recovery.oscillation_v_eps, recovery.oscillation_v_eps);
+  nh.param("oscillation_omega_eps", recovery.oscillation_omega_eps, recovery.oscillation_omega_eps);
+  nh.param("oscillation_recovery_min_duration", recovery.oscillation_recovery_min_duration, recovery.oscillation_recovery_min_duration);
+  nh.param("oscillation_filter_duration", recovery.oscillation_filter_duration, recovery.oscillation_filter_duration);
+  
   checkParameters();
   checkDeprecated(nh);
 }
@@ -157,7 +166,6 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   trajectory.force_reinit_new_goal_dist = cfg.force_reinit_new_goal_dist;
   trajectory.feasibility_check_no_poses = cfg.feasibility_check_no_poses;
   trajectory.publish_feedback = cfg.publish_feedback;
-  trajectory.shrink_horizon_backup = cfg.shrink_horizon_backup;
   
   // Robot     
   robot.max_vel_x = cfg.max_vel_x;
@@ -229,6 +237,11 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   hcp.viapoints_all_candidates = cfg.viapoints_all_candidates;
   hcp.visualize_hc_graph = cfg.visualize_hc_graph;
   
+  // Recovery
+  
+  recovery.shrink_horizon_backup = cfg.shrink_horizon_backup;
+  recovery.oscillation_recovery = cfg.oscillation_recovery;
+  
   checkParameters();
 }
     
@@ -281,6 +294,9 @@ void TebConfig::checkParameters() const
   // positive weight_adapt_factor
   if (optim.weight_adapt_factor < 1.0)
       ROS_WARN("TebLocalPlannerROS() Param Warning: parameter weight_adapt_factor shoud be >= 1.0");
+  
+  if (recovery.oscillation_filter_duration < 0)
+      ROS_WARN("TebLocalPlannerROS() Param Warning: parameter oscillation_filter_duration must be >= 0");
   
 }    
 

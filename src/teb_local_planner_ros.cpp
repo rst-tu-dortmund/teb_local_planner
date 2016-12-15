@@ -63,7 +63,7 @@ namespace teb_local_planner
 
 TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costmap_model_(NULL),
                                            costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
-                                           dynamic_recfg_(NULL), goal_reached_(false), no_infeasible_plans_(0), 
+                                           dynamic_recfg_(NULL), goal_reached_(false), no_infeasible_plans_(0), last_preferred_rotdir_(RotType::none),
                                            initialized_(false)
 {
 }
@@ -164,6 +164,12 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
         
     // setup callback for custom obstacles
     custom_obst_sub_ = nh.subscribe("obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
+    
+    // initialize failure detector
+    ros::NodeHandle nh_move_base("~");
+    double controller_frequency = 5;
+    nh_move_base.param("controller_frequency", controller_frequency, controller_frequency);
+    failure_detector_.setBufferLength(std::round(cfg_.recovery.oscillation_filter_duration*controller_frequency));
     
     // set initialized flag
     initialized_ = true;
@@ -318,6 +324,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel;
     return false;
   }
          
@@ -335,6 +342,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel;
     return false;
   }
 
@@ -345,6 +353,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel;
     return false;
   }
   
@@ -361,6 +370,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     if (!std::isfinite(cmd_vel.angular.z))
     {
       cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.angular.z = 0;
+      last_cmd_ = cmd_vel;
       planner_->clearPlanner();
       ROS_WARN("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...");
       ++no_infeasible_plans_; // increase number of infeasible solutions in a row
@@ -371,6 +381,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   
   // a feasible solution should be found, reset counter
   no_infeasible_plans_ = 0;
+  
+  // store last command (for recovery analysis etc.)
+  last_cmd_ = cmd_vel;
   
   // Now visualize everything    
   planner_->visualize();
@@ -828,7 +841,7 @@ void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::PoseSta
         goal_idx < (int)transformed_plan.size()-1 && // we do not reduce if the goal is already selected (because the orientation might change -> can introduce oscillations)
        (no_infeasible_plans_>0 || (current_time - time_last_infeasible_plan_).toSec() < cfg_.trajectory.shrink_horizon_min_duration )) // keep short horizon for at least a few seconds
     {
-        ROS_INFO_COND(no_infeasible_plans_==1, "Activating reduced horizon backup mode for at least %.2f sec (infeasible trajectory detected).", cfg_.trajectory.shrink_horizon_min_duration);
+        ROS_INFO_COND(no_infeasible_plans_==1, "Activating reduced horizon backup mode for at least %.2f sec (infeasible trajectory detected).", cfg_.recovery.shrink_horizon_min_duration);
 
 
         // Shorten horizon if requested
@@ -850,6 +863,45 @@ void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::PoseSta
             transformed_plan.erase(transformed_plan.begin()+new_goal_idx_transformed_plan, transformed_plan.end());
         else
             goal_idx += horizon_reduction; // this should not happen, but safety first ;-) 
+    }
+    
+    
+    // detect and resolve oscillations
+    if (cfg_.recovery.oscillation_recovery)
+    {
+        double max_vel_theta;
+        double max_vel_current = last_cmd_.linear.x >= 0 ? cfg_.robot.max_vel_x : cfg_.robot.max_vel_x_backwards;
+        if (cfg_.robot.min_turning_radius!=0 && max_vel_current>0)
+            max_vel_theta = std::max( max_vel_current/std::abs(cfg_.robot.min_turning_radius),  cfg_.robot.max_vel_theta );
+        else
+            max_vel_theta = cfg_.robot.max_vel_theta;
+        
+        failure_detector_.update(last_cmd_, cfg_.robot.max_vel_x, cfg_.robot.max_vel_x_backwards, max_vel_theta,
+                               cfg_.recovery.oscillation_v_eps, cfg_.recovery.oscillation_omega_eps);
+        
+        bool oscillating = failure_detector_.isOscillating();
+        bool recently_oscillated = (ros::Time::now()-time_last_oscillation_).toSec() < cfg_.recovery.oscillation_recovery_min_duration; // check if we have already detected an oscillation recently
+        
+        if (oscillating)
+        {
+            if (!recently_oscillated)
+            {
+                // save current turning direction
+                if (robot_vel_.angular.z > 0)
+                    last_preferred_rotdir_ = RotType::left;
+                else
+                    last_preferred_rotdir_ = RotType::right;
+                ROS_WARN("TebLocalPlannerROS: possible oscillation (of the robot or its local plan) detected. Activating recovery strategy (prefer current turning direction during optimization).");
+            }
+            time_last_oscillation_ = ros::Time::now();  
+            planner_->setPreferredTurningDir(last_preferred_rotdir_);
+        }
+        else if (!recently_oscillated && last_preferred_rotdir_ != RotType::none) // clear recovery behavior
+        {
+            last_preferred_rotdir_ = RotType::none;
+            planner_->setPreferredTurningDir(last_preferred_rotdir_);
+            ROS_INFO("TebLocalPlannerROS: oscillation recovery disabled/expired.");
+        }
     }
 
 }
