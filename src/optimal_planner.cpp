@@ -226,7 +226,7 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::PoseStamped>& init
   if (!teb_.isInit())
   {
     // init trajectory
-    teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
+    teb_.initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, cfg_->trajectory.global_plan_overwrite_orientation, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
   } 
   else // warm start
   {
