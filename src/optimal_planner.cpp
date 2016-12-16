@@ -525,7 +525,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
   Eigen::Matrix<double,2,2> information_inflated;
   information_inflated(0,0) = cfg_->optim.weight_obstacle * weight_multiplier;
   information_inflated(1,1) = cfg_->optim.weight_inflation;
-  information_inflated(0,1) = information(1,0) = 0;
+  information_inflated(0,1) = information_inflated(1,0) = 0;
   
   bool inflated = cfg_->obstacles.inflation_dist > cfg_->obstacles.min_obstacle_dist;
     
