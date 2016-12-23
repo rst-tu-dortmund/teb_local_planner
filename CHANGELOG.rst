@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.4.4 (2016-12-23)
+------------------
 * Indigo - Kinetic Synchronization: stable features and changes of kinetic (0.6.5/0.6.6) are now available in indigo, e.g.
   * Support for omnidirectional drives
   * Changed inner velocity storage object to geometry_msgs::Twist to also account for the strafing velocity (and later acceleration). This change caused some function prototype modifications.
