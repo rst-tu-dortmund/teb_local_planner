@@ -47,18 +47,18 @@ TebVisualization::TebVisualization() : initialized_(false)
 {
 }
 
-TebVisualization::TebVisualization(ros::NodeHandle& nh, const TebConfig& cfg) : initialized_(false)
+TebVisualization::TebVisualization(ros::NodeHandle& nh, const std::string& visualization_frame) : initialized_(false)
 {
-  initialize(nh, cfg);
+  initialize(nh, visualization_frame);
 }
 
-void TebVisualization::initialize(ros::NodeHandle& nh, const TebConfig& cfg)
+void TebVisualization::initialize(ros::NodeHandle& nh, const std::string& visualization_frame)
 {
   if (initialized_)
     ROS_WARN("TebVisualization already initialized. Reinitalizing...");
   
-  // set config
-  cfg_ = &cfg;
+  // set visualization frame
+    visualization_frame_ = visualization_frame;
   
   // register topics
   global_plan_pub_ = nh.advertise<nav_msgs::Path>("global_plan", 1);
@@ -92,7 +92,7 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
   
     // create path msg
     nav_msgs::Path teb_path;
-    teb_path.header.frame_id = cfg_->map_frame;
+    teb_path.header.frame_id = visualization_frame_;
     teb_path.header.stamp = ros::Time::now();
     
     // create pose_array (along trajectory)
@@ -101,7 +101,7 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
     teb_poses.header.stamp = teb_path.header.stamp;
     
     // fill path msgs with teb configurations
-    for (unsigned int i=0; i < teb.sizePoses(); i++)
+    for (int i=0; i < teb.sizePoses(); i++)
     {
       geometry_msgs::PoseStamped pose;
       pose.header.frame_id = teb_path.header.frame_id;
@@ -132,7 +132,7 @@ void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, c
   int idx = 0;
   for (std::vector<visualization_msgs::Marker>::iterator marker_it = markers.begin(); marker_it != markers.end(); ++marker_it, ++idx)
   {
-    marker_it->header.frame_id = cfg_->map_frame;
+    marker_it->header.frame_id = visualization_frame_;
     marker_it->header.stamp = ros::Time::now();
     marker_it->action = visualization_msgs::Marker::ADD;
     marker_it->ns = ns;
@@ -152,7 +152,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
   // Visualize point obstacles
   {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = cfg_->map_frame;
+    marker.header.frame_id = visualization_frame_;
     marker.header.stamp = ros::Time::now();
     marker.ns = "PointObstacles";
     marker.id = 0;
@@ -184,7 +184,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
   
   // Visualize line obstacles
   {
-    unsigned int idx = 0;
+    std::size_t idx = 0;
     for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
     {	
       boost::shared_ptr<LineObstacle> pobst = boost::dynamic_pointer_cast<LineObstacle>(*obst);   
@@ -192,7 +192,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
         continue;
       
       visualization_msgs::Marker marker;
-      marker.header.frame_id = cfg_->map_frame;
+      marker.header.frame_id = visualization_frame_;
       marker.header.stamp = ros::Time::now();
       marker.ns = "LineObstacles";
       marker.id = idx++;
@@ -224,7 +224,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 
   // Visualize polygon obstacles
   {
-    unsigned int idx = 0;
+    std::size_t idx = 0;
     for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
     {	
       boost::shared_ptr<PolygonObstacle> pobst = boost::dynamic_pointer_cast<PolygonObstacle>(*obst);   
@@ -232,7 +232,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 				continue;
       
       visualization_msgs::Marker marker;
-      marker.header.frame_id = cfg_->map_frame;
+      marker.header.frame_id = visualization_frame_;
       marker.header.stamp = ros::Time::now();
       marker.ns = "PolyObstacles";
       marker.id = idx++;
@@ -278,7 +278,7 @@ void TebVisualization::publishViaPoints(const std::vector< Eigen::Vector2d, Eige
     return;
   
   visualization_msgs::Marker marker;
-  marker.header.frame_id = cfg_->map_frame;
+  marker.header.frame_id = visualization_frame_;
   marker.header.stamp = ros::Time::now();
   marker.ns = ns;
   marker.id = 0;
@@ -311,7 +311,7 @@ if ( printErrorWhenNotInitialized() )
     return;
   
   visualization_msgs::Marker marker;
-  marker.header.frame_id = cfg_->map_frame;
+  marker.header.frame_id = visualization_frame_;
   marker.header.stamp = ros::Time::now();
   marker.ns = ns;
   marker.id = 0;
@@ -355,7 +355,7 @@ void TebVisualization::publishFeedbackMessage(const std::vector< boost::shared_p
 {
   FeedbackMsg msg;
   msg.header.stamp = ros::Time::now();
-  msg.header.frame_id = cfg_->map_frame;
+  msg.header.frame_id = visualization_frame_;
   msg.selected_trajectory_idx = selected_trajectory_idx;
   
   
@@ -384,7 +384,7 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
 {
   FeedbackMsg msg;
   msg.header.stamp = ros::Time::now();
-  msg.header.frame_id = cfg_->map_frame;
+  msg.header.frame_id = visualization_frame_;
   msg.selected_trajectory_idx = 0;
   
   msg.trajectories.resize(1);
@@ -402,7 +402,7 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
   feedback_pub_.publish(msg);
 }
 
-inline bool TebVisualization::printErrorWhenNotInitialized() const
+bool TebVisualization::printErrorWhenNotInitialized() const
 {
   if (!initialized_)
   {

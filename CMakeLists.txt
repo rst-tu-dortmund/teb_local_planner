@@ -160,7 +160,7 @@ catkin_package(
 	tf
 	tf_conversions
 	visualization_msgs
-  DEPENDS Eigen3 SuiteSparse G2O
+  DEPENDS SUITESPARSE G2O
 )
 
 ###########

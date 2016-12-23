@@ -478,6 +478,14 @@ public:
     centroid_.setConstant(NAN);
   }
   
+  /**
+   * @brief Construct polygon obstacle with a list of vertices
+   */
+  PolygonObstacle(const Point2dContainer& vertices) : Obstacle(), vertices_(vertices)
+  {
+    finalizePolygon();
+  }
+  
   
   /* FIXME Not working at the moment due to the aligned allocator version of std::vector
     * And it is C++11 code that is disabled atm to ensure compliance with ROS indigo/jade
@@ -500,7 +508,7 @@ public:
       // check if point is in the interior of the polygon
       // point in polygon test - raycasting (http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html)
       // using the following algorithm we may obtain false negatives on edge-cases, but that's ok for our purposes	
-      size_t i, j;
+      int i, j;
       bool c = false;
       for (i = 0, j = noVertices()-1; i < noVertices(); j = i++) 
       {
@@ -616,7 +624,7 @@ public:
   /**
     * @brief Get the number of vertices defining the polygon (the first vertex is counted once)
     */
-  size_t noVertices() const {return vertices_.size();}
+  int noVertices() const {return (int)vertices_.size();}
   
   
   ///@}

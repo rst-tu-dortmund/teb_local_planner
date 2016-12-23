@@ -62,7 +62,6 @@
 #include <teb_local_planner/ObstacleMsg.h>
 
 // transforms
-#include <angles/angles.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
@@ -299,13 +298,16 @@ protected:
    * The limit of the translational velocity for backwards driving can be changed independently.
    * Do not choose max_vel_x_backwards <= 0. If no backward driving is desired, change the optimization weight for
    * penalizing backwards driving instead.
-   * @param[in,out] v The translational velocity that should be saturated.
+   * @param[in,out] vx The translational velocity that should be saturated.
+   * @param[in,out] vy Strafing velocity which can be nonzero for holonomic robots
    * @param[in,out] omega The angular velocity that should be saturated.
    * @param max_vel_x Maximum translational velocity for forward driving
+   * @param max_vel_y Maximum strafing velocity (for holonomic robots)
    * @param max_vel_theta Maximum (absolute) angular velocity
    * @param max_vel_x_backwards Maximum translational velocity for backwards driving
    */
-  void saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards) const;
+  void saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y,
+                        double max_vel_theta, double max_vel_x_backwards) const;
 
   
   /**
@@ -324,7 +326,19 @@ protected:
    */
   double convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius = 0) const;
   
+  /**
+   * @brief Validate current parameter values of the footprint for optimization, obstacle distance and the costmap footprint
+   * 
+   * This method prints warnings if validation fails.
+   * @remarks Currently, we only validate the inscribed radius of the footprints
+   * @param opt_inscribed_radius Inscribed radius of the RobotFootprintModel for optimization
+   * @param costmap_inscribed_radius Inscribed radius of the footprint model used for the costmap
+   * @param min_obst_dist desired distance to obstacles
+   */
+  void validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist);
   
+  
+  void configureBackupModes(std::vector<geometry_msgs::PoseStamped>& transformed_plan,  int& goal_idx);
 
 
   
@@ -358,10 +372,10 @@ private:
   
   PoseSE2 robot_pose_; //!< Store current robot pose
   PoseSE2 robot_goal_; //!< Store current robot goal
-  Eigen::Vector2d robot_vel_; //!< Store current robot translational and angular velocity (v, omega)
+  geometry_msgs::Twist robot_vel_; //!< Store current robot translational and angular velocity (vx, vy, omega)
   bool goal_reached_; //!< store whether the goal is reached or not
-  bool horizon_reduced_; //!< store flag whether the horizon should be reduced temporary
-  ros::Time horizon_reduced_stamp_; //!< Store at which time stamp the horizon reduction was requested
+  ros::Time time_last_infeasible_plan_; //!< Store at which time stamp the last infeasible plan was detected
+  int no_infeasible_plans_; //!< Store how many times in a row the planner failed to find a feasible plan.
   
   std::vector<geometry_msgs::Point> footprint_spec_; //!< Store the footprint of the robot 
   double robot_inscribed_radius_; //!< The radius of the inscribed circle of the robot (collision possible)

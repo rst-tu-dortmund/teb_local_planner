@@ -131,7 +131,7 @@ public:
    * @param index element position inside the internal TimeDiffSequence
    * @return reference to the time difference at pos \c index
    */
-  double& TimeDiff(unsigned int index)
+  double& TimeDiff(int index)
   {
     ROS_ASSERT(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index)->dt();
@@ -142,7 +142,7 @@ public:
    * @param index element position inside the internal TimeDiffSequence
    * @return const reference to the time difference at pos \c index
    */
-  const double& TimeDiff(unsigned int index) const
+  const double& TimeDiff(int index) const
   {
     ROS_ASSERT(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index)->dt();
@@ -153,7 +153,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @return reference to the pose at pos \c index
    */
-  PoseSE2& Pose(unsigned int index) 
+  PoseSE2& Pose(int index) 
   {
     ROS_ASSERT(index<sizePoses());
     return pose_vec_.at(index)->pose();
@@ -164,7 +164,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @return const reference to the pose at pos \c index
    */
-  const PoseSE2& Pose(unsigned int index) const 
+  const PoseSE2& Pose(int index) const 
   {
     ROS_ASSERT(index<sizePoses());
     return pose_vec_.at(index)->pose();
@@ -195,7 +195,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @return Weak raw pointer to the pose vertex at pos \c index
    */ 
-  VertexPose* PoseVertex(unsigned int index) 
+  VertexPose* PoseVertex(int index) 
   {
     ROS_ASSERT(index<sizePoses());
     return pose_vec_.at(index);
@@ -206,7 +206,7 @@ public:
    * @param index element position inside the internal TimeDiffSequence
    * @return Weak raw pointer to the timediff vertex at pos \c index
    */  
-  VertexTimeDiff* TimeDiffVertex(unsigned int index) 
+  VertexTimeDiff* TimeDiffVertex(int index) 
   {
     ROS_ASSERT(index<sizeTimeDiffs()); 
     return timediff_vec_.at(index);
@@ -290,7 +290,7 @@ public:
    * @param index element position inside the internal PoseSequence
    * @param pose PoseSE2 element to insert into the internal PoseSequence
    */
-  void insertPose(unsigned int index, const PoseSE2& pose);
+  void insertPose(int index, const PoseSE2& pose);
   
   /**
    * @brief Insert a new pose vertex at pos. \c index to the pose sequence
@@ -298,7 +298,7 @@ public:
    * @param position 2D vector representing the position part
    * @param theta yaw-angle representing the orientation part
    */
-  void insertPose(unsigned int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta);
+  void insertPose(int index, const Eigen::Ref<const Eigen::Vector2d>& position, double theta);
   
   /**
    * @brief Insert a new pose vertex at pos. \c index to the pose sequence
@@ -307,40 +307,40 @@ public:
    * @param y y-coordinate of the position part
    * @param theta yaw-angle representing the orientation part
    */
-  void insertPose(unsigned int index, double x, double y, double theta);
+  void insertPose(int index, double x, double y, double theta);
   
   /**
    * @brief Insert a new timediff vertex at pos. \c index to the timediff sequence
    * @param index element position inside the internal TimeDiffSequence
    * @param dt timediff value
    */   
-  void insertTimeDiff(unsigned int index, double dt);
+  void insertTimeDiff(int index, double dt);
     
   /**
    * @brief Delete pose at pos. \c index in the pose sequence
    * @param index element position inside the internal PoseSequence
    */
-  void deletePose(unsigned int index);
+  void deletePose(int index);
   
   /**
    * @brief Delete multiple (\c number) poses starting at pos. \c index in the pose sequence
    * @param index first element position inside the internal PoseSequence
    * @param number number of elements that should be deleted
    */
-  void deletePoses(unsigned int index, unsigned int number);
+  void deletePoses(int index, int number);
 
   /**
    * @brief Delete pose at pos. \c index in the timediff sequence
    * @param index element position inside the internal TimeDiffSequence
    */
-  void deleteTimeDiff(unsigned int index);
+  void deleteTimeDiff(int index);
 	
   /**
    * @brief Delete multiple (\c number) time differences starting at pos. \c index in the timediff sequence
    * @param index first element position inside the internal TimeDiffSequence
    * @param number number of elements that should be deleted
    */
-  void deleteTimeDiffs(unsigned int index, unsigned int number);
+  void deleteTimeDiffs(int index, int number);
   
   //@}
   
@@ -362,10 +362,11 @@ public:
    * @param goal PoseSE2 defining the goal of the trajectory (final pose)
    * @param diststep euclidean distance between two consecutive poses (if 0, no intermediate samples are inserted despite min_samples)
    * @param timestep intialization for the timediff between two consecutive poses
-	 * @param min_samples Minimum number of samples that should be initialized at least
+   * @param min_samples Minimum number of samples that should be initialized at least
+   * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot
    * @return true if everything was fine, false otherwise
    */
-  bool initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep=0, double timestep=1, int min_samples = 3);
+  bool initTEBtoGoal(const PoseSE2& start, const PoseSE2& goal, double diststep=0, double timestep=1, int min_samples = 3, bool guess_backwards_motion = false);
   
   
   /**
@@ -395,7 +396,8 @@ public:
    * @param max_acc_theta specify to satisfy a maxmimum angular acceleration and decceleration (optional)
    * @param start_orientation Orientation of the first pose of the trajectory (optional, otherwise use goal heading)
    * @param goal_orientation Orientation of the last pose of the trajectory (optional, otherwise use goal heading)
-	 * @param min_samples Minimum number of samples that should be initialized at least
+   * @param min_samples Minimum number of samples that should be initialized at least
+   * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun unyary function that transforms the dereferenced iterator into an Eigen::Vector2d
    * @return true if everything was fine, false otherwise
@@ -404,7 +406,7 @@ public:
   template<typename BidirIter, typename Fun>
   bool initTEBtoGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
 		      boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
-		      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples = 3);  
+		      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples = 3, bool guess_backwards_motion = false);  
   
   /**
    * @brief Initialize a trajectory from a reference pose sequence (positions and orientations).
@@ -417,10 +419,11 @@ public:
    * @param dt specify a uniform time difference between two consecutive poses
    * @param estimate_orient if \c true, calculate orientation using the straight line distance vector between consecutive poses
    *                        (only copy start and goal orientation; recommended if no orientation data is available).
-	 * @param min_samples Minimum number of samples that should be initialized at least
+   * @param min_samples Minimum number of samples that should be initialized at least
+   * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot (this parameter is used only if \c estimate_orient is enabled.
    * @return true if everything was fine, false otherwise
    */
-  bool initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient=false, int min_samples = 3);
+  bool initTEBtoGoal(const std::vector<geometry_msgs::PoseStamped>& plan, double dt, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
   
   //@}
   
@@ -470,9 +473,10 @@ public:
    * Each call only one new sample (pose-dt-pair) is inserted or removed.
    * @param dt_ref reference temporal resolution
    * @param dt_hysteresis hysteresis to avoid oscillations
-	 * @param min_samples minimum number of samples that should be remain in the trajectory after resizing
+   * @param min_samples minimum number of samples that should be remain in the trajectory after resizing
+   * @param max_samples maximum number of samples that should not be exceeded during resizing
    */    
-  void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3);
+  void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3, int max_samples=1000);
   
   
   /**
@@ -480,14 +484,14 @@ public:
    * @param index index to the pose vertex
    * @param status if \c true, the vertex will be fixed, otherwise unfixed
    */
-  void setPoseVertexFixed(unsigned int index, bool status);
+  void setPoseVertexFixed(int index, bool status);
   
   /**
    * @brief Set a timediff vertex at pos \c index of the timediff sequence to be fixed or unfixed during optimization.
    * @param index index to the timediff vertex
    * @param status if \c true, the vertex will be fixed, otherwise unfixed
    */
-  void setTimeDiffVertexFixed(unsigned int index, bool status);
+  void setTimeDiffVertexFixed(int index, bool status);
   
   /**
    * @brief clear all poses and timediffs from the trajectory.
@@ -565,12 +569,12 @@ public:
   /**
    * @brief Get the length of the internal pose sequence
    */
-  std::size_t sizePoses() const {return pose_vec_.size();};
+  int sizePoses() const {return (int)pose_vec_.size();};
   
   /**
    * @brief Get the length of the internal timediff sequence
    */
-  std::size_t sizeTimeDiffs() const {return timediff_vec_.size();};
+  int sizeTimeDiffs() const {return (int)timediff_vec_.size();};
   
   /**
    * @brief Check whether the trajectory is initialized (nonzero pose and timediff sequences)
@@ -602,6 +606,19 @@ public:
    * @return \c true if one of both cases mentioned above are satisfied, false otherwise
    */
   bool detectDetoursBackwards(double threshold=0) const;
+  
+  /**
+   * @brief Check if all trajectory points are contained in a specific region
+   * 
+   * The specific region is a circle around the current robot position (Pose(0)) with given radius \c radius.
+   * This method investigates a different radius for points behind the robot if \c max_dist_behind_robot >= 0.
+   * @param radius radius of the region with the robot position (Pose(0)) as center
+   * @param max_dist_behind_robot A separate radius for trajectory points behind the robot, activated if 0 or positive
+   * @param skip_poses If >0: the specified number of poses are skipped for the test, e.g. Pose(0), Pose(0+skip_poses+1), Pose(2*skip_poses+2), ... are tested.
+   * @return \c true, if all tested trajectory points are inside the specified region, \c false otherwise.
+   */
+  bool isTrajectoryInsideRegion(double radius, double max_dist_behind_robot=-1, int skip_poses=0);
+  
   
   
   //@}

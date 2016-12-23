@@ -62,8 +62,9 @@ namespace teb_local_planner
   
 
 TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costmap_model_(NULL),
-                                           costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"), 
-                                           dynamic_recfg_(NULL), goal_reached_(false), horizon_reduced_(false), initialized_(false)
+                                           costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
+                                           dynamic_recfg_(NULL), goal_reached_(false), no_infeasible_plans_(0), 
+                                           initialized_(false)
 {
 }
 
@@ -90,9 +91,21 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     
     // reserve some memory for obstacles
     obstacles_.reserve(500);
+    
+    // init some variables
+    tf_ = tf;
+    costmap_ros_ = costmap_ros;
+    costmap_ = costmap_ros_->getCostmap(); // locking should be done in MoveBase.
+    
+    costmap_model_ = boost::make_shared<base_local_planner::CostmapModel>(*costmap_);
+
+    
+    global_frame_ = costmap_ros_->getGlobalFrameID();
+    cfg_.map_frame = global_frame_; // TODO
+    robot_base_frame_ = costmap_ros_->getBaseFrameID();
         
     // create visualization instance	
-    visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
+    visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_.map_frame)); 
         
     // create robot footprint/contour model for optimization
     RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
@@ -109,17 +122,6 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
       ROS_INFO("Parallel planning in distinctive topologies disabled.");
     }
     
-    // init other variables
-    tf_ = tf;
-    costmap_ros_ = costmap_ros;
-    costmap_ = costmap_ros_->getCostmap(); // locking should be done in MoveBase.
-    
-    costmap_model_ = boost::make_shared<base_local_planner::CostmapModel>(*costmap_);
-
-    global_frame_ = costmap_ros_->getGlobalFrameID();
-    cfg_.map_frame = global_frame_; // TODO
-    robot_base_frame_ = costmap_ros_->getBaseFrameID();
-
     //Initialize a costmap to polygon converter
     if (!cfg_.obstacles.costmap_converter_plugin.empty())
     {
@@ -148,7 +150,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     // Get footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
     costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);    
-
+    
     // init the odom helper to receive the robot's velocity from odom messages
     odom_helper_.setOdomTopic(cfg_.odom_topic);
 
@@ -156,6 +158,9 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     dynamic_recfg_ = boost::make_shared< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> >(nh);
     dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(&TebLocalPlannerROS::reconfigureCB, this, _1, _2);
     dynamic_recfg_->setCallback(cb);
+    
+    // validate optimization footprint and costmap footprint
+    validateFootprints(robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_.obstacles.min_obstacle_dist);
         
     // setup callback for custom obstacles
     custom_obst_sub_ = nh.subscribe("obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
@@ -206,6 +211,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   }
 
   cmd_vel.linear.x = 0;
+  cmd_vel.linear.y = 0;
   cmd_vel.angular.z = 0;
   goal_reached_ = false;  
   
@@ -217,10 +223,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // Get robot velocity
   tf::Stamped<tf::Pose> robot_vel_tf;
   odom_helper_.getRobotVel(robot_vel_tf);
-  robot_vel_ = tfPoseToEigenVector2dTransRot(robot_vel_tf);
-  geometry_msgs::Twist robot_vel_twist;
-  robot_vel_twist.linear.x = robot_vel_[0];
-  robot_vel_twist.angular.z = robot_vel_[1];   
+  robot_vel_.linear.x = robot_vel_tf.getOrigin().getX();
+  robot_vel_.linear.y = robot_vel_tf.getOrigin().getY();
+  robot_vel_.angular.z = tf::getYaw(robot_vel_tf.getRotation());
   
   // prune global plan to cut off parts of the past (spatially before the robot)
   pruneGlobalPlan(*tf_, robot_pose, global_plan_);
@@ -250,20 +255,10 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return true;
   }
   
-  // Shorten horizon if requested
-  if (horizon_reduced_)
-  {
-    // reduce to 50 percent:
-    int horizon_reduction = goal_idx/2;
-    // we have a small overhead here, since we already transformed 50% more of the trajectory.
-    // But that's ok for now, since we do not need to make transformGlobalPlan more complex 
-    // and a reduced horizon should occur just rarely.
-    int new_goal_idx_transformed_plan = int(transformed_plan.size()) - horizon_reduction - 1;
-    goal_idx -= horizon_reduction;
-    if (new_goal_idx_transformed_plan>0 && goal_idx >= 0)
-      transformed_plan.erase(transformed_plan.begin()+new_goal_idx_transformed_plan, transformed_plan.end());
-    else goal_idx += horizon_reduction; // this should not happen, but safety first ;-)
-  }
+  
+  // check if we should enter any backup mode and apply settings
+  configureBackupModes(transformed_plan, goal_idx);
+  
     
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty())
@@ -315,52 +310,47 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     
   // Now perform the actual planning
 //   bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_.goal_tolerance.free_goal_vel); // straight line init
-  bool success = planner_->plan(transformed_plan, &robot_vel_twist, cfg_.goal_tolerance.free_goal_vel);
+  bool success = planner_->plan(transformed_plan, &robot_vel_, cfg_.goal_tolerance.free_goal_vel);
   if (!success)
   {
     planner_->clearPlanner(); // force reinitialization for next time
     ROS_WARN("teb_local_planner was not able to obtain a local plan for the current setting.");
+    
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
     return false;
   }
-    
-  // Undo temporary horizon reduction
-  if (horizon_reduced_ && (ros::Time::now()-horizon_reduced_stamp_).toSec() >= 10 && !planner_->isHorizonReductionAppropriate(transformed_plan)) // 10s are hardcoded for now...
-  {
-    horizon_reduced_ = false;
-    ROS_INFO("Switching back to full horizon length.");
-  }
-     
+         
   // Check feasibility (but within the first few states only)
   bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_.trajectory.feasibility_check_no_poses);
   if (!feasible)
   {
     cmd_vel.linear.x = 0;
+    cmd_vel.linear.y = 0;
     cmd_vel.angular.z = 0;
    
-    if (!horizon_reduced_ && cfg_.trajectory.shrink_horizon_backup && planner_->isHorizonReductionAppropriate(transformed_plan))
-    {
-      horizon_reduced_ = true;
-      ROS_WARN("TebLocalPlannerROS: trajectory is not feasible, but the planner suggests a shorter horizon temporary. Complying with its wish for at least 10s...");
-      horizon_reduced_stamp_ = ros::Time::now();
-      return true; // commanded velocity is zero for this step
-    }
     // now we reset everything to start again with the initialization of new trajectories.
     planner_->clearPlanner();
     ROS_WARN("TebLocalPlannerROS: trajectory is not feasible. Resetting planner...");
-       
+    
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
     return false;
   }
 
   // Get the velocity command for this sampling interval
-  if (!planner_->getVelocityCommand(cmd_vel.linear.x, cmd_vel.angular.z))
+  if (!planner_->getVelocityCommand(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z))
   {
     planner_->clearPlanner();
     ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
     return false;
   }
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
-  saturateVelocity(cmd_vel.linear.x, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
+  saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_y,
+                   cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
 
   // convert rot-vel to steering angle if desired (carlike robot).
   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
@@ -370,14 +360,19 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     cmd_vel.angular.z = convertTransRotVelToSteeringAngle(cmd_vel.linear.x, cmd_vel.angular.z, cfg_.robot.wheelbase, 0.95*cfg_.robot.min_turning_radius);
     if (!std::isfinite(cmd_vel.angular.z))
     {
-      cmd_vel.linear.x = cmd_vel.angular.z = 0;
+      cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.angular.z = 0;
       planner_->clearPlanner();
       ROS_WARN("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...");
+      ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+      time_last_infeasible_plan_ = ros::Time::now();
       return false;
     }
   }
   
-  // Now visualize everything		    
+  // a feasible solution should be found, reset counter
+  no_infeasible_plans_ = 0;
+  
+  // Now visualize everything    
   planner_->visualize();
   visualization_->publishObstacles(obstacles_);
   visualization_->publishViaPoints(via_points_);
@@ -772,11 +767,17 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
 }
       
       
-void TebLocalPlannerROS::saturateVelocity(double& v, double& omega, double max_vel_x, double max_vel_theta, double max_vel_x_backwards) const
+void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_theta, double max_vel_x_backwards) const
 {
   // Limit translational velocity for forward driving
-  if (v > max_vel_x)
-    v = max_vel_x;
+  if (vx > max_vel_x)
+    vx = max_vel_x;
+  
+  // limit strafing velocity
+  if (vy > max_vel_y)
+    vy = max_vel_y;
+  else if (vy < -max_vel_y)
+    vy = -max_vel_y;
   
   // Limit angular velocity
   if (omega > max_vel_theta)
@@ -789,8 +790,8 @@ void TebLocalPlannerROS::saturateVelocity(double& v, double& omega, double max_v
   {
     ROS_WARN_ONCE("TebLocalPlannerROS(): Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
   }
-  else if (v < -max_vel_x_backwards)
-    v = -max_vel_x_backwards;
+  else if (vx < -max_vel_x_backwards)
+    vx = -max_vel_x_backwards;
 }
      
      
@@ -805,6 +806,52 @@ double TebLocalPlannerROS::convertTransRotVelToSteeringAngle(double v, double om
     radius = double(g2o::sign(radius)) * min_turning_radius; 
 
   return std::atan(wheelbase / radius);
+}
+     
+
+void TebLocalPlannerROS::validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist)
+{
+    ROS_WARN_COND(opt_inscribed_radius + min_obst_dist < costmap_inscribed_radius,
+                  "The inscribed radius of the footprint specified for TEB optimization (%f) + min_obstacle_dist (%f) are smaller "
+                  "than the inscribed radius of the robot's footprint in the costmap parameters (%f, including 'footprint_padding'). "
+                  "Infeasible optimziation results might occur frequently!", opt_inscribed_radius, min_obst_dist, costmap_inscribed_radius);
+}
+   
+   
+   
+void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::PoseStamped>& transformed_plan,  int& goal_idx)
+{
+    ros::Time current_time = ros::Time::now();
+    
+    // reduced horizon backup mode
+    if (cfg_.trajectory.shrink_horizon_backup && 
+        goal_idx < (int)transformed_plan.size()-1 && // we do not reduce if the goal is already selected (because the orientation might change -> can introduce oscillations)
+       (no_infeasible_plans_>0 || (current_time - time_last_infeasible_plan_).toSec() < cfg_.trajectory.shrink_horizon_min_duration )) // keep short horizon for at least a few seconds
+    {
+        ROS_INFO_COND(no_infeasible_plans_==1, "Activating reduced horizon backup mode for at least %.2f sec (infeasible trajectory detected).", cfg_.trajectory.shrink_horizon_min_duration);
+
+
+        // Shorten horizon if requested
+        // reduce to 50 percent:
+        int horizon_reduction = goal_idx/2;
+        
+        if (no_infeasible_plans_ > 9)
+        {
+            ROS_INFO_COND(no_infeasible_plans_==10, "Infeasible trajectory detected 10 times in a row: further reducing horizon...");
+            horizon_reduction /= 2;
+        }
+        
+        // we have a small overhead here, since we already transformed 50% more of the trajectory.
+        // But that's ok for now, since we do not need to make transformGlobalPlan more complex 
+        // and a reduced horizon should occur just rarely.
+        int new_goal_idx_transformed_plan = int(transformed_plan.size()) - horizon_reduction - 1;
+        goal_idx -= horizon_reduction;
+        if (new_goal_idx_transformed_plan>0 && goal_idx >= 0)
+            transformed_plan.erase(transformed_plan.begin()+new_goal_idx_transformed_plan, transformed_plan.end());
+        else
+            goal_idx += horizon_reduction; // this should not happen, but safety first ;-) 
+    }
+
 }
      
      

@@ -55,7 +55,7 @@ void TebVisualization::publishGraph(const GraphType& graph, const std::string& n
 
   // Visualize Edges
   visualization_msgs::Marker marker;
-  marker.header.frame_id = cfg_->map_frame;
+  marker.header.frame_id = visualization_frame_;
   marker.header.stamp = ros::Time::now();
   marker.ns = ns_prefix + "Edges";
   marker.id = 0;
@@ -124,7 +124,7 @@ void TebVisualization::publishGraph(const GraphType& graph, const std::string& n
   teb_marker_pub_.publish( marker );
   
   // Visualize vertices
-  marker.header.frame_id = cfg_->map_frame;
+  marker.header.frame_id = visualization_frame_;
   marker.header.stamp = ros::Time::now();
   marker.ns = ns_prefix + "Vertices";
   marker.id = 0;
@@ -182,7 +182,7 @@ void TebVisualization::publishPathContainer(BidirIter first, BidirIter last, con
     return;
   
   visualization_msgs::Marker marker;
-  marker.header.frame_id = cfg_->map_frame;
+  marker.header.frame_id = visualization_frame_;
   marker.header.stamp = ros::Time::now();
   marker.ns = ns;
   marker.id = 0;

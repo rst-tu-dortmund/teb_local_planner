@@ -44,7 +44,7 @@
 #define EDGE_VIA_POINT_H_
 
 #include <teb_local_planner/g2o_types/vertex_pose.h>
-#include <teb_local_planner/teb_config.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 
 #include "g2o/core/base_unary_edge.h"
 
@@ -63,7 +63,7 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesViaPoints
  * @remarks Do not forget to call setTebConfig() and setViaPoint()
  */     
-class EdgeViaPoint : public g2o::BaseUnaryEdge<1, const Eigen::Vector2d*, VertexPose>
+class EdgeViaPoint : public BaseTebUnaryEdge<1, const Eigen::Vector2d*, VertexPose>
 {
 public:
     
@@ -73,21 +73,8 @@ public:
   EdgeViaPoint() 
   {
     _measurement = NULL;
-    _vertices[0] = NULL;
   }
  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeViaPoint() 
-  {
-    if(_vertices[0]) 
-      _vertices[0]->edges().erase(this);
-  }
-
   /**
    * @brief Actual cost function
    */    
@@ -101,37 +88,6 @@ public:
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeViaPoint::computeError() _error[0]=%f\n",_error[0]);
   }
 
-  
-  /**
-   * @brief Compute and return error / cost value.
-   * 
-   * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-   * @return 1D Cost / error vector
-   */   
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-  
-  /**
-   * @brief Read values from input stream
-   */    
-  virtual bool read(std::istream& is)
-  {
-  // is >> _measurement[0] >> _measurement[1];
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */ 
-  virtual bool write(std::ostream& os) const
-  {
-  // os << information()(0,0) << " Error: " << _error[0] << ", Measurement X: " << _measurement[0] << ", Measurement Y: " << _measurement[1];
-    return os.good();
-  }
-  
   /**
    * @brief Set pointer to associated via point for the underlying cost function 
    * @param via_point 2D position vector containing the position of the via point
@@ -141,16 +97,6 @@ public:
     _measurement = via_point;
   }
     
-    
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */   
-  void setTebConfig(const TebConfig& cfg)
-  {
-      cfg_ = &cfg;
-  }
-
   /**
    * @brief Set all parameters at once
    * @param cfg TebConfig class
@@ -161,10 +107,6 @@ public:
     cfg_ = &cfg;
     _measurement = via_point;
   }
-  
-protected:
-
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
 public: 	
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

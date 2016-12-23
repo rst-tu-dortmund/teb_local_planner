@@ -46,9 +46,8 @@
 
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/teb_config.h>
-
-#include "g2o/core/base_binary_edge.h"
 
 #include <cmath>
 
@@ -71,7 +70,7 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesKinematics, EdgeKinematicsCarlike
  * @remarks Do not forget to call setTebConfig()
  */    
-class EdgeKinematicsDiffDrive : public g2o::BaseBinaryEdge<2, double, VertexPose, VertexPose>
+class EdgeKinematicsDiffDrive : public BaseTebBinaryEdge<2, double, VertexPose, VertexPose>
 {
 public:
   
@@ -81,24 +80,8 @@ public:
   EdgeKinematicsDiffDrive()
   {
       this->setMeasurement(0.);
-      _vertices[0] = _vertices[1] = NULL;
   }
   
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeKinematicsDiffDrive()
-  {
-    for(unsigned int i=0;i<2;i++) 
-    {
-      if(_vertices[i])
-        _vertices[i]->edges().erase(this);
-    }
-  }
-
   /**
    * @brief Actual cost function
    */    
@@ -166,53 +149,7 @@ public:
   }
 #endif
 #endif
-    
-  /**
-  * @brief Compute and return error / cost value.
-  * 
-  * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-  * @return 2D Cost / error vector [nh cost, backward drive dir cost]^T
-  */     
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-
-  /**
-   * @brief Read values from input stream
-   */    
-  virtual bool read(std::istream& is)
-  {
-    is >> _measurement;
-    //inverseMeasurement() = measurement() * -1;
-    is >> information()(0,0);
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */    
-  virtual bool write(std::ostream& os) const
-  {
-    //os << measurement() << " ";
-    os << information()(0,0) << " Error NH-Constraint: " << _error[0] << ", Error PosDriveDir: " << _error[1];
-    return os.good();
-  }
-
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */ 
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-
-protected:
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
-  
+      
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
 };
@@ -242,7 +179,7 @@ public:
  *          the user might add an extra margin to the min_turning_radius param.
  * @remarks Do not forget to call setTebConfig()
  */    
-class EdgeKinematicsCarlike : public g2o::BaseBinaryEdge<2, double, VertexPose, VertexPose>
+class EdgeKinematicsCarlike : public BaseTebBinaryEdge<2, double, VertexPose, VertexPose>
 {
 public:
   
@@ -252,24 +189,8 @@ public:
   EdgeKinematicsCarlike()
   {
       this->setMeasurement(0.);
-      _vertices[0] = _vertices[1] = NULL;
   }
   
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeKinematicsCarlike()
-  {
-    for(unsigned int i=0;i<2;i++) 
-    {
-      if(_vertices[i])
-        _vertices[i]->edges().erase(this);
-    }
-  }
-
   /**
    * @brief Actual cost function
    */    
@@ -285,62 +206,17 @@ public:
     _error[0] = fabs( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
 
     // limit minimum turning radius
-    double omega_t = g2o::normalize_theta( conf2->theta() - conf1->theta() );
-    if (omega_t == 0)
+    double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+    if (angle_diff == 0)
       _error[1] = 0; // straight line motion
+    else if (cfg_->trajectory.exact_arc_length) // use exact computation of the radius
+      _error[1] = penaltyBoundFromBelow(fabs(deltaS.norm()/(2*sin(angle_diff/2))), cfg_->robot.min_turning_radius, 0.0);
     else
-      _error[1] = penaltyBoundFromBelow(deltaS.norm() / fabs(omega_t), cfg_->robot.min_turning_radius, 0.0); 
+      _error[1] = penaltyBoundFromBelow(deltaS.norm() / fabs(angle_diff), cfg_->robot.min_turning_radius, 0.0); 
     // This edge is not affected by the epsilon parameter, the user might add an exra margin to the min_turning_radius parameter.
     
-
     ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeKinematicsCarlike::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
   }
-    
-  /**
-  * @brief Compute and return error / cost value.
-  * 
-  * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-  * @return 2D Cost / error vector [nh cost, backward drive dir cost]^T
-  */     
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-
-  /**
-   * @brief Read values from input stream
-   */    
-  virtual bool read(std::istream& is)
-  {
-    is >> _measurement;
-    //inverseMeasurement() = measurement() * -1;
-    is >> information()(0,0);
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */    
-  virtual bool write(std::ostream& os) const
-  {
-    //os << measurement() << " ";
-    os << information()(0,0) << " Error NH-Constraint: " << _error[0] << ", Error PosDriveDir: " << _error[1];
-    return os.good();
-  }
-
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */ 
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-
-protected:
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   

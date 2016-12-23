@@ -46,10 +46,10 @@
 
 #include <float.h>
 
-#include <g2o/core/base_unary_edge.h>
 #include <base_local_planner/BaseLocalPlannerConfig.h>
 
 #include <teb_local_planner/g2o_types/vertex_timediff.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/g2o_types/penalties.h>
 #include <teb_local_planner/teb_config.h>
 
@@ -70,31 +70,18 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesTimeOptimal
  * @remarks Do not forget to call setTebConfig()
  */
-class EdgeTimeOptimal : public g2o::BaseUnaryEdge<1, double, VertexTimeDiff>
+class EdgeTimeOptimal : public BaseTebUnaryEdge<1, double, VertexTimeDiff>
 {
 public:
-		
+    
   /**
    * @brief Construct edge.
    */
   EdgeTimeOptimal()
   {
     this->setMeasurement(0.);
-    _vertices[0] = NULL;
   }
   
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */
-  virtual ~EdgeTimeOptimal()
-  {
-    if(_vertices[0]) 
-      _vertices[0]->edges().erase(this); 
-  }
-
   /**
    * @brief Actual cost function
    */
@@ -118,50 +105,7 @@ public:
     _jacobianOplusXi( 0 , 0 ) = 1;
   }
 #endif
-    
-  /**
-   * @brief Compute and return error / cost value.
-   * 
-   * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-   * @return 1D Cost / error vector
-   */
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
   
-  /**
-   * @brief Read values from input stream
-   */
-  virtual bool read(std::istream& is)
-  {
-    is >> _measurement;
-    is >> information()(0,0);
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */
-  virtual bool write(std::ostream& os) const
-  {
-    os << information()(0,0) << " Error: " << _error[0]; 
-    return os.good();
-  }
-    
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */  
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-
-protected:
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   
 public:        
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

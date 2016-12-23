@@ -109,6 +109,19 @@ inline double distance_points2d(const P1& point1, const P2& point2)
   return std::sqrt( std::pow(point2.x-point1.x,2) + std::pow(point2.y-point1.y,2) );
 }
 
+
+/**
+ * @brief Calculate the 2d cross product (returns length of the resulting vector along the z-axis in 3d)
+ * @param v1 object containing public methods x() and y()
+ * @param v2 object containing fields x() and y()
+ * @return magnitude that would result in the 3D case (along the z-axis)
+*/
+template <typename V1, typename V2>
+inline double cross2d(const V1& v1, const V2& v2)
+{
+     return v1.x()*v2.y() - v2.x()*v1.y();
+}
+
 /** 
  * @brief Helper function that returns the const reference to a value defined by either its raw pointer type or const reference.
  * 

@@ -47,10 +47,9 @@
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/vertex_timediff.h>
 #include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/obstacles.h>
 #include <teb_local_planner/teb_config.h>
-
-#include "g2o/core/base_binary_edge.h"
 
 namespace teb_local_planner
 {
@@ -68,7 +67,7 @@ namespace teb_local_planner
  * @remarks Do not forget to call setTebConfig(), setVertexIdx() and 
  * @warning Experimental
  */  
-class EdgeDynamicObstacle : public g2o::BaseBinaryEdge<1, const Obstacle*, VertexPose, VertexTimeDiff>
+class EdgeDynamicObstacle : public BaseTebBinaryEdge<1, const Obstacle*, VertexPose, VertexTimeDiff>
 {
 public:
   
@@ -77,7 +76,6 @@ public:
    */    
   EdgeDynamicObstacle() : vert_idx_(0)
   {
-    _vertices[0] = _vertices[1] = NULL;
   }
   
   /**
@@ -86,21 +84,8 @@ public:
    */      
   EdgeDynamicObstacle(size_t vert_idx) : vert_idx_(vert_idx)
   {
-    _vertices[0] = _vertices[1] = NULL;
   }
   
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeDynamicObstacle() 
-  {
-    if(_vertices[0]) _vertices[0]->edges().erase(this);
-    if(_vertices[1]) _vertices[1]->edges().erase(this);
-  }
-
   /**
    * @brief Actual cost function
    */   
@@ -131,36 +116,6 @@ public:
 
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeDynamicObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
   }
-
-  /**
-   * @brief Compute and return error / cost value.
-   * 
-   * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-   * @return 1D Cost / error vector
-   */  
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-  
-  /**
-   * @brief Read values from input stream
-   */   
-  virtual bool read(std::istream& is)
-  {
-    //  is >> _measurement[0];
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */   
-  virtual bool write(std::ostream& os) const
-  {
-    //  os << information()(0,0) << " Error: " << _error[0] << ", Measurement X: " << _measurement[0] << ", Measurement Y: " << _measurement[1];
-    return os.good();
-  }
   
   /**
    * @brief Set the vertex index (position in the pose sequence)
@@ -180,18 +135,9 @@ public:
     _measurement = obstacle;
   }
   
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */  
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
 
 protected:
   
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   size_t vert_idx_; //!< Store vertex index (position in the pose sequence)
   
 public: 

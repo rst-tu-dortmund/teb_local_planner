@@ -58,6 +58,6 @@
 
 
   <export>
-	<nav_core plugin="${prefix}/teb_local_planner_plugin.xml"/>
+    <nav_core plugin="${prefix}/teb_local_planner_plugin.xml"/>
   </export>
 </package>

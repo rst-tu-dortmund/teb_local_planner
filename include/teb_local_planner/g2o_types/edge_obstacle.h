@@ -46,10 +46,10 @@
 #include <teb_local_planner/obstacles.h>
 #include <teb_local_planner/robot_footprint_model.h>
 #include <teb_local_planner/g2o_types/vertex_pose.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/g2o_types/penalties.h>
 #include <teb_local_planner/teb_config.h>
 
-#include "g2o/core/base_unary_edge.h"
 
 
 namespace teb_local_planner
@@ -67,7 +67,7 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesObstacles, TebOptimalPlanner::EdgeInflatedObstacle
  * @remarks Do not forget to call setTebConfig() and setObstacle()
  */     
-class EdgeObstacle : public g2o::BaseUnaryEdge<1, const Obstacle*, VertexPose>
+class EdgeObstacle : public BaseTebUnaryEdge<1, const Obstacle*, VertexPose>
 {
 public:
     
@@ -77,21 +77,8 @@ public:
   EdgeObstacle() 
   {
     _measurement = NULL;
-    _vertices[0] =NULL;
   }
  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeObstacle() 
-  {
-    if(_vertices[0]) 
-      _vertices[0]->edges().erase(this);
-  }
-
   /**
    * @brief Actual cost function
    */    
@@ -153,36 +140,6 @@ public:
 #endif
   
   /**
-   * @brief Compute and return error / cost value.
-   * 
-   * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-   * @return 1D Cost / error vector
-   */   
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-  
-  /**
-   * @brief Read values from input stream
-   */    
-  virtual bool read(std::istream& is)
-  {
-  // is >> _measurement[0] >> _measurement[1];
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */ 
-  virtual bool write(std::ostream& os) const
-  {
-  // os << information()(0,0) << " Error: " << _error[0] << ", Measurement X: " << _measurement[0] << ", Measurement Y: " << _measurement[1];
-    return os.good();
-  }
-  
-  /**
    * @brief Set pointer to associated obstacle for the underlying cost function 
    * @param obstacle 2D position vector containing the position of the obstacle
    */ 
@@ -201,15 +158,6 @@ public:
   }
     
   /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */   
-  void setTebConfig(const TebConfig& cfg)
-  {
-      cfg_ = &cfg;
-  }
-
-  /**
    * @brief Set all parameters at once
    * @param cfg TebConfig class
    * @param robot_model Robot model required for distance calculation
@@ -224,7 +172,6 @@ public:
   
 protected:
 
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
   
 public: 	
@@ -248,7 +195,7 @@ public:
  * @see TebOptimalPlanner::AddEdgesObstacles, TebOptimalPlanner::EdgeObstacle
  * @remarks Do not forget to call setTebConfig() and setObstacle()
  */     
-class EdgeInflatedObstacle : public g2o::BaseUnaryEdge<2, const Obstacle*, VertexPose>
+class EdgeInflatedObstacle : public BaseTebUnaryEdge<2, const Obstacle*, VertexPose>
 {
 public:
     
@@ -258,21 +205,8 @@ public:
   EdgeInflatedObstacle() 
   {
     _measurement = NULL;
-    _vertices[0] =NULL;
   }
  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~EdgeInflatedObstacle() 
-  {
-    if(_vertices[0]) 
-      _vertices[0]->edges().erase(this);
-  }
-
   /**
    * @brief Actual cost function
    */    
@@ -290,36 +224,6 @@ public:
     ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeObstacle::computeError() _error[0]=%f, _error[1]=%f\n",_error[0], _error[1]);
   }
 
-  /**
-   * @brief Compute and return error / cost value.
-   * 
-   * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-   * @return 1D Cost / error vector
-   */   
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-  
-  /**
-   * @brief Read values from input stream
-   */    
-  virtual bool read(std::istream& is)
-  {
-  // is >> _measurement[0] >> _measurement[1];
-    return true;
-  }
-
-  /**
-   * @brief Write values to an output stream
-   */ 
-  virtual bool write(std::ostream& os) const
-  {
-  // os << information()(0,0) << " Error: " << _error[0] << ", Measurement X: " << _measurement[0] << ", Measurement Y: " << _measurement[1];
-    return os.good();
-  }
-  
   /**
    * @brief Set pointer to associated obstacle for the underlying cost function 
    * @param obstacle 2D position vector containing the position of the obstacle
@@ -339,15 +243,6 @@ public:
   }
     
   /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */   
-  void setTebConfig(const TebConfig& cfg)
-  {
-      cfg_ = &cfg;
-  }
-
-  /**
    * @brief Set all parameters at once
    * @param cfg TebConfig class
    * @param robot_model Robot model required for distance calculation
@@ -362,7 +257,6 @@ public:
   
 protected:
 
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
   const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
   
 public:         
