@@ -2,6 +2,46 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Indigo - Kinetic Synchronization: stable features and changes of kinetic (0.6.5/0.6.6) are now available in indigo, e.g.
+  * Support for omnidirectional drives
+  * Changed inner velocity storage object to geometry_msgs::Twist to also account for the strafing velocity (and later acceleration). This change caused some function prototype modifications.
+  * Limiting y-acceleration (strafing acceleration) is now supported if holonomic mode is enabled (vel_max_y > 0)
+  * Increased bounds of many variables in dynamic_reconfigure. Resolves #14.
+  * HomotopyClassPlanner public interface extended
+  * Removed TebConfig dependency in TebVisualization
+  * Added intermediate edge layer for unary, binary and multi edges in order to reduce code redundancy.
+  * Added an option to compute the actual arc length
+  instead of using the Euclidean distance approximation.
+  The actual arc length is then used for computing velocities, accelerations
+  and the turning radius.
+  * New default obstacle association strategy.
+  During optimization graph creation, for each pose of the trajectory a
+  relevance detection is performed before considering the obstacle
+  during optimization. New parameters are introduced. The
+  old strategy is kept as 'legacy' strategy (see parameters).
+  * update of default parameters for 'costmap_obstacles_behind_robot_dist'
+  * Added a warning if the optim footprint + min_obstacle_dist is smaller than the costmap footprint.
+  Validation is performed by only comparing the inscribed radii of the footprints.
+  * Weight adaptation added for obstacles edges.
+  Added parameter 'weight_adapt_factor'.
+  Obstacle weights are scaled repeatedly scaled by this factor in each outer TEB iteration.
+  Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions.
+  * Changed HSignature to a generic equivalence class
+  * A new parameter is introduced to prefer the equivalence class of the initial plan
+  * Fixed some bugs related to the deletion of candidates and
+  for keeping the equivalence class of the initial plan.
+  * The trajectory is now initialized backwards for goals close to and behind the robot.
+  Parameter 'allow_init_with_backwards_motion' added.
+  * Horizon reduction for resolving infeasible trajectories is not activated anymore if the global goal is already selected
+  (to avoid oscillations due to changing final orientations)
+  * fixed wrong matrix assignment that caused a crash of the planner
+  * max_samples parameter added
+  * global plan orientations are now taken for TEB initialization if lobal_plan_overwrite_orientation==true
+  * Further fixes (thanks to Matthias FÜller and Daniel Neumann for providing patches)
+
+
 0.4.3 (2016-08-17)
 ------------------
 * Changed the f0 function for calculating the H-Signature.
