@@ -2,6 +2,15 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Strategy for recovering from oscillating local plans added (see new parameters)
+* Horizon reduction for resolving infeasible trajectories is not activated anymore if the global goal is already selected
+  (to avoid oscillations due to changing final orientations)
+* Global plan orientations are now taken for TEB initialization if lobal_plan_overwrite_orientation==true
+* Parameter max_samples added
+* Further fixes (thanks to Matthias Füller and Daniel Neumann for providing patches)
+
 0.6.5 (2016-11-15)
 ------------------
 * The trajectory is now initialized backwards for goals close to and behind the robot.
