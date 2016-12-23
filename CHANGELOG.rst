@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.6 (2016-12-23)
+------------------
 * Strategy for recovering from oscillating local plans added (see new parameters)
 * Horizon reduction for resolving infeasible trajectories is not activated anymore if the global goal is already selected
   (to avoid oscillations due to changing final orientations)
