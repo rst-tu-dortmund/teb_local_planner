@@ -265,6 +265,7 @@ protected:
     * @param global_frame The frame to transform the plan to
     * @param max_plan_length Specify maximum length (cumulative Euclidean distances) of the transformed plan [if <=0: disabled; the length is also bounded by the local costmap size!]
     * @param[out] transformed_plan Populated with the transformed plan
+    * @param global_plan_trimmed Trimmed global plan with use of max and min length
     * @param[out] current_goal_idx Index of the current (local) goal pose in the global plan
     * @param[out] tf_plan_to_global Transformation between the global plan and the global planning frame
     * @return \c true if the global plan is transformed, \c false otherwise
@@ -272,6 +273,7 @@ protected:
   bool transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan,
                            const tf::Stamped<tf::Pose>& global_pose,  const costmap_2d::Costmap2D& costmap,
                            const std::string& global_frame, double max_plan_length, std::vector<geometry_msgs::PoseStamped>& transformed_plan,
+                           std::vector<geometry_msgs::PoseStamped>& global_plan_trimmed,
                            int* current_goal_idx = NULL, tf::StampedTransform* tf_plan_to_global = NULL) const;
     
   /**
