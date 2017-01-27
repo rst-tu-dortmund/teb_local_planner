@@ -247,6 +247,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return false;
   }
 
+  // update via-points container
+  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
+
   // check if global goal is reached
   tf::Stamped<tf::Pose> global_goal;
   tf::poseStampedMsgToTF(global_plan_.back(), global_goal);
@@ -255,7 +258,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   double dy = global_goal.getOrigin().getY() - robot_pose_.y();
   double delta_orient = g2o::normalize_theta( tf::getYaw(global_goal.getRotation()) - robot_pose_.theta() );
   if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
-    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance)
+    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
+    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0))
   {
     goal_reached_ = true;
     return true;
@@ -308,8 +312,6 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // also consider custom obstacles (must be called after other updates, since the container is not cleared)
   updateObstacleContainerWithCustomObstacles();
   
-  // update via-points container
-  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
     
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
