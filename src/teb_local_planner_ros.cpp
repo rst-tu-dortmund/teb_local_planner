@@ -209,6 +209,7 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
 void TebLocalPlannerROS::peakViaPoint(double robot_x, double robot_y, double local_goal_x, double local_goal_y,
                              std::vector<geometry_msgs::PoseStamped>& transformed_plan) //@mudit
 {
+  if (local_goal_x-robot_x==0) return;
   double plan_line_slope= (local_goal_y-robot_y)/(local_goal_x-robot_x);  // slope of the line connecting robot pose and local goal
   double plan_line_yintercept= robot_y-(plan_line_slope*robot_x);        // y-intercept of the line connecting robot pose and local goal
   double max_dist=0;
