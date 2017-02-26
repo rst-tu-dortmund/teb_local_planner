@@ -339,7 +339,7 @@ protected:
   void validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist);
   
   void peakViaPoint(double robot_x, double robot_y, double localGoal_x, double localGoal_y,
-                               std::vector<geometry_msgs::PoseStamped>& transformed_plan); //Edit @mudit
+                               std::vector<geometry_msgs::PoseStamped>& transformed_plan, double robot_radius); //Edit @mudit
   
   void configureBackupModes(std::vector<geometry_msgs::PoseStamped>& transformed_plan,  int& goal_idx);
 
