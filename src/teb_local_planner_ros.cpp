@@ -207,7 +207,7 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
 }
 
 void TebLocalPlannerROS::peakViaPoint(double robot_x, double robot_y, double local_goal_x, double local_goal_y,
-                             std::vector<geometry_msgs::PoseStamped>& transformed_plan) //@mudit
+                             std::vector<geometry_msgs::PoseStamped>& transformed_plan, double robot_circumscribed_radius) //@mudit
 {
   if (local_goal_x-robot_x==0) return;
   double plan_line_slope= (local_goal_y-robot_y)/(local_goal_x-robot_x);  // slope of the line connecting robot pose and local goal
@@ -234,14 +234,16 @@ void TebLocalPlannerROS::peakViaPoint(double robot_x, double robot_y, double loc
 
    }
 
-     if(max_dist>0.01)                       //move_base crashes for unknown reason if max_dist=0.000000
+     if(max_dist>(robot_circumscribed_radius/16))                       //move_base crashes for unknown reason if max_dist=0.000000
      {
 	     via_points_.push_back( Eigen::Vector2d( transformed_plan[via_idx].pose.position.x, transformed_plan[via_idx].pose.position.y ) ); 
-	     cfg_.hcp.max_number_classes=1;
+	     cfg_.hcp.enable_multithreading=false;
+	     cfg_.hcp.max_number_classes=false;
      }
      else
 
-     cfg_.hcp.max_number_classes=4;                                                           // transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y
+     cfg_.hcp.enable_multithreading=true;
+     cfg_.hcp.max_number_classes=true;                                                      
 }
 
 bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
