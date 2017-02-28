@@ -441,30 +441,50 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
     return;
     
   //Get obstacles from costmap converter
-  costmap_converter::PolygonContainerConstPtr polygons =  costmap_converter_->getPolygons();
-  if (!polygons)
+  costmap_converter::ObstacleContainerConstPtr obstacles = costmap_converter_->getObstacles();
+  if (!obstacles)
     return;
-  
-  for (std::size_t i=0; i<polygons->size(); ++i)
+
+  for (std::size_t i=0; i<obstacles->obstacles.size(); ++i)
   {
-    if (polygons->at(i).points.size()==1) // Point
+    const geometry_msgs::Polygon* polygon = &obstacles->obstacles.at(i).polygon;
+
+    if (polygon->points.size()==1) // Point
     {
-      obstacles_.push_back(ObstaclePtr(new PointObstacle(polygons->at(i).points[0].x, polygons->at(i).points[0].y)));
+      obstacles_.push_back(ObstaclePtr(new PointObstacle(polygon->points[0].x, polygon->points[0].y)));
     }
-    else if (polygons->at(i).points.size()==2) // Line
+    else if (polygon->points.size()==2) // Line
     {
-      obstacles_.push_back(ObstaclePtr(new LineObstacle(polygons->at(i).points[0].x, polygons->at(i).points[0].y,
-                                                        polygons->at(i).points[1].x, polygons->at(i).points[1].y )));
+      obstacles_.push_back(ObstaclePtr(new LineObstacle(polygon->points[0].x, polygon->points[0].y,
+                                                        polygon->points[1].x, polygon->points[1].y )));
     }
-    else if (polygons->at(i).points.size()>2) // Real polygon
+    else if (polygon->points.size()>2) // Real polygon
     {
         PolygonObstacle* polyobst = new PolygonObstacle;
-        for (std::size_t j=0; j<polygons->at(i).points.size(); ++j)
+        for (std::size_t j=0; j<polygon->points.size(); ++j)
         {
-            polyobst->pushBackVertex(polygons->at(i).points[j].x, polygons->at(i).points[j].y);
+            polyobst->pushBackVertex(polygon->points[j].x, polygon->points[j].y);
         }
         polyobst->finalizePolygon();
         obstacles_.push_back(ObstaclePtr(polyobst));
+    }
+
+    if (!obstacles->velocities.empty() && !obstacles->orientations.empty())
+    {
+      Eigen::Vector2d vel;
+      vel.coeffRef(0) = obstacles->velocities.at(i).twist.linear.x;
+      vel.coeffRef(1) = obstacles->velocities.at(i).twist.linear.y;
+
+      // If norm of velocity is less than 0.001, consider obstacle as not dynamic
+      // TODO: Get rid of constant
+      if (vel.norm() < 0.001)
+        return;
+
+      double yaw = tf::getYaw(obstacles->orientations.at(i).quaternion);
+      Eigen::Rotation2Dd rot(-yaw);
+      vel = rot * vel;
+      obstacles_.at(i)->setCentroidVelocity(vel);
+      ROS_INFO("Obstacle %i | vel_x: %f, vel_y: %f", (int)i, vel.coeffRef(0), vel.coeffRef(1));
     }
   }
 }

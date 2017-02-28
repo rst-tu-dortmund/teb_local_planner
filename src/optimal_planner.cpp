@@ -307,8 +307,8 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
     AddEdgesObstaclesLegacy(weight_multiplier);
   else
     AddEdgesObstacles(weight_multiplier);
-  
-  //AddEdgesDynamicObstacles();
+
+  AddEdgesDynamicObstacles();
   
   AddEdgesViaPoints();
   
