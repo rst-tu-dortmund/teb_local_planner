@@ -238,22 +238,27 @@ void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
   obst_vector.resize(no_fixed_obstacles);
   
   // Add custom obstacles obtained via message (assume that all obstacles coordiantes are specified in the default planning frame)  
-  for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = obst_msg->obstacles.begin(); obst_it != obst_msg->obstacles.end(); ++obst_it)
+  for (size_t i = 0; i < obst_msg->obstacles.size(); ++i)
   {
-    if (obst_it->polygon.points.size() == 1 )
+    if (obst_msg->obstacles.at(i).polygon.points.size() == 1 )
     {
-      obst_vector.push_back(ObstaclePtr(new PointObstacle( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y )));
+      obst_vector.push_back(ObstaclePtr(new PointObstacle( obst_msg->obstacles.at(i).polygon.points.front().x,
+                                                           obst_msg->obstacles.at(i).polygon.points.front().y )));
     }
     else
     {
       PolygonObstacle* polyobst = new PolygonObstacle;
-      for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+      for (size_t j=0; j<obst_msg->obstacles.at(i).polygon.points.size(); ++j)
       {
-        polyobst->pushBackVertex( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y );
+        polyobst->pushBackVertex( obst_msg->obstacles.at(i).polygon.points[j].x,
+                                  obst_msg->obstacles.at(i).polygon.points[j].y );
       }
       polyobst->finalizePolygon();
       obst_vector.push_back(ObstaclePtr(polyobst));
     }
+
+    if(!obst_msg->velocities.empty() && !obst_msg->orientations.empty() && !obst_vector.empty())
+      obst_vector.back()->setCentroidVelocity(obst_msg->velocities.at(i), obst_msg->orientations.at(i));
   }
 }
 

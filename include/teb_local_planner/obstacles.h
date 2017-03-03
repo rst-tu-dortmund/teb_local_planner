@@ -42,12 +42,18 @@
 
 #include <Eigen/Core>
 #include <Eigen/StdVector>
+#include <Eigen/Geometry>
 
 #include <complex>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
+
 #include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/TwistWithCovariance.h>
+#include <geometry_msgs/QuaternionStamped.h>
+
+#include <tf/tf.h>
 #include <teb_local_planner/distance_calculations.h>
 
 
@@ -163,6 +169,31 @@ public:
     * @param vel 2D vector containing the velocities of the centroid in x and y directions
     */
   void setCentroidVelocity(const Eigen::Ref<const Eigen::Vector2d>& vel) {centroid_velocity_ = vel; dynamic_=true;} 
+
+  /**
+    * @brief Set the 2d velocity (vx, vy) of the obstacle w.r.t to the centroid
+    * @remarks Setting the velocity using this function marks the obstacle as dynamic (@see isDynamic)
+    * @param velocity geometry_msgs::TwistWithCovariance containing the velocity of the obstacle
+    * @param orientation geometry_msgs::QuaternionStamped containing the orientation of the obstacle
+    */
+  void setCentroidVelocity(const geometry_msgs::TwistWithCovariance velocity,
+                           const geometry_msgs::QuaternionStamped orientation)
+  {
+    // Set velocity, if obstacle is moving
+    Eigen::Vector2d vel;
+    vel.coeffRef(0) = velocity.twist.linear.x;
+    vel.coeffRef(1) = velocity.twist.linear.y;
+
+    // If norm of velocity is less than 0.001, consider obstacle as not dynamic
+    // TODO: Get rid of constant
+    if (vel.norm() < 0.001)
+      return;
+
+    double yaw = tf::getYaw(orientation.quaternion);
+    Eigen::Rotation2Dd rot(yaw);
+    vel = rot * vel;
+    setCentroidVelocity(vel);
+  }
 
   /**
     * @brief Get the obstacle velocity (vx, vy) (w.r.t. to the centroid)

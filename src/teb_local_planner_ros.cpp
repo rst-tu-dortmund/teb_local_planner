@@ -469,23 +469,9 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
         obstacles_.push_back(ObstaclePtr(polyobst));
     }
 
-    if (!obstacles->velocities.empty() && !obstacles->orientations.empty())
-    {
-      Eigen::Vector2d vel;
-      vel.coeffRef(0) = obstacles->velocities.at(i).twist.linear.x;
-      vel.coeffRef(1) = obstacles->velocities.at(i).twist.linear.y;
-
-      // If norm of velocity is less than 0.001, consider obstacle as not dynamic
-      // TODO: Get rid of constant
-      if (vel.norm() < 0.001)
-        return;
-
-      double yaw = tf::getYaw(obstacles->orientations.at(i).quaternion);
-      Eigen::Rotation2Dd rot(-yaw);
-      vel = rot * vel;
-      obstacles_.at(i)->setCentroidVelocity(vel);
-      ROS_INFO("Obstacle %i | vel_x: %f, vel_y: %f", (int)i, vel.coeffRef(0), vel.coeffRef(1));
-    }
+    // Set velocity, if obstacle is moving
+    if(!obstacles->velocities.empty() && !obstacles->orientations.empty() && !obstacles_.empty())
+      obstacles_.back()->setCentroidVelocity(obstacles->velocities.at(i), obstacles->orientations.at(i));
   }
 }
 
@@ -516,30 +502,43 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
       obstacle_to_map_eig.setIdentity();
     }
     
-    for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = custom_obstacle_msg_.obstacles.begin(); obst_it != custom_obstacle_msg_.obstacles.end(); ++obst_it)
+    for (size_t i=0; i<custom_obstacle_msg_.obstacles.size(); ++i)
     {
-      if (obst_it->polygon.points.size() == 1 ) // point
+      if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 ) // point
       {
-        Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
+        Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().z );
         obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
       }
-      else if (obst_it->polygon.points.size() == 2 ) // line
+      else if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 2 ) // line
       {
-        Eigen::Vector3d line_start( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
-        Eigen::Vector3d line_end( obst_it->polygon.points.back().x, obst_it->polygon.points.back().y, obst_it->polygon.points.back().z );
-        obstacles_.push_back(ObstaclePtr(new LineObstacle( (obstacle_to_map_eig * line_start).head(2), (obstacle_to_map_eig * line_end).head(2) )));
+        Eigen::Vector3d line_start( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
+                                    custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
+                                    custom_obstacle_msg_.obstacles.at(i).polygon.points.front().z );
+        Eigen::Vector3d line_end( custom_obstacle_msg_.obstacles.at(i).polygon.points.back().x,
+                                  custom_obstacle_msg_.obstacles.at(i).polygon.points.back().y,
+                                  custom_obstacle_msg_.obstacles.at(i).polygon.points.back().z );
+        obstacles_.push_back(ObstaclePtr(new LineObstacle( (obstacle_to_map_eig * line_start).head(2),
+                                                           (obstacle_to_map_eig * line_end).head(2) )));
       }
       else // polygon
       {
         PolygonObstacle* polyobst = new PolygonObstacle;
-        for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+        for (size_t j=0; j<custom_obstacle_msg_.obstacles.at(i).polygon.points.size(); ++j)
         {
-          Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
+          Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points[j].x,
+                               custom_obstacle_msg_.obstacles.at(i).polygon.points[j].y,
+                               custom_obstacle_msg_.obstacles.at(i).polygon.points[j].z );
           polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
         }
         polyobst->finalizePolygon();
         obstacles_.push_back(ObstaclePtr(polyobst));
       }
+
+      // Set velocity, if obstacle is moving
+      if(!custom_obstacle_msg_.velocities.empty() && !custom_obstacle_msg_.orientations.empty() && !obstacles_.empty())
+        obstacles_.back()->setCentroidVelocity(custom_obstacle_msg_.velocities.at(i), custom_obstacle_msg_.orientations.at(i));
     }
   }
 }
