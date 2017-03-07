@@ -81,8 +81,9 @@ public:
   /**
    * @brief Construct edge and specify the vertex id (neccessary for computeError).
    * @param vert_idx Index of the vertex (position in the pose sequence)
+   * @param t_ Estimated time until current pose is reached
    */      
-  EdgeDynamicObstacle(size_t vert_idx) : vert_idx_(vert_idx)
+  EdgeDynamicObstacle(size_t vert_idx, double t) : vert_idx_(vert_idx), t_(t)
   {
   }
   
@@ -96,7 +97,8 @@ public:
     const VertexTimeDiff* dt_vertex = static_cast<const VertexTimeDiff*>(_vertices[1]);
     
     // WARNING: vert_idx_*dt is just an approximation for the total time, since we don't have a uniform dt at the moment!
-    Eigen::Vector2d pred_obst_point = _measurement->getCentroid() + double(vert_idx_)*dt_vertex->estimate()*_measurement->getCentroidVelocity();
+    //Eigen::Vector2d pred_obst_point = _measurement->getCentroid() + double(vert_idx_)*dt_vertex->estimate()*_measurement->getCentroidVelocity();
+    Eigen::Vector2d pred_obst_point = _measurement->getCentroid() + t_*_measurement->getCentroidVelocity();
     double dist = (pred_obst_point - bandpt->position()).norm();
     /*
     // get point in x-y-t
@@ -139,6 +141,7 @@ public:
 protected:
   
   size_t vert_idx_; //!< Store vertex index (position in the pose sequence)
+  double t_; //!< Estimated time until current pose is reached
   
 public: 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

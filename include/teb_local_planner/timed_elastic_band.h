@@ -587,6 +587,13 @@ public:
   double getSumOfAllTimeDiffs() const;
   
   /**
+   * @brief Calculate the estimated transition time up to the pose denoted by index
+   * @param index Index of the pose up to which the transition times are summed up
+   * @return Estimated transition time up to pose index
+   */
+  double getSumOfTimeDiffsUpToIdx(int index) const;
+
+  /**
    * @brief Calculate the length (accumulated euclidean distance) of the trajectory
    */
   double getAccumulatedDistance() const;

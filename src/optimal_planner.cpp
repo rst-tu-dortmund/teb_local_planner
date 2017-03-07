@@ -628,7 +628,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
 
     for (int i=1; i < teb_.sizePoses() - 1; ++i)
     {
-      EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(i);
+      EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(i, teb_.getSumOfTimeDiffsUpToIdx(i));
       dynobst_edge->setVertex(0,teb_.PoseVertex(i));
       //dynobst_edge->setVertex(1,teb.PointVertex(i+1));
       dynobst_edge->setVertex(1,teb_.TimeDiffVertex(i));

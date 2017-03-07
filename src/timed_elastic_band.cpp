@@ -243,6 +243,18 @@ double TimedElasticBand::getSumOfAllTimeDiffs() const
   return time;
 }
 
+double TimedElasticBand::getSumOfTimeDiffsUpToIdx(int idx) const
+{
+  double time = 0;
+
+  for(int i = 0; i < idx; ++i)
+  {
+    time += timediff_vec_.at(i)->dt();
+  }
+
+  return time;
+}
+
 double TimedElasticBand::getAccumulatedDistance() const
 {
   double dist = 0;
