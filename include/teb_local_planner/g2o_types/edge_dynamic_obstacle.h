@@ -67,23 +67,22 @@ namespace teb_local_planner
  * @remarks Do not forget to call setTebConfig(), setVertexIdx() and 
  * @warning Experimental
  */  
-class EdgeDynamicObstacle : public BaseTebBinaryEdge<1, const Obstacle*, VertexPose, VertexTimeDiff>
+class EdgeDynamicObstacle : public BaseTebUnaryEdge<1, const Obstacle*, VertexPose>
 {
 public:
   
   /**
    * @brief Construct edge.
    */    
-  EdgeDynamicObstacle() : vert_idx_(0)
+  EdgeDynamicObstacle() : t_(0)
   {
   }
   
   /**
-   * @brief Construct edge and specify the vertex id (neccessary for computeError).
-   * @param vert_idx Index of the vertex (position in the pose sequence)
+   * @brief Construct edge and specify the time for its associated pose (neccessary for computeError).
    * @param t_ Estimated time until current pose is reached
    */      
-  EdgeDynamicObstacle(size_t vert_idx, double t) : vert_idx_(vert_idx), t_(t)
+  EdgeDynamicObstacle(double t) : t_(t)
   {
   }
   
@@ -94,12 +93,10 @@ public:
   {
     ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeDynamicObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexTimeDiff* dt_vertex = static_cast<const VertexTimeDiff*>(_vertices[1]);
-    
-    // WARNING: vert_idx_*dt is just an approximation for the total time, since we don't have a uniform dt at the moment!
-    //Eigen::Vector2d pred_obst_point = _measurement->getCentroid() + double(vert_idx_)*dt_vertex->estimate()*_measurement->getCentroidVelocity();
+
     Eigen::Vector2d pred_obst_point = _measurement->getCentroid() + t_*_measurement->getCentroidVelocity();
     double dist = (pred_obst_point - bandpt->position()).norm();
+
     /*
     // get point in x-y-t
     Eigen::Vector3d point(bandpt->estimate().coeffRef(0), bandpt->estimate().coeffRef(1), _vert_idx*dt_vertex->estimate());
@@ -119,14 +116,6 @@ public:
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeDynamicObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
   }
   
-  /**
-   * @brief Set the vertex index (position in the pose sequence)
-   * @param vert_idx Index of the vertex
-   */  
-  void setVertexIdx(size_t vert_idx)
-  {
-    vert_idx_ = vert_idx;
-  }
   
   /**
    * @brief Set Obstacle for the underlying cost function
@@ -140,7 +129,6 @@ public:
 
 protected:
   
-  size_t vert_idx_; //!< Store vertex index (position in the pose sequence)
   double t_; //!< Estimated time until current pose is reached
   
 public: 
