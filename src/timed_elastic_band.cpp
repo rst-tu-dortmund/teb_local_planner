@@ -243,11 +243,13 @@ double TimedElasticBand::getSumOfAllTimeDiffs() const
   return time;
 }
 
-double TimedElasticBand::getSumOfTimeDiffsUpToIdx(int idx) const
+double TimedElasticBand::getSumOfTimeDiffsUpToIdx(int index) const
 {
+  ROS_ASSERT(index<=timediff_vec_.size());
+
   double time = 0;
 
-  for(int i = 0; i < idx; ++i)
+  for(int i = 0; i < index; ++i)
   {
     time += timediff_vec_.at(i)->dt();
   }
