@@ -351,7 +351,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
     
   //@mudit edit : creating a via point for including peak points of the global plan in the robot's path
-  peakViaPoint(robot_pose_.x(),robot_pose_.y(),robot_goal_.x(),robot_goal_.y(),transformed_plan);
+  peakViaPoint(robot_pose_.x(),robot_pose_.y(),robot_goal_.x(),robot_goal_.y(),transformed_plan, robot_circumscribed_radius);
 	
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
