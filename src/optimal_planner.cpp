@@ -632,8 +632,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
       dynobst_edge->setVertex(0,teb_.PoseVertex(i));
       //dynobst_edge->setVertex(1,teb.PointVertex(i+1));
       dynobst_edge->setInformation(information);
-      dynobst_edge->setMeasurement(obst->get());
-      dynobst_edge->setTebConfig(*cfg_);
+      dynobst_edge->setParameters(*cfg_, robot_model_.get(), obst->get());
       optimizer_->addEdge(dynobst_edge);
     }
   }
