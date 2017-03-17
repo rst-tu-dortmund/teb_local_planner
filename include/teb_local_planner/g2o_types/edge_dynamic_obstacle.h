@@ -92,14 +92,14 @@ public:
    */   
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeDynamicObstacle()");
+    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeDynamicObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
     
     double dist = robot_model_->estimateSpatioTemporalDistance(bandpt->pose(), _measurement, t_);
 
     _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeDynamicObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeDynamicObstacle::computeError() _error[0]=%f\n",_error[0]);
   }
   
   
