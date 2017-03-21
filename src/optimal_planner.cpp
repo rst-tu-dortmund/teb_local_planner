@@ -617,9 +617,11 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
 {
   if (cfg_->optim.weight_obstacle==0 || obstacles_==NULL )
     return; // if weight equals zero skip adding edges!
-  
-  Eigen::Matrix<double,1,1> information;
-  information.fill(cfg_->optim.weight_dynamic_obstacle);
+
+  Eigen::Matrix<double,2,2> information;
+  information(0,0) = cfg_->optim.weight_dynamic_obstacle;
+  information(1,1) = cfg_->optim.weight_dynamic_obstacle_inflation;
+  information(0,1) = information(1,0) = 0;
   
   for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
   {
@@ -630,7 +632,6 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
     {
       EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(teb_.getSumOfTimeDiffsUpToIdx(i));
       dynobst_edge->setVertex(0,teb_.PoseVertex(i));
-      //dynobst_edge->setVertex(1,teb.PointVertex(i+1));
       dynobst_edge->setInformation(information);
       dynobst_edge->setParameters(*cfg_, robot_model_.get(), obst->get());
       optimizer_->addEdge(dynobst_edge);
