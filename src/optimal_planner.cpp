@@ -420,6 +420,10 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       // iterate obstacles
       for (const ObstaclePtr& obst : *obstacles_)
       {
+        // we handle dynamic obstacles differently below
+        if(obst->isDynamic())
+          continue;
+
           // calculate distance to current pose
           // TODO we ignore the robot footprint here in the association stage
           double dist = obst->getMinimumDistance(teb_.Pose(i).position());
