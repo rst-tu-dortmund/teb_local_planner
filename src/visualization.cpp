@@ -170,14 +170,35 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       point.y = pobst->y();
       point.z = 0;
       marker.points.push_back(point);
+
+      // Actual obstacles are red
+      std_msgs::ColorRGBA color;
+      color.a = 1.0;
+      color.r = 1.0;
+      color.g = 0.0;
+      color.b = 0.0;
+      marker.colors.push_back(color);
+
+      if (pobst->isDynamic())
+      {
+        double t = 2.0; // publish predicted obstacle location in 2 seconds
+        Eigen::Vector2d pred_obst_point = pobst->getCentroid() + t * pobst->getCentroidVelocity();
+        point.x = pred_obst_point.x();
+        point.y = pred_obst_point.y();
+        point.z = 0;
+        marker.points.push_back(point);
+
+        // Predicted obstacles are orange
+        color.a = 1.0;
+        color.r = 1.0;
+        color.g = 0.5;
+        color.b = 0.0;
+        marker.colors.push_back(color);
+      }
     }
     
     marker.scale.x = 0.1;
     marker.scale.y = 0.1;
-    marker.color.a = 1.0;
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
 
     teb_marker_pub_.publish( marker );
   }

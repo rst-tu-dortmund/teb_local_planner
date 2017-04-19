@@ -214,9 +214,11 @@ public:
     if (vel.norm() < 0.001)
       return;
 
-    double yaw = tf::getYaw(orientation.quaternion);
-    Eigen::Rotation2Dd rot(yaw);
-    vel = rot * vel;
+    // currently velocity published by stage is already given in the map frame
+//    double yaw = tf::getYaw(orientation.quaternion);
+//    ROS_INFO("Yaw: %f", yaw);
+//    Eigen::Rotation2Dd rot(yaw);
+//    vel = rot * vel;
     setCentroidVelocity(vel);
   }
 
