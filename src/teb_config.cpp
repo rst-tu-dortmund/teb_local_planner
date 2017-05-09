@@ -84,6 +84,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("min_obstacle_dist", obstacles.min_obstacle_dist, obstacles.min_obstacle_dist);
   nh.param("inflation_dist", obstacles.inflation_dist, obstacles.inflation_dist);
   nh.param("dynamic_obstacle_inflation_dist", obstacles.dynamic_obstacle_inflation_dist, obstacles.dynamic_obstacle_inflation_dist);
+  nh.param("include_dynamic_obstacles", obstacles.include_dynamic_obstacles, obstacles.include_dynamic_obstacles);
   nh.param("include_costmap_obstacles", obstacles.include_costmap_obstacles, obstacles.include_costmap_obstacles);
   nh.param("costmap_obstacles_behind_robot_dist", obstacles.costmap_obstacles_behind_robot_dist, obstacles.costmap_obstacles_behind_robot_dist);
   nh.param("obstacle_poses_affected", obstacles.obstacle_poses_affected, obstacles.obstacle_poses_affected);
@@ -190,6 +191,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   obstacles.min_obstacle_dist = cfg.min_obstacle_dist;
   obstacles.inflation_dist = cfg.inflation_dist;
   obstacles.dynamic_obstacle_inflation_dist = cfg.dynamic_obstacle_inflation_dist;
+  obstacles.include_dynamic_obstacles = cfg.include_dynamic_obstacles;
   obstacles.include_costmap_obstacles = cfg.include_costmap_obstacles;
   obstacles.legacy_obstacle_association = cfg.legacy_obstacle_association;
   obstacles.obstacle_association_force_inclusion_factor = cfg.obstacle_association_force_inclusion_factor;

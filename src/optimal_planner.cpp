@@ -308,7 +308,8 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
   else
     AddEdgesObstacles(weight_multiplier);
 
-  AddEdgesDynamicObstacles();
+  if (cfg_->obstacles.include_dynamic_obstacles)
+    AddEdgesDynamicObstacles();
   
   AddEdgesViaPoints();
   
@@ -421,7 +422,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       for (const ObstaclePtr& obst : *obstacles_)
       {
         // we handle dynamic obstacles differently below
-        if(obst->isDynamic())
+        if(cfg_->obstacles.include_dynamic_obstacles && obst->isDynamic())
           continue;
 
           // calculate distance to current pose
@@ -539,7 +540,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
     
   for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
   {
-    if ((*obst)->isDynamic()) // we handle dynamic obstacles differently below
+    if (cfg_->obstacles.include_dynamic_obstacles && (*obst)->isDynamic()) // we handle dynamic obstacles differently below
       continue; 
     
     int index;
