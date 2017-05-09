@@ -78,12 +78,6 @@ void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obsta
   robot_model_ = robot_model;
   initialized_ = true;
   
-  // now explore new homotopy classes and initialize tebs if new ones are found.
-  if (cfg_->hcp.simple_exploration)
-    graph_search_ = boost::shared_ptr<GraphSearchInterface>(new lrKeyPointGraph(*cfg_, this));
-  else
-    graph_search_ = boost::shared_ptr<GraphSearchInterface>(new ProbRoadmapGraph(*cfg_, this));
-
   setVisualization(visual);
 }
 
@@ -163,7 +157,7 @@ void HomotopyClassPlanner::visualize()
   if (visualization_)
   {
     // Visualize graph
-    if (cfg_->hcp.visualize_hc_graph)
+    if (cfg_->hcp.visualize_hc_graph && graph_search_)
       visualization_->publishGraph(graph_search_->graph_);
         
     // Visualize active tebs as marker
@@ -349,7 +343,13 @@ void HomotopyClassPlanner::exploreEquivalenceClassesAndInitTebs(const PoseSE2& s
     initial_plan_teb_.reset();
     initial_plan_teb_ = getInitialPlanTEB(); // this method searches for initial_plan_eq_class_ in the teb container (-> if !initial_plan_teb_)
   }
-    
+
+  // now explore new homotopy classes and initialize tebs if new ones are found.
+  if (cfg_->hcp.simple_exploration)
+    graph_search_ = boost::shared_ptr<GraphSearchInterface>(new lrKeyPointGraph(*cfg_, this));
+  else
+    graph_search_ = boost::shared_ptr<GraphSearchInterface>(new ProbRoadmapGraph(*cfg_, this));
+
   // now explore new homotopy classes and initialize tebs if new ones are found. The appropriate createGraph method is chosen via polymorphism.
   graph_search_->createGraph(start,goal,dist_to_obst,cfg_->hcp.obstacle_heading_threshold, start_vel);
 } 

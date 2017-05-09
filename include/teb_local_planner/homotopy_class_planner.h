@@ -426,7 +426,7 @@ public:
   /**
    * @brief Clear any existing graph of the homotopy class search
    */
-  void clearGraph() {if(graph_search_ != NULL) graph_search_->clearGraph();}
+  void clearGraph() {if(graph_search_) graph_search_->clearGraph();}
 
   /**
    * @brief find the index of the currently best TEB in the container
