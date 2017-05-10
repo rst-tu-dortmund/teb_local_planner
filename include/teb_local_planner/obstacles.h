@@ -183,6 +183,12 @@ public:
   virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const = 0;
 
   /**
+   * @brief Predict the position of this obstacle at time t using a constant velocity model
+   * @param t time, for which the position of this obstacle is predicted
+   * @return Point2dContainer containing the vertices of the obstacle
+   */
+  virtual Point2dContainer predictPosition(double t) const = 0;
+  /**
     * @brief Check if the obstacle is a moving with a (non-zero) velocity
     * @return \c true if the obstacle is not marked as static, \c false otherwise
     */	
@@ -349,25 +355,27 @@ public:
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
   {
-    // Predict obstacle (point) at time t
-    Eigen::Vector2d pred_obst_point = pos_ + t*centroid_velocity_;
-    return (pred_obst_point - position).norm();
+    return (predictPosition(t).at(0) - position).norm();
   }
 
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
   {
-    // Predict obstacle (point) at time t
-    Eigen::Vector2d pred_obst_point = pos_ + t*centroid_velocity_;
-    return distance_point_to_segment_2d(pred_obst_point, line_start, line_end);
+    return distance_point_to_segment_2d(predictPosition(t).at(0), line_start, line_end);
   }
 
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
   {
-    // Predict obstacle (point) at time t
-    Eigen::Vector2d pred_obst_point = pos_ + t*centroid_velocity_;
-    return distance_point_to_polygon_2d(pred_obst_point, polygon);
+    return distance_point_to_polygon_2d(predictPosition(t).at(0), polygon);
+  }
+
+  // Predict obstacle (point) at time t
+  virtual Point2dContainer predictPosition(double t) const
+  {
+    Point2dContainer point;
+    point.push_back(pos_ + t*centroid_velocity_);
+    return point;
   }
 
   // implements getCentroid() of the base class
@@ -498,33 +506,30 @@ public:
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
   {
-    // Predict obstacle (line) at time t
-    Eigen::Vector2d pred_start = start_ + t*centroid_velocity_;
-    Eigen::Vector2d pred_end = end_ + t*centroid_velocity_;
-
-    return distance_point_to_segment_2d(position, pred_start, pred_end);
+    return distance_point_to_segment_2d(position, predictPosition(t).at(0), predictPosition(t).at(1));
   }
 
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
   {
-    // Predict obstacle (line) at time t
-    Eigen::Vector2d pred_start = start_ + t*centroid_velocity_;
-    Eigen::Vector2d pred_end = end_ + t*centroid_velocity_;
-
-    return distance_segment_to_segment_2d(pred_start, pred_end, line_start, line_end);
+    return distance_segment_to_segment_2d(predictPosition(t).at(0), predictPosition(t).at(1), line_start, line_end);
   }
 
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
   {
-    // Predict obstacle (line) at time t
-    Eigen::Vector2d pred_start = start_ + t*centroid_velocity_;
-    Eigen::Vector2d pred_end = end_ + t*centroid_velocity_;
-
-    return distance_segment_to_polygon_2d(pred_start, pred_end, polygon);
+    return distance_segment_to_polygon_2d(predictPosition(t).at(0), predictPosition(t).at(1), polygon);
   }
-  
+
+  // Predict obstacle (line) at time t
+  virtual Point2dContainer predictPosition(double t) const
+  {
+    Point2dContainer line;
+    line.push_back(start_ + t*centroid_velocity_);
+    line.push_back(end_ + t*centroid_velocity_);
+    return line;
+  }
+
   // implements getCentroid() of the base class
   virtual const Eigen::Vector2d& getCentroid() const    
   {
@@ -669,31 +674,22 @@ public:
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
   {
-    // Predict obstacle (polygon) at time t
-    Point2dContainer pred_vertices(vertices_.size());
-    for (size_t i = 0; i < vertices_.size(); i++)
-    {
-      pred_vertices.at(i) = vertices_.at(i) + t*centroid_velocity_;
-    }
-
-    return distance_point_to_polygon_2d(position, pred_vertices);
+    return distance_point_to_polygon_2d(position, predictPosition(t));
   }
 
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
   {
-    // Predict obstacle (polygon) at time t
-    Point2dContainer pred_vertices(vertices_.size());
-    for (size_t i = 0; i < vertices_.size(); i++)
-    {
-      pred_vertices.at(i) = vertices_.at(i) + t*centroid_velocity_;
-    }
-
-    return distance_segment_to_polygon_2d(line_start, line_end, pred_vertices);
+    return distance_segment_to_polygon_2d(line_start, line_end, predictPosition(t));
   }
 
   // implements getMinimumSpatioTemporalDistance() of the base class
   virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+  {
+    return distance_polygon_to_polygon_2d(polygon, predictPosition(t));
+  }
+
+  virtual Point2dContainer predictPosition(double t) const
   {
     // Predict obstacle (polygon) at time t
     Point2dContainer pred_vertices(vertices_.size());
@@ -701,8 +697,7 @@ public:
     {
       pred_vertices.at(i) = vertices_.at(i) + t*centroid_velocity_;
     }
-
-    return distance_polygon_to_polygon_2d(polygon, pred_vertices);
+    return pred_vertices;
   }
 
   // implements getCentroid() of the base class
