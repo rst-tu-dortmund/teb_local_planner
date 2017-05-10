@@ -20,7 +20,7 @@ def publish_obstacle_msg():
 
   obstacle_msg = ObstacleMsg() 
   obstacle_msg.header.stamp = rospy.Time.now()
-  obstacle_msg.header.frame_id = "odom" # CHANGE HERE: odom/map
+  obstacle_msg.header.frame_id = "map" # CHANGE HERE: odom/map
   
   # Add point obstacle
   obstacle_msg.obstacles.append(PolygonStamped())
@@ -33,11 +33,13 @@ def publish_obstacle_msg():
   q = tf.transformations.quaternion_from_euler(0,0,yaw)
   quat = Quaternion(*q)
   obstacle_msg.orientations.append(QuaternionStamped())
+  obstacle_msg.orientations[0].header.stamp = obstacle_msg.header.stamp
+  obstacle_msg.orientations[0].header.frame_id = obstacle_msg.header.frame_id
   obstacle_msg.orientations[0].quaternion = quat
 
   obstacle_msg.velocities.append(TwistWithCovariance())
-  obstacle_msg.velocities[0].twist.linear.x = math.sqrt(vel_x*vel_x + vel_y*vel_y)
-  obstacle_msg.velocities[0].twist.linear.y = 0
+  obstacle_msg.velocities[0].twist.linear.x = vel_x
+  obstacle_msg.velocities[0].twist.linear.y = vel_y
   obstacle_msg.velocities[0].twist.linear.z = 0
   obstacle_msg.velocities[0].twist.angular.x = 0
   obstacle_msg.velocities[0].twist.angular.y = 0
