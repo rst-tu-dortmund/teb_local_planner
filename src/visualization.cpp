@@ -108,7 +108,7 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
       pose.header.stamp = teb_path.header.stamp;
       pose.pose.position.x = teb.Pose(i).x();
       pose.pose.position.y = teb.Pose(i).y();
-      pose.pose.position.z = 0;
+      pose.pose.position.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*teb.getSumOfTimeDiffsUpToIdx(i);
       pose.pose.orientation = tf::createQuaternionMsgFromYaw(teb.Pose(i).theta());
       teb_path.poses.push_back(pose);
       teb_poses.poses.push_back(pose.pose);
@@ -165,11 +165,31 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       boost::shared_ptr<PointObstacle> pobst = boost::dynamic_pointer_cast<PointObstacle>(*obst);      
       if (!pobst)
         continue;
-      geometry_msgs::Point point;
-      point.x = pobst->x();
-      point.y = pobst->y();
-      point.z = 0;
-      marker.points.push_back(point);
+
+      if (cfg_->hcp.visualize_with_time_as_z_axis_scale < 0.001)
+      {
+        geometry_msgs::Point point;
+        point.x = pobst->x();
+        point.y = pobst->y();
+        point.z = 0;
+        marker.points.push_back(point);
+      }
+      else // Spatiotemporally point obstacles become a line
+      {
+        marker.type = visualization_msgs::Marker::LINE_LIST;
+        geometry_msgs::Point start;
+        start.x = pobst->x();
+        start.y = pobst->y();
+        start.z = 0;
+        marker.points.push_back(start);
+
+        geometry_msgs::Point end;
+        double t = 20;
+        end.x = pobst->predictPosition(t).at(0)(0);
+        end.y = pobst->predictPosition(t).at(0)(1);
+        end.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*t;
+        marker.points.push_back(end);
+      }
     }
     
     marker.scale.x = 0.1;
@@ -323,22 +343,28 @@ if ( printErrorWhenNotInitialized() )
   {	  
     // iterate single poses
     PoseSequence::const_iterator it_pose = it_teb->get()->teb().poses().begin();
+    TimeDiffSequence::const_iterator it_timediff = it_teb->get()->teb().timediffs().begin();
     PoseSequence::const_iterator it_pose_end = it_teb->get()->teb().poses().end();
     std::advance(it_pose_end, -1); // since we are interested in line segments, reduce end iterator by one.
-    while (it_pose != it_pose_end) 
+    double time = 0;
+
+    while (it_pose != it_pose_end)
     {
       geometry_msgs::Point point_start;
       point_start.x = (*it_pose)->x();
       point_start.y = (*it_pose)->y();
-      point_start.z = 0;
+      point_start.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*time;
       marker.points.push_back(point_start);
+
+      time += (*it_timediff)->dt();
 
       geometry_msgs::Point point_end;
       point_end.x = (*boost::next(it_pose))->x();
       point_end.y = (*boost::next(it_pose))->y();
-      point_end.z = 0;
+      point_end.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*time;
       marker.points.push_back(point_end);
       ++it_pose;
+      ++it_timediff;
     }
   }
   marker.scale.x = 0.01;

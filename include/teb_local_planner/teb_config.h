@@ -182,6 +182,7 @@ public:
     bool viapoints_all_candidates; //!< If true, all trajectories of different topologies are attached to the current set of via-points, otherwise only the trajectory sharing the same one as the initial/global plan.
     
     bool visualize_hc_graph; //!< Visualize the graph that is created for exploring new homotopy classes.
+    double visualize_with_time_as_z_axis_scale; //!< If this value is bigger than 0, the trajectory and obstacles are visualized in 3d using the time as the z-axis scaled by this value. Most useful for dynamic obstacles.
   } hcp;
   
   //! Recovery/backup related parameters
@@ -316,6 +317,7 @@ public:
     hcp.viapoints_all_candidates = true;
     
     hcp.visualize_hc_graph = false;
+    hcp.visualize_with_time_as_z_axis_scale = 0.0;
     
     // Recovery
     
