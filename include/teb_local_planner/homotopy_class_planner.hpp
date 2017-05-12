@@ -45,10 +45,18 @@ namespace teb_local_planner
 template<typename BidirIter, typename Fun>
 EquivalenceClassPtr HomotopyClassPlanner::calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles)
 {
-   // Currently we only support the HSignature
-   HSignature* H = new HSignature(*cfg_);
-   H->calculateHSignature(path_start, path_end, fun_cplx_point, obstacles);
-   return EquivalenceClassPtr(H);
+  if(cfg_->hcp.enable_3d_homotopy_class_planning)
+  {
+    HSignature3d* H = new HSignature3d(*cfg_);
+    H->calculateHSignature(path_start, path_end, fun_cplx_point, obstacles);
+    return EquivalenceClassPtr(H);
+  }
+  else
+  {
+    HSignature* H = new HSignature(*cfg_);
+    H->calculateHSignature(path_start, path_end, fun_cplx_point, obstacles);
+    return EquivalenceClassPtr(H);
+  }
 }
 
 

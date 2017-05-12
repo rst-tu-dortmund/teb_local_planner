@@ -137,7 +137,6 @@ public:
     * @param fun_cplx_point function accepting the dereference iterator type and that returns the position as complex number.
     * @tparam BidirIter Bidirectional iterator type
     * @tparam Fun function of the form std::complex< long double > (const T& point_type)
-    * @return complex H-Signature value
     */  
     template<typename BidirIter, typename Fun>
     void calculateHSignature(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles)
@@ -270,6 +269,162 @@ private:
     std::complex<long double> hsignature_;
 };
 
+
+
+
+
+/**
+ * @brief The H-signature in three dimensions (here: x-y-t) defines an equivalence relation based on homology using theorems from electromagnetism.
+ *
+ * The H-Signature depends on the obstacle configuration and can be utilized
+ * to check whether two trajectores belong to the same homology class.
+ * Refer to: \n
+ * 	- S. Bhattacharya et al.: Identification and Representation of Homotopy Classes of Trajectories for Search-based Path Planning in 3D, 2011
+ */
+class HSignature3d : public EquivalenceClass
+{
+public:
+    /**
+    * @brief Constructor accepting a TebConfig
+    * @param cfg TebConfig storing some user configuration options
+    */
+    HSignature3d(const TebConfig& cfg) : cfg_(&cfg) {}
+
+
+   /**
+    * @brief Calculate the H-Signature of a path
+    *
+    * The implemented function accepts generic path descriptions that are restricted to the following structure: \n
+    * The path is composed of points T and is represented by a std::vector< T > or similar type (std::list, std::deque, ...). \n
+    * Provide a unary function with the following signature <c> std::complex< long double > (const T& point_type) </c>
+    * that returns a complex value for the position (Re(*)=x, Im(*)=y).
+    *
+    * T could also be a pointer type, if the passed function also accepts a const T* point_Type.
+    *
+    * @param path_start Iterator to the first element in the path
+    * @param path_end Iterator to the last element in the path
+    * @param obstacles obstacle container
+    * @param fun_cplx_point function accepting the dereference iterator type and that returns the position as complex number.
+    * @tparam BidirIter Bidirectional iterator type
+    * @tparam Fun function of the form std::complex< long double > (const T& point_type)
+    */
+    template<typename BidirIter, typename Fun>
+    void calculateHSignature(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles)
+    {
+      hsignature3d_.resize(obstacles->size());
+
+      std::advance(path_end, -1); // reduce path_end by 1 (since we check line segments between those path points
+
+      double H = 0;
+
+      for (size_t l = 0; l < obstacles->size(); ++l) // iterate all obstacles
+      {
+        H = 0;
+        double transitionTime = 0;
+        double nextTransitionTime = 0;
+        // iterate path
+        for (BidirIter path_start_iter = path_start; path_start_iter != path_end; ++path_start_iter)
+        {
+          std::complex<long double> z1 = fun_cplx_point(*path_start_iter);
+          std::complex<long double> z2 = fun_cplx_point(*boost::next(path_start_iter));
+          Eigen::Vector2d pose (z1.real(), z1.imag());
+          Eigen::Vector2d nextpose (z2.real(), z2.imag());
+          Eigen::Vector3d poseWithTime, nextPoseWithTime;
+          transitionTime = nextTransitionTime;
+          nextTransitionTime += (nextpose-pose).norm() / cfg_->robot.max_vel_x; // Approximate the time, if no time is known
+          poseWithTime << pose(0), pose(1), transitionTime;
+          nextPoseWithTime << nextpose(0), nextpose(1), nextTransitionTime;
+
+          Eigen::Vector3d directionVec = nextPoseWithTime - poseWithTime;
+          Eigen::Vector3d oneStep = directionVec;
+          oneStep.normalize();
+          oneStep *= 0.1;
+          Eigen::Vector3d dl = oneStep;
+          Eigen::Vector3d position = poseWithTime;
+
+          do
+          {
+            double t = 120;
+            Eigen::Vector3d s1 (obstacles->at(l)->getCentroid()(0), obstacles->at(l)->getCentroid()(1), 0);
+            Eigen::Vector3d s2 (obstacles->at(l)->predictPosition(t).at(0)(0), obstacles->at(l)->predictPosition(t).at(0)(1), t);
+            Eigen::Vector3d r = position;
+            Eigen::Vector3d p1 = s1 - r;
+            Eigen::Vector3d p2 = s2 - r;
+            Eigen::Vector3d d = ((s2 - s1).cross(p1.cross(p2))) / (s2 - s1).squaredNorm();
+            Eigen::Vector3d phi = 1 / d.squaredNorm() * ((d.cross(p2) / p2.norm()) - (d.cross(p1) / p1.norm()));
+
+            if (dl.norm() < (nextPoseWithTime - position).norm())
+              H += phi.dot(dl);
+            else
+              H += phi.dot(nextPoseWithTime - position);
+
+            position += oneStep;
+          } while (directionVec.norm() >= (position - poseWithTime).norm()); //+oneStep
+        }
+
+        // normalize to 1
+        hsignature3d_.at(l) = H/(4*M_PI);
+      }
+
+      // Debug output
+//      std::cout << "H-Signature: " << this << std::endl;
+//      for (size_t l = 0; l < obstacles->size(); ++l) // iterate all obstacles
+//      {
+//        ROS_INFO("%f", hsignature3d_.at(l));
+//      }
+//      ROS_INFO("--------");
+    }
+
+    /**
+     * @brief Check if two candidate classes are equivalent
+     *
+     * If the absolute value of the H-Signature is equal or greater than 1, a loop (in x-y) around the obstacle is indicated.
+     * Positive H-Signature: Obstacle lies on the left hand side of the planned trajectory
+     * Negative H-Signature: Obstacle lies on the right hand side of the planned trajectory
+     * H-Signature equals zero: Obstacle lies in infinity, has no influence on trajectory
+     *
+     * @param other The other equivalence class to test with
+     */
+    virtual bool isEqual(const EquivalenceClass& other) const
+    {
+      const HSignature3d* hother = dynamic_cast<const HSignature3d*>(&other); // TODO: better architecture without dynamic_cast
+      if (hother)
+      {
+        if (hsignature3d_.size() == hother->hsignature3d_.size())
+        {
+          for(size_t i = 0; i < hsignature3d_.size(); ++i)
+          {
+            // TODO: Better approach for H-Signature = 0
+            if (boost::math::sign(hother->hsignature3d_.at(i)) != boost::math::sign(hsignature3d_.at(i)))
+              return false; // Signatures are not equal, new homotopy class
+          }
+        return true; // Found! Homotopy class already exists, therefore nothing added
+        }
+      }
+      else
+          ROS_ERROR("Cannot compare HSignature3d equivalence classes with types other than HSignature3d.");
+
+      return false;
+    }
+
+    /**
+     * @brief Check if the equivalence value is detected correctly
+     * @return Returns false, if the equivalence class detection failed, e.g. if nan- or inf values occur.
+     */
+     virtual bool isValid() const
+     {
+        for(size_t i = 0; i < hsignature3d_.size(); ++i)
+        {
+          if (!std::isfinite(hsignature3d_.at(i)))
+            return false;
+        }
+        return true;
+     }
+
+private:
+    const TebConfig* cfg_;
+    std::vector<double> hsignature3d_;
+};
 
 
 } // namespace teb_local_planner
