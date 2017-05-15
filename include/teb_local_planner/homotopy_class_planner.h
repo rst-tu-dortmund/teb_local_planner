@@ -372,7 +372,8 @@ public:
    * @return pointer to the equivalence class base type
    */
   template<typename BidirIter, typename Fun>
-  EquivalenceClassPtr calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles = NULL);
+  EquivalenceClassPtr calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles = NULL,
+                                                boost::optional<TimeDiffSequence::iterator> timediff_start = boost::none, boost::optional<TimeDiffSequence::iterator> timediff_end = boost::none);
 
   /**
    * @brief Read-only access to the internal trajectory container.

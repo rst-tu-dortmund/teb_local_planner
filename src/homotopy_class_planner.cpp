@@ -235,7 +235,8 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
     }
 
     // calculate equivalence class for the current candidate
-    EquivalenceClassPtr equivalence_class = calculateEquivalenceClass(it_teb->get()->teb().poses().begin(), it_teb->get()->teb().poses().end(), getCplxFromVertexPosePtr ,obstacles_);
+    EquivalenceClassPtr equivalence_class = calculateEquivalenceClass(it_teb->get()->teb().poses().begin(), it_teb->get()->teb().poses().end(), getCplxFromVertexPosePtr , obstacles_,
+                                                                      it_teb->get()->teb().timediffs().begin(), it_teb->get()->teb().timediffs().end());
     
 //     teb_candidates.push_back(std::make_pair(it_teb,H));
     
