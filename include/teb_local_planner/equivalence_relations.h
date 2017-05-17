@@ -324,33 +324,32 @@ public:
         H = 0;
         double transitionTime = 0;
         double nextTransitionTime = 0;
-        BidirIter path_start_iter;
-        TimeDiffSequence::iterator timediff_start_iter;
+        BidirIter path_iter;
+        TimeDiffSequence::iterator timediff_iter;
 
         // iterate path
-        for (path_start_iter = path_start, timediff_start_iter = timediff_start.get(); path_start_iter != path_end; ++path_start_iter, ++timediff_start_iter)
+        for (path_iter = path_start, timediff_iter = timediff_start.get(); path_iter != path_end; ++path_iter, ++timediff_iter)
         {
-          std::complex<long double> z1 = fun_cplx_point(*path_start_iter);
-          std::complex<long double> z2 = fun_cplx_point(*boost::next(path_start_iter));
+          std::complex<long double> z1 = fun_cplx_point(*path_iter);
+          std::complex<long double> z2 = fun_cplx_point(*boost::next(path_iter));
           Eigen::Vector2d pose (z1.real(), z1.imag());
           Eigen::Vector2d nextpose (z2.real(), z2.imag());
 
           transitionTime = nextTransitionTime;
-
-          if (timediff_start == boost::none) // if no time information is provided yet, approximate transition time
+          if (timediff_start == boost::none || timediff_end == boost::none) // if no time information is provided yet, approximate transition time
             nextTransitionTime += (nextpose-pose).norm() / cfg_->robot.max_vel_x; // Approximate the time, if no time is known
           else // otherwise use the time information from the teb trajectory
           {
-            if (std::distance(path_start_iter, path_end) != std::distance(timediff_start_iter, timediff_end.get()))
+            if (std::distance(path_iter, path_end) != std::distance(timediff_iter, timediff_end.get()))
               ROS_ERROR("Size of poses and timediff vectors does not match. This is a bug.");
-            nextTransitionTime += (*(timediff_start.get()))->dt();
+            nextTransitionTime += (*timediff_iter)->dt();
           }
 
           Eigen::Vector3d poseWithTime (pose(0), pose(1), transitionTime);
           Eigen::Vector3d nextPoseWithTime (nextpose(0), nextpose(1), nextTransitionTime);
 
           Eigen::Vector3d directionVec = nextPoseWithTime - poseWithTime;
-          Eigen::Vector3d dl = 0.1 * directionVec.normalized();
+          Eigen::Vector3d dl = 0.1 * directionVec.normalized(); // Integrate with 10 steps between each pose
 
           for (Eigen::Vector3d position = poseWithTime; (position-poseWithTime).norm() <= directionVec.norm(); position += dl)
           {
