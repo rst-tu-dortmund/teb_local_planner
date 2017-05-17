@@ -334,7 +334,7 @@ public:
           std::complex<long double> z2 = fun_cplx_point(*boost::next(path_start_iter));
           Eigen::Vector2d pose (z1.real(), z1.imag());
           Eigen::Vector2d nextpose (z2.real(), z2.imag());
-          Eigen::Vector3d poseWithTime, nextPoseWithTime;
+
           transitionTime = nextTransitionTime;
 
           if (timediff_start == boost::none) // if no time information is provided yet, approximate transition time
@@ -346,14 +346,13 @@ public:
             nextTransitionTime += (*(timediff_start.get()))->dt();
           }
 
-          poseWithTime << pose(0), pose(1), transitionTime;
-          nextPoseWithTime << nextpose(0), nextpose(1), nextTransitionTime;
+          Eigen::Vector3d poseWithTime (pose(0), pose(1), transitionTime);
+          Eigen::Vector3d nextPoseWithTime (nextpose(0), nextpose(1), nextTransitionTime);
 
           Eigen::Vector3d directionVec = nextPoseWithTime - poseWithTime;
           Eigen::Vector3d dl = 0.1 * directionVec.normalized();
-          Eigen::Vector3d position = poseWithTime;
 
-          do
+          for (Eigen::Vector3d position = poseWithTime; (position-poseWithTime).norm() <= directionVec.norm(); position += dl)
           {
             double t = 120;
             Eigen::Vector3d s1 (obstacles->at(l)->getCentroid()(0), obstacles->at(l)->getCentroid()(1), 0);
@@ -368,9 +367,7 @@ public:
               H += phi.dot(dl);
             else
               H += phi.dot(nextPoseWithTime - position);
-
-            position += dl;
-          } while (directionVec.norm() >= (position - poseWithTime).norm()); //+oneStep
+          }
         }
 
         // normalize to 1
@@ -405,7 +402,11 @@ public:
         {
           for(size_t i = 0; i < hsignature3d_.size(); ++i)
           {
-            // TODO: Better approach for H-Signature = 0
+            // If the H-Signature for one obstacle is below this threshold, that obstacle is far away from the planned trajectory,
+            // and therefore ignored in the homotopy class planning
+            if (std::abs(hother->hsignature3d_.at(i)) < cfg_->hcp.h_signature_threshold || std::abs(hsignature3d_.at(i)) < cfg_->hcp.h_signature_threshold)
+              continue;
+
             if (boost::math::sign(hother->hsignature3d_.at(i)) != boost::math::sign(hsignature3d_.at(i)))
               return false; // Signatures are not equal, new homotopy class
           }
