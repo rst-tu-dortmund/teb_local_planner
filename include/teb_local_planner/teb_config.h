@@ -286,9 +286,9 @@ public:
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_kinematics_turning_radius = 1;
     optim.weight_optimaltime = 1;
-    optim.weight_obstacle = 10;
+    optim.weight_obstacle = 50;
     optim.weight_inflation = 0.1;
-    optim.weight_dynamic_obstacle = 10;
+    optim.weight_dynamic_obstacle = 50;
     optim.weight_dynamic_obstacle_inflation = 0.1;
     optim.weight_viapoint = 1;
     optim.weight_prefer_rotdir = 50;
