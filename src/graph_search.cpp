@@ -24,16 +24,8 @@ void GraphSearchInterface::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
     {
       visited.push_back(*it);
 
-
-      // check H-Signature
-      EquivalenceClassPtr H = hcp_->calculateEquivalenceClass(visited.begin(), visited.end(), boost::bind(getCplxFromHcGraph, _1, boost::cref(graph_)), hcp_->obstacles());
-
-      // check if H-Signature is already known
-      // and init new TEB if no duplicate was found
-      if ( hcp_->addEquivalenceClassIfNew(H) )
-      {
-        hcp_->addAndInitNewTeb(visited.begin(), visited.end(), boost::bind(getVector2dFromHcGraph, _1, boost::cref(graph_)), start_orientation, goal_orientation, start_velocity);
-      }
+      // Add new TEB, if this path belongs to a new homotopy class
+      hcp_->addAndInitNewTeb(visited.begin(), visited.end(), boost::bind(getVector2dFromHcGraph, _1, boost::cref(graph_)), start_orientation, goal_orientation, start_velocity);
 
       visited.pop_back();
       break;

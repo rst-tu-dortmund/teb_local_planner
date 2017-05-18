@@ -67,6 +67,19 @@
 namespace teb_local_planner
 {
 
+//!< Inline function used for calculateHSignature() in combination with VertexPose pointers
+inline std::complex<long double> getCplxFromVertexPosePtr(const VertexPose* pose)
+{
+  return std::complex<long double>(pose->x(), pose->y());
+};
+
+
+//!< Inline function used for calculateHSignature() in combination with geometry_msgs::PoseStamped
+inline std::complex<long double> getCplxFromMsgPoseStamped(const geometry_msgs::PoseStamped& pose)
+{
+  return std::complex<long double>(pose.pose.position.x, pose.pose.position.y);
+};
+
 /**
  * @class HomotopyClassPlanner
  * @brief Local planner that explores alternative homotopy classes, create a plan for each alternative
@@ -379,7 +392,7 @@ public:
    * @brief Read-only access to the internal trajectory container.
    * @return read-only reference to the teb container.
    */
-  const TebOptPlannerContainer& getTrajectoryContainer() const {return tebs_;};
+  const TebOptPlannerContainer& getTrajectoryContainer() const {return tebs_;}
 
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
