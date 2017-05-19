@@ -214,8 +214,6 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
       TimeDiff(i) = newtime;
       insertPose(i+1, PoseSE2::average(Pose(i),Pose(i+1)) );
       insertTimeDiff(i+1,newtime);
-      
-      ++i; // skip the newly inserted pose
     }
     else if(TimeDiff(i) < dt_ref - dt_hysteresis && sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
     {
