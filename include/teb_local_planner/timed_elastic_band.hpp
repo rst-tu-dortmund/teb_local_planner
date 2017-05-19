@@ -156,6 +156,8 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
         ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
         while (sizePoses() < min_samples-1) // subtract goal point that will be added later
         {
+          // Each inserted point bisects the remaining distance. Thus the timestep is also bisected.
+          timestep /= 2;
           // simple strategy: interpolate between the current pose and the goal
           addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), timestep ); // let the optimier correct the timestep (TODO: better initialization	
         }
