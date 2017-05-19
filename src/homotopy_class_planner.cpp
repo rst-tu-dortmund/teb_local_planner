@@ -324,13 +324,9 @@ void HomotopyClassPlanner::exploreEquivalenceClassesAndInitTebs(const PoseSE2& s
   renewAndAnalyzeOldTebs(false);
 
   // inject initial plan if available and not yet captured
-  // initial_plan_eq_class_ is set for the first time in this block. Therefore it is a nullptr the first time this is called
-  if (initial_plan_ && (!initial_plan_eq_class_ || addEquivalenceClassIfNew(initial_plan_eq_class_, true))) // also prevent candidate from deletion
+  if (initial_plan_)
   {
     initial_plan_teb_ = addAndInitNewTeb(*initial_plan_, start_vel);
-  // store the h signature of the initial plan to enable searching a matching teb later.
-    initial_plan_eq_class_ = calculateEquivalenceClass(initial_plan_teb_->teb().poses().begin(), initial_plan_teb_->teb().poses().end(), getCplxFromVertexPosePtr, obstacles_,
-                                                       initial_plan_teb_->teb().timediffs().begin(), initial_plan_teb_->teb().timediffs().end());
   }
   else
   {
@@ -351,24 +347,48 @@ void HomotopyClassPlanner::exploreEquivalenceClassesAndInitTebs(const PoseSE2& s
 
 TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity)
 {
-  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_) ) );
-  tebs_.back()->teb().initTEBtoGoal(start, goal, 0, cfg_->trajectory.dt_ref, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
+  TebOptimalPlannerPtr candidate =  TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_));
+
+  candidate->teb().initTEBtoGoal(start, goal, 0, cfg_->trajectory.dt_ref, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
 
   if (start_velocity)
-    tebs_.back()->setVelocityStart(*start_velocity);
+    candidate->setVelocityStart(*start_velocity);
 
-  return tebs_.back();
+  EquivalenceClassPtr H = calculateEquivalenceClass(candidate->teb().poses().begin(), candidate->teb().poses().end(), getCplxFromVertexPosePtr, obstacles_,
+                                                    candidate->teb().timediffs().begin(), candidate->teb().timediffs().end());
+
+  if(addEquivalenceClassIfNew(H))
+  {
+    tebs_.push_back(candidate);
+    return tebs_.back();
+  }
+
+  // If the candidate constitutes no new equivalence class, return a null pointer
+  return TebOptimalPlannerPtr();
 }
+
 
 TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity)
 {
-  tebs_.push_back( TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_) ) );
-  tebs_.back()->teb().initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
+  TebOptimalPlannerPtr candidate = TebOptimalPlannerPtr( new TebOptimalPlanner(*cfg_, obstacles_, robot_model_));
+
+  candidate->teb().initTEBtoGoal(initial_plan, cfg_->trajectory.dt_ref, true, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
 
   if (start_velocity)
-    tebs_.back()->setVelocityStart(*start_velocity);
+    candidate->setVelocityStart(*start_velocity);
 
-  return tebs_.back();
+  // store the h signature of the initial plan to enable searching a matching teb later.
+  initial_plan_eq_class_ = calculateEquivalenceClass(candidate->teb().poses().begin(), candidate->teb().poses().end(), getCplxFromVertexPosePtr, obstacles_,
+                                                     candidate->teb().timediffs().begin(), candidate->teb().timediffs().end());
+
+  if(addEquivalenceClassIfNew(initial_plan_eq_class_, true)) // also prevent candidate from deletion
+  {
+    tebs_.push_back(candidate);
+    return tebs_.back();
+  }
+
+  // If the candidate constitutes no new equivalence class, return a null pointer
+  return TebOptimalPlannerPtr();
 }
 
 void HomotopyClassPlanner::updateAllTEBs(const PoseSE2* start, const PoseSE2* goal, const geometry_msgs::Twist* start_velocity)

@@ -274,7 +274,7 @@ public:
 
 
   /**
-   * @brief Add a new Teb to the internal trajectory container and initialize it using a generic 2D reference path
+   * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it using a generic 2D reference path
    *
    * Refer to TimedElasticBand::initTEBtoGoal() for more details about the template parameters.
    * @param path_start start iterator of a generic 2d path
@@ -291,7 +291,7 @@ public:
   TebOptimalPlannerPtr addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity);
 
   /**
-   * @brief Add a new Teb to the internal trajectory container and initialize it with a simple straight line between a given start and goal
+   * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it with a simple straight line between a given start and goal
    * @param start start pose
    * @param goal goal pose
    * @param start_velocity start velocity (optional)
@@ -300,7 +300,7 @@ public:
   TebOptimalPlannerPtr addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity);
 
   /**
-   * @brief Add a new Teb to the internal trajectory container and initialize it using a PoseStamped container
+   * @brief Add a new Teb to the internal trajectory container , if this teb constitutes a new equivalence class. Initialize it using a PoseStamped container
    * @param initial_plan container of poses (start and goal orientation should be valid!)
    * @param start_velocity start velocity (optional)
    * @return Shared pointer to the newly created teb optimal planner
