@@ -456,11 +456,11 @@ void HomotopyClassPlanner::deleteTebDetours(double threshold)
     if (!it_eqclasses->second) // check if equivalence class is locked
     {
       // delete Detours if other TEBs will remain!
-      if (tebs_.size()>1 && it_teb->get()->teb().detectDetoursBackwards(threshold))
+      if (tebs_.size()>1 && (it_teb->get()->teb().detectDetoursBackwards(threshold) || !it_eqclasses->first->isReasonable()))
       {
-  it_teb = tebs_.erase(it_teb); // 0.05
+        it_teb = tebs_.erase(it_teb);
         it_eqclasses = equivalence_classes_.erase(it_eqclasses);
-  modified = true;
+        modified = true;
       }
     }
 
@@ -468,16 +468,16 @@ void HomotopyClassPlanner::deleteTebDetours(double threshold)
     // here, we ignore the lock-state, since we cannot keep trajectories that are not optimizable
     if (!it_teb->get()->isOptimized())
     {
-  it_teb = tebs_.erase(it_teb);
-        it_eqclasses = equivalence_classes_.erase(it_eqclasses);
-  modified = true;
-        ROS_DEBUG("HomotopyClassPlanner::deleteTebDetours(): removing candidate that was not optimized successfully");
+      it_teb = tebs_.erase(it_teb);
+      it_eqclasses = equivalence_classes_.erase(it_eqclasses);
+      modified = true;
+      ROS_DEBUG("HomotopyClassPlanner::deleteTebDetours(): removing candidate that was not optimized successfully");
     }
 
     if (!modified)
     {
-       ++it_teb;
-       ++it_eqclasses;
+      ++it_teb;
+      ++it_eqclasses;
     }
   }
 }

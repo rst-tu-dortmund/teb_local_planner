@@ -96,6 +96,12 @@ public:
     */
    virtual bool isValid() const = 0;
 
+   /**
+    * @brief Check if the trajectory is non-looping around an obstacle
+    * @return Returns false, if the trajectory loops around an obstacle
+    */
+   virtual bool isReasonable() const = 0;
+
 };
 
 using EquivalenceClassPtr = boost::shared_ptr<EquivalenceClass>;
@@ -263,6 +269,14 @@ public:
         return std::isfinite(hsignature_.real()) && std::isfinite(hsignature_.imag());
     }
 
+    /**
+     * @brief Check if the trajectory is non-looping around an obstacle.
+     * @return Returns always true, as this cannot be detected by this kind of H-Signature.
+     */
+    virtual bool isReasonable() const
+    {
+      return true;
+    }
 
 private:
 
@@ -431,6 +445,20 @@ public:
         }
         return true;
      }
+
+    /**
+     * @brief Check if the trajectory is non-looping around an obstacle. Values greater than 1 indicate a looping trajectory.
+     * @return Returns false, if the trajectory loops around an obstacle
+     */
+    virtual bool isReasonable() const
+    {
+      for(size_t i = 0; i < hsignature3d_.size(); ++i)
+      {
+        if (hsignature3d_.at(i) > 1.0)
+          return false;
+      }
+      return true;
+    }
 
 private:
     const TebConfig* cfg_;
