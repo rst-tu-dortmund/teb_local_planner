@@ -6,7 +6,5 @@
   	<!-- RVIZ -->
   	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find teb_local_planner)/cfg/rviz_test_optim.rviz" />
 
-  	<node pkg="teb_local_planner" name="publish_dynamic_obstacle" type="publish_dynamic_obstacle.py" output="screen"/> 
-
 </launch>
 
