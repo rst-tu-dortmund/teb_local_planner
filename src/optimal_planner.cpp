@@ -350,7 +350,11 @@ bool TebOptimalPlanner::optimizeGraph(int no_iterations,bool clear_after)
   optimizer_->initializeOptimization();
 
   int iter = optimizer_->optimize(no_iterations);
-  
+
+  // Save Hessian for visualization
+  //  g2o::OptimizationAlgorithmLevenberg* lm = dynamic_cast<g2o::OptimizationAlgorithmLevenberg*> (optimizer_->solver());
+  //  lm->solver()->saveHessian("~/MasterThesis/Matlab/Hessian.txt");
+
   if(!iter)
   {
 	ROS_ERROR("optimizeGraph(): Optimization failed! iter=%i", iter);
@@ -633,6 +637,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
     if (!(*obst)->isDynamic())
       continue;
 
+    // Skip first and last pose, as they are fixed
     for (int i=1; i < teb_.sizePoses() - 1; ++i)
     {
       EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(teb_.getSumOfTimeDiffsUpToIdx(i));
