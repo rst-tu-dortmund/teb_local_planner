@@ -96,13 +96,19 @@ int main( int argc, char** argv )
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
 
-  obst_vector.push_back( boost::make_shared<PointObstacle>(-5,1) );
-  obst_vector.push_back( boost::make_shared<PointObstacle>(-5,2.2) );
+  obst_vector.push_back( boost::make_shared<PointObstacle>(-3,1) );
+  obst_vector.push_back( boost::make_shared<PointObstacle>(6,2) );
   obst_vector.push_back( boost::make_shared<PointObstacle>(0,0.1) );
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,1.5,1,-1.5) ); //90 deg
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,0,-1,0) ); //180 deg
 //  obst_vector.push_back( boost::make_shared<PointObstacle>(-1.5,-0.5) );
-  
+
+  // Dynamic obstacles
+  Eigen::Vector2d vel (0.1, -0.3);
+  obst_vector.at(0)->setCentroidVelocity(vel);
+  vel = Eigen::Vector2d(-0.3, -0.2);
+  obst_vector.at(1)->setCentroidVelocity(vel);
+
   /*
   PolygonObstacle* polyobst = new PolygonObstacle;
   polyobst->pushBackVertex(1, -1);
