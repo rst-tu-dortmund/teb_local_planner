@@ -49,6 +49,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 
+#include <teb_local_planner/ObstacleMsg.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/TwistWithCovariance.h>
 #include <geometry_msgs/QuaternionStamped.h>
@@ -250,6 +251,22 @@ public:
    * @param[out] polygon the polygon message
    */
   virtual void toPolygonMsg(geometry_msgs::Polygon& polygon) = 0;
+
+  virtual void toTwistWithCovarianceMsg(geometry_msgs::TwistWithCovariance& twistWithCovariance)
+  {
+    if (dynamic_)
+    {
+      twistWithCovariance.twist.linear.x = centroid_velocity_(0);
+      twistWithCovariance.twist.linear.y = centroid_velocity_(1);
+    }
+    else
+    {
+      twistWithCovariance.twist.linear.x = 0;
+      twistWithCovariance.twist.linear.y = 0;
+    }
+
+    // TODO:Covariance
+  }
 
   //@}
 	
@@ -716,10 +733,10 @@ public:
   
   // implements toPolygonMsg() of the base class
   virtual void toPolygonMsg(geometry_msgs::Polygon& polygon);
-  
+
   
   /** @name Define the polygon */
-  ///@{       
+  ///@{
   
   // Access or modify polygon
   const Point2dContainer& vertices() const {return vertices_;} //!< Access vertices container (read-only)

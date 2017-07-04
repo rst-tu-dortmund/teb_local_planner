@@ -396,11 +396,17 @@ void TebVisualization::publishFeedbackMessage(const std::vector< boost::shared_p
   }
   
   // add obstacles
-  msg.obstacles.resize(obstacles.size());
+  msg.obstacle_msg.obstacles.resize(obstacles.size());
   for (std::size_t i=0; i<obstacles.size(); ++i)
   {
-    msg.obstacles[i].header = msg.header;
-    obstacles[i]->toPolygonMsg(msg.obstacles[i].polygon);
+    msg.obstacle_msg.obstacles[i].header = msg.header;
+    obstacles[i]->toPolygonMsg(msg.obstacle_msg.obstacles[i].polygon);
+  }
+
+  msg.obstacle_msg.velocities.resize(obstacles.size());
+  for (std::size_t i=0; i<obstacles.size(); ++i)
+  {
+    obstacles[i]->toTwistWithCovarianceMsg(msg.obstacle_msg.velocities[i]);
   }
   
   feedback_pub_.publish(msg);
@@ -418,11 +424,17 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
   teb_planner.getFullTrajectory(msg.trajectories.front().trajectory);
  
   // add obstacles
-  msg.obstacles.resize(obstacles.size());
+  msg.obstacle_msg.obstacles.resize(obstacles.size());
   for (std::size_t i=0; i<obstacles.size(); ++i)
   {
-    msg.obstacles[i].header = msg.header;
-    obstacles[i]->toPolygonMsg(msg.obstacles[i].polygon);
+    msg.obstacle_msg.obstacles[i].header = msg.header;
+    obstacles[i]->toPolygonMsg(msg.obstacle_msg.obstacles[i].polygon);
+  }
+
+  msg.obstacle_msg.velocities.resize(obstacles.size());
+  for (std::size_t i=0; i<obstacles.size(); ++i)
+  {
+    obstacles[i]->toTwistWithCovarianceMsg(msg.obstacle_msg.velocities[i]);
   }
   
   feedback_pub_.publish(msg);
