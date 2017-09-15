@@ -60,7 +60,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
-#include <teb_local_planner/ObstacleMsg.h>
+#include <costmap_converter/ObstacleMsg.h>
 
 // transforms
 #include <tf/tf.h>

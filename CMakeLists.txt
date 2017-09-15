@@ -99,7 +99,6 @@ endif()
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  ObstacleMsg.msg
   TrajectoryPointMsg.msg
   TrajectoryMsg.msg
   FeedbackMsg.msg
@@ -122,7 +121,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
-   geometry_msgs std_msgs
+   geometry_msgs std_msgs costmap_converter
 )
 
 #add dynamic reconfigure api

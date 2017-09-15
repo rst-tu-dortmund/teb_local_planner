@@ -470,7 +470,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
 
     // Set velocity, if obstacle is moving
     if(!obstacles->velocities.empty() && !obstacles->orientations.empty() && !obstacles_.empty())
-      obstacles_.back()->setCentroidVelocity(obstacles->velocities.at(i), obstacles->orientations.at(i));
+      obstacles_.back()->setCentroidVelocity(obstacles->velocities[i], obstacles->orientations[i]);
   }
 }
 
