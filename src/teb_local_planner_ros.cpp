@@ -480,7 +480,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
 {
   // Add custom obstacles obtained via message
   boost::mutex::scoped_lock l(custom_obst_mutex_);
-  
+
   if (!custom_obstacle_msg_.obstacles.empty())
   {
     // We only use the global header to specify the obstacle coordinate system instead of individual ones
@@ -522,6 +522,11 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
         obstacles_.push_back(ObstaclePtr(new LineObstacle( (obstacle_to_map_eig * line_start).head(2),
                                                            (obstacle_to_map_eig * line_end).head(2) )));
       }
+      else if (custom_obstacle_msg_.obstacles.at(i).polygon.points.empty())
+      {
+        ROS_WARN("Invalid custom obstacle received. List of polygon vertices is empty. Skipping...");
+        continue;
+      }
       else // polygon
       {
         PolygonObstacle* polyobst = new PolygonObstacle;
@@ -537,8 +542,8 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
       }
 
       // Set velocity, if obstacle is moving
-      if(!custom_obstacle_msg_.velocities.empty() && !custom_obstacle_msg_.orientations.empty() && !obstacles_.empty())
-        obstacles_.back()->setCentroidVelocity(custom_obstacle_msg_.velocities.at(i), custom_obstacle_msg_.orientations.at(i));
+      if(!obstacles_.empty())
+        obstacles_.back()->setCentroidVelocity(custom_obstacle_msg_.obstacles[i].velocities, custom_obstacle_msg_.obstacles[i].orientation);
     }
   }
 }
@@ -926,7 +931,7 @@ void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::PoseSta
 }
      
      
-void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
+void TebLocalPlannerROS::customObstacleCB(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg)
 {
   boost::mutex::scoped_lock l(custom_obst_mutex_);
   custom_obstacle_msg_ = *obst_msg;  
