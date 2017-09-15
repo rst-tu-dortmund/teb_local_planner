@@ -47,7 +47,7 @@ template<typename BidirIter, typename Fun>
 EquivalenceClassPtr HomotopyClassPlanner::calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles,
                                                                     boost::optional<TimeDiffSequence::iterator> timediff_start, boost::optional<TimeDiffSequence::iterator> timediff_end)
 {
-  if(cfg_->hcp.enable_3d_homotopy_class_planning)
+  if(cfg_->obstacles.include_dynamic_obstacles)
   {
     HSignature3d* H = new HSignature3d(*cfg_);
     H->calculateHSignature(path_start, path_end, fun_cplx_point, obstacles, timediff_start, timediff_end);
