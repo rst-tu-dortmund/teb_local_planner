@@ -37,6 +37,7 @@
  *********************************************************************/
 
 #include <teb_local_planner/homotopy_class_planner.h>
+#include <teb_local_planner/h_signature.h>
 
 namespace teb_local_planner
 {
