@@ -99,6 +99,7 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
             
             double timestep_vel = diff_norm/max_vel_x; // constant velocity
             double timestep_acc;
+
             if (max_acc_x)
             {
                     timestep_acc = sqrt(2*diff_norm/(*max_acc_x)); // constant acceleration
@@ -114,6 +115,9 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
                 yaw = g2o::normalize_theta(yaw + M_PI);
             addPoseAndTimeDiff(curr_point, yaw ,timestep);
             
+            /*
+            // TODO: the following code does not seem to hot-start the optimizer. Instead it recudes convergence time.
+
             Eigen::Vector2d diff_next = fun_position(*boost::next(path_start))-curr_point; // TODO maybe store the boost::next for the following iteration
             double ang_diff = std::abs( g2o::normalize_theta( atan2(diff_next[1],diff_next[0])
                                                             -atan2(diff_last[1],diff_last[0]) ) );
@@ -133,6 +137,8 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
             if (backwards)
                 yaw = g2o::normalize_theta(yaw + M_PI);
             addPoseAndTimeDiff(curr_point, yaw ,timestep);
+
+            */
             
             ++idx;
       }
