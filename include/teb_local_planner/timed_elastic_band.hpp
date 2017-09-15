@@ -44,7 +44,7 @@ namespace teb_local_planner
   
 
 template<typename BidirIter, typename Fun>
-bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
+bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
                                      boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
                                      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples, bool guess_backwards_motion) 
 {
@@ -67,9 +67,9 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
       Eigen::Vector2d start2goal =  goal_position - start_position;
       start_orient = atan2(start2goal[1],start2goal[0]);
     }
+
     double timestep = 1; // TODO: time
-    
-    
+
     if (goal_orientation)
     {
       goal_orient = *goal_orientation;
