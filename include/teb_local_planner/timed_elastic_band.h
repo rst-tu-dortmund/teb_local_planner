@@ -477,8 +477,7 @@ public:
    * @param max_samples maximum number of samples that should not be exceeded during resizing
    */    
   void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3, int max_samples=1000);
-  
-  
+
   /**
    * @brief Set a pose vertex at pos \c index of the pose sequence to be fixed or unfixed during optimization.
    * @param index index to the pose vertex

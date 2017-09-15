@@ -201,29 +201,41 @@ void TimedElasticBand::setTimeDiffVertexFixed(int index, bool status)
 
 
 void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples)
-{
-  /// iterate through all TEB states only once and add/remove states!
-  for(int i=0; i < sizeTimeDiffs(); ++i) // TimeDiff connects Point(i) with Point(i+1)
-  {
-    if(TimeDiff(i) > dt_ref + dt_hysteresis && sizeTimeDiffs()<max_samples)
-    {
-      //ROS_DEBUG("teb_local_planner: autoResize() inserting new bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
-      
-      double newtime = 0.5*TimeDiff(i);
+{  
+  /// iterate through all TEB states and add/remove states!
 
-      TimeDiff(i) = newtime;
-      insertPose(i+1, PoseSE2::average(Pose(i),Pose(i+1)) );
-      insertTimeDiff(i+1,newtime);
-    }
-    else if(TimeDiff(i) < dt_ref - dt_hysteresis && sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
+  bool modified = true;
+
+  for (int rep = 0; rep < 100 && modified; ++rep) // actually it should be while(), but we want to make sure to not get stuck in some oscillation, hence max 100 repitions.
+  {
+    modified = false;
+
+    for(int i=0; i < sizeTimeDiffs(); ++i) // TimeDiff connects Point(i) with Point(i+1)
     {
-      //ROS_DEBUG("teb_local_planner: autoResize() deleting bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
-      
-      if(i < ((int)sizeTimeDiffs()-1))
+      if(TimeDiff(i) > dt_ref + dt_hysteresis && sizeTimeDiffs()<max_samples)
       {
-        TimeDiff(i+1) = TimeDiff(i+1) + TimeDiff(i);
-        deleteTimeDiff(i);
-        deletePose(i+1);
+        //ROS_DEBUG("teb_local_planner: autoResize() inserting new bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
+
+        double newtime = 0.5*TimeDiff(i);
+
+        TimeDiff(i) = newtime;
+        insertPose(i+1, PoseSE2::average(Pose(i),Pose(i+1)) );
+        insertTimeDiff(i+1,newtime);
+
+        modified = true;
+      }
+      else if(TimeDiff(i) < dt_ref - dt_hysteresis && sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
+      {
+        //ROS_DEBUG("teb_local_planner: autoResize() deleting bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
+
+        if(i < ((int)sizeTimeDiffs()-1))
+        {
+          TimeDiff(i+1) = TimeDiff(i+1) + TimeDiff(i);
+          deleteTimeDiff(i);
+          deletePose(i+1);
+        }
+
+        modified = true;
       }
     }
   }
