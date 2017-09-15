@@ -208,8 +208,8 @@ public:
     * @param velocity geometry_msgs::TwistWithCovariance containing the velocity of the obstacle
     * @param orientation geometry_msgs::QuaternionStamped containing the orientation of the obstacle
     */
-  void setCentroidVelocity(const geometry_msgs::TwistWithCovariance velocity,
-                           const geometry_msgs::QuaternionStamped orientation)
+  void setCentroidVelocity(const geometry_msgs::TwistWithCovariance& velocity,
+                           const geometry_msgs::Quaternion& orientation)
   {
     // Set velocity, if obstacle is moving
     Eigen::Vector2d vel;
@@ -227,6 +227,12 @@ public:
 //    Eigen::Rotation2Dd rot(yaw);
 //    vel = rot * vel;
     setCentroidVelocity(vel);
+  }
+
+  void setCentroidVelocity(const geometry_msgs::TwistWithCovariance& velocity,
+                           const geometry_msgs::QuaternionStamped& orientation)
+  {
+    setCentroidVelocity(velocity, orientation.quaternion);
   }
 
   /**

@@ -440,7 +440,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
     return;
     
   //Get obstacles from costmap converter
-  costmap_converter::ObstacleContainerConstPtr obstacles = costmap_converter_->getObstacles();
+  costmap_converter::ObstacleArrayConstPtr obstacles = costmap_converter_->getObstacles();
   if (!obstacles)
     return;
 
@@ -469,8 +469,8 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
     }
 
     // Set velocity, if obstacle is moving
-    if(!obstacles->velocities.empty() && !obstacles->orientations.empty() && !obstacles_.empty())
-      obstacles_.back()->setCentroidVelocity(obstacles->velocities[i], obstacles->orientations[i]);
+    if(!obstacles_.empty())
+      obstacles_.back()->setCentroidVelocity(obstacles->obstacles[i].velocities, obstacles->obstacles[i].orientation);
   }
 }
 
