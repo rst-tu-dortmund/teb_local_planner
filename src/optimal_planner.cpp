@@ -622,13 +622,13 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
 }
 
 
-void TebOptimalPlanner::AddEdgesDynamicObstacles()
+void TebOptimalPlanner::AddEdgesDynamicObstacles(double weight_multiplier)
 {
-  if (cfg_->optim.weight_obstacle==0 || obstacles_==NULL )
+  if (cfg_->optim.weight_obstacle==0 || weight_multiplier==0 || obstacles_==NULL )
     return; // if weight equals zero skip adding edges!
 
   Eigen::Matrix<double,2,2> information;
-  information(0,0) = cfg_->optim.weight_dynamic_obstacle;
+  information(0,0) = cfg_->optim.weight_dynamic_obstacle * weight_multiplier;
   information(1,1) = cfg_->optim.weight_dynamic_obstacle_inflation;
   information(0,1) = information(1,0) = 0;
   
@@ -638,6 +638,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
       continue;
 
     // Skip first and last pose, as they are fixed
+    double time = teb_.TimeDiff(0);
     for (int i=1; i < teb_.sizePoses() - 1; ++i)
     {
       EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(teb_.getSumOfTimeDiffsUpToIdx(i));
@@ -645,6 +646,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles()
       dynobst_edge->setInformation(information);
       dynobst_edge->setParameters(*cfg_, robot_model_.get(), obst->get());
       optimizer_->addEdge(dynobst_edge);
+      time += teb_.TimeDiff(i); // we do not need to check the time diff bounds, since we iterate to "< sizePoses()-1".
     }
   }
 }
