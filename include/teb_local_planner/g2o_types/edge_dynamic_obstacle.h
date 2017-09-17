@@ -38,7 +38,7 @@
  * g2o-framework. g2o is licensed under the terms of the BSD License.
  * Refer to the base class source for detailed licensing information.
  *
- * Author: Christoph Rösmann
+ * Author: Christoph Rösmann, Franz Albers
  *********************************************************************/
 
 #ifndef EDGE_DYNAMICOBSTACLE_H

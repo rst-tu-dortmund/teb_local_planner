@@ -64,7 +64,7 @@ unsigned int no_fixed_obstacles;
 void CB_mainCycle(const ros::TimerEvent& e);
 void CB_publishCycle(const ros::TimerEvent& e);
 void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level);
-void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg);
+void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg);
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb);
 void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg);
@@ -244,7 +244,7 @@ void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConst
   pobst->position() = Eigen::Vector2d(feedback->pose.position.x,feedback->pose.position.y);	  
 }
 
-void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
+void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg)
 {
   // resize such that the vector contains only the fixed obstacles specified inside the main function
   obst_vector.resize(no_fixed_obstacles);
@@ -269,8 +269,8 @@ void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
       obst_vector.push_back(ObstaclePtr(polyobst));
     }
 
-    if(!obst_msg->velocities.empty() && !obst_msg->orientations.empty() && !obst_vector.empty())
-      obst_vector.back()->setCentroidVelocity(obst_msg->velocities.at(i), obst_msg->orientations.at(i));
+    if(!obst_vector.empty())
+      obst_vector.back()->setCentroidVelocity(obst_msg->obstacles.at(i).velocities, obst_msg->obstacles.at(i).orientation);
   }
 }
 

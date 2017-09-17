@@ -49,7 +49,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 
-#include <teb_local_planner/ObstacleMsg.h>
 #include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/TwistWithCovariance.h>
 #include <geometry_msgs/QuaternionStamped.h>
