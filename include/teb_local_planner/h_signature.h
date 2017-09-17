@@ -317,7 +317,9 @@ public:
           {
             double t = 120;
             Eigen::Vector3d s1 (obstacles->at(l)->getCentroid()(0), obstacles->at(l)->getCentroid()(1), 0);
-            Eigen::Vector3d s2 (obstacles->at(l)->predictPosition(t).at(0)(0), obstacles->at(l)->predictPosition(t).at(0)(1), t);
+            Eigen::Vector3d s2;
+            obstacles->at(l)->predictCentroidConstantVelocity(t, s2.head(2));
+            s2[2] = t;
             Eigen::Vector3d r = position;
             Eigen::Vector3d p1 = s1 - r;
             Eigen::Vector3d p2 = s2 - r;

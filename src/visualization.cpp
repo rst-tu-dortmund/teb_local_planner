@@ -185,8 +185,10 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 
         geometry_msgs::Point end;
         double t = 20;
-        end.x = pobst->predictPosition(t).at(0)(0);
-        end.y = pobst->predictPosition(t).at(0)(1);
+        Eigen::Vector2d pred;
+        pobst->predictCentroidConstantVelocity(t, pred);
+        end.x = pred[0];
+        end.y = pred[1];
         end.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*t;
         marker.points.push_back(end);
       }
