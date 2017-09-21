@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2017-09-21)
+------------------
 * This update introduces support for dynamic obstacles (thanks to Franz Albers, who implemented and tested the code).
   Dynamic obstacle support requires parameter *include\_dynamic\_obstacles* to be activated.
   Note, this feature is still experimental and subject to testing.
