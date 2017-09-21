@@ -113,6 +113,8 @@ public:
   {
     double min_obstacle_dist; //!< Minimum desired separation from obstacles
     double inflation_dist; //!< buffer zone around obstacles with non-zero penalty costs (should be larger than min_obstacle_dist in order to take effect)
+    double dynamic_obstacle_inflation_dist; //!< Buffer zone around predicted locations of dynamic obstacles with non-zero penalty costs (should be larger than min_obstacle_dist in order to take effect)
+    bool include_dynamic_obstacles; //!< Specify whether the movement of dynamic obstacles should be predicted by a constant velocity model (this also effects homotopy class planning); If false, all obstacles are considered to be static.
     bool include_costmap_obstacles; //!< Specify whether the obstacles in the costmap should be taken into account directly
     double costmap_obstacles_behind_robot_dist; //!< Limit the occupied local costmap obstacles taken into account for planning behind the robot (specify distance in meters)
     int obstacle_poses_affected; //!< The obstacle position is attached to the closest pose on the trajectory to reduce computational effort, but take a number of neighbors into account as well
@@ -149,6 +151,7 @@ public:
     double weight_obstacle; //!< Optimization weight for satisfying a minimum separation from obstacles
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles    
+    double weight_dynamic_obstacle_inflation; //!< Optimization weight for the inflation penalty of dynamic obstacles (should be small)
     double weight_viapoint; //!< Optimization weight for minimizing the distance to via-points
     double weight_prefer_rotdir; //!< Optimization weight for preferring a specific turning direction (-> currently only activated if an oscillation is detected, see 'oscillation_recovery'
     
@@ -180,6 +183,7 @@ public:
     bool viapoints_all_candidates; //!< If true, all trajectories of different topologies are attached to the current set of via-points, otherwise only the trajectory sharing the same one as the initial/global plan.
     
     bool visualize_hc_graph; //!< Visualize the graph that is created for exploring new homotopy classes.
+    double visualize_with_time_as_z_axis_scale; //!< If this value is bigger than 0, the trajectory and obstacles are visualized in 3d using the time as the z-axis scaled by this value. Most useful for dynamic obstacles.
   } hcp;
   
   //! Recovery/backup related parameters
@@ -254,6 +258,8 @@ public:
     
     obstacles.min_obstacle_dist = 0.5;
     obstacles.inflation_dist = 0.6;
+    obstacles.dynamic_obstacle_inflation_dist = 0.6;
+    obstacles.include_dynamic_obstacles = true;
     obstacles.include_costmap_obstacles = true;
     obstacles.costmap_obstacles_behind_robot_dist = 1.5;
     obstacles.obstacle_poses_affected = 25;
@@ -281,9 +287,10 @@ public:
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_kinematics_turning_radius = 1;
     optim.weight_optimaltime = 1;
-    optim.weight_obstacle = 10;
+    optim.weight_obstacle = 50;
     optim.weight_inflation = 0.1;
-    optim.weight_dynamic_obstacle = 10;
+    optim.weight_dynamic_obstacle = 50;
+    optim.weight_dynamic_obstacle_inflation = 0.1;
     optim.weight_viapoint = 1;
     optim.weight_prefer_rotdir = 50;
     
@@ -312,6 +319,7 @@ public:
     hcp.viapoints_all_candidates = true;
     
     hcp.visualize_hc_graph = false;
+    hcp.visualize_with_time_as_z_axis_scale = 0.0;
     
     // Recovery
     

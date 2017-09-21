@@ -91,21 +91,9 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     
     // reserve some memory for obstacles
     obstacles_.reserve(500);
-    
-    // init some variables
-    tf_ = tf;
-    costmap_ros_ = costmap_ros;
-    costmap_ = costmap_ros_->getCostmap(); // locking should be done in MoveBase.
-    
-    costmap_model_ = boost::make_shared<base_local_planner::CostmapModel>(*costmap_);
-
-    
-    global_frame_ = costmap_ros_->getGlobalFrameID();
-    cfg_.map_frame = global_frame_; // TODO
-    robot_base_frame_ = costmap_ros_->getBaseFrameID();
         
     // create visualization instance	
-    visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_.map_frame)); 
+    visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
         
     // create robot footprint/contour model for optimization
     RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
@@ -122,6 +110,17 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
       ROS_INFO("Parallel planning in distinctive topologies disabled.");
     }
     
+    // init other variables
+    tf_ = tf;
+    costmap_ros_ = costmap_ros;
+    costmap_ = costmap_ros_->getCostmap(); // locking should be done in MoveBase.
+    
+    costmap_model_ = boost::make_shared<base_local_planner::CostmapModel>(*costmap_);
+
+    global_frame_ = costmap_ros_->getGlobalFrameID();
+    cfg_.map_frame = global_frame_; // TODO
+    robot_base_frame_ = costmap_ros_->getBaseFrameID();
+
     //Initialize a costmap to polygon converter
     if (!cfg_.obstacles.costmap_converter_plugin.empty())
     {
@@ -131,6 +130,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
         std::string converter_name = costmap_converter_loader_.getName(cfg_.obstacles.costmap_converter_plugin);
         // replace '::' by '/' to convert the c++ namespace to a NodeHandle namespace
         boost::replace_all(converter_name, "::", "/");
+        costmap_converter_->setOdomTopic(cfg_.odom_topic);
         costmap_converter_->initialize(ros::NodeHandle(nh, "costmap_converter/" + converter_name));
         costmap_converter_->setCostmap2D(costmap_);
         
@@ -448,31 +448,37 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
     return;
     
   //Get obstacles from costmap converter
-  costmap_converter::PolygonContainerConstPtr polygons =  costmap_converter_->getPolygons();
-  if (!polygons)
+  costmap_converter::ObstacleArrayConstPtr obstacles = costmap_converter_->getObstacles();
+  if (!obstacles)
     return;
-  
-  for (std::size_t i=0; i<polygons->size(); ++i)
+
+  for (std::size_t i=0; i<obstacles->obstacles.size(); ++i)
   {
-    if (polygons->at(i).points.size()==1) // Point
+    const geometry_msgs::Polygon* polygon = &obstacles->obstacles.at(i).polygon;
+
+    if (polygon->points.size()==1) // Point
     {
-      obstacles_.push_back(ObstaclePtr(new PointObstacle(polygons->at(i).points[0].x, polygons->at(i).points[0].y)));
+      obstacles_.push_back(ObstaclePtr(new PointObstacle(polygon->points[0].x, polygon->points[0].y)));
     }
-    else if (polygons->at(i).points.size()==2) // Line
+    else if (polygon->points.size()==2) // Line
     {
-      obstacles_.push_back(ObstaclePtr(new LineObstacle(polygons->at(i).points[0].x, polygons->at(i).points[0].y,
-                                                        polygons->at(i).points[1].x, polygons->at(i).points[1].y )));
+      obstacles_.push_back(ObstaclePtr(new LineObstacle(polygon->points[0].x, polygon->points[0].y,
+                                                        polygon->points[1].x, polygon->points[1].y )));
     }
-    else if (polygons->at(i).points.size()>2) // Real polygon
+    else if (polygon->points.size()>2) // Real polygon
     {
         PolygonObstacle* polyobst = new PolygonObstacle;
-        for (std::size_t j=0; j<polygons->at(i).points.size(); ++j)
+        for (std::size_t j=0; j<polygon->points.size(); ++j)
         {
-            polyobst->pushBackVertex(polygons->at(i).points[j].x, polygons->at(i).points[j].y);
+            polyobst->pushBackVertex(polygon->points[j].x, polygon->points[j].y);
         }
         polyobst->finalizePolygon();
         obstacles_.push_back(ObstaclePtr(polyobst));
     }
+
+    // Set velocity, if obstacle is moving
+    if(!obstacles_.empty())
+      obstacles_.back()->setCentroidVelocity(obstacles->obstacles[i].velocities, obstacles->obstacles[i].orientation);
   }
 }
 
@@ -481,7 +487,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
 {
   // Add custom obstacles obtained via message
   boost::mutex::scoped_lock l(custom_obst_mutex_);
-  
+
   if (!custom_obstacle_msg_.obstacles.empty())
   {
     // We only use the global header to specify the obstacle coordinate system instead of individual ones
@@ -503,30 +509,48 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
       obstacle_to_map_eig.setIdentity();
     }
     
-    for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = custom_obstacle_msg_.obstacles.begin(); obst_it != custom_obstacle_msg_.obstacles.end(); ++obst_it)
+    for (size_t i=0; i<custom_obstacle_msg_.obstacles.size(); ++i)
     {
-      if (obst_it->polygon.points.size() == 1 ) // point
+      if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 ) // point
       {
-        Eigen::Vector3d pos( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
+        Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().z );
         obstacles_.push_back(ObstaclePtr(new PointObstacle( (obstacle_to_map_eig * pos).head(2) )));
       }
-      else if (obst_it->polygon.points.size() == 2 ) // line
+      else if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 2 ) // line
       {
-        Eigen::Vector3d line_start( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y, obst_it->polygon.points.front().z );
-        Eigen::Vector3d line_end( obst_it->polygon.points.back().x, obst_it->polygon.points.back().y, obst_it->polygon.points.back().z );
-        obstacles_.push_back(ObstaclePtr(new LineObstacle( (obstacle_to_map_eig * line_start).head(2), (obstacle_to_map_eig * line_end).head(2) )));
+        Eigen::Vector3d line_start( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
+                                    custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
+                                    custom_obstacle_msg_.obstacles.at(i).polygon.points.front().z );
+        Eigen::Vector3d line_end( custom_obstacle_msg_.obstacles.at(i).polygon.points.back().x,
+                                  custom_obstacle_msg_.obstacles.at(i).polygon.points.back().y,
+                                  custom_obstacle_msg_.obstacles.at(i).polygon.points.back().z );
+        obstacles_.push_back(ObstaclePtr(new LineObstacle( (obstacle_to_map_eig * line_start).head(2),
+                                                           (obstacle_to_map_eig * line_end).head(2) )));
+      }
+      else if (custom_obstacle_msg_.obstacles.at(i).polygon.points.empty())
+      {
+        ROS_WARN("Invalid custom obstacle received. List of polygon vertices is empty. Skipping...");
+        continue;
       }
       else // polygon
       {
         PolygonObstacle* polyobst = new PolygonObstacle;
-        for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+        for (size_t j=0; j<custom_obstacle_msg_.obstacles.at(i).polygon.points.size(); ++j)
         {
-          Eigen::Vector3d pos( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y, obst_it->polygon.points[i].z );
+          Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points[j].x,
+                               custom_obstacle_msg_.obstacles.at(i).polygon.points[j].y,
+                               custom_obstacle_msg_.obstacles.at(i).polygon.points[j].z );
           polyobst->pushBackVertex( (obstacle_to_map_eig * pos).head(2) );
         }
         polyobst->finalizePolygon();
         obstacles_.push_back(ObstaclePtr(polyobst));
       }
+
+      // Set velocity, if obstacle is moving
+      if(!obstacles_.empty())
+        obstacles_.back()->setCentroidVelocity(custom_obstacle_msg_.obstacles[i].velocities, custom_obstacle_msg_.obstacles[i].orientation);
     }
   }
 }
@@ -914,7 +938,7 @@ void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::PoseSta
 }
      
      
-void TebLocalPlannerROS::customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
+void TebLocalPlannerROS::customObstacleCB(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg)
 {
   boost::mutex::scoped_lock l(custom_obst_mutex_);
   custom_obstacle_msg_ = *obst_msg;  

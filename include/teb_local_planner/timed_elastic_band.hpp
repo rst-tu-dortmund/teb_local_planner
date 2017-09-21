@@ -44,7 +44,7 @@ namespace teb_local_planner
   
 
 template<typename BidirIter, typename Fun>
-bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
+bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path_end, Fun fun_position, double max_vel_x, double max_vel_theta,
                                      boost::optional<double> max_acc_x, boost::optional<double> max_acc_theta,
                                      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples, bool guess_backwards_motion) 
 {
@@ -67,9 +67,9 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
       Eigen::Vector2d start2goal =  goal_position - start_position;
       start_orient = atan2(start2goal[1],start2goal[0]);
     }
+
     double timestep = 1; // TODO: time
-    
-    
+
     if (goal_orientation)
     {
       goal_orient = *goal_orientation;
@@ -99,6 +99,7 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
             
             double timestep_vel = diff_norm/max_vel_x; // constant velocity
             double timestep_acc;
+
             if (max_acc_x)
             {
                     timestep_acc = sqrt(2*diff_norm/(*max_acc_x)); // constant acceleration
@@ -114,6 +115,9 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
                 yaw = g2o::normalize_theta(yaw + M_PI);
             addPoseAndTimeDiff(curr_point, yaw ,timestep);
             
+            /*
+            // TODO: the following code does not seem to hot-start the optimizer. Instead it recudes convergence time.
+
             Eigen::Vector2d diff_next = fun_position(*boost::next(path_start))-curr_point; // TODO maybe store the boost::next for the following iteration
             double ang_diff = std::abs( g2o::normalize_theta( atan2(diff_next[1],diff_next[0])
                                                             -atan2(diff_last[1],diff_last[0]) ) );
@@ -133,6 +137,8 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
             if (backwards)
                 yaw = g2o::normalize_theta(yaw + M_PI);
             addPoseAndTimeDiff(curr_point, yaw ,timestep);
+
+            */
             
             ++idx;
       }
@@ -156,6 +162,8 @@ bool TimedElasticBand::initTEBtoGoal(BidirIter path_start, BidirIter path_end, F
         ROS_DEBUG("initTEBtoGoal(): number of generated samples is less than specified by min_samples. Forcing the insertion of more samples...");
         while (sizePoses() < min_samples-1) // subtract goal point that will be added later
         {
+          // Each inserted point bisects the remaining distance. Thus the timestep is also bisected.
+          timestep /= 2;
           // simple strategy: interpolate between the current pose and the goal
           addPoseAndTimeDiff( PoseSE2::average(BackPose(), goal), timestep ); // let the optimier correct the timestep (TODO: better initialization	
         }

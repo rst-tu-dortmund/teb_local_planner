@@ -60,7 +60,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
-#include <teb_local_planner/ObstacleMsg.h>
+#include <costmap_converter/ObstacleMsg.h>
 
 // transforms
 #include <tf/tf.h>
@@ -231,7 +231,7 @@ protected:
     * @brief Callback for custom obstacles that are not obtained from the costmap 
     * @param obst_msg pointer to the message containing a list of polygon shaped obstacles
     */
-  void customObstacleCB(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg);
+  void customObstacleCB(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg);
   
   
    /**
@@ -370,7 +370,7 @@ private:
   boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg_; //!< Dynamic reconfigure server to allow config modifications at runtime
   ros::Subscriber custom_obst_sub_; //!< Subscriber for custom obstacles received via a ObstacleMsg.
   boost::mutex custom_obst_mutex_; //!< Mutex that locks the obstacle array (multi-threaded)
-  ObstacleMsg custom_obstacle_msg_; //!< Copy of the most recent obstacle message
+  costmap_converter::ObstacleArrayMsg custom_obstacle_msg_; //!< Copy of the most recent obstacle message
   
   PoseSE2 robot_pose_; //!< Store current robot pose
   PoseSE2 robot_goal_; //!< Store current robot goal

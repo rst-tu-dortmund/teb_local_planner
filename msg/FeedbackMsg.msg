@@ -10,6 +10,6 @@ teb_local_planner/TrajectoryMsg[] trajectories
 uint16 selected_trajectory_idx
 
 # List of active obstacles
-geometry_msgs/PolygonStamped[] obstacles
+costmap_converter/ObstacleArrayMsg obstacles_msg
 
 

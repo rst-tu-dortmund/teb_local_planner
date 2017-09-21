@@ -2,7 +2,7 @@
  *
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2016,
+ *  Copyright (c) 2017.
  *  TU Dortmund - Institute of Control Theory and Systems Engineering.
  *  All rights reserved.
  *
@@ -57,16 +57,18 @@ TebConfig config;
 boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg;
 ros::Subscriber custom_obst_sub;
 ros::Subscriber clicked_points_sub;
+std::vector<ros::Subscriber> obst_vel_subs;
 unsigned int no_fixed_obstacles;
 
 // =========== Function declarations =============
 void CB_mainCycle(const ros::TimerEvent& e);
 void CB_publishCycle(const ros::TimerEvent& e);
 void CB_reconfigure(TebLocalPlannerReconfigureConfig& reconfig, uint32_t level);
-void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg);
+void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg);
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb);
 void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg);
+void CB_setObstacleVelocity(const geometry_msgs::TwistConstPtr& twist_msg, const unsigned int id);
 
 
 // =============== Main function =================
@@ -96,13 +98,19 @@ int main( int argc, char** argv )
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
 
-  obst_vector.push_back( boost::make_shared<PointObstacle>(-5,1) );
-  obst_vector.push_back( boost::make_shared<PointObstacle>(-5,2.2) );
+  obst_vector.push_back( boost::make_shared<PointObstacle>(-3,1) );
+  obst_vector.push_back( boost::make_shared<PointObstacle>(6,2) );
   obst_vector.push_back( boost::make_shared<PointObstacle>(0,0.1) );
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,1.5,1,-1.5) ); //90 deg
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,0,-1,0) ); //180 deg
 //  obst_vector.push_back( boost::make_shared<PointObstacle>(-1.5,-0.5) );
-  
+
+  // Dynamic obstacles
+  Eigen::Vector2d vel (0.1, -0.3);
+  obst_vector.at(0)->setCentroidVelocity(vel);
+  vel = Eigen::Vector2d(-0.3, -0.2);
+  obst_vector.at(1)->setCentroidVelocity(vel);
+
   /*
   PolygonObstacle* polyobst = new PolygonObstacle;
   polyobst->pushBackVertex(1, -1);
@@ -116,6 +124,10 @@ int main( int argc, char** argv )
   
   for (unsigned int i=0; i<obst_vector.size(); ++i)
   {
+    // setup callbacks for setting obstacle velocities
+    std::string topic = "/test_optim_node/obstacle_" + std::to_string(i) + "/cmd_vel";
+    obst_vel_subs.push_back(n.subscribe<geometry_msgs::Twist>(topic, 1, boost::bind(&CB_setObstacleVelocity, _1, i)));
+
     //CreateInteractiveMarker(obst_vector.at(i)[0],obst_vector.at(i)[1],i,&marker_server, &CB_obstacle_marker);  
     // Add interactive markers for all point obstacles
     boost::shared_ptr<PointObstacle> pobst = boost::dynamic_pointer_cast<PointObstacle>(obst_vector.at(i));
@@ -131,7 +143,7 @@ int main( int argc, char** argv )
   //via_points.push_back( Eigen::Vector2d( 0.0, 1.5 ) );
   
   // Setup visualization
-  visual = TebVisualizationPtr(new TebVisualization(n, config.map_frame));
+  visual = TebVisualizationPtr(new TebVisualization(n, config));
   
   // Setup robot shape model
   RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n);
@@ -232,28 +244,33 @@ void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConst
   pobst->position() = Eigen::Vector2d(feedback->pose.position.x,feedback->pose.position.y);	  
 }
 
-void CB_customObstacle(const teb_local_planner::ObstacleMsg::ConstPtr& obst_msg)
+void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg)
 {
   // resize such that the vector contains only the fixed obstacles specified inside the main function
   obst_vector.resize(no_fixed_obstacles);
   
   // Add custom obstacles obtained via message (assume that all obstacles coordiantes are specified in the default planning frame)  
-  for (std::vector<geometry_msgs::PolygonStamped>::const_iterator obst_it = obst_msg->obstacles.begin(); obst_it != obst_msg->obstacles.end(); ++obst_it)
+  for (size_t i = 0; i < obst_msg->obstacles.size(); ++i)
   {
-    if (obst_it->polygon.points.size() == 1 )
+    if (obst_msg->obstacles.at(i).polygon.points.size() == 1 )
     {
-      obst_vector.push_back(ObstaclePtr(new PointObstacle( obst_it->polygon.points.front().x, obst_it->polygon.points.front().y )));
+      obst_vector.push_back(ObstaclePtr(new PointObstacle( obst_msg->obstacles.at(i).polygon.points.front().x,
+                                                           obst_msg->obstacles.at(i).polygon.points.front().y )));
     }
     else
     {
       PolygonObstacle* polyobst = new PolygonObstacle;
-      for (int i=0; i<(int)obst_it->polygon.points.size(); ++i)
+      for (size_t j=0; j<obst_msg->obstacles.at(i).polygon.points.size(); ++j)
       {
-        polyobst->pushBackVertex( obst_it->polygon.points[i].x, obst_it->polygon.points[i].y );
+        polyobst->pushBackVertex( obst_msg->obstacles.at(i).polygon.points[j].x,
+                                  obst_msg->obstacles.at(i).polygon.points[j].y );
       }
       polyobst->finalizePolygon();
       obst_vector.push_back(ObstaclePtr(polyobst));
     }
+
+    if(!obst_vector.empty())
+      obst_vector.back()->setCentroidVelocity(obst_msg->obstacles.at(i).velocities, obst_msg->obstacles.at(i).orientation);
   }
 }
 
@@ -266,4 +283,17 @@ void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg)
   ROS_INFO_STREAM("Via-point (" << point_msg->point.x << "," << point_msg->point.y << ") added.");
   if (config.optim.weight_viapoint<=0)
     ROS_WARN("Note, via-points are deactivated, since 'weight_via_point' <= 0");
+}
+
+
+void CB_setObstacleVelocity(const geometry_msgs::TwistConstPtr& twist_msg, const unsigned int id)
+{
+  if (id >= obst_vector.size())
+  {
+    ROS_WARN("Cannot set velocity: unknown obstacle id.");
+    return;
+  }
+
+  Eigen::Vector2d vel (twist_msg->linear.x, twist_msg->linear.y);
+  obst_vector.at(id)->setCentroidVelocity(vel);
 }

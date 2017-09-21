@@ -45,23 +45,7 @@
 #include <vector>
 #include <iterator>
 
-#ifdef BOOST_NO_CXX11_DEFAULTED_FUNCTIONS
-  #include <boost/graph/adjacency_list.hpp>
-#else
-  // Workaround for a bug in boost graph library (concerning directed graphs), boost version 1.48:
-  // boost::add_vertex requires a move constructor/assignment operator in one of the underlying boost objects if C++11 is activated,
-  // but they are missing. The compiler fails due to an implicit deletion. We just deactivate C++11 default functions for now.
-  #define BOOST_NO_CXX11_DEFAULTED_FUNCTIONS
-  #include <boost/graph/adjacency_list.hpp>
-  #undef BOOST_NO_CXX11_DEFAULTED_FUNCTIONS
-#endif
-
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/depth_first_search.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/random.hpp>
-#include <boost/utility.hpp>
-
 
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/Point.h>
@@ -77,54 +61,46 @@
 #include <teb_local_planner/visualization.h>
 #include <teb_local_planner/robot_footprint_model.h>
 #include <teb_local_planner/equivalence_relations.h>
+#include <teb_local_planner/graph_search.h>
 
 
 namespace teb_local_planner
 {
-  
- 
-//! Vertex in the graph that is used to find homotopy classes (only stores 2D positions)  
-struct HcGraphVertex
-{ 
-public:
-  Eigen::Vector2d pos; // position of vertices in the map
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+//!< Inline function used for calculateHSignature() in combination with VertexPose pointers
+inline std::complex<long double> getCplxFromVertexPosePtr(const VertexPose* pose)
+{
+  return std::complex<long double>(pose->x(), pose->y());
 };
 
-//! Abbrev. for the homotopy class search-graph type @see HcGraphVertex
-typedef boost::adjacency_list < boost::listS, boost::vecS, boost::directedS, HcGraphVertex, boost::no_property > HcGraph;
-//! Abbrev. for vertex type descriptors in the homotopy class search-graph
-typedef boost::graph_traits<HcGraph>::vertex_descriptor HcGraphVertexType;
-//! Abbrev. for edge type descriptors in the homotopy class search-graph
-typedef boost::graph_traits<HcGraph>::edge_descriptor HcGraphEdgeType;
-//! Abbrev. for the vertices iterator of the homotopy class search-graph
-typedef boost::graph_traits<HcGraph>::vertex_iterator HcGraphVertexIterator;
-//! Abbrev. for the edges iterator of the homotopy class search-graph
-typedef boost::graph_traits<HcGraph>::edge_iterator HcGraphEdgeIterator;
-//! Abbrev. for the adjacency iterator that iterates vertices that are adjecent to the specified one
-typedef boost::graph_traits<HcGraph>::adjacency_iterator HcGraphAdjecencyIterator;
+
+//!< Inline function used for calculateHSignature() in combination with geometry_msgs::PoseStamped
+inline std::complex<long double> getCplxFromMsgPoseStamped(const geometry_msgs::PoseStamped& pose)
+{
+  return std::complex<long double>(pose.pose.position.x, pose.pose.position.y);
+};
 
 /**
  * @class HomotopyClassPlanner
  * @brief Local planner that explores alternative homotopy classes, create a plan for each alternative
  *	  and finally return the robot controls for the current best path (repeated in each sampling interval)
- * 
+ *
  * Equivalence classes (e.g. homotopy) are explored using the help of a search-graph. \n
  * A couple of possible candidates are sampled / generated and filtered afterwards such that only a single candidate
  * per homotopy class remain. Filtering is applied using the H-Signature, a homotopy (resp. homology) invariant: \n
  *      - S. Bhattacharya et al.: Search-based Path Planning with Homotopy Class Constraints, AAAI, 2010
  *      - C. Rösmann et al.: Planning of Multiple Robot Trajectories in Distinctive Topologies, ECMR, 2015.
- * 
+ *
  * Followed by the homotopy class search, each candidate is used as an initialization for the underlying trajectory
  * optimization (in this case utilizing the TebOptimalPlanner class with the TimedElasticBand). \n
  * Depending on the config parameters, the optimization is performed in parallel. \n
- * After the optimization is completed, the best optimized candidate is selected w.r.t. to trajectory cost, since the 
+ * After the optimization is completed, the best optimized candidate is selected w.r.t. to trajectory cost, since the
  * cost already contains important features like clearance from obstacles and transition time. \n
- * 
+ *
  * Everyhting is performed by calling one of the overloaded plan() methods. \n
- * Afterwards the velocity command to control the robot is obtained from the "best" candidate 
+ * Afterwards the velocity command to control the robot is obtained from the "best" candidate
  * via getVelocityCommand(). \n
- * 
+ *
  * All steps are repeated in the subsequent sampling interval with the exception, that already planned (optimized) trajectories
  * are preferred against new path initilizations in order to improve the hot-starting capability.
  */
@@ -132,11 +108,13 @@ class HomotopyClassPlanner : public PlannerInterface
 {
 public:
 
+  using EquivalenceClassContainer = std::vector< std::pair<EquivalenceClassPtr, bool> >;
+
   /**
    * @brief Default constructor
    */
   HomotopyClassPlanner();
-  
+
   /**
    * @brief Construct and initialize the HomotopyClassPlanner
    * @param cfg Const reference to the TebConfig class for internal parameters
@@ -147,12 +125,12 @@ public:
    */
   HomotopyClassPlanner(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
                        TebVisualizationPtr visualization = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
-    
+
   /**
    * @brief Destruct the HomotopyClassPlanner.
    */
   virtual ~HomotopyClassPlanner();
-  
+
   /**
    * @brief Initialize the HomotopyClassPlanner
    * @param cfg Const reference to the TebConfig class for internal parameters
@@ -163,15 +141,15 @@ public:
    */
   void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
                   TebVisualizationPtr visualization = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
-  
-  
-  
+
+
+
   /** @name Plan a trajectory */
   //@{
-  
+
   /**
    * @brief Plan a trajectory based on an initial reference plan.
-   * 
+   *
    * Provide this method to create and optimize a trajectory that is initialized
    * according to an initial reference plan (given as a container of poses).
    * @warning The current implementation extracts only the start and goal pose and calls the overloaded plan()
@@ -182,10 +160,10 @@ public:
    * @return \c true if planning was successful, \c false otherwise
    */
   virtual bool plan(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
-  
+
   /**
    * @brief Plan a trajectory between a given start and goal pose (tf::Pose version).
-   * 
+   *
    * Provide this method to create and optimize a trajectory that is initialized between a given start and goal pose.
    * @param start tf::Pose containing the start pose of the trajectory
    * @param goal tf::Pose containing the goal pose of the trajectory
@@ -195,10 +173,10 @@ public:
    * @return \c true if planning was successful, \c false otherwise
    */
   virtual bool plan(const tf::Pose& start, const tf::Pose& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
-  
+
   /**
    * @brief Plan a trajectory between a given start and goal pose.
-   * 
+   *
    * Provide this method to create and optimize a trajectory that is initialized between a given start and goal pose.
    * @param start PoseSE2 containing the start pose of the trajectory
    * @param goal PoseSE2 containing the goal pose of the trajectory
@@ -208,30 +186,30 @@ public:
    * @return \c true if planning was successful, \c false otherwise
    */
   virtual bool plan(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_vel = NULL, bool free_goal_vel=false);
-  
+
   /**
    * @brief Get the velocity command from a previously optimized plan to control the robot at the current sampling interval.
    * @warning Call plan() first and check if the generated plan is feasible.
    * @param[out] vx translational velocity [m/s]
-   * @param[out] vy strafing velocity which can be nonzero for holonomic robots [m/s] 
+   * @param[out] vy strafing velocity which can be nonzero for holonomic robots [m/s]
    * @param[out] omega rotational velocity [rad/s]
    * @return \c true if command is valid, \c false otherwise
    */
   virtual bool getVelocityCommand(double& vx, double& vy, double& omega) const;
-  
+
   /**
    * @brief Access current best trajectory candidate (that relates to the "best" homotopy class).
-   * 
+   *
    * If no trajectory is available, the pointer will be empty.
    * If only a single trajectory is available, return it.
    * Otherwise return the best one, but call selectBestTeb() before to perform the actual selection (part of the plan() methods).
    * @return Shared pointer to the best TebOptimalPlanner that contains the selected trajectory (TimedElasticBand).
    */
   TebOptimalPlannerPtr bestTeb() const {return tebs_.empty() ? TebOptimalPlannerPtr() : tebs_.size()==1 ? tebs_.front() : best_teb_;}
-    
+
   /**
    * @brief Check whether the planned trajectory is feasible or not.
-   * 
+   *
    * This method currently checks only that the trajectory, or a part of the trajectory is collision free.
    * Obstacles are here represented as costmap instead of the internal ObstacleContainer.
    * @param costmap_model Pointer to the costmap model
@@ -239,41 +217,41 @@ public:
    * @param inscribed_radius The radius of the inscribed circle of the robot
    * @param circumscribed_radius The radius of the circumscribed circle of the robot
    * @param look_ahead_idx Number of poses along the trajectory that should be verified, if -1, the complete trajectory will be checked.
-   * @return \c true, if the robot footprint along the first part of the trajectory intersects with 
+   * @return \c true, if the robot footprint along the first part of the trajectory intersects with
    *         any obstacle in the costmap, \c false otherwise.
    */
   virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
                                     double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1);
-  
+
   //@}
-  
+
   /** @name Visualization */
   //@{
-  
+
   /**
    * @brief Register a TebVisualization class to enable visiualization routines (e.g. publish the local plan and pose sequence)
    * @param visualization shared pointer to a TebVisualization instance
    * @see visualizeTeb
    */
   void setVisualization(TebVisualizationPtr visualization);
-  
+
    /**
     * @brief Publish the local plan, pose sequence and additional information via ros topics (e.g. subscribe with rviz).
-    * 
+    *
     * Make sure to register a TebVisualization instance before using setVisualization() or an overlaoded constructor.
     * @see setVisualization
     */
   virtual void visualize();
-  
+
   //@}
-  
+
   /** @name Important steps that are called during planning */
   //@{
-    
- 
+
+
   /**
    * @brief Explore paths in new equivalence classes (e.g. homotopy classes) and initialize TEBs from them.
-   * 
+   *
    * This "all-in-one" method creates a graph with position keypoints from which
    * feasible paths (with clearance from obstacles) are extracted. \n
    * All obtained paths are filted to only keep a single path for each equivalence class. \n
@@ -288,18 +266,18 @@ public:
    */
   void exploreEquivalenceClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel);
 
-  
+
   /**
    * @brief Check all available trajectories (TEBs) for detours and delete found ones.
    * @see TimedElasticBand::detectDetoursBackwards
-   * @param threshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg) 
+   * @param threshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg)
    */
   void deleteTebDetours(double threshold=0.0);
- 
-  
+
+
   /**
-   * @brief Add a new Teb to the internal trajectory container and initialize it using a generic 2D reference path
-   * 
+   * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it using a generic 2D reference path
+   *
    * Refer to TimedElasticBand::initTEBtoGoal() for more details about the template parameters.
    * @param path_start start iterator of a generic 2d path
    * @param path_end end iterator of a generic 2d path
@@ -312,25 +290,25 @@ public:
    * @return Shared pointer to the newly created teb optimal planner
    */
   template<typename BidirIter, typename Fun>
-  TebOptimalPlannerPtr addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity); 
-  
+  TebOptimalPlannerPtr addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity);
+
   /**
-   * @brief Add a new Teb to the internal trajectory container and initialize it with a simple straight line between a given start and goal
+   * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it with a simple straight line between a given start and goal
    * @param start start pose
    * @param goal goal pose
    * @param start_velocity start velocity (optional)
    * @return Shared pointer to the newly created teb optimal planner
    */
-  TebOptimalPlannerPtr addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity); 
-  
+  TebOptimalPlannerPtr addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity);
+
   /**
-   * @brief Add a new Teb to the internal trajectory container and initialize it using a PoseStamped container
+   * @brief Add a new Teb to the internal trajectory container , if this teb constitutes a new equivalence class. Initialize it using a PoseStamped container
    * @param initial_plan container of poses (start and goal orientation should be valid!)
    * @param start_velocity start velocity (optional)
    * @return Shared pointer to the newly created teb optimal planner
    */
   TebOptimalPlannerPtr addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity);
-  
+
   /**
    * @brief Update TEBs with new pose, goal and current velocity.
    * @param start New start pose (optional)
@@ -338,55 +316,55 @@ public:
    * @param start_velocity start velocity (optional)
    */
   void updateAllTEBs(const PoseSE2* start, const PoseSE2* goal, const geometry_msgs::Twist* start_velocity);
-  
-  
+
+
   /**
    * @brief Optimize all available trajectories by invoking the optimizer on each one.
-   * 
+   *
    * Depending on the configuration parameters, the optimization is performed either single or multi threaded.
    * @param iter_innerloop Number of inner iterations (see TebOptimalPlanner::optimizeTEB())
    * @param iter_outerloop Number of outer iterations (see TebOptimalPlanner::optimizeTEB())
    */
   void optimizeAllTEBs(int iter_innerloop, int iter_outerloop);
-  
+
   /**
    * @brief Returns a shared pointer to the TEB related to the initial plan
    * @return A non-empty shared ptr is returned if a match was found; Otherwise the shared ptr is empty.
    */
   TebOptimalPlannerPtr getInitialPlanTEB();
-  
+
   /**
    * @brief In case of multiple, internally stored, alternative trajectories, select the best one according to their cost values.
-   * 
+   *
    * The trajectory cost includes features such as transition time and clearance from obstacles. \n
    * The best trajectory can be accessed later by bestTeb() within the current sampling interval in order to avoid unessary recalculations.
    * @return Shared pointer to the best TebOptimalPlanner that contains the selected trajectory (TimedElasticBand).
    */
   TebOptimalPlannerPtr selectBestTeb();
-  
+
   //@}
-  
+
    /**
     * @brief Reset the planner.
-    * 
+    *
     * Clear all previously found H-signatures, paths, tebs and the hcgraph.
     */
-  virtual void clearPlanner() {graph_.clear(); equivalence_classes_.clear(); tebs_.clear(); initial_plan_ = NULL;}
-  
-    
+  virtual void clearPlanner() {clearGraph(); equivalence_classes_.clear(); tebs_.clear(); initial_plan_ = NULL;}
+
+
   /**
    * @brief Prefer a desired initial turning direction (by penalizing the opposing one)
-   * 
-   * A desired (initial) turning direction might be specified in case the planned trajectory oscillates between two 
+   *
+   * A desired (initial) turning direction might be specified in case the planned trajectory oscillates between two
    * solutions (in the same equivalence class!) with similar cost. Check the parameters in order to adjust the weight of the penalty.
    * Initial means that the penalty is applied only to the first few poses of the trajectory.
    * @param dir This parameter might be RotType::left (prefer left), RotType::right (prefer right) or RotType::none (prefer none)
    */
   virtual void setPreferredTurningDir(RotType dir);
-  
+
   /**
    * @brief Check if the planner suggests a shorter horizon (e.g. to resolve problems)
-   * 
+   *
    * This method is intendend to be called after determining that a trajectory provided by the planner is infeasible.
    * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
    * Implemented cases: see TebOptimalPlanner
@@ -394,12 +372,12 @@ public:
    * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
    */
   virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;
-  
+
   /**
    * @brief Calculate the equivalence class of a path
-   * 
+   *
    * Currently, only the H-signature (refer to HSignature) is implemented.
-   * 
+   *
    * @param path_start Iterator to the first element in the path
    * @param path_end Iterator to the last element in the path
    * @param obstacles obstacle container
@@ -407,16 +385,17 @@ public:
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun function of the form std::complex< long double > (const T& point_type)
    * @return pointer to the equivalence class base type
-   */  
+   */
   template<typename BidirIter, typename Fun>
-  EquivalenceClassPtr calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles = NULL);
-  
+  EquivalenceClassPtr calculateEquivalenceClass(BidirIter path_start, BidirIter path_end, Fun fun_cplx_point, const ObstContainer* obstacles = NULL,
+                                                boost::optional<TimeDiffSequence::iterator> timediff_start = boost::none, boost::optional<TimeDiffSequence::iterator> timediff_end = boost::none);
+
   /**
    * @brief Read-only access to the internal trajectory container.
    * @return read-only reference to the teb container.
    */
-  const TebOptPlannerContainer& getTrajectoryContainer() const {return tebs_;};
-  
+  const TebOptPlannerContainer& getTrajectoryContainer() const {return tebs_;}
+
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
    * @param[out] cost current cost value for each trajectory
@@ -425,8 +404,8 @@ public:
    * @param viapoint_cost_scale Specify extra scaling for via points.
    * @param alternative_time_cost Replace the cost for the time optimal objective by the actual (weighted) transition time
    */
-  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);  
-  
+  virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
+
   /**
    * @brief Check if two h-signatures are similar (w.r.t. a certain threshold)
    * @param h1 first h-signature
@@ -438,166 +417,122 @@ public:
       double diff_real = std::abs(h2.real() - h1.real());
       double diff_imag = std::abs(h2.imag() - h1.imag());
       if (diff_real<=threshold && diff_imag<=threshold)
-        return true; // Found! Homotopy class already exists, therefore nothing added  
+        return true; // Found! Homotopy class already exists, therefore nothing added
       return false;
   }
-  
-   
+
+
   /**
    * @brief Access config (read-only)
    * @return const pointer to the config instance
    */
-  const TebConfig* config() const {return cfg_;}  
-    
+  const TebConfig* config() const {return cfg_;}
+
   /**
    * @brief Access current obstacle container (read-only)
    * @return const pointer to the obstacle container instance
-   */ 
+   */
   const ObstContainer* obstacles() const {return obstacles_;}
-  
+
   /**
    * @brief Returns true if the planner is initialized
    */
   bool isInitialized() const {return initialized_;}
-  
+
   /**
    * @brief Clear any existing graph of the homotopy class search
    */
-  void clearGraph() {graph_.clear();}
-  
+  void clearGraph() {if(graph_search_) graph_search_->clearGraph();}
+
   /**
    * @brief find the index of the currently best TEB in the container
    * @remarks bestTeb() should be preferred whenever possible
    * @return index of the best TEB obtained with bestTEB(), if no TEB is avaiable, it returns -1.
    */
   int bestTebIdx() const;
-  
-    
-protected:
-  
-  /** @name Explore new paths and keep only a single one for each homotopy class */
-  //@{
-  
-  /**
-   * @brief Create a graph containing points in the global frame that can be used to explore new possible paths between start and goal.
-   * 
-   * This version of the graph creation places a keypoint on the left and right side of each obstacle w.r.t to the goal heading. \n
-   * All feasible paths between start and goal point are extracted using a Depth First Search afterwards. \n
-   * This version works very well for small point obstacles. For more complex obstacles call the createProbRoadmapGraph()
-   * method that samples keypoints in a predefined area and hopefully finds all relevant alternative paths.
-   * 
-   * @see createProbRoadmapGraph
-   * @param start Start pose from wich to start on (e.g. the current robot pose).
-   * @param goal Goal pose to find paths to (e.g. the robot's goal).
-   * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
-   * @param obstacle_heading_threshold Value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account [0,1]
-   * @param start_velocity start velocity (optional)
-   */
-  void createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity);
-  
-  /**
-   * @brief Create a graph and sample points in the global frame that can be used to explore new possible paths between start and goal.
-   * 
-   * This version of the graph samples keypoints in a predefined area (config) in the current frame between start and goal. \n
-   * Afterwards all feasible paths between start and goal point are extracted using a Depth First Search. \n
-   * Use the sampling method for complex, non-point or huge obstacles. \n
-   * You may call createGraph() instead.
-   * 
-   * @see createGraph
-   * @param start Start pose from wich to start on (e.g. the current robot pose).
-   * @param goal Goal pose to find paths to (e.g. the robot's goal).
-   * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
-   * @param no_samples number of random samples
-   * @param obstacle_heading_threshold Value of the normalized scalar product between obstacle heading and goal heading in order to take them (obstacles) into account [0,1]
-   * @param start_velocity start velocity (optional)
-   */  
-  void createProbRoadmapGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, int no_samples, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity);
-  
-  /**
-   * @brief Check if a h-signature exists already.
-   * @param eq_class equivalence class that should be tested
-   * @return \c true if the h-signature is found, \c false otherwise
-   */ 
-  bool hasEquivalenceClass(const EquivalenceClassPtr& eq_class) const;
-  
+
+
   /**
    * @brief Internal helper function that adds a new equivalence class to the list of known classes only if it is unique.
    * @param eq_class equivalence class that should be tested
    * @param lock if \c true, exclude the H-signature from deletion, e.g. in deleteTebDetours().
    * @return \c true if the h-signature was added and no duplicate was found, \c false otherwise
-   */    
+   */
   bool addEquivalenceClassIfNew(const EquivalenceClassPtr& eq_class, bool lock=false);
-  
+
+  /**
+   * @brief Return the current set of equivalence erelations (read-only)
+   * @return reference to the internal set of currently tracked equivalence relations
+   */
+  const EquivalenceClassContainer& getEquivalenceClassRef() const  {return equivalence_classes_;}
+
+
+protected:
+
+  /** @name Explore new paths and keep only a single one for each homotopy class */
+  //@{
+
+  /**
+   * @brief Check if a h-signature exists already.
+   * @param eq_class equivalence class that should be tested
+   * @return \c true if the h-signature is found, \c false otherwise
+   */
+  bool hasEquivalenceClass(const EquivalenceClassPtr& eq_class) const;
+
+
   /**
    * @brief Renew all found h-signatures for the new planning step based on existing TEBs. Optionally detours can be discarded.
-   * 
+   *
    * Calling this method in each new planning interval is really important.
    * First all old h-signatures are deleted, since they could be invalid for this planning step (obstacle position may changed).
    * Afterwards the h-signatures are calculated for each existing TEB/trajectory and is inserted to the list of known h-signatures.
    * Doing this is important to prefer already optimized trajectories in contrast to initialize newly explored coarse paths.
-   * @param delete_detours if this param is \c true, all existing TEBs are cleared from detour-candidates by utilizing deleteTebDetours(). 
+   * @param delete_detours if this param is \c true, all existing TEBs are cleared from detour-candidates by utilizing deleteTebDetours().
    */
   void renewAndAnalyzeOldTebs(bool delete_detours);
-  
+
   /**
    * @brief Associate trajectories with via-points
-   * 
-   * If \c all_trajectories is true, all trajectory candidates are connected with the set of via_points, 
+   *
+   * If \c all_trajectories is true, all trajectory candidates are connected with the set of via_points,
    * otherwise only the trajectory sharing the homotopy class of the initial/global plan (and all via-points from alternative trajectories are removed)
    * @remarks Requires that the plan method is called with an initial plan provided and that via-points are enabled (config)
    * @param all_trajectories see method description
    */
   void updateReferenceTrajectoryViaPoints(bool all_trajectories);
-  
-  /**
-   * @brief Depth First Search implementation to find all paths between the start and the specified goal vertex.
-   * 
-   * Complete paths are stored to the internal path container.
-   * @sa http://www.technical-recipes.com/2011/a-recursive-algorithm-to-find-all-paths-between-two-given-nodes/
-   * @param g Graph on which the depth first should be performed
-   * @param visited A container that stores visited vertices (pass an empty container, it will be filled inside during recursion).
-   * @param goal Desired goal vertex
-   * @param start_orientation Orientation of the first trajectory pose, required to initialize the trajectory/TEB
-   * @param goal_orientation Orientation of the goal trajectory pose, required to initialize the trajectory/TEB
-   * @param start_velocity start velocity (optional)
-   */
-  void DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity);
-   
+
   //@}
-  
-    
+
+
   // external objects (store weak pointers)
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
   const ViaPointContainer* via_points_; //!< Store the current list of via-points
-  
+
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   TebOptimalPlannerPtr best_teb_; //!< Store the current best teb.
   RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
-  
+
   const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
   EquivalenceClassPtr initial_plan_eq_class_; //!< Store the equivalence class of the initial plan
   TebOptimalPlannerPtr initial_plan_teb_; //!< Store pointer to the TEB related to the initial plan (use method getInitialPlanTEB() since it checks if initial_plan_teb_ is still included in tebs_.)
-  
+
   TebOptPlannerContainer tebs_; //!< Container that stores multiple local teb planners (for alternative equivalence classes) and their corresponding costs
-  
-  HcGraph graph_; //!< Store the graph that is utilized to find alternative homotopy classes.
- 
-  using EquivalenceClassContainer = std::vector< std::pair<EquivalenceClassPtr, bool> >;
-  EquivalenceClassContainer equivalence_classes_; //!< Store all known quivalence classes (e.g. h-signatures) to allow checking for duplicates after finding and adding new ones. 
+
+  EquivalenceClassContainer equivalence_classes_; //!< Store all known quivalence classes (e.g. h-signatures) to allow checking for duplicates after finding and adding new ones.
                                                                             //   The second parameter denotes whether to exclude the class from detour deletion or not (true: force keeping).
-  
-  boost::random::mt19937 rnd_generator_; //!< Random number generator used by createProbRoadmapGraph to sample graph keypoints.   
-      
+
+  boost::shared_ptr<GraphSearchInterface> graph_search_;
+
   bool initialized_; //!< Keeps track about the correct initialization of this class
-  
-  
+
+
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    
-    
+
+
 };
 
 //! Abbrev. for a shared pointer of a HomotopyClassPlanner instance.
