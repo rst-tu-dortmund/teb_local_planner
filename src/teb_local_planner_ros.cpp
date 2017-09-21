@@ -238,10 +238,11 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 
   // Transform global plan to the frame of interest (w.r.t. the local costmap)
   std::vector<geometry_msgs::PoseStamped> transformed_plan;
+  std::vector<geometry_msgs::PoseStamped> trimmed_global_plan;
   int goal_idx;
   tf::StampedTransform tf_plan_to_global;
   if (!transformGlobalPlan(*tf_, global_plan_, robot_pose, *costmap_, global_frame_, cfg_.trajectory.max_global_plan_lookahead_dist, 
-                           transformed_plan, &goal_idx, &tf_plan_to_global))
+                           trimmed_global_plan, transformed_plan, &goal_idx, &tf_plan_to_global))
   {
     ROS_WARN("Could not transform the global plan to the frame of the controller");
     return false;
@@ -396,7 +397,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   planner_->visualize();
   visualization_->publishObstacles(obstacles_);
   visualization_->publishViaPoints(via_points_);
-  visualization_->publishGlobalPlan(global_plan_);
+  visualization_->publishGlobalPlan(trimmed_global_plan);
   return true;
 }
 
@@ -632,7 +633,8 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const tf::TransformListener& tf, const 
 
 bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, const std::vector<geometry_msgs::PoseStamped>& global_plan,
                   const tf::Stamped<tf::Pose>& global_pose, const costmap_2d::Costmap2D& costmap, const std::string& global_frame, double max_plan_length,
-                  std::vector<geometry_msgs::PoseStamped>& transformed_plan, int* current_goal_idx, tf::StampedTransform* tf_plan_to_global) const
+                  std::vector<geometry_msgs::PoseStamped>& transformed_plan, std::vector<geometry_msgs::PoseStamped>& global_plan_trimmed,
+                  int* current_goal_idx, tf::StampedTransform* tf_plan_to_global) const
 {
   // this method is a slightly modified version of base_local_planner/goal_functions.h
 
@@ -704,6 +706,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
       tf::poseStampedTFToMsg(tf_pose, newer_pose);
 
       transformed_plan.push_back(newer_pose);
+      global_plan_trimmed.push_back(pose);
 
       double x_diff = robot_pose.getOrigin().x() - global_plan[i].pose.position.x;
       double y_diff = robot_pose.getOrigin().y() - global_plan[i].pose.position.y;
