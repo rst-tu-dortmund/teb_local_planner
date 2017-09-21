@@ -108,6 +108,8 @@ class HomotopyClassPlanner : public PlannerInterface
 {
 public:
 
+  using EquivalenceClassContainer = std::vector< std::pair<EquivalenceClassPtr, bool> >;
+
   /**
    * @brief Default constructor
    */
@@ -458,6 +460,13 @@ public:
    */
   bool addEquivalenceClassIfNew(const EquivalenceClassPtr& eq_class, bool lock=false);
 
+  /**
+   * @brief Return the current set of equivalence erelations (read-only)
+   * @return reference to the internal set of currently tracked equivalence relations
+   */
+  const EquivalenceClassContainer& getEquivalenceClassRef() const  {return equivalence_classes_;}
+
+
 protected:
 
   /** @name Explore new paths and keep only a single one for each homotopy class */
@@ -511,7 +520,6 @@ protected:
 
   TebOptPlannerContainer tebs_; //!< Container that stores multiple local teb planners (for alternative equivalence classes) and their corresponding costs
 
-  using EquivalenceClassContainer = std::vector< std::pair<EquivalenceClassPtr, bool> >;
   EquivalenceClassContainer equivalence_classes_; //!< Store all known quivalence classes (e.g. h-signatures) to allow checking for duplicates after finding and adding new ones.
                                                                             //   The second parameter denotes whether to exclude the class from detour deletion or not (true: force keeping).
 

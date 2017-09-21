@@ -226,6 +226,13 @@ public:
       return true;
     }
 
+    /**
+     * @brief Get the current value of the h-signature (read-only)
+     * @return h-signature in complex-number format
+     */
+     const std::complex<long double>& value() const {return hsignature_;}
+
+
 private:
 
     const TebConfig* cfg_;
@@ -401,6 +408,12 @@ public:
       }
       return true;
     }
+
+    /**
+     * @brief Get the current h-signature (read-only)
+     * @return h-signature in complex-number format
+     */
+     const std::vector<double>& values() const {return hsignature3d_;}
 
 private:
     const TebConfig* cfg_;
