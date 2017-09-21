@@ -200,7 +200,7 @@ void TimedElasticBand::setTimeDiffVertexFixed(int index, bool status)
 }
 
 
-void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples)
+void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples, bool fast_mode)
 {  
   /// iterate through all TEB states and add/remove states!
 
@@ -238,6 +238,7 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
         modified = true;
       }
     }
+    if (fast_mode) break;
   }
 }
 

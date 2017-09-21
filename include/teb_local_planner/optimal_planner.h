@@ -102,6 +102,10 @@ typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> 
  * 	- R. Kümmerle et al.: G2o: A general framework for graph optimization, ICRA, 2011. 
  * 
  * @todo: Call buildGraph() only if the teb structure has been modified to speed up hot-starting from previous solutions.
+ * @todo: We introduced the non-fast mode with the support of dynamic obstacles
+ *        (which leads to better results in terms of x-y-t homotopy planning).
+ *        However, we have not tested this mode intensively yet, so we keep
+ *        the legacy fast mode as default until we finish our tests.
  */
 class TebOptimalPlanner : public PlannerInterface
 {

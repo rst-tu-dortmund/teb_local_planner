@@ -175,11 +175,21 @@ bool TebOptimalPlanner::optimizeTEB(int iterations_innerloop, int iterations_out
   optimized_ = false;
   
   double weight_multiplier = 1.0;
+
+  // TODO(roesmann): we introduced the non-fast mode with the support of dynamic obstacles
+  //                (which leads to better results in terms of x-y-t homotopy planning).
+  //                 however, we have not tested this mode intensively yet, so we keep
+  //                 the legacy fast mode as default until we finish our tests.
+  bool fast_mode = !cfg_->obstacles.include_dynamic_obstacles;
   
   for(int i=0; i<iterations_outerloop; ++i)
   {
     if (cfg_->trajectory.teb_autosize)
-      teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples, cfg_->trajectory.max_samples);
+    {
+      //teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples, cfg_->trajectory.max_samples);
+      teb_.autoResize(cfg_->trajectory.dt_ref, cfg_->trajectory.dt_hysteresis, cfg_->trajectory.min_samples, cfg_->trajectory.max_samples, fast_mode);
+
+    }
 
     success = buildGraph(weight_multiplier);
     if (!success) 
