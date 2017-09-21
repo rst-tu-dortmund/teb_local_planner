@@ -206,6 +206,45 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
   return true;
 }
 
+void TebLocalPlannerROS::peakViaPoint(double robot_x, double robot_y, double local_goal_x, double local_goal_y,
+                             std::vector<geometry_msgs::PoseStamped>& transformed_plan, double robot_circumscribed_radius) //@mudit
+{
+  if (local_goal_x-robot_x==0) return;
+  double plan_line_slope= (local_goal_y-robot_y)/(local_goal_x-robot_x);  // slope of the line connecting robot pose and local goal
+  double plan_line_yintercept= robot_y-(plan_line_slope*robot_x);        // y-intercept of the line connecting robot pose and local goal
+  double max_dist=0;
+  int via_idx;
+   for (std::size_t i=1; i < transformed_plan.size(); ++i)
+   {double  x_transformed= transformed_plan[i].pose.position.x;  //x1
+    double  y_transformed= transformed_plan[i].pose.position.y;  //y1
+    double  c_perpendicular= y_transformed+(1/plan_line_slope)*x_transformed; // y-intercept of the line connecting (x1,y1) and the perpendicular point
+                                                                            // meeting the line connecting robot pose and local goal
+
+    double x2= (plan_line_yintercept-c_perpendicular)/((-1/plan_line_slope)-plan_line_slope); //x2 and y2 are the new points on the line connecting robot pose and local goal
+    double y2= (plan_line_slope*x2)+plan_line_yintercept;
+
+    double sqDist= (x2-x_transformed)*(x2-x_transformed)+(y2-y_transformed)*(y2-y_transformed); //Calculating distance b/w the two points
+
+            if(max_dist<sqDist)
+            {
+		max_dist=sqDist;
+     		via_idx=i;
+            }
+
+
+   }
+
+     if(max_dist>(robot_circumscribed_radius/16))                       //move_base crashes for unknown reason if max_dist=0.000000
+     {
+	     via_points_.push_back( Eigen::Vector2d( transformed_plan[via_idx].pose.position.x, transformed_plan[via_idx].pose.position.y ) ); 
+	     cfg_.hcp.enable_multithreading=false;
+	     cfg_.hcp.max_number_classes=false;
+     }
+     else
+
+     cfg_.hcp.enable_multithreading=true;
+     cfg_.hcp.max_number_classes=true;                                                      
+}
 
 bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
 {
@@ -311,6 +350,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // update via-points container
   updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
     
+  //@mudit edit : creating a via point for including peak points of the global plan in the robot's path
+  peakViaPoint(robot_pose_.x(),robot_pose_.y(),robot_goal_.x(),robot_goal_.y(),transformed_plan, robot_circumscribed_radius);
+	
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
     
