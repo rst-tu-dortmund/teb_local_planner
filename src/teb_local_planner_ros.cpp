@@ -55,7 +55,7 @@
 
 
 // register this planner as a BaseLocalPlanner plugin
-PLUGINLIB_DECLARE_CLASS(teb_local_planner, TebLocalPlannerROS, teb_local_planner::TebLocalPlannerROS, nav_core::BaseLocalPlanner)
+PLUGINLIB_EXPORT_CLASS(teb_local_planner::TebLocalPlannerROS, nav_core::BaseLocalPlanner)
 
 namespace teb_local_planner
 {
