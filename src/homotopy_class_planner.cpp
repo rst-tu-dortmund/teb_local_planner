@@ -463,6 +463,7 @@ void HomotopyClassPlanner::deleteTebDetours(double threshold)
         it_teb = tebs_.erase(it_teb);
         it_eqclasses = equivalence_classes_.erase(it_eqclasses);
         modified = true;
+        continue;
       }
     }
 
