@@ -2,6 +2,32 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.7 (2017-09-21)
+------------------
+* This update introduces support for dynamic obstacles (thanks to Franz Albers, who implemented and tested the code).
+  Dynamic obstacle support requires parameter *include\_dynamic\_obstacles* to be activated.
+  Note, this feature is still experimental and subject to testing.
+  Motion prediction is performed using a constant velocity model.
+  Dynamic obstacles might be incorporated as follows:
+  * via a custom message provided on topic ~/obstacles (warning: we changed the message type from teb_local_planner/ObstacleMsg to costmap_converter/ObstacleArrayMsg).
+  * via the CostmapToDynamicObstacles plugin as part of the costmap\_converter package (still experimental).
+  A tutorial is going to be provided soon.
+* FeedbackMsg includes a ObstacleMsg instead of a polygon
+* ObstacleMsg removed from package since it is now part of the costmap\_converter package.
+* Homotopy class planer code update: graph search methods and equivalence classes (h-signatures) are now 
+  implemented as subclasses of more general interfaces.
+* TEB trajectory initialization now uses a max\_vel\_x argument instead of the desired time difference in order to give the optimizer a better warm start. 
+  Old methods are marked as deprecated. This change does not affect users settings.
+* Inplace rotations removed from trajectory initialization to improve convergence speed of the optimizer
+* teb\_local\_planner::ObstacleMsg removed in favor of costmap\_converter::ObstacleArrayMsg. This also requires custom obstacle publishers to update to the new format
+* the "new" trajectory resizing method is only activated, if "include_dynamic_obstacles" is set to true.
+  We introduced the non-fast mode with the support of dynamic obstacles
+  (which leads to better results in terms of x-y-t homotopy planning).
+  However, we have not yet tested this mode intensively, so we keep
+  the previous mode as default until we finish our tests.
+* added parameter and code to update costmap footprint if it is dynamic (#49)
+* Contributors: Franz Albers, Christoph Rösmann, procopiostein
+
 0.6.6 (2016-12-23)
 ------------------
 * Strategy for recovering from oscillating local plans added (see new parameters)
