@@ -137,10 +137,33 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
         costmap_converter_->startWorker(ros::Rate(cfg_.obstacles.costmap_converter_rate), costmap_, cfg_.obstacles.costmap_converter_spin_thread);
         ROS_INFO_STREAM("Costmap conversion plugin " << cfg_.obstacles.costmap_converter_plugin << " loaded.");        
       }
-      catch(pluginlib::PluginlibException& ex)
+      catch(const pluginlib::PluginlibException& ex)
       {
         ROS_WARN("The specified costmap converter plugin cannot be loaded. All occupied costmap cells are treaten as point obstacles. Error message: %s", ex.what());
         costmap_converter_.reset();
+      }
+
+      boost::shared_ptr<costmap_converter::BaseCostmapToDynamicObstacles> dynamic_costmap_converter = boost::dynamic_pointer_cast<costmap_converter::BaseCostmapToDynamicObstacles>(costmap_converter_);
+      if(dynamic_costmap_converter && !cfg_.obstacles.static_costmap_converter_plugin.empty())
+      {
+        try
+        {
+          boost::shared_ptr<costmap_converter::BaseCostmapToPolygons> static_costmap_converter = costmap_converter_loader_.createInstance(cfg_.obstacles.static_costmap_converter_plugin);
+          if(boost::dynamic_pointer_cast<costmap_converter::BaseCostmapToDynamicObstacles>(static_costmap_converter))
+          {
+            throw pluginlib::PluginlibException("The specified plugin for static costmap conversion is a dynamic plugin. Specify a static plugin.");
+          }
+          std::string static_converter_name = costmap_converter_loader_.getName(cfg_.obstacles.static_costmap_converter_plugin);
+          static_costmap_converter->initialize(ros::NodeHandle(nh, "costmap_converter/" + static_converter_name));
+          dynamic_costmap_converter->setStaticCostmapConverterPlugin(static_costmap_converter);
+          ROS_INFO_STREAM("Underlying costmap conversion plugin for static obstacles " << cfg_.obstacles.static_costmap_converter_plugin << " loaded.");
+        }
+        catch(const pluginlib::PluginlibException& ex)
+        {
+          ROS_WARN("The specified costmap converter plugin cannot be loaded. Continuing without subsequent conversion of static obstacles. Error message: %s", ex.what());
+          // Reset shared pointer
+          dynamic_costmap_converter->setStaticCostmapConverterPlugin(boost::shared_ptr<costmap_converter::BaseCostmapToDynamicObstacles>());
+        }
       }
     }
     else 
