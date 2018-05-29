@@ -83,6 +83,15 @@ public:
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const = 0;
 
   /**
+    * @brief Estimate the distance between the robot and the predicted location of an obstacle at time t
+    * @param current_pose robot pose, from which the distance to the obstacle is estimated
+    * @param obstacle Pointer to the dynamic obstacle (constant velocity model is assumed)
+    * @param t time, for which the predicted distance to the obstacle is calculated
+    * @return Euclidean distance to the robot
+    */
+  virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const = 0;
+
+  /**
     * @brief Visualize the robot using a markers
     * 
     * Fill a marker message with all necessary information (type, pose, scale and color).
@@ -91,6 +100,13 @@ public:
     * @param[out] markers container of marker messages describing the robot shape
     */
   virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const {}
+  
+  
+  /**
+   * @brief Compute the inscribed radius of the footprint model
+   * @return inscribed radius
+   */
+  virtual double getInscribedRadius() = 0;
 
 	
 
@@ -138,6 +154,24 @@ public:
   {
     return obstacle->getMinimumDistance(current_pose.position());
   }
+  
+  /**
+    * @brief Estimate the distance between the robot and the predicted location of an obstacle at time t
+    * @param current_pose robot pose, from which the distance to the obstacle is estimated
+    * @param obstacle Pointer to the dynamic obstacle (constant velocity model is assumed)
+    * @param t time, for which the predicted distance to the obstacle is calculated
+    * @return Euclidean distance to the robot
+    */
+  virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+  {
+    return obstacle->getMinimumSpatioTemporalDistance(current_pose.position(), t);
+  }
+
+  /**
+   * @brief Compute the inscribed radius of the footprint model
+   * @return inscribed radius
+   */
+  virtual double getInscribedRadius() {return 0.0;}
 
 };
 
@@ -179,6 +213,18 @@ public:
   }
 
   /**
+    * @brief Estimate the distance between the robot and the predicted location of an obstacle at time t
+    * @param current_pose robot pose, from which the distance to the obstacle is estimated
+    * @param obstacle Pointer to the dynamic obstacle (constant velocity model is assumed)
+    * @param t time, for which the predicted distance to the obstacle is calculated
+    * @return Euclidean distance to the robot
+    */
+  virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+  {
+    return obstacle->getMinimumSpatioTemporalDistance(current_pose.position(), t) - radius_;
+  }
+
+  /**
     * @brief Visualize the robot using a markers
     * 
     * Fill a marker message with all necessary information (type, pose, scale and color).
@@ -199,6 +245,12 @@ public:
     marker.color.g = 0.8;
     marker.color.b = 0.0;
   }
+  
+  /**
+   * @brief Compute the inscribed radius of the footprint model
+   * @return inscribed radius
+   */
+  virtual double getInscribedRadius() {return radius_;}
 
 private:
     
@@ -254,6 +306,21 @@ public:
   }
 
   /**
+    * @brief Estimate the distance between the robot and the predicted location of an obstacle at time t
+    * @param current_pose robot pose, from which the distance to the obstacle is estimated
+    * @param obstacle Pointer to the dynamic obstacle (constant velocity model is assumed)
+    * @param t time, for which the predicted distance to the obstacle is calculated
+    * @return Euclidean distance to the robot
+    */
+  virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+  {
+    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    double dist_front = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() + front_offset_*dir, t) - front_radius_;
+    double dist_rear = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() - rear_offset_*dir, t) - rear_radius_;
+    return std::min(dist_front, dist_rear);
+  }
+
+  /**
     * @brief Visualize the robot using a markers
     * 
     * Fill a marker message with all necessary information (type, pose, scale and color).
@@ -295,6 +362,17 @@ public:
 //       marker2.scale.z = 0.05;
       marker2.color = color;
     }
+  }
+  
+  /**
+   * @brief Compute the inscribed radius of the footprint model
+   * @return inscribed radius
+   */
+  virtual double getInscribedRadius() 
+  {
+      double min_longitudinal = std::min(rear_offset_ + rear_radius_, front_offset_ + front_radius_);
+      double min_lateral = std::min(rear_radius_, front_radius_);
+      return std::min(min_longitudinal, min_lateral);
   }
 
 private:
@@ -371,16 +449,25 @@ public:
     */
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
   {
-    // here we are doing the transformation into the world frame manually
-    double cos_th = std::cos(current_pose.theta());
-    double sin_th = std::sin(current_pose.theta());
     Eigen::Vector2d line_start_world;
-    line_start_world.x() = current_pose.x() + cos_th * line_start_.x() - sin_th * line_start_.y();
-    line_start_world.y() = current_pose.y() + sin_th * line_start_.x() + cos_th * line_start_.y();
     Eigen::Vector2d line_end_world;
-    line_end_world.x() = current_pose.x() + cos_th * line_end_.x() - sin_th * line_end_.y();
-    line_end_world.y() = current_pose.y() + sin_th * line_end_.x() + cos_th * line_end_.y();
+    transformToWorld(current_pose, line_start_world, line_end_world);
     return obstacle->getMinimumDistance(line_start_world, line_end_world);
+  }
+
+  /**
+    * @brief Estimate the distance between the robot and the predicted location of an obstacle at time t
+    * @param current_pose robot pose, from which the distance to the obstacle is estimated
+    * @param obstacle Pointer to the dynamic obstacle (constant velocity model is assumed)
+    * @param t time, for which the predicted distance to the obstacle is calculated
+    * @return Euclidean distance to the robot
+    */
+  virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+  {
+    Eigen::Vector2d line_start_world;
+    Eigen::Vector2d line_end_world;
+    transformToWorld(current_pose, line_start_world, line_end_world);
+    return obstacle->getMinimumSpatioTemporalDistance(line_start_world, line_end_world, t);
   }
 
   /**
@@ -420,9 +507,34 @@ public:
     marker.scale.x = 0.05; 
     marker.color = color;
   }
+  
+  /**
+   * @brief Compute the inscribed radius of the footprint model
+   * @return inscribed radius
+   */
+  virtual double getInscribedRadius() 
+  {
+      return 0.0; // lateral distance = 0.0
+  }
 
 private:
     
+  /**
+    * @brief Transforms a line to the world frame manually
+    * @param current_pose Current robot pose
+    * @param[out] line_start line_start_ in the world frame
+    * @param[out] line_end line_end_ in the world frame
+    */
+  void transformToWorld(const PoseSE2& current_pose, Eigen::Vector2d& line_start_world, Eigen::Vector2d& line_end_world) const
+  {
+    double cos_th = std::cos(current_pose.theta());
+    double sin_th = std::sin(current_pose.theta());
+    line_start_world.x() = current_pose.x() + cos_th * line_start_.x() - sin_th * line_start_.y();
+    line_start_world.y() = current_pose.y() + sin_th * line_start_.x() + cos_th * line_start_.y();
+    line_end_world.x() = current_pose.x() + cos_th * line_end_.x() - sin_th * line_end_.y();
+    line_end_world.y() = current_pose.y() + sin_th * line_end_.x() + cos_th * line_end_.y();
+  }
+
   Eigen::Vector2d line_start_;
   Eigen::Vector2d line_end_;
   
@@ -468,16 +580,23 @@ public:
     */
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
   {
-    // here we are doing the transformation into the world frame manually
-    double cos_th = std::cos(current_pose.theta());
-    double sin_th = std::sin(current_pose.theta());
     Point2dContainer polygon_world(vertices_.size());
-    for (std::size_t i=0; i<vertices_.size(); ++i)
-    {
-      polygon_world[i].x() = current_pose.x() + cos_th * vertices_[i].x() - sin_th * vertices_[i].y();
-      polygon_world[i].y() = current_pose.y() + sin_th * vertices_[i].x() + cos_th * vertices_[i].y();
-    }
+    transformToWorld(current_pose, polygon_world);
     return obstacle->getMinimumDistance(polygon_world);
+  }
+
+  /**
+    * @brief Estimate the distance between the robot and the predicted location of an obstacle at time t
+    * @param current_pose robot pose, from which the distance to the obstacle is estimated
+    * @param obstacle Pointer to the dynamic obstacle (constant velocity model is assumed)
+    * @param t time, for which the predicted distance to the obstacle is calculated
+    * @return Euclidean distance to the robot
+    */
+  virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+  {
+    Point2dContainer polygon_world(vertices_.size());
+    transformToWorld(current_pose, polygon_world);
+    return obstacle->getMinimumSpatioTemporalDistance(polygon_world, t);
   }
 
   /**
@@ -523,9 +642,51 @@ public:
     marker.color = color;
 
   }
+  
+  /**
+   * @brief Compute the inscribed radius of the footprint model
+   * @return inscribed radius
+   */
+  virtual double getInscribedRadius() 
+  {
+     double min_dist = std::numeric_limits<double>::max();
+     Eigen::Vector2d center(0.0, 0.0);
+      
+     if (vertices_.size() <= 2)
+        return 0.0;
+
+     for (int i = 0; i < (int)vertices_.size() - 1; ++i)
+     {
+        // compute distance from the robot center point to the first vertex
+        double vertex_dist = vertices_[i].norm();
+        double edge_dist = distance_point_to_segment_2d(center, vertices_[i], vertices_[i+1]);
+        min_dist = std::min(min_dist, std::min(vertex_dist, edge_dist));
+     }
+ 
+     // we also need to check the last vertex and the first vertex
+     double vertex_dist = vertices_.back().norm();
+     double edge_dist = distance_point_to_segment_2d(center, vertices_.back(), vertices_.front());
+     return std::min(min_dist, std::min(vertex_dist, edge_dist));
+  }
 
 private:
     
+  /**
+    * @brief Transforms a polygon to the world frame manually
+    * @param current_pose Current robot pose
+    * @param[out] polygon_world polygon in the world frame
+    */
+  void transformToWorld(const PoseSE2& current_pose, Point2dContainer& polygon_world) const
+  {
+    double cos_th = std::cos(current_pose.theta());
+    double sin_th = std::sin(current_pose.theta());
+    for (std::size_t i=0; i<vertices_.size(); ++i)
+    {
+      polygon_world[i].x() = current_pose.x() + cos_th * vertices_[i].x() - sin_th * vertices_[i].y();
+      polygon_world[i].y() = current_pose.y() + sin_th * vertices_[i].x() + cos_th * vertices_[i].y();
+    }
+  }
+
   Point2dContainer vertices_;
   
 };

@@ -38,7 +38,7 @@
  * g2o-framework. g2o is licensed under the terms of the BSD License.
  * Refer to the base class source for detailed licensing information.
  *
- * Author: Christoph Rösmann
+ * Author: Christoph Rösmann, Franz Albers
  *********************************************************************/
 
 #ifndef EDGE_DYNAMICOBSTACLE_H
@@ -50,6 +50,7 @@
 #include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/obstacles.h>
 #include <teb_local_planner/teb_config.h>
+#include <teb_local_planner/robot_footprint_model.h>
 
 namespace teb_local_planner
 {
@@ -67,22 +68,22 @@ namespace teb_local_planner
  * @remarks Do not forget to call setTebConfig(), setVertexIdx() and 
  * @warning Experimental
  */  
-class EdgeDynamicObstacle : public BaseTebBinaryEdge<1, const Obstacle*, VertexPose, VertexTimeDiff>
+class EdgeDynamicObstacle : public BaseTebUnaryEdge<2, const Obstacle*, VertexPose>
 {
 public:
   
   /**
    * @brief Construct edge.
    */    
-  EdgeDynamicObstacle() : vert_idx_(0)
+  EdgeDynamicObstacle() : t_(0)
   {
   }
   
   /**
-   * @brief Construct edge and specify the vertex id (neccessary for computeError).
-   * @param vert_idx Index of the vertex (position in the pose sequence)
+   * @brief Construct edge and specify the time for its associated pose (neccessary for computeError).
+   * @param t_ Estimated time until current pose is reached
    */      
-  EdgeDynamicObstacle(size_t vert_idx) : vert_idx_(vert_idx)
+  EdgeDynamicObstacle(double t) : t_(t)
   {
   }
   
@@ -91,40 +92,17 @@ public:
    */   
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeDynamicObstacle()");
+    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeDynamicObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexTimeDiff* dt_vertex = static_cast<const VertexTimeDiff*>(_vertices[1]);
     
-    // WARNING: vert_idx_*dt is just an approximation for the total time, since we don't have a uniform dt at the moment!
-    Eigen::Vector2d pred_obst_point = _measurement->getCentroid() + double(vert_idx_)*dt_vertex->estimate()*_measurement->getCentroidVelocity();
-    double dist = (pred_obst_point - bandpt->position()).norm();
-    /*
-    // get point in x-y-t
-    Eigen::Vector3d point(bandpt->estimate().coeffRef(0), bandpt->estimate().coeffRef(1), _vert_idx*dt_vertex->estimate());
-    
-    // calc distance of that point to the obstacle trajectory in x-y-t predicted with a constant velocity
-    Eigen::Vector3d robot_point;
-    robot_point.head(2) = _measurement->getCentroid();
-    robot_point.coeffRef(2) = 0;
-    Eigen::Vector3d robot_vel;
-    robot_vel.head(2) = _measurement->getCentroidVelocity();
-    robot_vel.coeffRef(2) = 1;
-    double dist = 0; //calcDistancePointToLine<Eigen::Vector3d>(point, robot_point, robot_vel);   
-    */ 
-    
-    _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+    double dist = robot_model_->estimateSpatioTemporalDistance(bandpt->pose(), _measurement, t_);
 
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeDynamicObstacle::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);	  
+    _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundFromBelow(dist, cfg_->obstacles.dynamic_obstacle_inflation_dist, 0.0);
+
+    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeDynamicObstacle::computeError() _error[0]=%f\n",_error[0]);
   }
   
-  /**
-   * @brief Set the vertex index (position in the pose sequence)
-   * @param vert_idx Index of the vertex
-   */  
-  void setVertexIdx(size_t vert_idx)
-  {
-    vert_idx_ = vert_idx;
-  }
   
   /**
    * @brief Set Obstacle for the underlying cost function
@@ -135,10 +113,32 @@ public:
     _measurement = obstacle;
   }
   
+  /**
+   * @brief Set pointer to the robot model
+   * @param robot_model Robot model required for distance calculation
+   */
+  void setRobotModel(const BaseRobotFootprintModel* robot_model)
+  {
+    robot_model_ = robot_model;
+  }
+
+  /**
+   * @brief Set all parameters at once
+   * @param cfg TebConfig class
+   * @param robot_model Robot model required for distance calculation
+   * @param obstacle 2D position vector containing the position of the obstacle
+   */
+  void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
+  {
+    cfg_ = &cfg;
+    robot_model_ = robot_model;
+    _measurement = obstacle;
+  }
 
 protected:
   
-  size_t vert_idx_; //!< Store vertex index (position in the pose sequence)
+  const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
+  double t_; //!< Estimated time until current pose is reached
   
 public: 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

@@ -99,7 +99,6 @@ endif()
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  ObstacleMsg.msg
   TrajectoryPointMsg.msg
   TrajectoryMsg.msg
   FeedbackMsg.msg
@@ -122,7 +121,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
-   geometry_msgs std_msgs
+   geometry_msgs std_msgs costmap_converter
 )
 
 #add dynamic reconfigure api
@@ -160,7 +159,7 @@ catkin_package(
 	tf
 	tf_conversions
 	visualization_msgs
-  DEPENDS Eigen3 SuiteSparse G2O
+  DEPENDS SUITESPARSE G2O
 )
 
 ###########
@@ -183,9 +182,11 @@ add_library(teb_local_planner
    src/optimal_planner.cpp
    src/obstacles.cpp
    src/visualization.cpp
+   src/recovery_behaviors.cpp
    src/teb_config.cpp
    src/homotopy_class_planner.cpp
    src/teb_local_planner_ros.cpp
+   src/graph_search.cpp
 )
 
 # Dynamic reconfigure: make sure configure headers are built before any node using them

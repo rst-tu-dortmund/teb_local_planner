@@ -2,6 +2,88 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.7 (2017-09-21)
+------------------
+* This update introduces support for dynamic obstacles (thanks to Franz Albers, who implemented and tested the code).
+  Dynamic obstacle support requires parameter *include\_dynamic\_obstacles* to be activated.
+  Note, this feature is still experimental and subject to testing.
+  Motion prediction is performed using a constant velocity model.
+  Dynamic obstacles might be incorporated as follows:
+  * via a custom message provided on topic ~/obstacles (warning: we changed the message type from teb_local_planner/ObstacleMsg to costmap_converter/ObstacleArrayMsg).
+  * via the CostmapToDynamicObstacles plugin as part of the costmap\_converter package (still experimental).
+  A tutorial is going to be provided soon.
+* FeedbackMsg includes a ObstacleMsg instead of a polygon
+* ObstacleMsg removed from package since it is now part of the costmap\_converter package.
+* Homotopy class planer code update: graph search methods and equivalence classes (h-signatures) are now 
+  implemented as subclasses of more general interfaces.
+* TEB trajectory initialization now uses a max\_vel\_x argument instead of the desired time difference in order to give the optimizer a better warm start. 
+  Old methods are marked as deprecated. This change does not affect users settings.
+* Inplace rotations removed from trajectory initialization to improve convergence speed of the optimizer
+* teb\_local\_planner::ObstacleMsg removed in favor of costmap\_converter::ObstacleArrayMsg. This also requires custom obstacle publishers to update to the new format
+* the "new" trajectory resizing method is only activated, if "include_dynamic_obstacles" is set to true.
+  We introduced the non-fast mode with the support of dynamic obstacles
+  (which leads to better results in terms of x-y-t homotopy planning).
+  However, we have not yet tested this mode intensively, so we keep
+  the previous mode as default until we finish our tests.
+* added parameter and code to update costmap footprint if it is dynamic (#49)
+* Contributors: Franz Albers, Christoph Rösmann, procopiostein
+
+0.6.6 (2016-12-23)
+------------------
+* Strategy for recovering from oscillating local plans added (see new parameters)
+* Horizon reduction for resolving infeasible trajectories is not activated anymore if the global goal is already selected
+  (to avoid oscillations due to changing final orientations)
+* Global plan orientations are now taken for TEB initialization if lobal_plan_overwrite_orientation==true
+* Parameter max_samples added
+* Further fixes (thanks to Matthias Füller and Daniel Neumann for providing patches)
+
+0.6.5 (2016-11-15)
+------------------
+* The trajectory is now initialized backwards for goals close to and behind the robot.
+  Parameter 'allow_init_with_backwards_motion' added.
+* Updated the TEB selection in the HomotopyClassPlanner.
+  * A new parameter is introduced to prefer the equivalence class of the initial plan
+  * Fixed some bugs related to the deletion of candidates and for keeping the equivalence class of the initial plan.
+* Weight adaptation added for obstacles edges.
+  Added parameter 'weight_adapt_factor'.
+  Obstacle weights are repeatedly scaled by this factor in each outer TEB iteration.
+  Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions.
+* Added a warning if the optim footprint + min_obstacle_dist is smaller than the costmap footprint.
+  Validation is performed by only comparing the inscribed radii of the footprints.
+* Revision/extension of the reduced-horizon backup mode which is triggered in case infeasible trajectories are detected.
+* Changed HSignature to a generic equivalence class
+* Minor changes
+
+0.6.4 (2016-10-23)
+------------------
+* New default obstacle association strategy:
+  During optimization graph creation, for each pose of the trajectory a
+  relevance detection is performed before considering the obstacle
+  during optimization. New parameters are introduced. The
+  old strategy is kept as 'legacy' strategy (see parameters).
+* Computation of velocities, acceleration and turning radii extended:
+  Added an option to compute the actual arc length
+  instead of using the Euclidean distance approximation (see parameter `exact_arc_length`.
+* Added intermediate edge layer for unary, binary and multi edges in order to reduce code redundancy.
+* Script for visualizing velocity profile updated to accept the feedback topic name via rosparam server
+* Removed TebConfig dependency in TebVisualization
+* PolygonObstacle can now be constructed using a vertices container
+* HomotopyClassPlanner public interface extended
+* Changed H-Signature computation to work 'again' with few obstacles such like 1 or 2
+* Removed inline flags in visualization.cpp
+* Removed inline flags in timed_elastic_band.cpp.
+  Fixes `#15 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/15>`_.
+* Increased bounds of many variables in dynamic_reconfigure. 
+  Resolves `#14 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/14>`_.
+  The particular variables are maximum velocities, maximum accelerations,
+  minimum turning radius,...
+  Note: optimization weights and dt_ref as well as dt_hyst are not
+  tuned for velocities and accelerations beyond
+  the default values (e.g. >1 m/s). Just increasing the maximum velocity
+  bounds without adjusting the other parameters leads to an insufficient behavior.
+* Default parameter value update: 'costmap_obstacles_behind_robot_dist'
+* Additional minor fixes.
+
 0.6.3 (2016-08-17)
 ------------------
 * Changed the f0 function for calculating the H-Signature.

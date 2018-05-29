@@ -140,6 +140,16 @@ public:
    * @brief Reset the planner.
    */
   virtual void clearPlanner() = 0;
+  
+  /**
+   * @brief Prefer a desired initial turning direction (by penalizing the opposing one)
+   * 
+   * A desired (initial) turning direction might be specified in case the planned trajectory oscillates between two 
+   * solutions (in the same equivalence class!) with similar cost. Check the parameters in order to adjust the weight of the penalty.
+   * Initial means that the penalty is applied only to the first few poses of the trajectory.
+   * @param dir This parameter might be RotType::left (prefer left), RotType::right (prefer right) or RotType::none (prefer none)
+   */
+  virtual void setPreferredTurningDir(RotType dir) {ROS_WARN("setPreferredTurningDir() not implemented for this planner.");}
     
   /**
    * @brief Visualize planner specific stuff.

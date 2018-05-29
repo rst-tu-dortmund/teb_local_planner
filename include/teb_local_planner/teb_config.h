@@ -72,7 +72,9 @@ public:
     double dt_ref; //!< Desired temporal resolution of the trajectory (should be in the magniture of the underlying control rate)
     double dt_hysteresis; //!< Hysteresis for automatic resizing depending on the current temporal resolution (dt): usually 10% of dt_ref
     int min_samples; //!< Minimum number of samples (should be always greater than 2)
+    int max_samples; //!< Maximum number of samples; Warning: if too small the discretization/resolution might not be sufficient for the given robot model or obstacle avoidance does not work anymore.
     bool global_plan_overwrite_orientation; //!< Overwrite orientation of local subgoals provided by the global planner
+    bool allow_init_with_backwards_motion; //!< If true, the underlying trajectories might be initialized with backwards motions in case the goal is behind the start within the local costmap (this is only recommended if the robot is equipped with rear sensors)
     double global_plan_viapoint_sep; //!< Min. separation between each two consecutive via-points extracted from the global plan (if negative: disabled)
     bool via_points_ordered; //!< If true, the planner adheres to the order of via-points in the storage container
     double max_global_plan_lookahead_dist; //!< Specify maximum length (cumulative Euclidean distances) of the subset of the global plan taken into account for optimization [if <=0: disabled; the length is also bounded by the local costmap size!]
@@ -80,7 +82,6 @@ public:
     double force_reinit_new_goal_dist; //!< Reinitialize the trajectory if a previous goal is updated with a seperation of more than the specified value in meters (skip hot-starting)
     int feasibility_check_no_poses; //!< Specify up to which pose on the predicted plan the feasibility should be checked each sampling interval.
     bool publish_feedback; //!< Publish planner feedback containing the full trajectory and a list of active obstacles (should be enabled only for evaluation or debugging purposes)
-    bool shrink_horizon_backup; //!< Allows the planner to shrink the horizon temporary (50%) in case of automatically detected issues.
   } trajectory; //!< Trajectory related parameters
     
   //! Robot related parameters
@@ -97,6 +98,7 @@ public:
     double max_steering_rate; //!< Maximum bound of the steering wheel (requires the definition of the wheelbase) [deactivate: zero]
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
     bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
+    bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
   } robot; //!< Robot related parameters
   
   //! Goal tolerance related parameters
@@ -105,6 +107,7 @@ public:
     double yaw_goal_tolerance; //!< Allowed final orientation error
     double xy_goal_tolerance; //!< Allowed final euclidean distance to the goal position
     bool free_goal_vel; //!< Allow the robot's velocity to be nonzero (usally max_vel) for planning purposes
+    bool complete_global_plan; // true prevents the robot from ending the path early when it cross the end goal
   } goal_tolerance; //!< Goal tolerance related parameters
 
   //! Obstacle related parameters
@@ -112,6 +115,8 @@ public:
   {
     double min_obstacle_dist; //!< Minimum desired separation from obstacles
     double inflation_dist; //!< buffer zone around obstacles with non-zero penalty costs (should be larger than min_obstacle_dist in order to take effect)
+    double dynamic_obstacle_inflation_dist; //!< Buffer zone around predicted locations of dynamic obstacles with non-zero penalty costs (should be larger than min_obstacle_dist in order to take effect)
+    bool include_dynamic_obstacles; //!< Specify whether the movement of dynamic obstacles should be predicted by a constant velocity model (this also effects homotopy class planning); If false, all obstacles are considered to be static.
     bool include_costmap_obstacles; //!< Specify whether the obstacles in the costmap should be taken into account directly
     double costmap_obstacles_behind_robot_dist; //!< Limit the occupied local costmap obstacles taken into account for planning behind the robot (specify distance in meters)
     int obstacle_poses_affected; //!< The obstacle position is attached to the closest pose on the trajectory to reduce computational effort, but take a number of neighbors into account as well
@@ -149,7 +154,11 @@ public:
     double weight_obstacle; //!< Optimization weight for satisfying a minimum separation from obstacles
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles    
+    double weight_dynamic_obstacle_inflation; //!< Optimization weight for the inflation penalty of dynamic obstacles (should be small)
     double weight_viapoint; //!< Optimization weight for minimizing the distance to via-points
+    double weight_prefer_rotdir; //!< Optimization weight for preferring a specific turning direction (-> currently only activated if an oscillation is detected, see 'oscillation_recovery'
+    
+    double weight_adapt_factor; //!< Some special weights (currently 'weight_obstacle') are repeatedly scaled by this factor in each outer TEB iteration (weight_new = weight_old*factor); Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions of the underlying optimization problem.
   } optim; //!< Optimization related parameters
   
   
@@ -160,6 +169,7 @@ public:
     bool simple_exploration; //!< If true, distinctive trajectories are explored using a simple left-right approach (pass each obstacle on the left or right side) for path generation, otherwise sample possible roadmaps randomly in a specified region between start and goal.
     int max_number_classes; //!< Specify the maximum number of allowed alternative homotopy classes (limits computational effort)
     double selection_cost_hysteresis; //!< Specify how much trajectory cost must a new candidate have w.r.t. a previously selected trajectory in order to be selected (selection if new_cost < old_cost*factor).
+    double selection_prefer_initial_plan; //!< Specify a cost reduction in the interval (0,1) for the trajectory in the equivalence class of the initial plan.
     double selection_obst_cost_scale; //!< Extra scaling of obstacle cost terms just for selecting the 'best' candidate.
     double selection_viapoint_cost_scale; //!< Extra scaling of via-point cost terms just for selecting the 'best' candidate.
     bool selection_alternative_time_cost; //!< If true, time cost is replaced by the total transition time.
@@ -176,10 +186,23 @@ public:
     bool viapoints_all_candidates; //!< If true, all trajectories of different topologies are attached to the current set of via-points, otherwise only the trajectory sharing the same one as the initial/global plan.
     
     bool visualize_hc_graph; //!< Visualize the graph that is created for exploring new homotopy classes.
+    double visualize_with_time_as_z_axis_scale; //!< If this value is bigger than 0, the trajectory and obstacles are visualized in 3d using the time as the z-axis scaled by this value. Most useful for dynamic obstacles.
   } hcp;
   
+  //! Recovery/backup related parameters
+  struct Recovery
+  {
+    bool shrink_horizon_backup; //!< Allows the planner to shrink the horizon temporary (50%) in case of automatically detected issues.
+    double shrink_horizon_min_duration; //!< Specify minimum duration for the reduced horizon in case an infeasible trajectory is detected.
+    bool oscillation_recovery; //!< Try to detect and resolve oscillations between multiple solutions in the same equivalence class (robot frequently switches between left/right/forward/backwards)
+    double oscillation_v_eps; //!< Threshold for the average normalized linear velocity: if oscillation_v_eps and oscillation_omega_eps are not exceeded both, a possible oscillation is detected
+    double oscillation_omega_eps; //!< Threshold for the average normalized angular velocity: if oscillation_v_eps and oscillation_omega_eps are not exceeded both, a possible oscillation is detected
+    double oscillation_recovery_min_duration; //!< Minumum duration [sec] for which the recovery mode is activated after an oscillation is detected.
+    double oscillation_filter_duration; //!< Filter length/duration [sec] for the detection of oscillations
+  } recovery; //!< Parameters related to recovery and backup strategies
 
- /**
+  
+  /**
   * @brief Construct the TebConfig using default values.
   * @warning If the \b rosparam server or/and \b dynamic_reconfigure (rqt_reconfigure) node are used,
   *	     the default variables will be overwritten: \n
@@ -204,7 +227,9 @@ public:
     trajectory.dt_ref = 0.3;
     trajectory.dt_hysteresis = 0.1;
     trajectory.min_samples = 3;
+    trajectory.max_samples = 500;
     trajectory.global_plan_overwrite_orientation = true;
+    trajectory.allow_init_with_backwards_motion = false;
     trajectory.global_plan_viapoint_sep = -1;
     trajectory.via_points_ordered = false;
     trajectory.max_global_plan_lookahead_dist = 1;
@@ -212,7 +237,6 @@ public:
     trajectory.force_reinit_new_goal_dist = 1;
     trajectory.feasibility_check_no_poses = 5;
     trajectory.publish_feedback = false;
-    trajectory.shrink_horizon_backup = true;
     
     // Robot
          
@@ -227,17 +251,21 @@ public:
     robot.max_steering_rate = 0;
     robot.wheelbase = 1.0;
     robot.cmd_angle_instead_rotvel = false;
+    robot.is_footprint_dynamic = false;
     
     // GoalTolerance
     
     goal_tolerance.xy_goal_tolerance = 0.2;
     goal_tolerance.yaw_goal_tolerance = 0.2;
     goal_tolerance.free_goal_vel = false;
-    
+    goal_tolerance.complete_global_plan = true;
+     
     // Obstacles
     
     obstacles.min_obstacle_dist = 0.5;
     obstacles.inflation_dist = 0.6;
+    obstacles.dynamic_obstacle_inflation_dist = 0.6;
+    obstacles.include_dynamic_obstacles = true;
     obstacles.include_costmap_obstacles = true;
     obstacles.costmap_obstacles_behind_robot_dist = 1.5;
     obstacles.obstacle_poses_affected = 25;
@@ -266,10 +294,14 @@ public:
     optim.weight_kinematics_turning_radius = 1;
     optim.weight_max_steering_rate = 1;
     optim.weight_optimaltime = 1;
-    optim.weight_obstacle = 10;
+    optim.weight_obstacle = 50;
     optim.weight_inflation = 0.1;
-    optim.weight_dynamic_obstacle = 10;
+    optim.weight_dynamic_obstacle = 50;
+    optim.weight_dynamic_obstacle_inflation = 0.1;
     optim.weight_viapoint = 1;
+    optim.weight_prefer_rotdir = 50;
+    
+    optim.weight_adapt_factor = 2.0;
     
     // Homotopy Class Planner
    
@@ -278,6 +310,7 @@ public:
     hcp.simple_exploration = false;
     hcp.max_number_classes = 5; 
     hcp.selection_cost_hysteresis = 1.0;
+    hcp.selection_prefer_initial_plan = 0.95;
     hcp.selection_obst_cost_scale = 100.0;
     hcp.selection_viapoint_cost_scale = 1.0;
     hcp.selection_alternative_time_cost = false;
@@ -293,6 +326,17 @@ public:
     hcp.viapoints_all_candidates = true;
     
     hcp.visualize_hc_graph = false;
+    hcp.visualize_with_time_as_z_axis_scale = 0.0;
+    
+    // Recovery
+    
+    recovery.shrink_horizon_backup = true;
+    recovery.shrink_horizon_min_duration = 10;
+    recovery.oscillation_recovery = true;
+    recovery.oscillation_v_eps = 0.1;
+    recovery.oscillation_omega_eps = 0.1;
+    recovery.oscillation_recovery_min_duration = 10;
+    recovery.oscillation_filter_duration = 10;
 
 
   }

@@ -1,0 +1,23 @@
+build-kinetic:
+  variables:
+    ROSDISTRO: "kinetic"
+    CATKIN_WS: "/root/catkin_ws"
+  stage: build
+  image: osrf/ros:$ROSDISTRO-desktop-full
+  before_script: 
+    - apt-get -qq update
+    - apt-get -qq install git-core python-catkin-tools curl
+    - mkdir -p $CATKIN_WS/src
+    - cp -a . $CATKIN_WS/src/
+    - cd $CATKIN_WS
+    - rosdep update
+    - rosdep install -y --from-paths src --ignore-src --rosdistro $ROSDISTRO --as-root=apt:false
+  script: 
+    - source /ros_entrypoint.sh
+    - cd $CATKIN_WS
+    - catkin build -i -s --no-status
+  only:
+    - kinetic-devel
+  tags:
+    - ubuntu
+    - docker

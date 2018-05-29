@@ -47,18 +47,18 @@ TebVisualization::TebVisualization() : initialized_(false)
 {
 }
 
-TebVisualization::TebVisualization(ros::NodeHandle& nh, const std::string& visualization_frame) : initialized_(false)
+TebVisualization::TebVisualization(ros::NodeHandle& nh, const TebConfig& cfg) : initialized_(false)
 {
-  initialize(nh, visualization_frame);
+  initialize(nh, cfg);
 }
 
-void TebVisualization::initialize(ros::NodeHandle& nh, const std::string& visualization_frame)
+void TebVisualization::initialize(ros::NodeHandle& nh, const TebConfig& cfg)
 {
   if (initialized_)
     ROS_WARN("TebVisualization already initialized. Reinitalizing...");
   
-  // set visualization frame
-    visualization_frame_ = visualization_frame;
+  // set config
+  cfg_ = &cfg;
   
   // register topics
   global_plan_pub_ = nh.advertise<nav_msgs::Path>("global_plan", 1);
@@ -92,7 +92,7 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
   
     // create path msg
     nav_msgs::Path teb_path;
-    teb_path.header.frame_id = visualization_frame_;
+    teb_path.header.frame_id = cfg_->map_frame;
     teb_path.header.stamp = ros::Time::now();
     
     // create pose_array (along trajectory)
@@ -108,7 +108,7 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
       pose.header.stamp = teb_path.header.stamp;
       pose.pose.position.x = teb.Pose(i).x();
       pose.pose.position.y = teb.Pose(i).y();
-      pose.pose.position.z = 0;
+      pose.pose.position.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*teb.getSumOfTimeDiffsUpToIdx(i);
       pose.pose.orientation = tf::createQuaternionMsgFromYaw(teb.Pose(i).theta());
       teb_path.poses.push_back(pose);
       teb_poses.poses.push_back(pose.pose);
@@ -132,7 +132,7 @@ void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, c
   int idx = 0;
   for (std::vector<visualization_msgs::Marker>::iterator marker_it = markers.begin(); marker_it != markers.end(); ++marker_it, ++idx)
   {
-    marker_it->header.frame_id = visualization_frame_;
+    marker_it->header.frame_id = cfg_->map_frame;
     marker_it->header.stamp = ros::Time::now();
     marker_it->action = visualization_msgs::Marker::ADD;
     marker_it->ns = ns;
@@ -152,7 +152,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
   // Visualize point obstacles
   {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = visualization_frame_;
+    marker.header.frame_id = cfg_->map_frame;
     marker.header.stamp = ros::Time::now();
     marker.ns = "PointObstacles";
     marker.id = 0;
@@ -165,11 +165,33 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       boost::shared_ptr<PointObstacle> pobst = boost::dynamic_pointer_cast<PointObstacle>(*obst);      
       if (!pobst)
         continue;
-      geometry_msgs::Point point;
-      point.x = pobst->x();
-      point.y = pobst->y();
-      point.z = 0;
-      marker.points.push_back(point);
+
+      if (cfg_->hcp.visualize_with_time_as_z_axis_scale < 0.001)
+      {
+        geometry_msgs::Point point;
+        point.x = pobst->x();
+        point.y = pobst->y();
+        point.z = 0;
+        marker.points.push_back(point);
+      }
+      else // Spatiotemporally point obstacles become a line
+      {
+        marker.type = visualization_msgs::Marker::LINE_LIST;
+        geometry_msgs::Point start;
+        start.x = pobst->x();
+        start.y = pobst->y();
+        start.z = 0;
+        marker.points.push_back(start);
+
+        geometry_msgs::Point end;
+        double t = 20;
+        Eigen::Vector2d pred;
+        pobst->predictCentroidConstantVelocity(t, pred);
+        end.x = pred[0];
+        end.y = pred[1];
+        end.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*t;
+        marker.points.push_back(end);
+      }
     }
     
     marker.scale.x = 0.1;
@@ -192,7 +214,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
         continue;
       
       visualization_msgs::Marker marker;
-      marker.header.frame_id = visualization_frame_;
+      marker.header.frame_id = cfg_->map_frame;
       marker.header.stamp = ros::Time::now();
       marker.ns = "LineObstacles";
       marker.id = idx++;
@@ -232,7 +254,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 				continue;
       
       visualization_msgs::Marker marker;
-      marker.header.frame_id = visualization_frame_;
+      marker.header.frame_id = cfg_->map_frame;
       marker.header.stamp = ros::Time::now();
       marker.ns = "PolyObstacles";
       marker.id = idx++;
@@ -278,7 +300,7 @@ void TebVisualization::publishViaPoints(const std::vector< Eigen::Vector2d, Eige
     return;
   
   visualization_msgs::Marker marker;
-  marker.header.frame_id = visualization_frame_;
+  marker.header.frame_id = cfg_->map_frame;
   marker.header.stamp = ros::Time::now();
   marker.ns = ns;
   marker.id = 0;
@@ -311,7 +333,7 @@ if ( printErrorWhenNotInitialized() )
     return;
   
   visualization_msgs::Marker marker;
-  marker.header.frame_id = visualization_frame_;
+  marker.header.frame_id = cfg_->map_frame;
   marker.header.stamp = ros::Time::now();
   marker.ns = ns;
   marker.id = 0;
@@ -323,22 +345,28 @@ if ( printErrorWhenNotInitialized() )
   {	  
     // iterate single poses
     PoseSequence::const_iterator it_pose = it_teb->get()->teb().poses().begin();
+    TimeDiffSequence::const_iterator it_timediff = it_teb->get()->teb().timediffs().begin();
     PoseSequence::const_iterator it_pose_end = it_teb->get()->teb().poses().end();
     std::advance(it_pose_end, -1); // since we are interested in line segments, reduce end iterator by one.
-    while (it_pose != it_pose_end) 
+    double time = 0;
+
+    while (it_pose != it_pose_end)
     {
       geometry_msgs::Point point_start;
       point_start.x = (*it_pose)->x();
       point_start.y = (*it_pose)->y();
-      point_start.z = 0;
+      point_start.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*time;
       marker.points.push_back(point_start);
+
+      time += (*it_timediff)->dt();
 
       geometry_msgs::Point point_end;
       point_end.x = (*boost::next(it_pose))->x();
       point_end.y = (*boost::next(it_pose))->y();
-      point_end.z = 0;
+      point_end.z = cfg_->hcp.visualize_with_time_as_z_axis_scale*time;
       marker.points.push_back(point_end);
       ++it_pose;
+      ++it_timediff;
     }
   }
   marker.scale.x = 0.01;
@@ -355,7 +383,7 @@ void TebVisualization::publishFeedbackMessage(const std::vector< boost::shared_p
 {
   FeedbackMsg msg;
   msg.header.stamp = ros::Time::now();
-  msg.header.frame_id = visualization_frame_;
+  msg.header.frame_id = cfg_->map_frame;
   msg.selected_trajectory_idx = selected_trajectory_idx;
   
   
@@ -370,11 +398,23 @@ void TebVisualization::publishFeedbackMessage(const std::vector< boost::shared_p
   }
   
   // add obstacles
-  msg.obstacles.resize(obstacles.size());
+  msg.obstacles_msg.obstacles.resize(obstacles.size());
   for (std::size_t i=0; i<obstacles.size(); ++i)
   {
-    msg.obstacles[i].header = msg.header;
-    obstacles[i]->toPolygonMsg(msg.obstacles[i].polygon);
+    msg.obstacles_msg.header = msg.header;
+
+    // copy polygon
+    msg.obstacles_msg.obstacles[i].header = msg.header;
+    obstacles[i]->toPolygonMsg(msg.obstacles_msg.obstacles[i].polygon);
+
+    // copy id
+    msg.obstacles_msg.obstacles[i].id = i; // TODO: we do not have any id stored yet
+
+    // orientation
+    //msg.obstacles_msg.obstacles[i].orientation =; // TODO
+
+    // copy velocities
+    obstacles[i]->toTwistWithCovarianceMsg(msg.obstacles_msg.obstacles[i].velocities);
   }
   
   feedback_pub_.publish(msg);
@@ -384,7 +424,7 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
 {
   FeedbackMsg msg;
   msg.header.stamp = ros::Time::now();
-  msg.header.frame_id = visualization_frame_;
+  msg.header.frame_id = cfg_->map_frame;
   msg.selected_trajectory_idx = 0;
   
   msg.trajectories.resize(1);
@@ -392,11 +432,23 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
   teb_planner.getFullTrajectory(msg.trajectories.front().trajectory);
  
   // add obstacles
-  msg.obstacles.resize(obstacles.size());
+  msg.obstacles_msg.obstacles.resize(obstacles.size());
   for (std::size_t i=0; i<obstacles.size(); ++i)
   {
-    msg.obstacles[i].header = msg.header;
-    obstacles[i]->toPolygonMsg(msg.obstacles[i].polygon);
+    msg.obstacles_msg.header = msg.header;
+
+    // copy polygon
+    msg.obstacles_msg.obstacles[i].header = msg.header;
+    obstacles[i]->toPolygonMsg(msg.obstacles_msg.obstacles[i].polygon);
+
+    // copy id
+    msg.obstacles_msg.obstacles[i].id = i; // TODO: we do not have any id stored yet
+
+    // orientation
+    //msg.obstacles_msg.obstacles[i].orientation =; // TODO
+
+    // copy velocities
+    obstacles[i]->toTwistWithCovarianceMsg(msg.obstacles_msg.obstacles[i].velocities);
   }
   
   feedback_pub_.publish(msg);

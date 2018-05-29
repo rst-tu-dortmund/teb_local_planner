@@ -67,6 +67,7 @@
 #include <teb_local_planner/g2o_types/edge_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_via_point.h>
+#include <teb_local_planner/g2o_types/edge_prefer_rotdir.h>
 
 // messages
 #include <nav_msgs/Path.h>
@@ -101,6 +102,10 @@ typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> 
  * 	- R. Kümmerle et al.: G2o: A general framework for graph optimization, ICRA, 2011. 
  * 
  * @todo: Call buildGraph() only if the teb structure has been modified to speed up hot-starting from previous solutions.
+ * @todo: We introduced the non-fast mode with the support of dynamic obstacles
+ *        (which leads to better results in terms of x-y-t homotopy planning).
+ *        However, we have not tested this mode intensively yet, so we keep
+ *        the legacy fast mode as default until we finish our tests.
  */
 class TebOptimalPlanner : public PlannerInterface
 {
@@ -343,6 +348,16 @@ public:
   }
   
   /**
+   * @brief Prefer a desired initial turning direction (by penalizing the opposing one)
+   * 
+   * A desired (initial) turning direction might be specified in case the planned trajectory oscillates between two 
+   * solutions (in the same equivalence class!) with similar cost. Check the parameters in order to adjust the weight of the penalty.
+   * Initial means that the penalty is applied only to the first few poses of the trajectory.
+   * @param dir This parameter might be RotType::left (prefer left), RotType::right (prefer right) or RotType::none (prefer none)
+   */
+  virtual void setPreferredTurningDir(RotType dir) {prefer_rotdir_=dir;}
+  
+  /**
    * @brief Register the vertices and edges defined for the TEB to the g2o::Factory.
    * 
    * This allows the user to export the internal graph to a text file for instance.
@@ -523,9 +538,12 @@ protected:
    * For more details refer to the literature cited in the TebOptimalPlanner class description.
    * @see optimizeGraph
    * @see clearGraph
+   * @param weight_multiplier Specify a weight multipler for selected weights in optimizeGraph
+   *                          This might be used for weight adapation strategies.
+   *                          Currently, only obstacle collision weights are considered.
    * @return \c true, if the graph was created successfully, \c false otherwise.
    */
-  bool buildGraph();
+  bool buildGraph(double weight_multiplier=1.0);
   
   /**
    * @brief Optimize the previously constructed hyper-graph to deform / optimize the TEB.
@@ -539,7 +557,7 @@ protected:
    * @param clear_after Clear the graph after optimization.
    * @return \c true, if optimization terminates successfully, \c false otherwise.
    */
-  bool optimizeGraph(int no_iterations,bool clear_after=true);
+  bool optimizeGraph(int no_iterations, bool clear_after=true);
   
   /**
    * @brief Clear an existing internal hyper-graph.
@@ -594,8 +612,9 @@ protected:
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
+   * @param weight_multiplier Specify an additional weight multipler (in addition to the the config weight)
    */
-  void AddEdgesObstacles();
+  void AddEdgesObstacles(double weight_multiplier=1.0);
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles (legacy association strategy)
@@ -603,8 +622,9 @@ protected:
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
+   * @param weight_multiplier Specify an additional weight multipler (in addition to the the config weight)
    */
-  void AddEdgesObstaclesLegacy();
+  void AddEdgesObstaclesLegacy(double weight_multiplier=1.0);
   
   /**
    * @brief Add all edges (local cost functions) related to minimizing the distance to via-points
@@ -617,11 +637,14 @@ protected:
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from dynamic (moving) obstacles.
    * @warning experimental 
+   * @todo Should we also add neighbors to decrease jiggling/oscillations
    * @see EdgeDynamicObstacle
    * @see buildGraph
    * @see optimizeGraph
+   * @param weight_multiplier Specify an additional weight multipler (in addition to the the config weight)
+
    */
-  void AddEdgesDynamicObstacles();  
+  void AddEdgesDynamicObstacles(double weight_multiplier=1.0);
 
   /**
    * @brief Add all edges (local cost functions) for satisfying kinematic constraints of a differential drive robot
@@ -648,6 +671,12 @@ protected:
    * @see optimizeGraph
    */
   void AddEdgesSteeringRate();
+
+   * @brief Add all edges (local cost functions) for prefering a specifiy turning direction (by penalizing the other one)
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesPreferRotDir(); 
   
   //@}
   
@@ -665,6 +694,7 @@ protected:
   const ViaPointContainer* via_points_; //!< Store via points for planning
   
   double cost_; //!< Store cost value of the current hyper-graph
+  RotType prefer_rotdir_; //!< Store whether to prefer a specific initial rotation in optimization (might be activated in case the robot oscillates)
   
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class
