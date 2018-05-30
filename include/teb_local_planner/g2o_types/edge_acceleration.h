@@ -121,7 +121,7 @@ public:
             dist2 = fabs( angle_diff2 * radius ); // actual arg length!
         }
     }
-    
+
     double vel1 = dist1 / dt1->dt();
     double vel2 = dist2 / dt2->dt();
     
@@ -129,8 +129,8 @@ public:
     // consider directions
 //     vel1 *= g2o::sign(diff1[0]*cos(pose1->theta()) + diff1[1]*sin(pose1->theta())); 
 //     vel2 *= g2o::sign(diff2[0]*cos(pose2->theta()) + diff2[1]*sin(pose2->theta())); 
-    vel1 *= fast_sigmoid( 100*(diff1.x()*cos(pose1->theta()) + diff1.y()*sin(pose1->theta())) ); 
-    vel2 *= fast_sigmoid( 100*(diff2.x()*cos(pose2->theta()) + diff2.y()*sin(pose2->theta())) ); 
+    vel1 *= fast_sigmoid( 100*(diff1.x()*cos(pose1->theta()) + diff1.y()*sin(pose1->theta())) );
+    vel2 *= fast_sigmoid( 100*(diff2.x()*cos(pose2->theta()) + diff2.y()*sin(pose2->theta())) );
     
     const double acc_lin  = (vel2 - vel1)*2 / ( dt1->dt() + dt2->dt() );
    

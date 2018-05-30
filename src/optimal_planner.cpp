@@ -903,7 +903,7 @@ void TebOptimalPlanner::AddEdgesKinematicsDiffDrive()
 
 void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 {
-  if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_turning_radius)
+  if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_turning_radius==0)
     return; // if weight equals zero skip adding edges!
   
   // create edge for satisfiying kinematic constraints
@@ -941,10 +941,16 @@ void TebOptimalPlanner::AddEdgesSteeringRate()
       steering_rate_edge->setVertex(0,teb_.PoseVertex(0));
       steering_rate_edge->setVertex(1,teb_.PoseVertex(1));
       steering_rate_edge->setVertex(2,teb_.TimeDiffVertex(0));
-      if (vel_start_.second.linear.x==0.0)
-        steering_rate_edge->setInitialSteeringAngle(0.0);
+      if (std::abs(vel_start_.second.linear.x) < 1e-6)
+      {
+        //ROS_INFO("TebOptimalPlanner::AddEdgesSteeringRate(): current v close to zero. Using last measured steering angle");
+        steering_rate_edge->setInitialSteeringAngle(recent_steering_angle_); // TODO(roesmann): it would be better to measure the actual steering angle
+      }
       else
-        steering_rate_edge->setInitialSteeringAngle(std::atan(cfg_->robot.wheelbase/vel_start_.second.linear.x * vel_start_.second.angular.z) );
+      {
+        recent_steering_angle_ = std::atan(cfg_->robot.wheelbase/vel_start_.second.linear.x * vel_start_.second.angular.z);
+        steering_rate_edge->setInitialSteeringAngle(recent_steering_angle_);
+      }
       steering_rate_edge->setInformation(information_steering_rate);
       steering_rate_edge->setTebConfig(*cfg_);
       optimizer_->addEdge(steering_rate_edge);

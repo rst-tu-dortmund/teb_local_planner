@@ -106,7 +106,7 @@ public:
     double vel = dist / deltaT->estimate();
     
 //     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
-    vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
+    vel *= fast_sigmoid( 100.0 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
     
     const double omega = angle_diff / deltaT->estimate();
   
@@ -297,35 +297,58 @@ public:
     const VertexTimeDiff* dt1 = static_cast<const VertexTimeDiff*>(_vertices[3]);
     const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
     
-    const double dist1 = (conf2->estimate().position() - conf1->estimate().position()).norm();
-    const double dist2 = (conf3->estimate().position() - conf2->estimate().position()).norm();
-    const double angle_diff1 = g2o::normalize_theta( conf2->theta() - conf1->theta() );
-    const double angle_diff2 = g2o::normalize_theta( conf3->theta() - conf2->theta() );
+    Eigen::Vector2d delta_s1 = conf2->estimate().position() - conf1->estimate().position();
+    Eigen::Vector2d delta_s2 = conf3->estimate().position() - conf2->estimate().position();
+    double dist1 = delta_s1.norm();
+    double dist2 = delta_s2.norm();
+    double angle_diff1 = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+    double angle_diff2 = g2o::normalize_theta( conf3->theta() - conf2->theta() );
         
     double phi1, phi2;
-    if (dist1 == 0)
+    if (std::abs(dist1) < 1e-12)
+    {
         phi1 = 0; // TODO previous phi?
+        //ROS_INFO("phi 1 is zero!");
+    }
     else
     {
+      //dist1 *= fast_sigmoid( 100.0 * (delta_s1.x()*cos(conf1->theta()) + delta_s1.y()*sin(conf1->theta())) ); // consider direction
+       //if (delta_s1.x()*cos(conf1->theta()) + delta_s1.y()*sin(conf1->theta()) < 0)
+        //dist1 = -dist1;
+
         if (cfg_->trajectory.exact_arc_length)
-            phi1 = std::atan(cfg_->robot.wheelbase / dist1 * 2*sin(angle_diff1/2));
+            phi1 = std::atan(cfg_->robot.wheelbase / dist1 * 2.0*std::sin(angle_diff1/2.0));
         else
             phi1 = std::atan(cfg_->robot.wheelbase / dist1 * angle_diff1);
+
+        // if we compute the sign of dist1 using the following method, the optimizer get's stuck (possibly due to non-smoothness and atan)
+        // In case if we apply the sign to the angle directly, it seems to work:
+        phi1 *= fast_sigmoid( 100.0 * (delta_s1.x()*cos(conf1->theta()) + delta_s1.y()*sin(conf1->theta())) ); // consider direction
     }
     
-    if (dist2 == 0)
-        phi2 = 0;
+    if (std::abs(dist2) < 1e-12)
+    {
+        phi2 = phi1;
+        ROS_INFO("phi 2 is phi1!");
+    }
     else
     {
+        //dist2 *= fast_sigmoid( 100.0 * (delta_s2.x()*cos(conf2->theta()) + delta_s2.y()*sin(conf2->theta())) ); // consider direction
+        //if (delta_s2.x()*cos(conf2->theta()) + delta_s2.y()*sin(conf2->theta()) < 0)
+       //   dist2 = -dist2;
+
         if (cfg_->trajectory.exact_arc_length)
-            phi2 = std::atan(cfg_->robot.wheelbase / dist2 * 2*sin(angle_diff2/2));
+            phi2 = std::atan(cfg_->robot.wheelbase / dist2 * 2.0*std::sin(angle_diff2/2.0));
         else
             phi2 = std::atan(cfg_->robot.wheelbase / dist2 * angle_diff2);
+
+        // if we compute the sign of dist1 using the following method, the optimizer get's stuck (possibly due to non-smoothness and atan).
+        // In case if we apply the sign to the angle directly, it seems to work:
+        phi2 *= fast_sigmoid( 100.0 * (delta_s2.x()*cos(conf2->theta()) + delta_s2.y()*sin(conf2->theta())) ); // consider direction
     }
 
-    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(phi2 - phi1)*2 / (dt1->dt() + dt2->dt()), cfg_->robot.max_steering_rate, 0.0); 
+    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(phi2 - phi1)*2.0 / (dt1->dt() + dt2->dt()), cfg_->robot.max_steering_rate, 0.0);
     
- 
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeSteeringRate::computeError() _error[0]\n",_error[0]);
   }
   
@@ -358,21 +381,32 @@ public:
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
     
-    const double dist = (conf2->estimate().position() - conf1->estimate().position()).norm();
-    const double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+    Eigen::Vector2d delta_s = conf2->estimate().position() - conf1->estimate().position();
+    double dist = delta_s.norm();
+    double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
         
     double phi;
-    if (dist == 0)
-        phi = 0;
+    if (std::abs(dist) < 1e-12)
+    {
+        ROS_INFO("Start phi equals pervious phi!");
+        phi = _measurement;
+    }
     else
     {
+       //dist *= fast_sigmoid( 100.0 * (delta_s.x()*cos(conf1->theta()) + delta_s.y()*sin(conf1->theta())) ); // consider direction
+       //dist *= (double)g2o::sign( delta_s.x()*cos(conf1->theta()) + delta_s.y()*sin(conf1->theta()) ); // consider direction
+
         if (cfg_->trajectory.exact_arc_length)
-            phi = std::atan(cfg_->robot.wheelbase / dist * 2*sin(angle_diff/2));
+            phi = std::atan(cfg_->robot.wheelbase / dist * 2.0*std::sin(angle_diff/2.0));
         else
             phi = std::atan(cfg_->robot.wheelbase / dist * angle_diff);
+
+        // if we compute the sign of dist1 using the following method, the optimizer get's stuck (possibly due to non-smoothness and atan).
+        // In case if we apply the sign to the angle directly, it seems to work:
+        phi *= fast_sigmoid( 100.0 * (delta_s.x()*cos(conf1->theta()) + delta_s.y()*sin(conf1->theta())) ); // consider direction
     }
 
-    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(_measurement - phi) / dt->dt(), cfg_->robot.max_steering_rate, 0.0); 
+    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(phi - _measurement) / dt->dt(), cfg_->robot.max_steering_rate, 0.0);
     
  
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeSteeringRateStart::computeError() _error[0]\n",_error[0]);
@@ -412,21 +446,31 @@ public:
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
     
-    const double dist = (conf2->estimate().position() - conf1->estimate().position()).norm();
-    const double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
+    Eigen::Vector2d delta_s = conf2->estimate().position() - conf1->estimate().position();
+    double dist = delta_s.norm();
+    double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );
         
     double phi;
-    if (dist == 0)
+    if (std::abs(dist) < 1e-12)
+    {
+      ROS_INFO("Goal phi is zero!");
         phi = 0;
+    }
     else
     {
+        //dist *= fast_sigmoid( 100.0 * (delta_s.x()*cos(conf1->theta()) + delta_s.y()*sin(conf1->theta())) ); // consider direction
+
         if (cfg_->trajectory.exact_arc_length)
-            phi = std::atan(cfg_->robot.wheelbase / dist * 2*sin(angle_diff/2));
+            phi = std::atan(cfg_->robot.wheelbase / dist * 2.0*std::sin(angle_diff/2.0));
         else
             phi = std::atan(cfg_->robot.wheelbase / dist * angle_diff);
+
+        // if we compute the sign of dist1 using the following method, the optimizer get's stuck (possibly due to non-smoothness and atan).
+        // In case if we apply the sign to the angle directly, it seems to work:
+        phi *= fast_sigmoid( 100.0 * (delta_s.x()*cos(conf1->theta()) + delta_s.y()*sin(conf1->theta())) ); // consider direction
     }
 
-    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(phi - _measurement) / dt->dt(), cfg_->robot.max_steering_rate, 0.0); 
+    _error[0] = penaltyBoundToInterval(g2o::normalize_theta(_measurement - phi) / dt->dt(), cfg_->robot.max_steering_rate, 0.0);
     
  
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeSteeringRateGoal::computeError() _error[0]\n",_error[0]);
