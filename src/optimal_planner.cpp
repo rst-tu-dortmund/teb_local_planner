@@ -922,6 +922,13 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 
 void TebOptimalPlanner::AddEdgesPreferRotDir()
 {
+  //TODO(roesmann): Note, these edges can result in odd predictions, in particular
+  //                we can observe a substantional mismatch between open- and closed-loop planning
+  //                leading to a poor control performance.
+  //                At the moment, we keep these functionality for oscillation recovery:
+  //                Activating the edge for a short time period might not be crucial and
+  //                could move the robot to a new oscillation-free state.
+  //                This needs to be analyzed in more detail!
   if (prefer_rotdir_ == RotType::none || cfg_->optim.weight_prefer_rotdir==0)
     return; // if weight equals zero skip adding edges!
 
