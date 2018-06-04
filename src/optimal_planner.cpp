@@ -901,7 +901,7 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 {
   if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_turning_radius)
     return; // if weight equals zero skip adding edges!
-  return;
+
   // create edge for satisfiying kinematic constraints
   Eigen::Matrix<double,2,2> information_kinematics;
   information_kinematics.fill(0.0);
