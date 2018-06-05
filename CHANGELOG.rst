@@ -2,6 +2,21 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed a crucial bug (from 0.6.6): A cost function for prefering a clockwise resp. anti-clockwise turn was enabled by default.
+  This cost function was only intendet to be active only for recovering from an oscillating robot. 
+  This cost led to a penalty for one of the turning directions and hence the maximum turning rate for the penalized direction could not be reached.
+  Furthermore, which is more crucial: since the penalty applied only to a small (initial) subset of the trajectory, the overall control performance was poor
+  (huge gap between planned motion and closed-loop trajectories led to frequent corrections of the robot pose and hence many motion traversals).
+* Adds support for circular obstacle types. This includes support for the radius field in costmap_converter::ObstacleMsg
+* rqt reconfigure: parameters are now grouped in tabs (robot, trajectory, viapoints, ...)
+* Update to use non deprecated pluginlib macro
+* Python scripts updated to new obstacle message definition.
+* Fixed issue when start and end are at the same location (PR #43)
+* Normalize marker quaternions in *test_optim_node*
+* Contributors: Christoph Rösmann, Alexander Reimann, Mikael Arguedas, wollip
+
 0.6.7 (2017-09-21)
 ------------------
 * This update introduces support for dynamic obstacles (thanks to Franz Albers, who implemented and tested the code).
