@@ -456,9 +456,14 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
 
   for (std::size_t i=0; i<obstacles->obstacles.size(); ++i)
   {
-    const geometry_msgs::Polygon* polygon = &obstacles->obstacles.at(i).polygon;
+    const costmap_converter::ObstacleMsg* obstacle = &obstacles->obstacles.at(i);
+    const geometry_msgs::Polygon* polygon = &obstacle->polygon;
 
-    if (polygon->points.size()==1) // Point
+    if (polygon->points.size()==1 && obstacle->radius > 0) // Circle
+    {
+      obstacles_.push_back(ObstaclePtr(new CircularObstacle(polygon->points[0].x, polygon->points[0].y, obstacle->radius)));
+    }
+    else if (polygon->points.size()==1) // Point
     {
       obstacles_.push_back(ObstaclePtr(new PointObstacle(polygon->points[0].x, polygon->points[0].y)));
     }
@@ -513,7 +518,14 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
     
     for (size_t i=0; i<custom_obstacle_msg_.obstacles.size(); ++i)
     {
-      if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 ) // point
+      if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 && custom_obstacle_msg_.obstacles.at(i).radius > 0 ) // circle
+      {
+        Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().z );
+        obstacles_.push_back(ObstaclePtr(new CircularObstacle( (obstacle_to_map_eig * pos).head(2), custom_obstacle_msg_.obstacles.at(i).radius)));
+      }
+      else if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 ) // point
       {
         Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
                              custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
