@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.1 (2018-06-05)
+------------------
 * Fixed a crucial bug (from 0.6.6): A cost function for prefering a clockwise resp. anti-clockwise turn was enabled by default.
   This cost function was only intendet to be active only for recovering from an oscillating robot. 
   This cost led to a penalty for one of the turning directions and hence the maximum turning rate for the penalized direction could not be reached.
