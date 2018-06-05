@@ -193,6 +193,7 @@ void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigne
   i_marker.description = "Obstacle";
   i_marker.pose.position.x = init_x;
   i_marker.pose.position.y = init_y;
+  i_marker.pose.orientation.w = 1.0f; // make quaternion normalized
 
   // create a grey box marker
   visualization_msgs::Marker box_marker;
@@ -205,6 +206,7 @@ void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigne
   box_marker.color.g = 0.5;
   box_marker.color.b = 0.5;
   box_marker.color.a = 1.0;
+  box_marker.pose.orientation.w = 1.0f; // make quaternion normalized
 
   // create a non-interactive control which contains the box
   visualization_msgs::InteractiveMarkerControl box_control;
@@ -217,9 +219,9 @@ void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigne
   // create a control which will move the box, rviz will insert 2 arrows
   visualization_msgs::InteractiveMarkerControl move_control;
   move_control.name = "move_x";
-  move_control.orientation.w = 1;
+  move_control.orientation.w = 0.707107f;
   move_control.orientation.x = 0;
-  move_control.orientation.y = 1;
+  move_control.orientation.y = 0.707107f;
   move_control.orientation.z = 0;
   move_control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_PLANE;
 

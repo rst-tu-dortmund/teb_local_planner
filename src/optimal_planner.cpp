@@ -76,6 +76,7 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacle
   robot_model_ = robot_model;
   via_points_ = via_points;
   cost_ = HUGE_VAL;
+  prefer_rotdir_ = RotType::none;
   setVisualization(visual);
   
   vel_start_.first = true;
@@ -900,7 +901,7 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 {
   if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_turning_radius)
     return; // if weight equals zero skip adding edges!
-  
+
   // create edge for satisfiying kinematic constraints
   Eigen::Matrix<double,2,2> information_kinematics;
   information_kinematics.fill(0.0);
@@ -921,9 +922,22 @@ void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 
 void TebOptimalPlanner::AddEdgesPreferRotDir()
 {
+  //TODO(roesmann): Note, these edges can result in odd predictions, in particular
+  //                we can observe a substantional mismatch between open- and closed-loop planning
+  //                leading to a poor control performance.
+  //                At the moment, we keep these functionality for oscillation recovery:
+  //                Activating the edge for a short time period might not be crucial and
+  //                could move the robot to a new oscillation-free state.
+  //                This needs to be analyzed in more detail!
   if (prefer_rotdir_ == RotType::none || cfg_->optim.weight_prefer_rotdir==0)
     return; // if weight equals zero skip adding edges!
-  
+
+  if (prefer_rotdir_ != RotType::right && prefer_rotdir_ != RotType::left)
+  {
+    ROS_WARN("TebOptimalPlanner::AddEdgesPreferRotDir(): unsupported RotType selected. Skipping edge creation.");
+    return;
+  }
+
   // create edge for satisfiying kinematic constraints
   Eigen::Matrix<double,1,1> information_rotdir;
   information_rotdir.fill(cfg_->optim.weight_prefer_rotdir);
@@ -937,7 +951,7 @@ void TebOptimalPlanner::AddEdgesPreferRotDir()
     
     if (prefer_rotdir_ == RotType::left)
         rotdir_edge->preferLeft();
-    else 
+    else if (prefer_rotdir_ == RotType::right)
         rotdir_edge->preferRight();
     
     optimizer_->addEdge(rotdir_edge);

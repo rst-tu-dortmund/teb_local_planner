@@ -440,7 +440,154 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW  
 };
 
+/**
+ * @class CircularObstacle
+ * @brief Implements a 2D circular obstacle (point obstacle plus radius)
+ */
+class CircularObstacle : public Obstacle
+{
+public:
 
+  /**
+    * @brief Default constructor of the circular obstacle class
+    */
+  CircularObstacle() : Obstacle(), pos_(Eigen::Vector2d::Zero())
+  {}
+
+  /**
+    * @brief Construct CircularObstacle using a 2d center position vector and radius
+    * @param position 2d position that defines the current obstacle position
+    * @param radius radius of the obstacle
+    */
+  CircularObstacle(const Eigen::Ref< const Eigen::Vector2d>& position, double radius) : Obstacle(), pos_(position), radius_(radius)
+  {}
+
+  /**
+    * @brief Construct CircularObstacle using x- and y-center-coordinates and radius
+    * @param x x-coordinate
+    * @param y y-coordinate
+    * @param radius radius of the obstacle
+    */
+  CircularObstacle(double x, double y, double radius) : Obstacle(), pos_(Eigen::Vector2d(x,y)), radius_(radius)
+  {}
+
+
+  // implements checkCollision() of the base class
+  virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+  {
+      return getMinimumDistance(point) < min_dist;
+  }
+
+
+  // implements checkLineIntersection() of the base class
+  virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const
+  {
+      // Distance Line - Circle
+      // refer to http://www.spieleprogrammierer.de/wiki/2D-Kollisionserkennung#Kollision_Kreis-Strecke
+      Eigen::Vector2d a = line_end-line_start; // not normalized!  a=y-x
+      Eigen::Vector2d b = pos_-line_start; // b=m-x
+
+      // Now find nearest point to circle v=x+a*t with t=a*b/(a*a) and bound to 0<=t<=1
+      double t = a.dot(b)/a.dot(a);
+      if (t<0) t=0; // bound t (since a is not normalized, t can be scaled between 0 and 1 to parametrize the line
+      else if (t>1) t=1;
+      Eigen::Vector2d nearest_point = line_start + a*t;
+
+      // check collision
+      return checkCollision(nearest_point, min_dist);
+  }
+
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+  {
+    return (position-pos_).norm() - radius_;
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return distance_point_to_segment_2d(pos_, line_start, line_end) - radius_;
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_point_to_polygon_2d(pos_, polygon) - radius_;
+  }
+
+  // implements getMinimumDistanceVec() of the base class
+  virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
+  {
+    return pos_ + radius_*(position-pos_).normalized();
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+  {
+    return (pos_ + t*centroid_velocity_ - position).norm() - radius_;
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+  {
+    return distance_point_to_segment_2d(pos_ + t*centroid_velocity_, line_start, line_end) - radius_;
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+  {
+    return distance_point_to_polygon_2d(pos_ + t*centroid_velocity_, polygon) - radius_;
+  }
+
+  // implements predictCentroidConstantVelocity() of the base class
+  virtual void predictCentroidConstantVelocity(double t, Eigen::Ref<Eigen::Vector2d> position) const
+  {
+    position = pos_ + t*centroid_velocity_;
+  }
+
+  // implements getCentroid() of the base class
+  virtual const Eigen::Vector2d& getCentroid() const
+  {
+    return pos_;
+  }
+
+  // implements getCentroidCplx() of the base class
+  virtual std::complex<double> getCentroidCplx() const
+  {
+    return std::complex<double>(pos_[0],pos_[1]);
+  }
+
+  // Accessor methods
+  const Eigen::Vector2d& position() const {return pos_;} //!< Return the current position of the obstacle (read-only)
+  Eigen::Vector2d& position() {return pos_;} //!< Return the current position of the obstacle
+  double& x() {return pos_.coeffRef(0);} //!< Return the current x-coordinate of the obstacle
+  const double& x() const {return pos_.coeffRef(0);} //!< Return the current y-coordinate of the obstacle (read-only)
+  double& y() {return pos_.coeffRef(1);} //!< Return the current x-coordinate of the obstacle
+  const double& y() const {return pos_.coeffRef(1);} //!< Return the current y-coordinate of the obstacle (read-only)
+  double& radius() {return radius_;} //!< Return the current radius of the obstacle
+  const double& radius() const {return radius_;} //!< Return the current radius of the obstacle
+
+  // implements toPolygonMsg() of the base class
+  virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+  {
+    // TODO(roesmann): the polygon message type cannot describe a "perfect" circle
+    //                 We could switch to ObstacleMsg if required somewhere...
+    polygon.points.resize(1);
+    polygon.points.front().x = pos_.x();
+    polygon.points.front().y = pos_.y();
+    polygon.points.front().z = 0;
+  }
+
+protected:
+
+  Eigen::Vector2d pos_; //!< Store the center position of the CircularObstacle
+  double radius_ = 0.0; //!< Radius of the obstacle
+
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
 
 /**
 * @class LineObstacle

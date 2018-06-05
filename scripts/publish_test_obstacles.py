@@ -3,22 +3,23 @@
 # Author: christoph.roesmann@tu-dortmund.de
 
 import rospy, math
-from teb_local_planner.msg import ObstacleMsg
+from costmap_converter.msg import ObstacleArrayMsg, ObstacleMsg
 from geometry_msgs.msg import PolygonStamped, Point32
 
 
 def publish_obstacle_msg():
-  pub = rospy.Publisher('/test_optim_node/obstacles', ObstacleMsg, queue_size=1)
-  #pub = rospy.Publisher('/p3dx/move_base/TebLocalPlannerROS/obstacles', ObstacleMsg, queue_size=1)
+  pub = rospy.Publisher('/test_optim_node/obstacles', ObstacleArrayMsg, queue_size=1)
+  #pub = rospy.Publisher('/p3dx/move_base/TebLocalPlannerROS/obstacles', ObstacleArrayMsg, queue_size=1)
   rospy.init_node("test_obstacle_msg")
 
 
-  obstacle_msg = ObstacleMsg() 
+  obstacle_msg = ObstacleArrayMsg() 
   obstacle_msg.header.stamp = rospy.Time.now()
   obstacle_msg.header.frame_id = "odom" # CHANGE HERE: odom/map
   
   # Add point obstacle
-  obstacle_msg.obstacles.append(PolygonStamped())
+  obstacle_msg.obstacles.append(ObstacleMsg())
+  obstacle_msg.obstacles[0].id = 0
   obstacle_msg.obstacles[0].polygon.points = [Point32()]
   obstacle_msg.obstacles[0].polygon.points[0].x = 1.5
   obstacle_msg.obstacles[0].polygon.points[0].y = 0
@@ -26,7 +27,8 @@ def publish_obstacle_msg():
 
 
   # Add line obstacle
-  obstacle_msg.obstacles.append(PolygonStamped())
+  obstacle_msg.obstacles.append(ObstacleMsg())
+  obstacle_msg.obstacles[1].id = 1
   line_start = Point32()
   line_start.x = -2.5
   line_start.y = 0.5
@@ -38,7 +40,8 @@ def publish_obstacle_msg():
   obstacle_msg.obstacles[1].polygon.points = [line_start, line_end]
   
   # Add polygon obstacle
-  obstacle_msg.obstacles.append(PolygonStamped())
+  obstacle_msg.obstacles.append(ObstacleMsg())
+  obstacle_msg.obstacles[1].id = 2
   v1 = Point32()
   v1.x = -1
   v1.y = -1

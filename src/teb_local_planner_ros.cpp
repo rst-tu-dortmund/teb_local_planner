@@ -247,6 +247,9 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return false;
   }
 
+  // update via-points container
+  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
+
   // check if global goal is reached
   tf::Stamped<tf::Pose> global_goal;
   tf::poseStampedMsgToTF(global_plan_.back(), global_goal);
@@ -255,7 +258,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   double dy = global_goal.getOrigin().getY() - robot_pose_.y();
   double delta_orient = g2o::normalize_theta( tf::getYaw(global_goal.getRotation()) - robot_pose_.theta() );
   if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
-    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance)
+    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
+    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0))
   {
     goal_reached_ = true;
     return true;
@@ -308,8 +312,6 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   // also consider custom obstacles (must be called after other updates, since the container is not cleared)
   updateObstacleContainerWithCustomObstacles();
   
-  // update via-points container
-  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
     
   // Do not allow config changes during the following optimization step
   boost::mutex::scoped_lock cfg_lock(cfg_.configMutex());
@@ -454,9 +456,14 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
 
   for (std::size_t i=0; i<obstacles->obstacles.size(); ++i)
   {
-    const geometry_msgs::Polygon* polygon = &obstacles->obstacles.at(i).polygon;
+    const costmap_converter::ObstacleMsg* obstacle = &obstacles->obstacles.at(i);
+    const geometry_msgs::Polygon* polygon = &obstacle->polygon;
 
-    if (polygon->points.size()==1) // Point
+    if (polygon->points.size()==1 && obstacle->radius > 0) // Circle
+    {
+      obstacles_.push_back(ObstaclePtr(new CircularObstacle(polygon->points[0].x, polygon->points[0].y, obstacle->radius)));
+    }
+    else if (polygon->points.size()==1) // Point
     {
       obstacles_.push_back(ObstaclePtr(new PointObstacle(polygon->points[0].x, polygon->points[0].y)));
     }
@@ -511,7 +518,14 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
     
     for (size_t i=0; i<custom_obstacle_msg_.obstacles.size(); ++i)
     {
-      if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 ) // point
+      if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 && custom_obstacle_msg_.obstacles.at(i).radius > 0 ) // circle
+      {
+        Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
+                             custom_obstacle_msg_.obstacles.at(i).polygon.points.front().z );
+        obstacles_.push_back(ObstaclePtr(new CircularObstacle( (obstacle_to_map_eig * pos).head(2), custom_obstacle_msg_.obstacles.at(i).radius)));
+      }
+      else if (custom_obstacle_msg_.obstacles.at(i).polygon.points.size() == 1 ) // point
       {
         Eigen::Vector3d pos( custom_obstacle_msg_.obstacles.at(i).polygon.points.front().x,
                              custom_obstacle_msg_.obstacles.at(i).polygon.points.front().y,
