@@ -2,6 +2,14 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adds the possibility to provide via-points via a topic. 
+  Currently, the user needs to decide whether to receive via-points from topic or to obtain them from the global reference plan 
+  (e.g., activate the latter by setting global_plan_viapoint_sep>0 as before).
+  A small test script publish_viapoints.py is provided to demonstrate the feature within test_optim_node.
+* Contributors: Christoph Rösmann
+
 0.7.1 (2018-06-05)
 ------------------
 * Fixed a crucial bug (from 0.6.6): A cost function for prefering a clockwise resp. anti-clockwise turn was enabled by default.
