@@ -56,6 +56,7 @@ ViaPointContainer via_points;
 TebConfig config;
 boost::shared_ptr< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> > dynamic_recfg;
 ros::Subscriber custom_obst_sub;
+ros::Subscriber via_points_sub;
 ros::Subscriber clicked_points_sub;
 std::vector<ros::Subscriber> obst_vel_subs;
 unsigned int no_fixed_obstacles;
@@ -68,6 +69,7 @@ void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst
 void CreateInteractiveMarker(const double& init_x, const double& init_y, unsigned int id, std::string frame, interactive_markers::InteractiveMarkerServer* marker_server, interactive_markers::InteractiveMarkerServer::FeedbackCallback feedback_cb);
 void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg);
+void CB_via_points(const nav_msgs::Path::ConstPtr& via_points_msg);
 void CB_setObstacleVelocity(const geometry_msgs::TwistConstPtr& twist_msg, const unsigned int id);
 
 
@@ -95,6 +97,9 @@ int main( int argc, char** argv )
   // setup callback for clicked points (in rviz) that are considered as via-points
   clicked_points_sub = n.subscribe("/clicked_point", 5, CB_clicked_points);
   
+  // setup callback for via-points (callback overwrites previously set via-points)
+  via_points_sub = n.subscribe("via_points", 1, CB_via_points);
+
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
 
@@ -137,10 +142,6 @@ int main( int argc, char** argv )
     }
   }
   marker_server.applyChanges();
-  
-  
-  // Add via points
-  //via_points.push_back( Eigen::Vector2d( 0.0, 1.5 ) );
   
   // Setup visualization
   visual = TebVisualizationPtr(new TebVisualization(n, config));
@@ -287,6 +288,15 @@ void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg)
     ROS_WARN("Note, via-points are deactivated, since 'weight_via_point' <= 0");
 }
 
+void CB_via_points(const nav_msgs::Path::ConstPtr& via_points_msg)
+{
+  ROS_INFO_ONCE("Via-points received. This message is printed once.");
+  via_points.clear();
+  for (const geometry_msgs::PoseStamped& pose : via_points_msg->poses)
+  {
+    via_points.emplace_back(pose.pose.position.x, pose.pose.position.y);
+  }
+}
 
 void CB_setObstacleVelocity(const geometry_msgs::TwistConstPtr& twist_msg, const unsigned int id)
 {
