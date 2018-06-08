@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.2 (2018-06-08)
+------------------
 * Adds the possibility to provide via-points via a topic. 
   Currently, the user needs to decide whether to receive via-points from topic or to obtain them from the global reference plan 
   (e.g., activate the latter by setting global_plan_viapoint_sep>0 as before).
