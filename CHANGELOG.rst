@@ -8,7 +8,7 @@ Changelog for package teb_local_planner
   This cost function was only intendet to be active only for recovering from an oscillating robot. 
   This cost led to a penalty for one of the turning directions and hence the maximum turning rate for the penalized direction could not be reached.
   Furthermore, which is more crucial: since the penalty applied only to a small (initial) subset of the trajectory, the overall control performance was poor
-  (huge gap between planned motion and closed-loop trajectories led to frequent corrections of the robot pose and hence many motion traversals).
+  (huge gap between planned motion and closed-loop trajectories led to frequent corrections of the robot pose and hence many motion reversals).
 * Adds support for circular obstacle types. This includes support for the radius field in costmap_converter::ObstacleMsg
 * rqt reconfigure: parameters are now grouped in tabs (robot, trajectory, viapoints, ...)
 * Update to use non deprecated pluginlib macro
