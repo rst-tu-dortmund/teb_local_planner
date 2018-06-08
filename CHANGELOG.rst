@@ -2,13 +2,21 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adds the possibility to provide via-points via a topic. 
+  Currently, the user needs to decide whether to receive via-points from topic or to obtain them from the global reference plan 
+  (e.g., activate the latter by setting global_plan_viapoint_sep>0 as before).
+  A small test script publish_viapoints.py is provided to demonstrate the feature within test_optim_node.
+* Contributors: Christoph Rösmann
+
 0.6.8 (2018-06-05)
 ------------------
 * Fixed a crucial bug (from 0.6.6): A cost function for prefering a clockwise resp. anti-clockwise turn was enabled by default.
   This cost function was only intendet to be active only for recovering from an oscillating robot. 
   This cost led to a penalty for one of the turning directions and hence the maximum turning rate for the penalized direction could not be reached.
   Furthermore, which is more crucial: since the penalty applied only to a small (initial) subset of the trajectory, the overall control performance was poor
-  (huge gap between planned motion and closed-loop trajectories led to frequent corrections of the robot pose and hence many motion traversals).
+  (huge gap between planned motion and closed-loop trajectories led to frequent corrections of the robot pose and hence many motion reversals).
 * Adds support for circular obstacle types. This includes support for the radius field in costmap_converter::ObstacleMsg
 * rqt reconfigure: parameters are now grouped in tabs (robot, trajectory, viapoints, ...)
 * Update to use non deprecated pluginlib macro
