@@ -63,8 +63,8 @@ namespace teb_local_planner
 
 TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costmap_model_(NULL),
                                            costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
-                                           dynamic_recfg_(NULL), goal_reached_(false), no_infeasible_plans_(0), last_preferred_rotdir_(RotType::none),
-                                           initialized_(false)
+                                           dynamic_recfg_(NULL), custom_via_points_active_(false), goal_reached_(false), no_infeasible_plans_(0),
+                                           last_preferred_rotdir_(RotType::none), initialized_(false)
 {
 }
 
@@ -164,6 +164,9 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
         
     // setup callback for custom obstacles
     custom_obst_sub_ = nh.subscribe("obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
+
+    // setup callback for custom via-points
+    via_points_sub_ = nh.subscribe("via_points", 1, &TebLocalPlannerROS::customViaPointsCB, this);
     
     // initialize failure detector
     ros::NodeHandle nh_move_base("~");
@@ -248,7 +251,8 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   }
 
   // update via-points container
-  updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
+  if (!custom_via_points_active_)
+    updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
 
   // check if global goal is reached
   tf::Stamped<tf::Pose> global_goal;
@@ -573,7 +577,7 @@ void TebLocalPlannerROS::updateViaPointsContainer(const std::vector<geometry_msg
 {
   via_points_.clear();
   
-  if (min_separation<0)
+  if (min_separation<=0)
     return;
   
   std::size_t prev_idx = 0;
@@ -956,6 +960,26 @@ void TebLocalPlannerROS::customObstacleCB(const costmap_converter::ObstacleArray
 {
   boost::mutex::scoped_lock l(custom_obst_mutex_);
   custom_obstacle_msg_ = *obst_msg;  
+}
+
+void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::Path::ConstPtr& via_points_msg)
+{
+  ROS_INFO_ONCE("Via-points received. This message is printed once.");
+  if (cfg_.trajectory.global_plan_viapoint_sep > 0)
+  {
+    ROS_WARN("Via-points are already obtained from the global plan (global_plan_viapoint_sep>0)."
+             "Ignoring custom via-points.");
+    custom_via_points_active_ = false;
+    return;
+  }
+
+  boost::mutex::scoped_lock l(via_point_mutex_);
+  via_points_.clear();
+  for (const geometry_msgs::PoseStamped& pose : via_points_msg->poses)
+  {
+    via_points_.emplace_back(pose.pose.position.x, pose.pose.position.y);
+  }
+  custom_via_points_active_ = !via_points_.empty();
 }
      
 RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(const ros::NodeHandle& nh)
