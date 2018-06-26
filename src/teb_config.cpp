@@ -55,7 +55,9 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("max_samples", trajectory.max_samples, trajectory.max_samples);
   nh.param("global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation, trajectory.global_plan_overwrite_orientation);
   nh.param("allow_init_with_backwards_motion", trajectory.allow_init_with_backwards_motion, trajectory.allow_init_with_backwards_motion);
-  nh.param("global_plan_via_point_sep", trajectory.global_plan_viapoint_sep, trajectory.global_plan_viapoint_sep);
+  nh.getParam("global_plan_via_point_sep", trajectory.global_plan_viapoint_sep); // deprecated, see checkDeprecated()
+  if (!nh.param("global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep, trajectory.global_plan_viapoint_sep))
+    nh.setParam("global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep); // write deprecated value to param server
   nh.param("via_points_ordered", trajectory.via_points_ordered, trajectory.via_points_ordered);
   nh.param("max_global_plan_lookahead_dist", trajectory.max_global_plan_lookahead_dist, trajectory.max_global_plan_lookahead_dist);
   nh.param("exact_arc_length", trajectory.exact_arc_length, trajectory.exact_arc_length);
@@ -324,6 +326,9 @@ void TebConfig::checkDeprecated(const ros::NodeHandle& nh) const
   
   if (nh.hasParam("alternative_time_cost"))
     ROS_WARN("TebLocalPlannerROS() Param Warning: 'alternative_time_cost' is deprecated. It has been replaced by 'selection_alternative_time_cost'.");
+
+  if (nh.hasParam("global_plan_via_point_sep"))
+    ROS_WARN("TebLocalPlannerROS() Param Warning: 'global_plan_via_point_sep' is deprecated. It has been replaced by 'global_plan_viapoint_sep' due to consistency reasons.");
 }
 
     
