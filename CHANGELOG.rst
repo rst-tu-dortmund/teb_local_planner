@@ -2,6 +2,28 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Parameter `switching_blocking_period` added to homotopy class planner parameter group.
+  Values greater than zero enforce the homotopy class planner to only switch to new equivalence classes as soon
+  as the given period is expired (this might reduce oscillations in some scenarios). The value is set to zero seconds
+  by default in order to not change the behavior of existing configurations.
+* Fixed unconsistent naming of parameter `global_plan_viapoint_sep`.
+  The parameter retrieved at startup was `global_plan_via_point_sep` and via dynamic_reconfigure it was `global_plan_viapoint_sep`.
+  `global_plan_via_point_sep` has now been replaced by `global_plan_viapoint_sep` since this is more consistent with the variable name
+  in the code as well as `weight_viapoint` and the ros wiki description.
+  In order to not break things, the old parameter name can still be used. However, a deprecated warning is printed.
+* transformGlobalPlan searches now for the closest point within the complete subset of the global plan in the local costmap:
+  In every sampling interval, the global plan is processed in order to find the closest pose to the robot (as reference start) 
+  and the current end pose (either local at costmap boundary or max_global_plan_lookahead_dist).
+  Previously, the search algorithm stopped as soon as the distance to the robot increased once. 
+  This caused troubles with more complex global plans, hence the new strategy checks the complete subset
+  of the global plan in the local costmap for the closest distance to the robot.
+* via-points that are very close to the current robot pose or behind the robot are now skipped (in non-ordered mode)
+* Edge creation: minor performance improvement for dynamic obstacle edges
+* dynamic_reconfigure: parameter visualize_with_time_as_z_axis_scale moved to group trajectory
+* Contributors: Christoph Rösmann
+
 0.7.2 (2018-06-08)
 ------------------
 * Adds the possibility to provide via-points via a topic. 
@@ -13,7 +35,7 @@ Changelog for package teb_local_planner
 0.7.1 (2018-06-05)
 ------------------
 * Fixed a crucial bug (from 0.6.6): A cost function for prefering a clockwise resp. anti-clockwise turn was enabled by default.
-  This cost function was only intendet to be active only for recovering from an oscillating robot. 
+  This cost function was only intended to be active only for recovering from an oscillating robot. 
   This cost led to a penalty for one of the turning directions and hence the maximum turning rate for the penalized direction could not be reached.
   Furthermore, which is more crucial: since the penalty applied only to a small (initial) subset of the trajectory, the overall control performance was poor
   (huge gap between planned motion and closed-loop trajectories led to frequent corrections of the robot pose and hence many motion reversals).
