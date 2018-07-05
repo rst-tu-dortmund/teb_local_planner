@@ -171,7 +171,8 @@ public:
     double selection_obst_cost_scale; //!< Extra scaling of obstacle cost terms just for selecting the 'best' candidate.
     double selection_viapoint_cost_scale; //!< Extra scaling of via-point cost terms just for selecting the 'best' candidate.
     bool selection_alternative_time_cost; //!< If true, time cost is replaced by the total transition time.
-    
+    double switching_blocking_period; //!< Specify a time duration in seconds that needs to be expired before a switch to new equivalence class is allowed
+
     int roadmap_graph_no_samples; //! < Specify the number of samples generated for creating the roadmap graph, if simple_exploration is turend off.
     double roadmap_graph_area_width; //!< Random keypoints/waypoints are sampled in a rectangular region between start and goal. Specify the width of that region in meters.
     double roadmap_graph_area_length_scale; //!< The length of the rectangular region is determined by the distance between start and goal. This parameter further scales the distance such that the geometric center remains equal!
@@ -318,6 +319,7 @@ public:
     hcp.roadmap_graph_area_length_scale = 1.0;
     hcp.h_signature_prescaler = 1;
     hcp.h_signature_threshold = 0.1;
+    hcp.switching_blocking_period = 0.0;
     
     hcp.viapoints_all_candidates = true;
     

@@ -652,7 +652,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles(double weight_multiplier)
     double time = teb_.TimeDiff(0);
     for (int i=1; i < teb_.sizePoses() - 1; ++i)
     {
-      EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(teb_.getSumOfTimeDiffsUpToIdx(i));
+      EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(time);
       dynobst_edge->setVertex(0,teb_.PoseVertex(i));
       dynobst_edge->setInformation(information);
       dynobst_edge->setParameters(*cfg_, robot_model_.get(), obst->get());
@@ -685,8 +685,17 @@ void TebOptimalPlanner::AddEdgesViaPoints()
       index = n-2; // set to a pose before the goal, since we can move it away!
     // check if point coincides with start or is located before it
     if ( index < 1)
-      index = 1;
-    
+    {
+      if (cfg_->trajectory.via_points_ordered)
+      {
+        index = 1; // try to connect the via point with the second (and non-fixed) pose. It is likely that autoresize adds new poses inbetween later.
+      }
+      else
+      {
+        ROS_DEBUG("TebOptimalPlanner::AddEdgesViaPoints(): skipping a via-point that is close or behind the current robot pose.");
+        continue; // skip via points really close or behind the current robot pose
+      }
+    }
     Eigen::Matrix<double,1,1> information;
     information.fill(cfg_->optim.weight_viapoint);
     
