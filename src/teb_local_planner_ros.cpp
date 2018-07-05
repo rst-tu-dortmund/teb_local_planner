@@ -692,18 +692,19 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf::TransformListener& tf, co
     double sq_dist = 1e10;
     
     //we need to loop to a point on the plan that is within a certain distance of the robot
-    while(i < (int)global_plan.size())
+    for(int j=0; j < (int)global_plan.size(); ++j)
     {
-      double x_diff = robot_pose.getOrigin().x() - global_plan[i].pose.position.x;
-      double y_diff = robot_pose.getOrigin().y() - global_plan[i].pose.position.y;
+      double x_diff = robot_pose.getOrigin().x() - global_plan[j].pose.position.x;
+      double y_diff = robot_pose.getOrigin().y() - global_plan[j].pose.position.y;
       double new_sq_dist = x_diff * x_diff + y_diff * y_diff;
-      if (new_sq_dist > sq_dist && sq_dist < sq_dist_threshold) // find first distance that is greater
+      if (new_sq_dist > sq_dist_threshold)
+        break;  // force stop if we have reached the costmap border
+
+      if (new_sq_dist < sq_dist) // find closest distance
       {
         sq_dist = new_sq_dist;
-        break;
+        i = j;
       }
-      sq_dist = new_sq_dist;
-      ++i;
     }
     
     tf::Stamped<tf::Pose> tf_pose;
