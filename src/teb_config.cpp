@@ -132,6 +132,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("selection_viapoint_cost_scale", hcp.selection_viapoint_cost_scale, hcp.selection_viapoint_cost_scale);
   nh.param("selection_cost_hysteresis", hcp.selection_cost_hysteresis, hcp.selection_cost_hysteresis); 
   nh.param("selection_alternative_time_cost", hcp.selection_alternative_time_cost, hcp.selection_alternative_time_cost); 
+  nh.param("switching_blocking_period", hcp.switching_blocking_period, hcp.switching_blocking_period);
   nh.param("roadmap_graph_samples", hcp.roadmap_graph_no_samples, hcp.roadmap_graph_no_samples); 
   nh.param("roadmap_graph_area_width", hcp.roadmap_graph_area_width, hcp.roadmap_graph_area_width); 
   nh.param("roadmap_graph_area_length_scale", hcp.roadmap_graph_area_length_scale, hcp.roadmap_graph_area_length_scale);
@@ -236,6 +237,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   hcp.selection_obst_cost_scale = cfg.selection_obst_cost_scale;
   hcp.selection_viapoint_cost_scale = cfg.selection_viapoint_cost_scale;
   hcp.selection_alternative_time_cost = cfg.selection_alternative_time_cost;
+  hcp.switching_blocking_period = cfg.switching_blocking_period;
   
   hcp.obstacle_heading_threshold = cfg.obstacle_heading_threshold;
   hcp.roadmap_graph_no_samples = cfg.roadmap_graph_no_samples;

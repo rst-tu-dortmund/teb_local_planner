@@ -38,6 +38,8 @@
 
 #include <teb_local_planner/homotopy_class_planner.h>
 
+#include <limits>
+
 namespace teb_local_planner
 {
 
@@ -535,14 +537,17 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
     TebOptimalPlannerPtr initial_plan_teb = getInitialPlanTEB();
 
     // check if last best_teb is still a valid candidate
-    if (std::find(tebs_.begin(), tebs_.end(), best_teb_) != tebs_.end())
+    if (best_teb_ && std::find(tebs_.begin(), tebs_.end(), best_teb_) != tebs_.end())
     {
         // get cost of this candidate
         min_cost_last_best = best_teb_->getCurrentCost() * cfg_->hcp.selection_cost_hysteresis; // small hysteresis
         last_best_teb = best_teb_;
     }
+    else
+    {
+      last_best_teb.reset();
+    }
 
-    // check if last best_teb is still a valid candidate
     if (initial_plan_teb) // the validity was already checked in getInitialPlanTEB()
     {
         // get cost of this candidate
@@ -572,9 +577,9 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
 
         if (teb_cost < min_cost)
         {
-        // check if this candidate is currently not selected
-        best_teb_ = *it_teb;
-        min_cost = teb_cost;
+          // check if this candidate is currently not selected
+          best_teb_ = *it_teb;
+          min_cost = teb_cost;
         }
      }
 
@@ -607,6 +612,24 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
 //           }
 //       }
 //   }
+
+    // check if we are allowed to change
+    if (last_best_teb && best_teb_ != last_best_teb)
+    {
+      ros::Time now = ros::Time::now();
+      if ((now-last_eq_class_switching_time_).toSec() > cfg_->hcp.switching_blocking_period)
+      {
+        last_eq_class_switching_time_ = now;
+      }
+      else
+      {
+        ROS_DEBUG("HomotopyClassPlanner::selectBestTeb(): Switching equivalence classes blocked (check parameter switching_blocking_period.");
+        // block switching, so revert best_teb_
+        best_teb_ = last_best_teb;
+      }
+
+    }
+
 
     return best_teb_;
 }

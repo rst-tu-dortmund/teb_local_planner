@@ -525,6 +525,8 @@ protected:
 
   boost::shared_ptr<GraphSearchInterface> graph_search_;
 
+  ros::Time last_eq_class_switching_time_; //!< Store the time at which the equivalence class changed recently
+
   bool initialized_; //!< Keeps track about the correct initialization of this class
 
 
