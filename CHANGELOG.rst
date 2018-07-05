@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.3 (2018-07-05)
+------------------
 * Parameter `switching_blocking_period` added to homotopy class planner parameter group.
   Values greater than zero enforce the homotopy class planner to only switch to new equivalence classes as soon
   as the given period is expired (this might reduce oscillations in some scenarios). The value is set to zero seconds
