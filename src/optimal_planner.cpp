@@ -39,6 +39,7 @@
 #include <teb_local_planner/optimal_planner.h>
 #include <map>
 #include <limits>
+#include <memory>
 
 
 namespace teb_local_planner
@@ -153,10 +154,10 @@ boost::shared_ptr<g2o::SparseOptimizer> TebOptimalPlanner::initOptimizer()
 
   // allocating the optimizer
   boost::shared_ptr<g2o::SparseOptimizer> optimizer = boost::make_shared<g2o::SparseOptimizer>();
-  TEBLinearSolver* linearSolver = new TEBLinearSolver(); // see typedef in optimization.h
+  auto linearSolver = new TEBLinearSolver();
   linearSolver->setBlockOrdering(true);
-  TEBBlockSolver* blockSolver = new TEBBlockSolver(linearSolver);
-  g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(blockSolver);
+  auto  blockSolver = new TEBBlockSolver(std::unique_ptr<g2o::LinearSolver<Eigen::Matrix<double, -1, -1> >>(linearSolver));
+  g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(std::unique_ptr<g2o::BlockSolver< g2o::BlockSolverTraits<-1, -1> >>(blockSolver));
 
   optimizer->setAlgorithm(solver);
   
