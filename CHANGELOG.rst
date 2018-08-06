@@ -2,6 +2,13 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* First melodic release
+* Updated to new g2o API
+* Migration to tf2
+* Contributors: Christoph Rösmann
+
 0.7.3 (2018-07-05)
 ------------------
 * Parameter `switching_blocking_period` added to homotopy class planner parameter group.
