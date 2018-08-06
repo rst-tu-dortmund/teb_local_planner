@@ -23,6 +23,8 @@
 
   <build_depend>cmake_modules</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>tf2_eigen</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
   
   <build_export_depend>message_runtime</build_export_depend>
   <exec_depend>message_runtime</exec_depend>
@@ -40,8 +42,8 @@
   <depend>pluginlib</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
-  <depend>tf</depend>
-  <depend>tf_conversions</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
 
   <export>

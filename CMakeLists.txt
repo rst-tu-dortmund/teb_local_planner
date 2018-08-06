@@ -19,8 +19,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   pluginlib
-  tf
-  tf_conversions
+  tf2
+  tf2_eigen
+  tf2_geometry_msgs
+  tf2_ros
   visualization_msgs
 )
 message(STATUS "System: ${CMAKE_SYSTEM}")
@@ -156,8 +158,8 @@ catkin_package(
 	pluginlib
 	roscpp
 	std_msgs
-	tf
-	tf_conversions
+        tf2
+        tf2_ros
 	visualization_msgs
   DEPENDS SUITESPARSE G2O
 )
