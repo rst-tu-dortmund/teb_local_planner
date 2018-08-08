@@ -523,6 +523,8 @@ public:
    * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
    */
   virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;
+
+  virtual bool getMeanVelocities(double up_to_dist, double& mean_vel_x, double& mean_vel_y, double& mean_vel_theta, bool& incl_backward_motion) const;
   
   //@}
   

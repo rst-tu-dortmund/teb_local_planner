@@ -342,6 +342,8 @@ protected:
    * @param min_obst_dist desired distance to obstacles
    */
   void validateFootprints(double opt_inscribed_radius, double costmap_inscribed_radius, double min_obst_dist);
+
+  bool rotateInPlaceIfBackward(geometry_msgs::Twist& cmd_vel);
   
   
   void configureBackupModes(std::vector<geometry_msgs::PoseStamped>& transformed_plan,  int& goal_idx);
@@ -390,6 +392,7 @@ private:
   ros::Time time_last_oscillation_; //!< Store at which time stamp the last oscillation was detected
   RotType last_preferred_rotdir_; //!< Store recent preferred turning direction
   geometry_msgs::Twist last_cmd_; //!< Store the last control command generated in computeVelocityCommands()
+  bool inplace_rotation_active_; //!< Store, if the planner currently overwrites the optimizer by an inplace rotation
   
   std::vector<geometry_msgs::Point> footprint_spec_; //!< Store the footprint of the robot 
   double robot_inscribed_radius_; //!< The radius of the inscribed circle of the robot (collision possible)

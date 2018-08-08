@@ -1314,4 +1314,46 @@ bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry
   return false;
 }
 
+bool TebOptimalPlanner::getMeanVelocities(double up_to_dist, double& mean_vel_x, double& mean_vel_y, double& mean_vel_theta, bool& incl_backward_motion) const
+{
+  double vel_x = 0;
+  double vel_y = 0;
+  double vel_theta = 0;
+
+  int num_values = 0;
+  mean_vel_x = 0;
+  mean_vel_y = 0;
+  mean_vel_theta = 0;
+  incl_backward_motion = false;
+
+  double dist = 0;
+
+  for (int i = 1; i < teb_.sizePoses(); ++i)
+  {
+    extractVelocity(teb_.Pose(i-1), teb_.Pose(i), teb_.TimeDiff(i-1), vel_x, vel_y, vel_theta);
+    mean_vel_x += vel_x;
+    mean_vel_y += vel_y;
+    mean_vel_theta += vel_theta;
+
+    dist += std::abs(teb_.TimeDiff(i-1) * vel_x);
+    if (dist >= up_to_dist)
+      break;
+
+    incl_backward_motion = incl_backward_motion || vel_x < 0;
+
+    ++num_values;
+  }
+
+  if (num_values > 0)
+  {
+    mean_vel_x /= (double)num_values;
+    mean_vel_y /= (double)num_values;
+    mean_vel_theta /= (double)num_values;
+  }
+  else
+    return false;
+
+  return true;
+}
+
 } // namespace teb_local_planner

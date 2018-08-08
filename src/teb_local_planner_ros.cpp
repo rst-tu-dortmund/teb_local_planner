@@ -64,7 +64,7 @@ namespace teb_local_planner
 TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costmap_model_(NULL),
                                            costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
                                            dynamic_recfg_(NULL), custom_via_points_active_(false), goal_reached_(false), no_infeasible_plans_(0),
-                                           last_preferred_rotdir_(RotType::none), initialized_(false)
+                                           last_preferred_rotdir_(RotType::none), inplace_rotation_active_(false), initialized_(false)
 {
 }
 
@@ -369,6 +369,13 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     last_cmd_ = cmd_vel;
     return false;
   }
+
+  if (cfg_.robot.overwrite_backward_by_inplace_motion)
+  {
+    rotateInPlaceIfBackward(cmd_vel);
+    //if (rotateInPlaceIfBackward(cmd_vel))
+      //ROS_INFO_STREAM("Backwards motion overwritten by inplace motion: ");
+  }
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
   saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_y,
@@ -391,7 +398,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
       return false;
     }
   }
-  
+
   // a feasible solution should be found, reset counter
   no_infeasible_plans_ = 0;
   
@@ -878,6 +885,67 @@ void TebLocalPlannerROS::validateFootprints(double opt_inscribed_radius, double 
                   "The inscribed radius of the footprint specified for TEB optimization (%f) + min_obstacle_dist (%f) are smaller "
                   "than the inscribed radius of the robot's footprint in the costmap parameters (%f, including 'footprint_padding'). "
                   "Infeasible optimziation results might occur frequently!", opt_inscribed_radius, min_obst_dist, costmap_inscribed_radius);
+}
+
+bool TebLocalPlannerROS::rotateInPlaceIfBackward(geometry_msgs::Twist& cmd_vel)
+{
+  double max_rot_vel = cfg_.robot.max_vel_theta;
+  double max_rot_acc = cfg_.robot.acc_lim_theta;
+
+  //double theta_diff = g2o::normalize_theta(ref_theta - current_pose.theta());
+
+  // check which side to rotate
+  // we do not want to screw up our optimized trajectory
+  // we could just check cmd_vel.linear.x and cmd_vel.angular.z but it turned out
+  // that checking directions along a small subset of the trajectory is more robust
+  double mean_vel_x = 0;
+  double mean_vel_y = 0;
+  double mean_vel_theta = 0;
+  bool incl_backward_motion = false;
+  if (!planner_->getMeanVelocities(0.25, mean_vel_x, mean_vel_y, mean_vel_theta, incl_backward_motion)) // TODO(roesmann): number of poses to check as parameter?
+  {
+    ROS_WARN("Cannot retrieve mean velocities");
+    return false;
+  }
+
+  if (!incl_backward_motion)
+  {
+    inplace_rotation_active_ = false;
+    return false;
+  }
+
+  double vel = max_rot_vel;
+  // choose direction of rotation only in case the inplace rotation is triggered now in order to avoid oscillations
+  if (inplace_rotation_active_)
+  {
+    if (last_cmd_.angular.z < 0) vel *= -1;
+    // ROS_INFO("active inplace rotation");
+  }
+  else
+  {
+    if (mean_vel_theta < 0) vel *= -1;
+    // ROS_INFO("new inplace rotation");
+  }
+
+
+
+  // chose velocity such we can stop at the reference given a maximum acceleration
+  //double vel = std::sqrt(2 * max_rot_acc * std::abs(theta_diff));
+  //vel = std::min(vel, max_rot_vel);
+  //vel *= -(double)g2o::sign(theta_diff);
+
+
+
+
+  cmd_vel.linear.x = 0.0;
+  cmd_vel.linear.y = 0.0;
+  cmd_vel.angular.z = vel;
+
+  // simulate rotation for collision checking (similar as in rotate_recovery.cpp of the navigation stack)
+  //double footprint_cost = c
+
+  inplace_rotation_active_ = true;
+  return true;
 }
    
    

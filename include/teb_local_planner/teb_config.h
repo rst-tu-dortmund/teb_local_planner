@@ -97,6 +97,7 @@ public:
     double min_turning_radius; //!< Minimum turning radius of a carlike robot (diff-drive robot: zero); 
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
     bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
+    bool overwrite_backward_by_inplace_motion;
     bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
   } robot; //!< Robot related parameters
   
@@ -249,6 +250,7 @@ public:
     robot.min_turning_radius = 0;
     robot.wheelbase = 1.0;
     robot.cmd_angle_instead_rotvel = false;
+    robot.overwrite_backward_by_inplace_motion = true;
     robot.is_footprint_dynamic = false;
     
     // GoalTolerance

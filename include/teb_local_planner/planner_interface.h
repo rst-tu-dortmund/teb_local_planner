@@ -198,6 +198,16 @@ public:
   virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false)
   {
   }      
+
+  virtual bool getMeanVelocities(double up_to_dist, double& mean_vel_x, double& mean_vel_y, double& mean_vel_theta, bool& incl_backward_motion) const
+  {
+    ROS_WARN("Planner method 'virtual void getMeanVelocities(...) const' not implemented");
+    mean_vel_x = 0;
+    mean_vel_y = 0;
+    mean_vel_theta = 0;
+    incl_backward_motion = false;
+    return false;
+  }
                 
 };
 

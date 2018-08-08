@@ -406,6 +406,8 @@ public:
    */
   virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, double viapoint_cost_scale=1.0, bool alternative_time_cost=false);
 
+  virtual bool getMeanVelocities(double up_to_dist, double& mean_vel_x, double& mean_vel_y, double& mean_vel_theta, bool& incl_backward_motion) const;
+
   /**
    * @brief Check if two h-signatures are similar (w.r.t. a certain threshold)
    * @param h1 first h-signature
