@@ -106,15 +106,15 @@ void PolygonObstacle::calcCentroid()
     // seach for the two outer points of the line with the maximum distance inbetween
     int i_cand = 0;
     int j_cand = 0;
-    double min_dist = std::numeric_limits<double>::max();
+    double max_dist = 0;
     for (int i=0; i< noVertices(); ++i)
     {
       for (int j=i+1; j< noVertices(); ++j) // start with j=i+1
       {
         double dist = (vertices_[j] - vertices_[i]).norm();
-        if (dist < min_dist)
+        if (dist > max_dist)
         {
-          min_dist = dist;
+          max_dist = dist;
           i_cand = i;
           j_cand = j;
         }
