@@ -91,6 +91,7 @@ public:
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
     double max_vel_theta; //!< Maximum angular velocity of the robot
+    double max_vel_abs_xy; //!< Maximum absolute velocity (for omnidirectional robots) [if zero or negative: disabled]
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_y; //!< Maximum strafing acceleration of the robot
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
@@ -142,6 +143,7 @@ public:
     double weight_max_vel_x; //!< Optimization weight for satisfying the maximum allowed translational velocity
     double weight_max_vel_y; //!< Optimization weight for satisfying the maximum allowed strafing velocity (in use only for holonomic robots)
     double weight_max_vel_theta; //!< Optimization weight for satisfying the maximum allowed angular velocity
+    double weight_max_vel_abs_xy; //!< Optimization weight for satisfying the maximum allowed absolute velocity (in use only for holonomic robots)
     double weight_acc_lim_x; //!< Optimization weight for satisfying the maximum allowed translational acceleration
     double weight_acc_lim_y; //!< Optimization weight for satisfying the maximum allowed strafing acceleration (in use only for holonomic robots)
     double weight_acc_lim_theta; //!< Optimization weight for satisfying the maximum allowed angular acceleration
@@ -243,6 +245,7 @@ public:
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
+    robot.max_vel_abs_xy = 0;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
@@ -284,6 +287,7 @@ public:
     optim.weight_max_vel_x = 2; //1
     optim.weight_max_vel_y = 2;
     optim.weight_max_vel_theta = 1;
+    optim.weight_max_vel_abs_xy = 2;
     optim.weight_acc_lim_x = 1;
     optim.weight_acc_lim_y = 1;
     optim.weight_acc_lim_theta = 1;

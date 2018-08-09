@@ -70,6 +70,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
   nh.param("max_vel_y", robot.max_vel_y, robot.max_vel_y);
   nh.param("max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
+  nh.param("max_vel_abs_xy", robot.max_vel_abs_xy, robot.max_vel_abs_xy);
   nh.param("acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
   nh.param("acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
   nh.param("acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
@@ -107,6 +108,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_max_vel_x", optim.weight_max_vel_x, optim.weight_max_vel_x);
   nh.param("weight_max_vel_y", optim.weight_max_vel_y, optim.weight_max_vel_y);
   nh.param("weight_max_vel_theta", optim.weight_max_vel_theta, optim.weight_max_vel_theta);
+  nh.param("weight_max_vel_abs_xy", optim.weight_max_vel_abs_xy, optim.weight_max_vel_abs_xy);
   nh.param("weight_acc_lim_x", optim.weight_acc_lim_x, optim.weight_acc_lim_x);
   nh.param("weight_acc_lim_y", optim.weight_acc_lim_y, optim.weight_acc_lim_y);
   nh.param("weight_acc_lim_theta", optim.weight_acc_lim_theta, optim.weight_acc_lim_theta);
@@ -181,6 +183,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.max_vel_x_backwards = cfg.max_vel_x_backwards;
   robot.max_vel_y = cfg.max_vel_y;
   robot.max_vel_theta = cfg.max_vel_theta;
+  robot.max_vel_abs_xy = cfg.max_vel_abs_xy;
   robot.acc_lim_x = cfg.acc_lim_x;
   robot.acc_lim_y = cfg.acc_lim_y;
   robot.acc_lim_theta = cfg.acc_lim_theta;
@@ -215,6 +218,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_max_vel_x = cfg.weight_max_vel_x;
   optim.weight_max_vel_y = cfg.weight_max_vel_y;
   optim.weight_max_vel_theta = cfg.weight_max_vel_theta;
+  optim.weight_max_vel_abs_xy = cfg.weight_max_vel_abs_xy;
   optim.weight_acc_lim_x = cfg.weight_acc_lim_x;
   optim.weight_acc_lim_y = cfg.weight_acc_lim_y;
   optim.weight_acc_lim_theta = cfg.weight_acc_lim_theta;
