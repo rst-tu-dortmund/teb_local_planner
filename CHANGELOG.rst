@@ -2,6 +2,12 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* bugfix in calculateHSignature. Fixes `#90 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/90>`_.
+* fixed centroid computation in a special case of polygon-obstacles
+* Contributors: Christoph Rösmann
+
 0.4.4 (2016-12-23)
 ------------------
 * Indigo - Kinetic Synchronization: stable features and changes of kinetic (0.6.5/0.6.6) are now available in indigo, e.g.
