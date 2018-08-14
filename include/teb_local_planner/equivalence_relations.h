@@ -201,15 +201,15 @@ public:
                 cplx Al = f0;
                 for (std::size_t j=0; j<obstacles->size(); ++j)
                 {
-                if (j==l) 
-                    continue;
-                cplx obst_j = obstacles->at(j)->getCentroidCplx();
-                cplx diff = obst_l - obst_j;
-                //if (diff.real()!=0 || diff.imag()!=0)
-                if (std::abs(diff)<0.05) // skip really close obstacles
-                    Al /= diff;
-                else
-                    continue;
+                    if (j==l)
+                        continue;
+                    cplx obst_j = obstacles->at(j)->getCentroidCplx();
+                    cplx diff = obst_l - obst_j;
+                    //if (diff.real()!=0 || diff.imag()!=0)
+                    if (std::abs(diff)<0.05) // skip really close obstacles
+                        continue;
+                    else
+                        Al /= diff;
                 }
                 // compute log value
                 double diff2 = std::abs(z2-obst_l);
