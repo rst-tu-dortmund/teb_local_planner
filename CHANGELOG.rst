@@ -2,6 +2,12 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* bugfix in calculateHSignature. Fixes `#90 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/90>`_.
+* fixed centroid computation in a special case of polygon-obstacles
+* Contributors: Christoph Rösmann
+
 0.7.3 (2018-07-05)
 ------------------
 * Parameter `switching_blocking_period` added to homotopy class planner parameter group.
