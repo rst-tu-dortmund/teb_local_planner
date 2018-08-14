@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2018-08-14)
+-------------------
 * bugfix in calculateHSignature. Fixes #90.
 * fixed centroid computation in a special case of polygon-obstacles
 * Contributors: Christoph Rösmann
