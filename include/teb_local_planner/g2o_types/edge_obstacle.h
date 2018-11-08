@@ -32,7 +32,7 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Notes:
  * The following class is derived from a class defined by the
  * g2o-framework. g2o is licensed under the terms of the BSD License.
@@ -43,56 +43,49 @@
 #ifndef EDGE_OBSTACLE_H_
 #define EDGE_OBSTACLE_H_
 
-#include <teb_local_planner/obstacles.h>
-#include <teb_local_planner/robot_footprint_model.h>
-#include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/g2o_types/vertex_pose.h>
+#include <teb_local_planner/obstacles.h>
+#include <teb_local_planner/robot_footprint_model.h>
 #include <teb_local_planner/teb_config.h>
-
-
 
 namespace teb_local_planner
 {
+    /**
+     * @class EdgeObstacle
+     * @brief Edge defining the cost function for keeping a minimum distance from obstacles.
+     *
+     * The edge depends on a single vertex \f$ \mathbf{s}_i \f$ and minimizes: \n
+     * \f$ \min \textrm{penaltyBelow}( dist2point ) \cdot weight \f$. \n
+     * \e dist2point denotes the minimum distance to the point obstacle. \n
+     * \e weight can be set using setInformation(). \n
+     * \e penaltyBelow denotes the penalty function, see penaltyBoundFromBelow() \n
+     * @see TebOptimalPlanner::AddEdgesObstacles, TebOptimalPlanner::EdgeInflatedObstacle
+     * @remarks Do not forget to call setTebConfig() and setObstacle()
+     */
+    class EdgeObstacle : public BaseTebUnaryEdge<1, const Obstacle *, VertexPose>
+    {
+      public:
+        /**
+         * @brief Construct edge.
+         */
+        EdgeObstacle() { _measurement = NULL; }
 
-/**
- * @class EdgeObstacle
- * @brief Edge defining the cost function for keeping a minimum distance from obstacles.
- * 
- * The edge depends on a single vertex \f$ \mathbf{s}_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyBelow}( dist2point ) \cdot weight \f$. \n
- * \e dist2point denotes the minimum distance to the point obstacle. \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyBelow denotes the penalty function, see penaltyBoundFromBelow() \n
- * @see TebOptimalPlanner::AddEdgesObstacles, TebOptimalPlanner::EdgeInflatedObstacle
- * @remarks Do not forget to call setTebConfig() and setObstacle()
- */     
-class EdgeObstacle : public BaseTebUnaryEdge<1, const Obstacle*, VertexPose>
-{
-public:
-    
-  /**
-   * @brief Construct edge.
-   */    
-  EdgeObstacle() 
-  {
-    _measurement = NULL;
-  }
- 
-  /**
-   * @brief Actual cost function
-   */    
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeObstacle()");
-    const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
+        /**
+         * @brief Actual cost function
+         */
+        void computeError()
+        {
+            ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeObstacle()");
+            const VertexPose *bandpt = static_cast<const VertexPose *>(_vertices[0]);
 
-    double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
+            double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
 
-    _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+            _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
 
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeObstacle::computeError() _error[0]=%f\n",_error[0]);
-  }
+            ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeObstacle::computeError() _error[0]=%f\n", _error[0]);
+        }
 
 #ifdef USE_ANALYTIC_JACOBI
 #if 0
@@ -138,133 +131,117 @@ public:
   }
 #endif
 #endif
-  
-  /**
-   * @brief Set pointer to associated obstacle for the underlying cost function 
-   * @param obstacle 2D position vector containing the position of the obstacle
-   */ 
-  void setObstacle(const Obstacle* obstacle)
-  {
-    _measurement = obstacle;
-  }
-    
-  /**
-   * @brief Set pointer to the robot model 
-   * @param robot_model Robot model required for distance calculation
-   */ 
-  void setRobotModel(const BaseRobotFootprintModel* robot_model)
-  {
-    robot_model_ = robot_model;
-  }
-    
-  /**
-   * @brief Set all parameters at once
-   * @param cfg TebConfig class
-   * @param robot_model Robot model required for distance calculation
-   * @param obstacle 2D position vector containing the position of the obstacle
-   */ 
-  void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
-  {
-    cfg_ = &cfg;
-    robot_model_ = robot_model;
-    _measurement = obstacle;
-  }
-  
-protected:
 
-  const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
-  
-public: 	
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        /**
+         * @brief Set pointer to associated obstacle for the underlying cost function
+         * @param obstacle 2D position vector containing the position of the obstacle
+         */
+        void setObstacle(const Obstacle *obstacle) { _measurement = obstacle; }
 
-};
-  
+        /**
+         * @brief Set pointer to the robot model
+         * @param robot_model Robot model required for distance calculation
+         */
+        void setRobotModel(const BaseRobotFootprintModel *robot_model) { robot_model_ = robot_model; }
 
+        /**
+         * @brief Set all parameters at once
+         * @param cfg TebConfig class
+         * @param robot_model Robot model required for distance calculation
+         * @param obstacle 2D position vector containing the position of the obstacle
+         */
+        void setParameters(const TebConfig &cfg, const BaseRobotFootprintModel *robot_model, const Obstacle *obstacle)
+        {
+            cfg_ = &cfg;
+            robot_model_ = robot_model;
+            _measurement = obstacle;
+        }
 
-/**
- * @class EdgeInflatedObstacle
- * @brief Edge defining the cost function for keeping a minimum distance from inflated obstacles.
- * 
- * The edge depends on a single vertex \f$ \mathbf{s}_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyBelow}( dist2point, min_obstacle_dist ) \cdot weight_inflation \f$. \n
- * Additional, a second penalty is provided with \n
- * \f$ \min \textrm{penaltyBelow}( dist2point, inflation_dist ) \cdot weight_inflation \f$.
- * It is assumed that inflation_dist > min_obstacle_dist and weight_inflation << weight_inflation.
- * \e dist2point denotes the minimum distance to the point obstacle. \n
- * \e penaltyBelow denotes the penalty function, see penaltyBoundFromBelow() \n
- * @see TebOptimalPlanner::AddEdgesObstacles, TebOptimalPlanner::EdgeObstacle
- * @remarks Do not forget to call setTebConfig() and setObstacle()
- */     
-class EdgeInflatedObstacle : public BaseTebUnaryEdge<2, const Obstacle*, VertexPose>
-{
-public:
-    
-  /**
-   * @brief Construct edge.
-   */    
-  EdgeInflatedObstacle() 
-  {
-    _measurement = NULL;
-  }
- 
-  /**
-   * @brief Actual cost function
-   */    
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeObstacle()");
-    const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
+      protected:
+        const BaseRobotFootprintModel *robot_model_;  //!< Store pointer to robot_model
 
-    double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
+      public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
 
-    _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundFromBelow(dist, cfg_->obstacles.inflation_dist, 0.0);
+    /**
+     * @class EdgeInflatedObstacle
+     * @brief Edge defining the cost function for keeping a minimum distance from inflated obstacles.
+     *
+     * The edge depends on a single vertex \f$ \mathbf{s}_i \f$ and minimizes: \n
+     * \f$ \min \textrm{penaltyBelow}( dist2point, min_obstacle_dist ) \cdot weight_inflation \f$. \n
+     * Additional, a second penalty is provided with \n
+     * \f$ \min \textrm{penaltyBelow}( dist2point, inflation_dist ) \cdot weight_inflation \f$.
+     * It is assumed that inflation_dist > min_obstacle_dist and weight_inflation << weight_inflation.
+     * \e dist2point denotes the minimum distance to the point obstacle. \n
+     * \e penaltyBelow denotes the penalty function, see penaltyBoundFromBelow() \n
+     * @see TebOptimalPlanner::AddEdgesObstacles, TebOptimalPlanner::EdgeObstacle
+     * @remarks Do not forget to call setTebConfig() and setObstacle()
+     */
+    class EdgeInflatedObstacle : public BaseTebUnaryEdge<2, const Obstacle *, VertexPose>
+    {
+      public:
+        /**
+         * @brief Construct edge.
+         */
+        EdgeInflatedObstacle() { _measurement = NULL; }
 
-    
-    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeObstacle::computeError() _error[0]=%f, _error[1]=%f\n",_error[0], _error[1]);
-  }
+        /**
+         * @brief Actual cost function
+         */
+        void computeError()
+        {
+            ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeObstacle()");
+            const VertexPose *bandpt = static_cast<const VertexPose *>(_vertices[0]);
 
-  /**
-   * @brief Set pointer to associated obstacle for the underlying cost function 
-   * @param obstacle 2D position vector containing the position of the obstacle
-   */ 
-  void setObstacle(const Obstacle* obstacle)
-  {
-    _measurement = obstacle;
-  }
-    
-  /**
-   * @brief Set pointer to the robot model 
-   * @param robot_model Robot model required for distance calculation
-   */ 
-  void setRobotModel(const BaseRobotFootprintModel* robot_model)
-  {
-    robot_model_ = robot_model;
-  }
-    
-  /**
-   * @brief Set all parameters at once
-   * @param cfg TebConfig class
-   * @param robot_model Robot model required for distance calculation
-   * @param obstacle 2D position vector containing the position of the obstacle
-   */ 
-  void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
-  {
-    cfg_ = &cfg;
-    robot_model_ = robot_model;
-    _measurement = obstacle;
-  }
-  
-protected:
+            double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
 
-  const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
-  
-public:         
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            double squared_inflation_error_limit = (cfg_->obstacles.inflation_dist - cfg_->obstacles.min_obstacle_dist) *
+                                                   (cfg_->obstacles.inflation_dist - cfg_->obstacles.min_obstacle_dist) / 2;
+            if (dist < cfg_->obstacles.min_obstacle_dist)
+                _error[0] =
+                  squared_inflation_error_limit;  // + penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+            else
+                _error[0] = 0;
+            double squared_inflation_error = (cfg_->obstacles.inflation_dist - dist) * (cfg_->obstacles.inflation_dist - dist) / 2;
+            _error[1] = penaltyBoundFromAbove(squared_inflation_error, squared_inflation_error_limit, 0.0);
 
-};
-    
+            ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeObstacle::computeError() _error[0]=%f, _error[1]=%f\n",
+                           _error[0], _error[1]);
+        }
 
-} // end namespace
+        /**
+         * @brief Set pointer to associated obstacle for the underlying cost function
+         * @param obstacle 2D position vector containing the position of the obstacle
+         */
+        void setObstacle(const Obstacle *obstacle) { _measurement = obstacle; }
+
+        /**
+         * @brief Set pointer to the robot model
+         * @param robot_model Robot model required for distance calculation
+         */
+        void setRobotModel(const BaseRobotFootprintModel *robot_model) { robot_model_ = robot_model; }
+
+        /**
+         * @brief Set all parameters at once
+         * @param cfg TebConfig class
+         * @param robot_model Robot model required for distance calculation
+         * @param obstacle 2D position vector containing the position of the obstacle
+         */
+        void setParameters(const TebConfig &cfg, const BaseRobotFootprintModel *robot_model, const Obstacle *obstacle)
+        {
+            cfg_ = &cfg;
+            robot_model_ = robot_model;
+            _measurement = obstacle;
+        }
+
+      protected:
+        const BaseRobotFootprintModel *robot_model_;  //!< Store pointer to robot_model
+
+      public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
+
+}  // namespace teb_local_planner
 
 #endif
