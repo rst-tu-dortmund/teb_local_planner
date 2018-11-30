@@ -675,8 +675,9 @@ void TebOptimalPlanner::AddEdgesViaPoints()
   
   for (ViaPointContainer::const_iterator vp_it = via_points_->begin(); vp_it != via_points_->end(); ++vp_it)
   {
+	PoseSE2 temp = *vp_it;
     
-    int index = teb_.findClosestTrajectoryPose(*vp_it, NULL, start_pose_idx);
+    int index = teb_.findClosestTrajectoryPose(temp.position(), NULL, start_pose_idx);
     if (cfg_->trajectory.via_points_ordered)
       start_pose_idx = index+2; // skip a point to have a DOF inbetween for further via-points
      

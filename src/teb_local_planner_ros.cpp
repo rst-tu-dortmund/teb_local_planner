@@ -587,8 +587,17 @@ void TebLocalPlannerROS::updateViaPointsContainer(const std::vector<geometry_msg
     if (distance_points2d( transformed_plan[prev_idx].pose.position, transformed_plan[i].pose.position ) < min_separation)
       continue;
         
+    tf::Quaternion q(
+    	transformed_plan[i].pose.orientation.x,
+		transformed_plan[i].pose.orientation.y,
+		transformed_plan[i].pose.orientation.z,
+		transformed_plan[i].pose.orientation.w);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
     // add via-point
-    via_points_.push_back( Eigen::Vector2d( transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y ) );
+    via_points_.push_back( PoseSE2( transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y, yaw) );
     prev_idx = i;
   }
   
@@ -978,7 +987,16 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::Path::ConstPtr& via_p
   via_points_.clear();
   for (const geometry_msgs::PoseStamped& pose : via_points_msg->poses)
   {
-    via_points_.emplace_back(pose.pose.position.x, pose.pose.position.y);
+	tf::Quaternion q(
+		pose.pose.orientation.x,
+		pose.pose.orientation.y,
+		pose.pose.orientation.z,
+		pose.pose.orientation.w);
+	tf::Matrix3x3 m(q);
+	double roll, pitch, yaw;
+	m.getRPY(roll, pitch, yaw);
+
+    via_points_.emplace_back(pose.pose.position.x, pose.pose.position.y, yaw);
   }
   custom_via_points_active_ = !via_points_.empty();
 }
