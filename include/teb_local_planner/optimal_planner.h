@@ -89,7 +89,7 @@ typedef g2o::LinearSolverCSparse<TEBBlockSolver::PoseMatrixType> TEBLinearSolver
 //typedef g2o::LinearSolverCholmod<TEBBlockSolver::PoseMatrixType> TEBLinearSolver;
 
 //! Typedef for a container storing via-points
-typedef std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > ViaPointContainer;
+typedef std::vector< PoseSE2, Eigen::aligned_allocator<PoseSE2> > ViaPointContainer;
 
 
 /**

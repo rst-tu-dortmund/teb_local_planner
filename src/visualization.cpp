@@ -294,7 +294,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 }
 
 
-void TebVisualization::publishViaPoints(const std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> >& via_points, const std::string& ns) const
+void TebVisualization::publishViaPoints(const std::vector< PoseSE2, Eigen::aligned_allocator<PoseSE2> >& via_points, const std::string& ns) const
 {
   if ( via_points.empty() || printErrorWhenNotInitialized() )
     return;

@@ -63,7 +63,7 @@ namespace teb_local_planner
  * @see TebOptimalPlanner::AddEdgesViaPoints
  * @remarks Do not forget to call setTebConfig() and setViaPoint()
  */     
-class EdgeViaPoint : public BaseTebUnaryEdge<1, const Eigen::Vector2d*, VertexPose>
+class EdgeViaPoint : public BaseTebUnaryEdge<2, const PoseSE2*, VertexPose>
 {
 public:
     
@@ -83,7 +83,8 @@ public:
     ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig(), setViaPoint() on EdgeViaPoint()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
 
-    _error[0] = (bandpt->position() - *_measurement).norm();
+    _error[0] = (bandpt->position() - _measurement->position()).norm(); // as in EdgeViaPoint
+    _error[1] = g2o::normalize_theta(bandpt->theta() - _measurement->theta());
 
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeViaPoint::computeError() _error[0]=%f\n",_error[0]);
   }
@@ -92,7 +93,7 @@ public:
    * @brief Set pointer to associated via point for the underlying cost function 
    * @param via_point 2D position vector containing the position of the via point
    */ 
-  void setViaPoint(const Eigen::Vector2d* via_point)
+  void setViaPoint(const PoseSE2* via_point)
   {
     _measurement = via_point;
   }
@@ -102,7 +103,7 @@ public:
    * @param cfg TebConfig class
    * @param via_point 2D position vector containing the position of the via point
    */ 
-  void setParameters(const TebConfig& cfg, const Eigen::Vector2d* via_point)
+  void setParameters(const TebConfig& cfg, const PoseSE2* via_point)
   {
     cfg_ = &cfg;
     _measurement = via_point;
