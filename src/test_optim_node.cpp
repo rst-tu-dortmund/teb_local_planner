@@ -282,7 +282,7 @@ void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg)
 {
   // we assume for simplicity that the fixed frame is already the map/planning frame
   // consider clicked points as via-points
-  via_points.push_back( Eigen::Vector2d(point_msg->point.x, point_msg->point.y) );
+  via_points.emplace_back(point_msg->point.x, point_msg->point.y, 0);
   ROS_INFO_STREAM("Via-point (" << point_msg->point.x << "," << point_msg->point.y << ") added.");
   if (config.optim.weight_viapoint<=0)
     ROS_WARN("Note, via-points are deactivated, since 'weight_via_point' <= 0");
@@ -294,7 +294,7 @@ void CB_via_points(const nav_msgs::Path::ConstPtr& via_points_msg)
   via_points.clear();
   for (const geometry_msgs::PoseStamped& pose : via_points_msg->poses)
   {
-    via_points.emplace_back(pose.pose.position.x, pose.pose.position.y);
+    via_points.emplace_back(pose.pose.position.x, pose.pose.position.y, 0);
   }
 }
 
