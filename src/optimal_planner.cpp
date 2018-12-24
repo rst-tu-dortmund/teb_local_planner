@@ -759,7 +759,7 @@ void TebOptimalPlanner::AddEdgesVelocity()
       return; // if weight equals zero skip adding edges!
 
     int n = teb_.sizePoses();
-    switch (sfg_->robot.omni_type) {
+    switch (cfg_->robot.omni_type) {
       case 0:
         {
           Eigen::Matrix<double,1,1> information;
@@ -940,7 +940,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   }
   else // holonomic robot
   {
-    switch (sfg_->robot.omni_type) {
+    switch (cfg_->robot.omni_type) {
       case 0:
         {
           Eigen::Matrix<double,1,1> information;

@@ -872,7 +872,7 @@ void TebLocalPlannerROS::saturateVelocityHolonomic(double& vx, double& vy, doubl
       l = 0.0;
       break;
   }
-  scale = (l < 1.0) ? 1.0 : 1.0 / l;
+  double scale = (l < 1.0) ? 1.0 : 1.0 / l;
   vx *= scale;
   vy *= scale;
   omega *= scale;
