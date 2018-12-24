@@ -316,6 +316,22 @@ protected:
 
   
   /**
+   * @brief Saturate the translational and angular velocity to given limits for different holonomic type.
+   * 
+   * The limit of the translational velocity for backwards driving can NOT be changed independently.
+   * @param[in,out] vx The translational velocity that should be saturated.
+   * @param[in,out] vy Strafing velocity which can be nonzero for holonomic robots
+   * @param[in,out] omega The angular velocity that should be saturated.
+   * @param max_vel_x Maximum translational velocity for forward driving
+   * @param max_vel_y Maximum strafing velocity (for holonomic robots)
+   * @param max_vel_theta Maximum (absolute) angular velocity
+   * @param omni_type Type of the holonomic robot, see teb_config.h for details
+   */
+  void saturateVelocityHolonomic(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y,
+                                 double max_vel_theta, int omni_type) const;
+
+
+  /**
    * @brief Convert translational and rotational velocities to a steering angle of a carlike robot
    * 
    * The conversion is based on the following equations:

@@ -1733,7 +1733,7 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
     _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic3::computeError(): a1=%f\n",a1);
@@ -1825,7 +1825,7 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
     _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic3Start::computeError(): a1=%f\n",a1);
@@ -1927,7 +1927,7 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
     _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic3Goal::computeError(): a1=%f\n",a1);
@@ -2039,8 +2039,8 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(-a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic4::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic4::computeError(): a2=%f\n",a2);
@@ -2131,8 +2131,8 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(-a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic4Start::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic4Start::computeError(): a2=%f\n",a2);
@@ -2233,8 +2233,8 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(-a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic4Goal::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic4Goal::computeError(): a2=%f\n",a2);

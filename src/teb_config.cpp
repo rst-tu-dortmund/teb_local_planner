@@ -75,6 +75,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
   nh.param("min_turning_radius", robot.min_turning_radius, robot.min_turning_radius);
   nh.param("wheelbase", robot.wheelbase, robot.wheelbase);
+  nh.param("omni_type", robot.omni_type, robot.omni_type);
   nh.param("cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh.param("is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
   
@@ -186,6 +187,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.acc_lim_theta = cfg.acc_lim_theta;
   robot.min_turning_radius = cfg.min_turning_radius;
   robot.wheelbase = cfg.wheelbase;
+  robot.omni_type = cfg.omni_type;
   robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   
   // GoalTolerance
@@ -264,6 +266,9 @@ void TebConfig::checkParameters() const
   if (robot.max_vel_x_backwards <= 0)
     ROS_WARN("TebLocalPlannerROS() Param Warning: Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
   
+  if (robot.max_vel_y != 0 && robot.max_vel_x_backwards != 0.0)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x_backwards will be replaced by max_vel_x when running in holonomic robot mode.");
+
   // bounds smaller than penalty epsilon
   if (robot.max_vel_x <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");

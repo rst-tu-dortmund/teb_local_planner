@@ -96,6 +96,7 @@ public:
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
     double min_turning_radius; //!< Minimum turning radius of a carlike robot (diff-drive robot: zero); 
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
+    int omni_type; //!< Type of the holonomic robot, possible choices are 0..4. Type 0: ideal; x:y should be 1:1. Type 1: 4 wheel, 45 deg; x:y should be 1:1. Type 2: 4 wheel, 0 deg; x:y should be 1:1. Type 3: 3 wheel, 0 deg or 180 deg; x:y should be 2:sqrt(3). Type 4: 3 wheel, 90 deg or 270 deg; x:y should be sqrt(3):2.
     bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
     bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
   } robot; //!< Robot related parameters
@@ -248,6 +249,7 @@ public:
     robot.acc_lim_theta = 0.5;
     robot.min_turning_radius = 0;
     robot.wheelbase = 1.0;
+    robot.omni_type = 0;
     robot.cmd_angle_instead_rotvel = false;
     robot.is_footprint_dynamic = false;
     

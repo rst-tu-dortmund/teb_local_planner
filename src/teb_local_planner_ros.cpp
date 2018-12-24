@@ -372,8 +372,12 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   }
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
-  saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_y,
-                   cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
+  if (cfg_.robot.max_vel_y == 0)
+    saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_y,
+                     cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
+  else
+    saturateVelocityHolonomic(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_y,
+                              cfg_.robot.max_vel_theta, cfg_.robot.omni_type);
 
   // convert rot-vel to steering angle if desired (carlike robot).
   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
@@ -841,6 +845,40 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
 }
      
      
+void TebLocalPlannerROS::saturateVelocityHolonomic(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_theta, int omni_type) const
+{
+  // use scale to limit overall speed
+  double a1 = vx / max_vel_x;
+  double a2 = vy / max_vel_y;
+  double a3 = omega / max_vel_theta;
+  double l = 0.0;
+  switch (omni_type) {
+    case 0:
+      l = std::hypot(std::hypot(a1, a2), a3);
+      break;
+    case 1:
+      l = std::fabs(a1) + std::fabs(a2) + std::fabs(a3);
+      break;
+    case 2:
+      l = std::max(std::fabs(a1), std::fabs(a2)) + std::fabs(a3);
+      break;
+    case 3:
+      l = std::max(std::fabs(a2 + a3), std::max(std::fabs(a1 - a2 * 0.5 + a3), std::fabs(a1 + a2 * 0.5 - a3)));
+      break;
+    case 4:
+      l = std::max(std::fabs(a1 + a3), std::max(std::fabs(a1 * 0.5 - a2 - a3), std::fabs(a1 * 0.5 + a2 - a3)));
+      break;
+    default:
+      l = 0.0;
+      break;
+  }
+  scale = (l < 1.0) ? 1.0 : 1.0 / l;
+  vx *= scale;
+  vy *= scale;
+  omega *= scale;
+}
+
+
 double TebLocalPlannerROS::convertTransRotVelToSteeringAngle(double v, double omega, double wheelbase, double min_turning_radius) const
 {
   if (omega==0 || v==0)

@@ -568,7 +568,7 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
     _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic3::computeError(): a1=%f\n",a1);
@@ -647,8 +647,8 @@ public:
 
     // error
     _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(-a1*0.5+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic4::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic4::computeError(): a2=%f\n",a2);
