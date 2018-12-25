@@ -48,14 +48,9 @@
 #include <teb_local_planner/g2o_types/vertex_timediff.h>
 #include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/g2o_types/penalties.h>
-#include <teb_local_planner/teb_config.h>
-
-
-#include <iostream>
 
 namespace teb_local_planner
 {
-
 
 /**
  * @class EdgeVelocity
@@ -87,34 +82,7 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocity()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-
-    const Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
-
-    double dist = deltaS.norm();
-    const double angle_diff = g2o::normalize_theta(conf2->theta() - conf1->theta());
-    if (cfg_->trajectory.exact_arc_length && angle_diff != 0)
-    {
-        double radius =  dist/(2*sin(angle_diff/2));
-        dist = fabs( angle_diff * radius ); // actual arg length!
-    }
-    double vel = dist / deltaT->estimate();
-
-//     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
-    vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
-
-    const double omega = angle_diff / deltaT->estimate();
-
-    _error[0] = penaltyBoundToInterval(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
-  }
+  void computeError();
 
 #ifdef USE_ANALYTIC_JACOBI
 #if 0 //TODO the hardcoded jacobian does not include the changing direction (just the absolute value)
@@ -190,16 +158,11 @@ public:
 #endif
 #endif
 
-
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
-
-
-
 
 
 /**
@@ -233,40 +196,13 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    _error[0] = penaltyBoundToInterval(vx, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(vy, cfg_->robot.max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
-    _error[2] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]) && std::isfinite(_error[2]),
-                   "EdgeVelocityHolonomic::computeError() _error[0]=%f _error[1]=%f _error[2]=%f\n",_error[0],_error[1],_error[2]);
-  }
-
+  void computeError();
 
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 
 /**
@@ -305,45 +241,13 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic0()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    // normalize
-    double a1 = vx / cfg_->robot.max_vel_x;
-    double a2 = vy / cfg_->robot.max_vel_y;
-    double a3 = omega / cfg_->robot.max_vel_theta;
-
-    // error
-    _error[0] = penaltyBoundToInterval(std::hypot(std::hypot(a1,a2),a3), 1.0, cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic0::computeError(): a1=%f\n",a1);
-    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic0::computeError(): a2=%f\n",a2);
-    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic0::computeError(): a3=%f\n",a3);
-  }
-
+  void computeError();
 
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 
 /**
@@ -382,48 +286,13 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic1()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    // normalize
-    double a1 = vx / cfg_->robot.max_vel_x;
-    double a2 = vy / cfg_->robot.max_vel_y;
-    double a3 = omega / cfg_->robot.max_vel_theta;
-
-    // error
-    _error[0] = penaltyBoundToInterval(a1+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1-a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[3] = penaltyBoundToInterval(a1-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic1::computeError(): a1=%f\n",a1);
-    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic1::computeError(): a2=%f\n",a2);
-    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic1::computeError(): a3=%f\n",a3);
-  }
-
+  void computeError();
 
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 
 /**
@@ -462,48 +331,13 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic2()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    // normalize
-    double a1 = vx / cfg_->robot.max_vel_x;
-    double a2 = vy / cfg_->robot.max_vel_y;
-    double a3 = omega / cfg_->robot.max_vel_theta;
-
-    // error
-    _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[3] = penaltyBoundToInterval(a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic2::computeError(): a1=%f\n",a1);
-    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic2::computeError(): a2=%f\n",a2);
-    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic2::computeError(): a3=%f\n",a3);
-  }
-
+  void computeError();
 
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 
 /**
@@ -542,47 +376,13 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic3()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    // normalize
-    double a1 = vx / cfg_->robot.max_vel_x;
-    double a2 = vy / cfg_->robot.max_vel_y;
-    double a3 = omega / cfg_->robot.max_vel_theta;
-
-    // error
-    _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic3::computeError(): a1=%f\n",a1);
-    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic3::computeError(): a2=%f\n",a2);
-    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic3::computeError(): a3=%f\n",a3);
-  }
-
+  void computeError();
 
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 
 /**
@@ -621,47 +421,13 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic4()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    // normalize
-    double a1 = vx / cfg_->robot.max_vel_x;
-    double a2 = vy / cfg_->robot.max_vel_y;
-    double a3 = omega / cfg_->robot.max_vel_theta;
-
-    // error
-    _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic4::computeError(): a1=%f\n",a1);
-    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic4::computeError(): a2=%f\n",a2);
-    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic4::computeError(): a3=%f\n",a3);
-  }
-
+  void computeError();
 
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 
 /**
@@ -700,47 +466,13 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic5()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    // normalize
-    double a1 = vx / cfg_->robot.max_vel_x;
-    double a2 = vy / cfg_->robot.max_vel_y;
-    double a3 = omega / cfg_->robot.max_vel_theta;
-
-    // error
-    _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic5::computeError(): a1=%f\n",a1);
-    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic5::computeError(): a2=%f\n",a2);
-    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic5::computeError(): a3=%f\n",a3);
-  }
-
+  void computeError();
 
 public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 
 /**
@@ -779,40 +511,7 @@ public:
   /**
    * @brief Actual cost function
    */
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic6()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta());
-
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-
-    // normalize
-    double a1 = vx / cfg_->robot.max_vel_x;
-    double a2 = vy / cfg_->robot.max_vel_y;
-    double a3 = omega / cfg_->robot.max_vel_theta;
-
-    // error
-    _error[0] = penaltyBoundToInterval(a3-a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic6::computeError(): a1=%f\n",a1);
-    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic6::computeError(): a2=%f\n",a2);
-    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic6::computeError(): a3=%f\n",a3);
-  }
-
+  void computeError();
 
 public:
 

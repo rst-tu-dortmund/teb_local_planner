@@ -266,7 +266,7 @@ void TebConfig::checkParameters() const
   if (robot.max_vel_x_backwards <= 0)
     ROS_WARN("TebLocalPlannerROS() Param Warning: Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
   
-  if (robot.max_vel_y != 0 && robot.max_vel_x_backwards != 0.0)
+  if (robot.max_vel_y != 0 && robot.max_vel_x_backwards != robot.max_vel_x)
     ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x_backwards will be replaced by max_vel_x when running in holonomic robot mode.");
 
   // bounds smaller than penalty epsilon
