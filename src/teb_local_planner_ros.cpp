@@ -863,10 +863,16 @@ void TebLocalPlannerROS::saturateVelocityHolonomic(double& vx, double& vy, doubl
       l = std::max(std::fabs(a1), std::fabs(a2)) + std::fabs(a3);
       break;
     case 3:
-      l = std::max(std::fabs(a2 + a3), std::max(std::fabs(a1 - a2 * 0.5 + a3), std::fabs(a1 + a2 * 0.5 - a3)));
+      l = std::max(std::fabs(a3 + a2), std::max(std::fabs(a3 - a1 - a2 * 0.5), std::fabs(a3 + a1 - a2 * 0.5)));
       break;
     case 4:
-      l = std::max(std::fabs(a1 + a3), std::max(std::fabs(a1 * 0.5 - a2 - a3), std::fabs(a1 * 0.5 + a2 - a3)));
+      l = std::max(std::fabs(a3 + a1), std::max(std::fabs(a3 - a1 * 0.5 + a2), std::fabs(a3 - a1 * 0.5 - a2)));
+      break;
+    case 5:
+      l = std::max(std::fabs(a3 - a2), std::max(std::fabs(a3 + a1 + a2 * 0.5), std::fabs(a3 - a1 + a2 * 0.5)));
+      break;
+    case 6:
+      l = std::max(std::fabs(a3 - a1), std::max(std::fabs(a3 + a1 * 0.5 - a2), std::fabs(a3 + a1 * 0.5 + a2)));
       break;
     default:
       l = 0.0;

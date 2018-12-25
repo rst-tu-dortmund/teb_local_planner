@@ -1651,13 +1651,13 @@ public:
  * @class EdgeAccelerationHolonomic3
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
  *
- *       x                x
- *       --            /      \
- * y   |----|       y   |----|
- *     |    |   or      |    |
- *     |----|           |----|
- *    \      /            --
- * This is for Holonomic type 3: 3 wheels, 0 or 180 degrees
+ *       x
+ *       --
+ * y   |----|
+ *     |    |
+ *     |----|
+ *    \      /
+ * This is for Holonomic type 3: 3 wheels, 0 degrees
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
  * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
@@ -1732,9 +1732,9 @@ public:
     double a3 = acc_rot / cfg_->robot.acc_lim_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic3::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic3::computeError(): a2=%f\n",a2);
@@ -1751,13 +1751,13 @@ public:
  * @class EdgeAccelerationHolonomic3Start
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
  *
- *       x                x
- *       --            /      \
- * y   |----|       y   |----|
- *     |    |   or      |    |
- *     |----|           |----|
- *    \      /            --
- * This is for Holonomic type 3: 3 wheels, 0 or 180 degrees
+ *       x
+ *       --
+ * y   |----|
+ *     |    |
+ *     |----|
+ *    \      /
+ * This is for Holonomic type 3: 3 wheels, 0 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
@@ -1824,9 +1824,9 @@ public:
     double a3 = acc_rot / cfg_->robot.acc_lim_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic3Start::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic3Start::computeError(): a2=%f\n",a2);
@@ -1852,13 +1852,13 @@ public:
  * @class EdgeAccelerationHolonomic3Goal
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
  *
- *       x                x
- *       --            /      \
- * y   |----|       y   |----|
- *     |    |   or      |    |
- *     |----|           |----|
- *    \      /            --
- * This is for Holonomic type 3: 3 wheels, 0 or 180 degrees
+ *       x
+ *       --
+ * y   |----|
+ *     |    |
+ *     |----|
+ *    \      /
+ * This is for Holonomic type 3: 3 wheels, 0 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
@@ -1926,9 +1926,9 @@ public:
     double a3 = acc_rot / cfg_->robot.acc_lim_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic3Goal::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic3Goal::computeError(): a2=%f\n",a2);
@@ -1957,13 +1957,13 @@ public:
  * @class EdgeAccelerationHolonomic4
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
  *
- *       x                x
- *           \         /
- * y   |----|       y   |----|
- *   | |    |   or      |    | |
- *     |----|           |----|
- *           /         \
- * This is for Holonomic type 4: 3 wheels, 90 or 270 degrees
+ *       x
+ *    /
+ * y   |----|
+ *     |    | |
+ *     |----|
+ *    \
+ * This is for Holonomic type 4: 3 wheels, 30 degrees
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
  * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
@@ -2038,9 +2038,9 @@ public:
     double a3 = acc_rot / cfg_->robot.acc_lim_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic4::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic4::computeError(): a2=%f\n",a2);
@@ -2057,13 +2057,13 @@ public:
  * @class EdgeAccelerationHolonomic4Start
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
  *
- *       x                x
- *           \         /
- * y   |----|       y   |----|
- *   | |    |   or      |    | |
- *     |----|           |----|
- *           /         \
- * This is for Holonomic type 4: 3 wheels, 90 or 270 degrees
+ *       x
+ *    /
+ * y   |----|
+ *     |    | |
+ *     |----|
+ *    \
+ * This is for Holonomic type 4: 3 wheels, 30 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
@@ -2130,9 +2130,9 @@ public:
     double a3 = acc_rot / cfg_->robot.acc_lim_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic4Start::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic4Start::computeError(): a2=%f\n",a2);
@@ -2158,13 +2158,13 @@ public:
  * @class EdgeAccelerationHolonomic4Goal
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
  *
- *       x                x
- *           \         /
- * y   |----|       y   |----|
- *   | |    |   or      |    | |
- *     |----|           |----|
- *           /         \
- * This is for Holonomic type 4: 3 wheels, 90 or 270 degrees
+ *       x
+ *    /
+ * y   |----|
+ *     |    | |
+ *     |----|
+ *    \
+ * This is for Holonomic type 4: 3 wheels, 30 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
@@ -2232,13 +2232,625 @@ public:
     double a3 = acc_rot / cfg_->robot.acc_lim_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic4Goal::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic4Goal::computeError(): a2=%f\n",a2);
     ROS_ASSERT_MSG(std::isfinite(a3), "EdgeAccelerationHolonomic4Goal::computeError(): a3=%f\n",a3);
+  }
+
+
+  /**
+   * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
+   * @param vel_goal twist message containing the translational and rotational velocity
+   */
+  void setGoalVelocity(const geometry_msgs::Twist& vel_goal)
+  {
+    _measurement = &vel_goal;
+  }
+
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+
+
+
+/**
+ * @class EdgeAccelerationHolonomic5
+ * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
+ *
+ *       x
+ *    /      \
+ * y   |----|
+ *     |    |
+ *     |----|
+ *       --
+ * This is for Holonomic type 3: 3 wheels, 60 degrees
+ *
+ * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation() \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
+ * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesAcceleration
+ * @see EdgeAccelerationHolonomic5Start
+ * @see EdgeAccelerationHolonomic5Goal
+ * @remarks Do not forget to call setTebConfig()
+ * @remarks Refer to EdgeAccelerationHolonomic5Start() and EdgeAccelerationHolonomic5Goal() for defining boundary values!
+ */
+class EdgeAccelerationHolonomic5 : public BaseTebMultiEdge<3, double>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeAccelerationHolonomic5()
+  {
+    this->resize(5);
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeAcceleration()");
+    const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexPose* pose3 = static_cast<const VertexPose*>(_vertices[2]);
+    const VertexTimeDiff* dt1 = static_cast<const VertexTimeDiff*>(_vertices[3]);
+    const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
+
+    // VELOCITY & ACCELERATION
+    Eigen::Vector2d diff1 = pose2->position() - pose1->position();
+    Eigen::Vector2d diff2 = pose3->position() - pose2->position();
+
+    double cos_theta1 = std::cos(pose1->theta());
+    double sin_theta1 = std::sin(pose1->theta());
+    double cos_theta2 = std::cos(pose2->theta());
+    double sin_theta2 = std::sin(pose2->theta());
+
+    // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
+    double p1_dx =  cos_theta1*diff1.x() + sin_theta1*diff1.y();
+    double p1_dy = -sin_theta1*diff1.x() + cos_theta1*diff1.y();
+    // transform pose3 into robot frame pose2 (inverse 2d rotation matrix)
+    double p2_dx =  cos_theta2*diff2.x() + sin_theta2*diff2.y();
+    double p2_dy = -sin_theta2*diff2.x() + cos_theta2*diff2.y();
+
+    double vel1_x = p1_dx / dt1->dt();
+    double vel1_y = p1_dy / dt1->dt();
+    double vel2_x = p2_dx / dt2->dt();
+    double vel2_y = p2_dy / dt2->dt();
+
+    double dt12 = dt1->dt() + dt2->dt();
+
+    double acc_x  = (vel2_x - vel1_x)*2 / dt12;
+    double acc_y  = (vel2_y - vel1_y)*2 / dt12;
+
+    // ANGULAR ACCELERATION
+    double omega1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt1->dt();
+    double omega2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt2->dt();
+    double acc_rot  = (omega2 - omega1)*2 / dt12;
+
+    // normalize
+    double a1 = acc_x / cfg_->robot.acc_lim_x;
+    double a2 = acc_y / cfg_->robot.acc_lim_y;
+    double a3 = acc_rot / cfg_->robot.acc_lim_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic5::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic5::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeAccelerationHolonomic5::computeError(): a3=%f\n",a3);
+  }
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+
+/**
+ * @class EdgeAccelerationHolonomic5Start
+ * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
+ *
+ *       x
+ *    /      \
+ * y   |----|
+ *     |    |
+ *     |----|
+ *       --
+ * This is for Holonomic type 3: 3 wheels, 60 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
+ * and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation(). \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
+ * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesAcceleration
+ * @see EdgeAccelerationHolonomic5
+ * @see EdgeAccelerationHolonomic5Goal
+ * @remarks Do not forget to call setTebConfig()
+ * @remarks Refer to EdgeAccelerationHolonomic5Goal() for defining boundary values at the end of the trajectory!
+ */
+class EdgeAccelerationHolonomic5Start : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeAccelerationHolonomic5Start()
+  {
+    this->resize(3);
+    _measurement = NULL;
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationStart()");
+    const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
+
+    // VELOCITY & ACCELERATION
+    Eigen::Vector2d diff = pose2->position() - pose1->position();
+
+    double cos_theta1 = std::cos(pose1->theta());
+    double sin_theta1 = std::sin(pose1->theta());
+
+    // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
+    double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
+    double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+
+    double vel1_x = _measurement->linear.x;
+    double vel1_y = _measurement->linear.y;
+    double vel2_x = p1_dx / dt->dt();
+    double vel2_y = p1_dy / dt->dt();
+
+    double acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
+    double acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
+
+    // ANGULAR ACCELERATION
+    double omega1 = _measurement->angular.z;
+    double omega2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
+    double acc_rot  = (omega2 - omega1) / dt->dt();
+
+    // normalize
+    double a1 = acc_lin_x / cfg_->robot.acc_lim_x;
+    double a2 = acc_lin_y / cfg_->robot.acc_lim_y;
+    double a3 = acc_rot / cfg_->robot.acc_lim_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic5Start::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic5Start::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeAccelerationHolonomic5Start::computeError(): a3=%f\n",a3);
+  }
+
+  /**
+   * @brief Set the initial velocity that is taken into account for calculating the acceleration
+   * @param vel_start twist message containing the translational and rotational velocity
+   */
+  void setInitialVelocity(const geometry_msgs::Twist& vel_start)
+  {
+    _measurement = &vel_start;
+  }
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+
+
+/**
+ * @class EdgeAccelerationHolonomic5Goal
+ * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
+ *
+ *       x
+ *    /      \
+ * y   |----|
+ *     |    |
+ *     |----|
+ *       --
+ * This is for Holonomic type 3: 3 wheels, 60 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
+ * and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation() \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
+ * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesAcceleration
+ * @see EdgeAccelerationHolonomic5
+ * @see EdgeAccelerationHolonomic5Start
+ * @remarks Do not forget to call setTebConfig()
+ * @remarks Refer to EdgeAccelerationHolonomic5Start() for defining boundary (initial) values at the end of the trajectory
+ */
+class EdgeAccelerationHolonomic5Goal : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeAccelerationHolonomic5Goal()
+  {
+    _measurement = NULL;
+    this->resize(3);
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationGoal()");
+    const VertexPose* pose_pre_goal = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* pose_goal = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
+
+    // VELOCITY & ACCELERATION
+
+    Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();
+
+    double cos_theta1 = std::cos(pose_pre_goal->theta());
+    double sin_theta1 = std::sin(pose_pre_goal->theta());
+
+    // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
+    double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
+    double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+
+    double vel1_x = p1_dx / dt->dt();
+    double vel1_y = p1_dy / dt->dt();
+    double vel2_x = _measurement->linear.x;
+    double vel2_y = _measurement->linear.y;
+
+    double acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
+    double acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
+
+    // ANGULAR ACCELERATION
+    double omega1 = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta()) / dt->dt();
+    double omega2 = _measurement->angular.z;
+    double acc_rot  = (omega2 - omega1) / dt->dt();
+
+    // normalize
+    double a1 = acc_lin_x / cfg_->robot.acc_lim_x;
+    double a2 = acc_lin_y / cfg_->robot.acc_lim_y;
+    double a3 = acc_rot / cfg_->robot.acc_lim_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic5Goal::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic5Goal::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeAccelerationHolonomic5Goal::computeError(): a3=%f\n",a3);
+  }
+
+
+  /**
+   * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
+   * @param vel_goal twist message containing the translational and rotational velocity
+   */
+  void setGoalVelocity(const geometry_msgs::Twist& vel_goal)
+  {
+    _measurement = &vel_goal;
+  }
+
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+
+
+
+/**
+ * @class EdgeAccelerationHolonomic6
+ * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
+ *
+ *       x
+ *           \
+ * y   |----|
+ *   | |    |
+ *     |----|
+ *           /
+ * This is for Holonomic type 4: 3 wheels, 90 degrees
+ *
+ * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation() \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
+ * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesAcceleration
+ * @see EdgeAccelerationHolonomic6Start
+ * @see EdgeAccelerationHolonomic6Goal
+ * @remarks Do not forget to call setTebConfig()
+ * @remarks Refer to EdgeAccelerationHolonomic6Start() and EdgeAccelerationHolonomic6Goal() for defining boundary values!
+ */
+class EdgeAccelerationHolonomic6 : public BaseTebMultiEdge<3, double>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeAccelerationHolonomic6()
+  {
+    this->resize(5);
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeAcceleration()");
+    const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexPose* pose3 = static_cast<const VertexPose*>(_vertices[2]);
+    const VertexTimeDiff* dt1 = static_cast<const VertexTimeDiff*>(_vertices[3]);
+    const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
+
+    // VELOCITY & ACCELERATION
+    Eigen::Vector2d diff1 = pose2->position() - pose1->position();
+    Eigen::Vector2d diff2 = pose3->position() - pose2->position();
+
+    double cos_theta1 = std::cos(pose1->theta());
+    double sin_theta1 = std::sin(pose1->theta());
+    double cos_theta2 = std::cos(pose2->theta());
+    double sin_theta2 = std::sin(pose2->theta());
+
+    // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
+    double p1_dx =  cos_theta1*diff1.x() + sin_theta1*diff1.y();
+    double p1_dy = -sin_theta1*diff1.x() + cos_theta1*diff1.y();
+    // transform pose3 into robot frame pose2 (inverse 2d rotation matrix)
+    double p2_dx =  cos_theta2*diff2.x() + sin_theta2*diff2.y();
+    double p2_dy = -sin_theta2*diff2.x() + cos_theta2*diff2.y();
+
+    double vel1_x = p1_dx / dt1->dt();
+    double vel1_y = p1_dy / dt1->dt();
+    double vel2_x = p2_dx / dt2->dt();
+    double vel2_y = p2_dy / dt2->dt();
+
+    double dt12 = dt1->dt() + dt2->dt();
+
+    double acc_x  = (vel2_x - vel1_x)*2 / dt12;
+    double acc_y  = (vel2_y - vel1_y)*2 / dt12;
+
+    // ANGULAR ACCELERATION
+    double omega1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt1->dt();
+    double omega2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt2->dt();
+    double acc_rot  = (omega2 - omega1)*2 / dt12;
+
+    // normalize
+    double a1 = acc_x / cfg_->robot.acc_lim_x;
+    double a2 = acc_y / cfg_->robot.acc_lim_y;
+    double a3 = acc_rot / cfg_->robot.acc_lim_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a1, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic6::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic6::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeAccelerationHolonomic6::computeError(): a3=%f\n",a3);
+  }
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+
+/**
+ * @class EdgeAccelerationHolonomic6Start
+ * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
+ *
+ *       x
+ *           \
+ * y   |----|
+ *   | |    |
+ *     |----|
+ *           /
+ * This is for Holonomic type 4: 3 wheels, 90 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
+ * and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation(). \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
+ * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesAcceleration
+ * @see EdgeAccelerationHolonomic6
+ * @see EdgeAccelerationHolonomic6Goal
+ * @remarks Do not forget to call setTebConfig()
+ * @remarks Refer to EdgeAccelerationHolonomic6Goal() for defining boundary values at the end of the trajectory!
+ */
+class EdgeAccelerationHolonomic6Start : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeAccelerationHolonomic6Start()
+  {
+    this->resize(3);
+    _measurement = NULL;
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationStart()");
+    const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
+
+    // VELOCITY & ACCELERATION
+    Eigen::Vector2d diff = pose2->position() - pose1->position();
+
+    double cos_theta1 = std::cos(pose1->theta());
+    double sin_theta1 = std::sin(pose1->theta());
+
+    // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
+    double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
+    double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+
+    double vel1_x = _measurement->linear.x;
+    double vel1_y = _measurement->linear.y;
+    double vel2_x = p1_dx / dt->dt();
+    double vel2_y = p1_dy / dt->dt();
+
+    double acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
+    double acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
+
+    // ANGULAR ACCELERATION
+    double omega1 = _measurement->angular.z;
+    double omega2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
+    double acc_rot  = (omega2 - omega1) / dt->dt();
+
+    // normalize
+    double a1 = acc_lin_x / cfg_->robot.acc_lim_x;
+    double a2 = acc_lin_y / cfg_->robot.acc_lim_y;
+    double a3 = acc_rot / cfg_->robot.acc_lim_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a1, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic6Start::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic6Start::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeAccelerationHolonomic6Start::computeError(): a3=%f\n",a3);
+  }
+
+  /**
+   * @brief Set the initial velocity that is taken into account for calculating the acceleration
+   * @param vel_start twist message containing the translational and rotational velocity
+   */
+  void setInitialVelocity(const geometry_msgs::Twist& vel_start)
+  {
+    _measurement = &vel_start;
+  }
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+
+
+/**
+ * @class EdgeAccelerationHolonomic6Goal
+ * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
+ *
+ *       x
+ *           \
+ * y   |----|
+ *   | |    |
+ *     |----|
+ *           /
+ * This is for Holonomic type 4: 3 wheels, 90 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
+ * and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation() \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
+ * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesAcceleration
+ * @see EdgeAccelerationHolonomic6
+ * @see EdgeAccelerationHolonomic6Start
+ * @remarks Do not forget to call setTebConfig()
+ * @remarks Refer to EdgeAccelerationHolonomic6Start() for defining boundary (initial) values at the end of the trajectory
+ */
+class EdgeAccelerationHolonomic6Goal : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeAccelerationHolonomic6Goal()
+  {
+    _measurement = NULL;
+    this->resize(3);
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationGoal()");
+    const VertexPose* pose_pre_goal = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* pose_goal = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
+
+    // VELOCITY & ACCELERATION
+
+    Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();
+
+    double cos_theta1 = std::cos(pose_pre_goal->theta());
+    double sin_theta1 = std::sin(pose_pre_goal->theta());
+
+    // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
+    double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
+    double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+
+    double vel1_x = p1_dx / dt->dt();
+    double vel1_y = p1_dy / dt->dt();
+    double vel2_x = _measurement->linear.x;
+    double vel2_y = _measurement->linear.y;
+
+    double acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
+    double acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
+
+    // ANGULAR ACCELERATION
+    double omega1 = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta()) / dt->dt();
+    double omega2 = _measurement->angular.z;
+    double acc_rot  = (omega2 - omega1) / dt->dt();
+
+    // normalize
+    double a1 = acc_lin_x / cfg_->robot.acc_lim_x;
+    double a2 = acc_lin_y / cfg_->robot.acc_lim_y;
+    double a3 = acc_rot / cfg_->robot.acc_lim_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a1, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeAccelerationHolonomic6Goal::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeAccelerationHolonomic6Goal::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeAccelerationHolonomic6Goal::computeError(): a3=%f\n",a3);
   }
 
 

@@ -510,13 +510,13 @@ public:
  * @class EdgeVelocityHolonomic3
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
  *
- *       x                x
- *       --            /      \
- * y   |----|       y   |----|
- *     |    |   or      |    |
- *     |----|           |----|
- *    \      /            --
- * This is for Holonomic type 3: 3 wheels, 0 or 180 degrees
+ *       x
+ *       --
+ * y   |----|
+ *     |    |
+ *     |----|
+ *    \      /
+ * This is for Holonomic type 3: 3 wheels, 0 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
  * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
@@ -567,9 +567,9 @@ public:
     double a3 = omega / cfg_->robot.max_vel_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1+a2*0.5-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1-a2*0.5+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic3::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic3::computeError(): a2=%f\n",a2);
@@ -589,13 +589,13 @@ public:
  * @class EdgeVelocityHolonomic4
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
  *
- *       x                x
- *           \         /
- * y   |----|       y   |----|
- *   | |    |   or      |    | |
- *     |----|           |----|
- *           /         \
- * This is for Holonomic type 4: 3 wheels, 90 or 270 degrees
+ *       x
+ *    /
+ * y   |----|
+ *     |    | |
+ *     |----|
+ *    \
+ * This is for Holonomic type 4: 3 wheels, 30 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
  * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
@@ -646,13 +646,171 @@ public:
     double a3 = omega / cfg_->robot.max_vel_theta;
 
     // error
-    _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(a1*0.5+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-    _error[2] = penaltyBoundToInterval(a1*0.5-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic4::computeError(): a1=%f\n",a1);
     ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic4::computeError(): a2=%f\n",a2);
     ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic4::computeError(): a3=%f\n",a3);
+  }
+
+
+public:
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+
+
+/**
+ * @class EdgeVelocityHolonomic5
+ * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
+ *
+ *       x
+ *    /      \
+ * y   |----|
+ *     |    |
+ *     |----|
+ *       --
+ * This is for Holonomic type 5: 3 wheels, 60 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
+ * \e v_{w1} \dots v_{w3} denote the normalized velocity of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation(). \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
+ * The dimension of the error / cost vector is 3: they represent the normalized velocity of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesVelocity
+ * @remarks Do not forget to call setTebConfig()
+ */
+class EdgeVelocityHolonomic5 : public BaseTebMultiEdge<3, double>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeVelocityHolonomic5()
+  {
+    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic5()");
+    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
+    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
+
+    double cos_theta1 = std::cos(conf1->theta());
+    double sin_theta1 = std::sin(conf1->theta());
+
+    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
+    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
+    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
+
+    double vx = r_dx / deltaT->estimate();
+    double vy = r_dy / deltaT->estimate();
+    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
+
+    // normalize
+    double a1 = vx / cfg_->robot.max_vel_x;
+    double a2 = vy / cfg_->robot.max_vel_y;
+    double a3 = omega / cfg_->robot.max_vel_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic5::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic5::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic5::computeError(): a3=%f\n",a3);
+  }
+
+
+public:
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+
+
+/**
+ * @class EdgeVelocityHolonomic6
+ * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
+ *
+ *       x
+ *           \
+ * y   |----|
+ *   | |    |
+ *     |----|
+ *           /
+ * This is for Holonomic type 4: 3 wheels, 90 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
+ * \e v_{w1} \dots v_{w3} denote the normalized velocity of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation(). \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
+ * The dimension of the error / cost vector is 3: they represent the normalized velocity of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesVelocity
+ * @remarks Do not forget to call setTebConfig()
+ */
+class EdgeVelocityHolonomic6 : public BaseTebMultiEdge<3, double>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeVelocityHolonomic6()
+  {
+    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError()
+  {
+    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic6()");
+    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
+    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
+    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
+    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
+
+    double cos_theta1 = std::cos(conf1->theta());
+    double sin_theta1 = std::sin(conf1->theta());
+
+    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
+    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
+    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
+
+    double vx = r_dx / deltaT->estimate();
+    double vy = r_dy / deltaT->estimate();
+    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
+
+    // normalize
+    double a1 = vx / cfg_->robot.max_vel_x;
+    double a2 = vy / cfg_->robot.max_vel_y;
+    double a3 = omega / cfg_->robot.max_vel_theta;
+
+    // error
+    _error[0] = penaltyBoundToInterval(a3-a1+a3, 1.0, cfg_->optim.penalty_epsilon);
+    _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
+    _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+
+    ROS_ASSERT_MSG(std::isfinite(a1), "EdgeVelocityHolonomic6::computeError(): a1=%f\n",a1);
+    ROS_ASSERT_MSG(std::isfinite(a2), "EdgeVelocityHolonomic6::computeError(): a2=%f\n",a2);
+    ROS_ASSERT_MSG(std::isfinite(a3), "EdgeVelocityHolonomic6::computeError(): a3=%f\n",a3);
   }
 
 
