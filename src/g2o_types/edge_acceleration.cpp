@@ -42,6 +42,7 @@
  *********************************************************************/
 
 #include <teb_local_planner/g2o_types/edge_acceleration.h>
+#include <teb_local_planner/omni_helper.hpp>
 #include <teb_local_planner/teb_config.h>
 
 namespace teb_local_planner
@@ -398,7 +399,7 @@ void EdgeAccelerationHolonomic0::computeError()
   getAccelerationHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(std::hypot(std::hypot(a1,a2),a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 inline void getAccelerationHolonomicNormalizedStart(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
@@ -447,7 +448,7 @@ void EdgeAccelerationHolonomic0Start::computeError()
   getAccelerationHolonomicNormalizedStart(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(std::hypot(std::hypot(a1,a2),a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 inline void getAccelerationHolonomicNormalizedGoal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
@@ -497,7 +498,7 @@ void EdgeAccelerationHolonomic0Goal::computeError()
   getAccelerationHolonomicNormalizedGoal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(std::hypot(std::hypot(a1,a2),a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic1::computeError()
@@ -507,10 +508,10 @@ void EdgeAccelerationHolonomic1::computeError()
   getAccelerationHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a1+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a1+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a1-a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(a1-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic1Start::computeError()
@@ -520,10 +521,10 @@ void EdgeAccelerationHolonomic1Start::computeError()
   getAccelerationHolonomicNormalizedStart(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a1+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a1+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a1-a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(a1-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic1Goal::computeError()
@@ -533,10 +534,10 @@ void EdgeAccelerationHolonomic1Goal::computeError()
   getAccelerationHolonomicNormalizedGoal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a1+a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a1+a2-a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a1-a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(a1-a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic2::computeError()
@@ -546,10 +547,10 @@ void EdgeAccelerationHolonomic2::computeError()
   getAccelerationHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a1-a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic2Start::computeError()
@@ -559,10 +560,10 @@ void EdgeAccelerationHolonomic2Start::computeError()
   getAccelerationHolonomicNormalizedStart(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a1-a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic2Goal::computeError()
@@ -572,10 +573,10 @@ void EdgeAccelerationHolonomic2Goal::computeError()
   getAccelerationHolonomicNormalizedGoal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a1+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a1-a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a2+a3, 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(a2-a3, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic3::computeError()
@@ -585,9 +586,9 @@ void EdgeAccelerationHolonomic3::computeError()
   getAccelerationHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic3Start::computeError()
@@ -597,9 +598,9 @@ void EdgeAccelerationHolonomic3Start::computeError()
   getAccelerationHolonomicNormalizedStart(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic3Goal::computeError()
@@ -609,9 +610,9 @@ void EdgeAccelerationHolonomic3Goal::computeError()
   getAccelerationHolonomicNormalizedGoal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3+a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3-a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3+a1-a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic4::computeError()
@@ -621,9 +622,9 @@ void EdgeAccelerationHolonomic4::computeError()
   getAccelerationHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic4Start::computeError()
@@ -633,9 +634,9 @@ void EdgeAccelerationHolonomic4Start::computeError()
   getAccelerationHolonomicNormalizedStart(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic4Goal::computeError()
@@ -645,9 +646,9 @@ void EdgeAccelerationHolonomic4Goal::computeError()
   getAccelerationHolonomicNormalizedGoal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3+a1, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3-a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3-a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic5::computeError()
@@ -657,9 +658,9 @@ void EdgeAccelerationHolonomic5::computeError()
   getAccelerationHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic5Start::computeError()
@@ -669,9 +670,9 @@ void EdgeAccelerationHolonomic5Start::computeError()
   getAccelerationHolonomicNormalizedStart(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic5Goal::computeError()
@@ -681,9 +682,9 @@ void EdgeAccelerationHolonomic5Goal::computeError()
   getAccelerationHolonomicNormalizedGoal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3-a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3+a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3-a1+a2*0.5, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic6::computeError()
@@ -693,9 +694,9 @@ void EdgeAccelerationHolonomic6::computeError()
   getAccelerationHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3-a1, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic6Start::computeError()
@@ -705,9 +706,9 @@ void EdgeAccelerationHolonomic6Start::computeError()
   getAccelerationHolonomicNormalizedStart(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3-a1, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic6Goal::computeError()
@@ -717,9 +718,9 @@ void EdgeAccelerationHolonomic6Goal::computeError()
   getAccelerationHolonomicNormalizedGoal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(a3-a1, 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(a3+a1*0.5-a2, 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(a3+a1*0.5+a2, 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 }; // end namespace

@@ -37,6 +37,7 @@
  *********************************************************************/
 
 #include <teb_local_planner/teb_local_planner_ros.h>
+#include <teb_local_planner/omni_helper.hpp>
 
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -854,25 +855,25 @@ void TebLocalPlannerROS::saturateVelocityHolonomic(double& vx, double& vy, doubl
   double l = 0.0;
   switch (omni_type) {
     case 0:
-      l = std::hypot(std::hypot(a1, a2), a3);
+      l = limit_0(a1, a2, a3);
       break;
     case 1:
-      l = std::fabs(a1) + std::fabs(a2) + std::fabs(a3);
+      l = limit_1(a1, a2, a3);
       break;
     case 2:
-      l = std::max(std::fabs(a1), std::fabs(a2)) + std::fabs(a3);
+      l = limit_2(a1, a2, a3);
       break;
     case 3:
-      l = std::max(std::fabs(a3 + a2), std::max(std::fabs(a3 - a1 - a2 * 0.5), std::fabs(a3 + a1 - a2 * 0.5)));
+      l = limit_3(a1, a2, a3);
       break;
     case 4:
-      l = std::max(std::fabs(a3 + a1), std::max(std::fabs(a3 - a1 * 0.5 + a2), std::fabs(a3 - a1 * 0.5 - a2)));
+      l = limit_4(a1, a2, a3);
       break;
     case 5:
-      l = std::max(std::fabs(a3 - a2), std::max(std::fabs(a3 + a1 + a2 * 0.5), std::fabs(a3 - a1 + a2 * 0.5)));
+      l = limit_5(a1, a2, a3);
       break;
     case 6:
-      l = std::max(std::fabs(a3 - a1), std::max(std::fabs(a3 + a1 * 0.5 - a2), std::fabs(a3 + a1 * 0.5 + a2)));
+      l = limit_6(a1, a2, a3);
       break;
     default:
       l = 0.0;

@@ -37,6 +37,7 @@
  *********************************************************************/
 
 #include <teb_local_planner/optimal_planner.h>
+#include <teb_local_planner/omni_helper.hpp>
 #include <map>
 #include <memory>
 #include <limits>
@@ -772,7 +773,7 @@ void TebOptimalPlanner::AddEdgesVelocity()
         {
           Eigen::Matrix<double,1,1> information;
           information.fill(0);
-          information(0,0) = std::hypot(std::hypot(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y), cfg_->optim.weight_max_vel_theta);
+          information(0,0) = weight_0_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
 
           for (int i=0; i < n - 1; ++i)
           {
@@ -790,10 +791,10 @@ void TebOptimalPlanner::AddEdgesVelocity()
         {
           Eigen::Matrix<double,4,4> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_max_vel_x + cfg_->optim.weight_max_vel_y + cfg_->optim.weight_max_vel_theta;
-          information(1,1) = information(0,0);
-          information(2,2) = information(0,0);
-          information(3,3) = information(0,0);
+          information(0,0) = weight_1_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(1,1) = weight_1_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(2,2) = weight_1_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(3,3) = weight_1_4(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
 
           for (int i=0; i < n - 1; ++i)
           {
@@ -811,10 +812,10 @@ void TebOptimalPlanner::AddEdgesVelocity()
         {
           Eigen::Matrix<double,4,4> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_max_vel_x + cfg_->optim.weight_max_vel_theta;
-          information(1,1) = information(0,0);
-          information(2,2) = cfg_->optim.weight_max_vel_y + cfg_->optim.weight_max_vel_theta;
-          information(3,3) = information(2,2);
+          information(0,0) = weight_2_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(1,1) = weight_2_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(2,2) = weight_2_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(3,3) = weight_2_4(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
 
           for (int i=0; i < n - 1; ++i)
           {
@@ -832,9 +833,9 @@ void TebOptimalPlanner::AddEdgesVelocity()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_max_vel_y + cfg_->optim.weight_max_vel_theta;
-          information(1,1) = cfg_->optim.weight_max_vel_x + cfg_->optim.weight_max_vel_y * 0.5 + cfg_->optim.weight_max_vel_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_3_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(1,1) = weight_3_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(2,2) = weight_3_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
 
           for (int i=0; i < n - 1; ++i)
           {
@@ -852,9 +853,9 @@ void TebOptimalPlanner::AddEdgesVelocity()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_max_vel_x + cfg_->optim.weight_max_vel_theta;
-          information(1,1) = cfg_->optim.weight_max_vel_x * 0.5 + cfg_->optim.weight_max_vel_y + cfg_->optim.weight_max_vel_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_4_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(1,1) = weight_4_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(2,2) = weight_4_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
 
           for (int i=0; i < n - 1; ++i)
           {
@@ -872,9 +873,9 @@ void TebOptimalPlanner::AddEdgesVelocity()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_max_vel_y + cfg_->optim.weight_max_vel_theta;
-          information(1,1) = cfg_->optim.weight_max_vel_x + cfg_->optim.weight_max_vel_y * 0.5 + cfg_->optim.weight_max_vel_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_5_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(1,1) = weight_5_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(2,2) = weight_5_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
 
           for (int i=0; i < n - 1; ++i)
           {
@@ -892,9 +893,9 @@ void TebOptimalPlanner::AddEdgesVelocity()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_max_vel_x + cfg_->optim.weight_max_vel_theta;
-          information(1,1) = cfg_->optim.weight_max_vel_x * 0.5 + cfg_->optim.weight_max_vel_y + cfg_->optim.weight_max_vel_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_6_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(1,1) = weight_6_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information(2,2) = weight_6_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
 
           for (int i=0; i < n - 1; ++i)
           {
@@ -993,7 +994,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         {
           Eigen::Matrix<double,1,1> information;
           information.fill(0);
-          information(0,0) = std::hypot(std::hypot(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y), cfg_->optim.weight_acc_lim_theta);
+          information(0,0) = weight_0_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
 
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
@@ -1040,10 +1041,10 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         {
           Eigen::Matrix<double,4,4> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_acc_lim_x + cfg_->optim.weight_acc_lim_y + cfg_->optim.weight_acc_lim_theta;
-          information(1,1) = information(0,0);
-          information(2,2) = information(0,0);
-          information(3,3) = information(0,0);
+          information(0,0) = weight_1_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(1,1) = weight_1_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(2,2) = weight_1_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(3,3) = weight_1_4(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
 
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
@@ -1090,10 +1091,10 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         {
           Eigen::Matrix<double,4,4> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_acc_lim_x + cfg_->optim.weight_acc_lim_theta;
-          information(1,1) = information(0,0);
-          information(2,2) = cfg_->optim.weight_acc_lim_y + cfg_->optim.weight_acc_lim_theta;
-          information(3,3) = information(2,2);
+          information(0,0) = weight_2_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(1,1) = weight_2_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(2,2) = weight_2_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(3,3) = weight_2_4(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
 
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
@@ -1140,9 +1141,9 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_acc_lim_y + cfg_->optim.weight_acc_lim_theta;
-          information(1,1) = cfg_->optim.weight_acc_lim_x + cfg_->optim.weight_acc_lim_y * 0.5 + cfg_->optim.weight_acc_lim_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_3_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(1,1) = weight_3_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(2,2) = weight_3_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
 
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
@@ -1189,9 +1190,9 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_acc_lim_x + cfg_->optim.weight_acc_lim_theta;
-          information(1,1) = cfg_->optim.weight_acc_lim_x * 0.5 + cfg_->optim.weight_acc_lim_y + cfg_->optim.weight_acc_lim_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_4_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(1,1) = weight_4_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(2,2) = weight_4_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
 
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
@@ -1238,9 +1239,9 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_acc_lim_y + cfg_->optim.weight_acc_lim_theta;
-          information(1,1) = cfg_->optim.weight_acc_lim_x + cfg_->optim.weight_acc_lim_y * 0.5 + cfg_->optim.weight_acc_lim_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_5_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(1,1) = weight_5_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(2,2) = weight_5_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
 
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
@@ -1287,9 +1288,9 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         {
           Eigen::Matrix<double,3,3> information;
           information.fill(0);
-          information(0,0) = cfg_->optim.weight_acc_lim_x + cfg_->optim.weight_acc_lim_theta;
-          information(1,1) = cfg_->optim.weight_acc_lim_x * 0.5 + cfg_->optim.weight_acc_lim_y + cfg_->optim.weight_acc_lim_theta;
-          information(2,2) = information(1,1);
+          information(0,0) = weight_6_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(1,1) = weight_6_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information(2,2) = weight_6_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
 
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
