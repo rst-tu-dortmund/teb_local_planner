@@ -45,169 +45,191 @@
 #include <teb_local_planner/omni_helper.hpp>
 #include <teb_local_planner/teb_config.h>
 
+/*
+ *
+ * variable name:
+ *  l: linear, a: angular
+ *  v: velocity, a: acceleration, j: jerk
+ *  x: axis x, y: axis y, z: axis z
+ *  t: time, s: position
+ *  df_x_y: f(y) - f(x)
+ *
+ * special case:
+ *  df: f(2) - f(1), when there is no f(3) in the context
+ *  x in dx: translation along axis x
+ *  y in dy: translation along axis y
+ *  z in dz: rotation along axis z (theta)
+ *
+ * examples:
+ *  lvx: linear velocity in axis x
+ *  aaz: angular acceleration in axis z
+ *  dt_1_3: time(3) - time(1)
+ *  dx: translation along axis x from time 1 to time 2
+ *
+ */
 namespace teb_local_planner
 {
 
-inline void getAcceleration(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& acc_lin, double& acc_rot)
+inline void getAcceleration(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& aaz)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
   const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexPose* pose3 = static_cast<const VertexPose*>(_vertices[2]);
-  const VertexTimeDiff* dt1 = static_cast<const VertexTimeDiff*>(_vertices[3]);
-  const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
+  const VertexTimeDiff* dt_1_2 = static_cast<const VertexTimeDiff*>(_vertices[3]);
+  const VertexTimeDiff* dt_2_3 = static_cast<const VertexTimeDiff*>(_vertices[4]);
 
   // VELOCITY & ACCELERATION
-  const Eigen::Vector2d diff1 = pose2->position() - pose1->position();
-  const Eigen::Vector2d diff2 = pose3->position() - pose2->position();
+  const Eigen::Vector2d ds_1_2 = pose2->position() - pose1->position();
+  const Eigen::Vector2d ds_2_3 = pose3->position() - pose2->position();
 
-  double dist1 = diff1.norm();
-  double dist2 = diff2.norm();
-  const double angle_diff1 = g2o::normalize_theta(pose2->theta() - pose1->theta());
-  const double angle_diff2 = g2o::normalize_theta(pose3->theta() - pose2->theta());
+  double dist1 = ds_1_2.norm();
+  double dist2 = ds_2_3.norm();
+  const double dz_1_2 = g2o::normalize_theta(pose2->theta() - pose1->theta());
+  const double dz_2_3 = g2o::normalize_theta(pose3->theta() - pose2->theta());
 
   if (cfg_->trajectory.exact_arc_length) // use exact arc length instead of Euclidean approximation
   {
-      if (angle_diff1 != 0)
+      if (dz_1_2 != 0)
       {
-          const double radius =  dist1/(2*sin(angle_diff1/2));
-          dist1 = fabs( angle_diff1 * radius ); // actual arg length!
+          const double radius =  dist1/(2*sin(dz_1_2/2));
+          dist1 = fabs( dz_1_2 * radius ); // actual arg length!
       }
-      if (angle_diff2 != 0)
+      if (dz_2_3 != 0)
       {
-          const double radius =  dist2/(2*sin(angle_diff2/2));
-          dist2 = fabs( angle_diff2 * radius ); // actual arg length!
+          const double radius =  dist2/(2*sin(dz_2_3/2));
+          dist2 = fabs( dz_2_3 * radius ); // actual arg length!
       }
   }
 
-  double vel1 = dist1 / dt1->dt();
-  double vel2 = dist2 / dt2->dt();
+  double lvx1 = dist1 / dt_1_2->dt();
+  double lvx2 = dist2 / dt_2_3->dt();
 
   // consider directions
-  //vel1 *= g2o::sign(diff1[0]*cos(pose1->theta()) + diff1[1]*sin(pose1->theta()));
-  //vel2 *= g2o::sign(diff2[0]*cos(pose2->theta()) + diff2[1]*sin(pose2->theta()));
-  vel1 *= fast_sigmoid( 100*(diff1.x()*cos(pose1->theta()) + diff1.y()*sin(pose1->theta())) );
-  vel2 *= fast_sigmoid( 100*(diff2.x()*cos(pose2->theta()) + diff2.y()*sin(pose2->theta())) );
+  //lvx1 *= g2o::sign(ds_1_2[0]*cos(pose1->theta()) + ds_1_2[1]*sin(pose1->theta()));
+  //lvx2 *= g2o::sign(ds_2_3[0]*cos(pose2->theta()) + ds_2_3[1]*sin(pose2->theta()));
+  lvx1 *= fast_sigmoid( 100*(ds_1_2.x()*cos(pose1->theta()) + ds_1_2.y()*sin(pose1->theta())) );
+  lvx2 *= fast_sigmoid( 100*(ds_2_3.x()*cos(pose2->theta()) + ds_2_3.y()*sin(pose2->theta())) );
 
   // ANGULAR ACCELERATION
-  const double omega1 = angle_diff1 / dt1->dt();
-  const double omega2 = angle_diff2 / dt2->dt();
+  const double avz1 = dz_1_2 / dt_1_2->dt();
+  const double avz2 = dz_2_3 / dt_2_3->dt();
 
-  acc_lin  = (vel2 - vel1)*2 / ( dt1->dt() + dt2->dt() );
-  acc_rot  = (omega2 - omega1)*2 / ( dt1->dt() + dt2->dt() );
+  lax  = (lvx2 - lvx1)*2 / ( dt_1_2->dt() + dt_2_3->dt() );
+  aaz  = (avz2 - avz1)*2 / ( dt_1_2->dt() + dt_2_3->dt() );
 }
 
 void EdgeAcceleration::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAcceleration()");
-  double acc_lin, acc_rot;
-  getAcceleration(cfg_, _vertices, acc_lin, acc_rot);
+  double lax, aaz;
+  getAcceleration(cfg_, _vertices, lax, aaz);
 
-  _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAcceleration::computeError() translational: _error[0]=%f\n",_error[0]);
   ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAcceleration::computeError() rotational: _error[1]=%f\n",_error[1]);
 }
 
-inline void getAccelerationStart(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& acc_lin, double& acc_rot)
+inline void getAccelerationStart(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& aaz)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
   const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
   // VELOCITY & ACCELERATION
-  const Eigen::Vector2d diff = pose2->position() - pose1->position();
-  double dist = diff.norm();
-  const double angle_diff = g2o::normalize_theta(pose2->theta() - pose1->theta());
-  if (cfg_->trajectory.exact_arc_length && angle_diff != 0)
+  const Eigen::Vector2d ds = pose2->position() - pose1->position();
+  double dist = ds.norm();
+  const double dz = g2o::normalize_theta(pose2->theta() - pose1->theta());
+  if (cfg_->trajectory.exact_arc_length && dz != 0)
   {
-      const double radius =  dist/(2*sin(angle_diff/2));
-      dist = fabs( angle_diff * radius ); // actual arg length!
+      const double radius =  dist/(2*sin(dz/2));
+      dist = fabs( dz * radius ); // actual arg length!
   }
 
-  const double vel1 = _measurement->linear.x;
-  double vel2 = dist / dt->dt();
+  const double lvx1 = _measurement->linear.x;
+  double lvx2 = dist / dt->dt();
 
   // consider directions
-  //vel2 *= g2o::sign(diff[0]*cos(pose1->theta()) + diff[1]*sin(pose1->theta()));
-  vel2 *= fast_sigmoid( 100*(diff.x()*cos(pose1->theta()) + diff.y()*sin(pose1->theta())) );
+  //lvx2 *= g2o::sign(ds[0]*cos(pose1->theta()) + ds[1]*sin(pose1->theta()));
+  lvx2 *= fast_sigmoid( 100*(ds.x()*cos(pose1->theta()) + ds.y()*sin(pose1->theta())) );
 
   // ANGULAR ACCELERATION
-  const double omega1 = _measurement->angular.z;
-  const double omega2 = angle_diff / dt->dt();
+  const double avz1 = _measurement->angular.z;
+  const double avz2 = dz / dt->dt();
 
-  acc_lin  = (vel2 - vel1) / dt->dt();
-  acc_rot  = (omega2 - omega1) / dt->dt();
+  lax  = (lvx2 - lvx1) / dt->dt();
+  aaz  = (avz2 - avz1) / dt->dt();
 }
 
 void EdgeAccelerationStart::computeError()
 {
   ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationStart()");
-  double acc_lin, acc_rot;
-  getAccelerationStart(cfg_, _measurement, _vertices, acc_lin, acc_rot);
+  double lax, aaz;
+  getAccelerationStart(cfg_, _measurement, _vertices, lax, aaz);
 
-  _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAccelerationStart::computeError() translational: _error[0]=%f\n",_error[0]);
   ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAccelerationStart::computeError() rotational: _error[1]=%f\n",_error[1]);
 }
 
-inline void getAccelerationGoal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& acc_lin, double& acc_rot)
+inline void getAccelerationGoal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& aaz)
 {
-  const VertexPose* pose_pre_goal = static_cast<const VertexPose*>(_vertices[0]);
-  const VertexPose* pose_goal = static_cast<const VertexPose*>(_vertices[1]);
+  const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
+  const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
   // VELOCITY & ACCELERATION
-  const Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();
-  double dist = diff.norm();
-  const double angle_diff = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta());
-  if (cfg_->trajectory.exact_arc_length  && angle_diff != 0)
+  const Eigen::Vector2d ds = pose2->position() - pose1->position();
+  double dist = ds.norm();
+  const double dz = g2o::normalize_theta(pose2->theta() - pose1->theta());
+  if (cfg_->trajectory.exact_arc_length  && dz != 0)
   {
-      double radius =  dist/(2*sin(angle_diff/2));
-      dist = fabs( angle_diff * radius ); // actual arg length!
+      double radius =  dist/(2*sin(dz/2));
+      dist = fabs( dz* radius ); // actual arg length!
   }
 
-  double vel1 = dist / dt->dt();
-  const double vel2 = _measurement->linear.x;
+  double lvx1 = dist / dt->dt();
+  const double lvx2 = _measurement->linear.x;
 
   // consider directions
-  //vel1 *= g2o::sign(diff[0]*cos(pose_pre_goal->theta()) + diff[1]*sin(pose_pre_goal->theta()));
-  vel1 *= fast_sigmoid( 100*(diff.x()*cos(pose_pre_goal->theta()) + diff.y()*sin(pose_pre_goal->theta())) );
+  //lvx1 *= g2o::sign(ds[0]*cos(pose1->theta()) + ds[1]*sin(pose1->theta()));
+  lvx1 *= fast_sigmoid( 100*(ds.x()*cos(pose1->theta()) + ds.y()*sin(pose1->theta())) );
 
   // ANGULAR ACCELERATION
-  const double omega1 = angle_diff / dt->dt();
-  const double omega2 = _measurement->angular.z;
+  const double avz1 = dz/ dt->dt();
+  const double avz2 = _measurement->angular.z;
 
-  acc_lin  = (vel2 - vel1) / dt->dt();
-  acc_rot  = (omega2 - omega1) / dt->dt();
+  lax  = (lvx2 - lvx1) / dt->dt();
+  aaz  = (avz2 - avz1) / dt->dt();
 }
 
 void EdgeAccelerationGoal::computeError()
 {
   ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationGoal()");
-  double acc_lin, acc_rot;
-  getAccelerationGoal(cfg_, _measurement, _vertices, acc_lin, acc_rot);
+  double lax, aaz;
+  getAccelerationGoal(cfg_, _measurement, _vertices, lax, aaz);
 
-  _error[0] = penaltyBoundToInterval(acc_lin,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAccelerationGoal::computeError() translational: _error[0]=%f\n",_error[0]);
   ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAccelerationGoal::computeError() rotational: _error[1]=%f\n",_error[1]);
 }
 
-inline void getAccelerationHolonomic(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& acc_x, double& acc_y, double& acc_rot)
+inline void getAccelerationHolonomic(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& lay, double& aaz)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
   const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexPose* pose3 = static_cast<const VertexPose*>(_vertices[2]);
-  const VertexTimeDiff* dt1 = static_cast<const VertexTimeDiff*>(_vertices[3]);
-  const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
+  const VertexTimeDiff* dt_1_2 = static_cast<const VertexTimeDiff*>(_vertices[3]);
+  const VertexTimeDiff* dt_2_3 = static_cast<const VertexTimeDiff*>(_vertices[4]);
 
   // VELOCITY & ACCELERATION
-  Eigen::Vector2d diff1 = pose2->position() - pose1->position();
-  Eigen::Vector2d diff2 = pose3->position() - pose2->position();
+  Eigen::Vector2d ds_1_2 = pose2->position() - pose1->position();
+  Eigen::Vector2d ds_2_3 = pose3->position() - pose2->position();
 
   double cos_theta1 = std::cos(pose1->theta());
   double sin_theta1 = std::sin(pose1->theta());
@@ -215,128 +237,128 @@ inline void getAccelerationHolonomic(const TebConfig* cfg_, const g2o::HyperGrap
   double sin_theta2 = std::sin(pose2->theta());
 
   // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
-  double p1_dx =  cos_theta1*diff1.x() + sin_theta1*diff1.y();
-  double p1_dy = -sin_theta1*diff1.x() + cos_theta1*diff1.y();
+  double dx_1_2 =  cos_theta1*ds_1_2.x() + sin_theta1*ds_1_2.y();
+  double dy_1_2 = -sin_theta1*ds_1_2.x() + cos_theta1*ds_1_2.y();
   // transform pose3 into robot frame pose2 (inverse 2d rotation matrix)
-  double p2_dx =  cos_theta2*diff2.x() + sin_theta2*diff2.y();
-  double p2_dy = -sin_theta2*diff2.x() + cos_theta2*diff2.y();
+  double dx_2_3 =  cos_theta2*ds_2_3.x() + sin_theta2*ds_2_3.y();
+  double dy_2_3 = -sin_theta2*ds_2_3.x() + cos_theta2*ds_2_3.y();
 
-  double vel1_x = p1_dx / dt1->dt();
-  double vel1_y = p1_dy / dt1->dt();
-  double vel2_x = p2_dx / dt2->dt();
-  double vel2_y = p2_dy / dt2->dt();
-
-  double dt12 = dt1->dt() + dt2->dt();
+  double lvx1 = dx_1_2 / dt_1_2->dt();
+  double lvy1 = dy_1_2 / dt_1_2->dt();
+  double lvx2 = dx_2_3 / dt_2_3->dt();
+  double lvy2 = dy_2_3 / dt_2_3->dt();
 
   // ANGULAR ACCELERATION
-  double omega1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt1->dt();
-  double omega2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt2->dt();
+  double avz1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt_1_2->dt();
+  double avz2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt_2_3->dt();
 
-  acc_x  = (vel2_x - vel1_x)*2 / dt12;
-  acc_y  = (vel2_y - vel1_y)*2 / dt12;
-  acc_rot  = (omega2 - omega1)*2 / dt12;
+  double dt_1_3 = dt_1_2->dt() + dt_2_3->dt();
+
+  lax  = (lvx2 - lvx1)*2 / dt_1_3;
+  lay  = (lvy2 - lvy1)*2 / dt_1_3;
+  aaz  = (avz2 - avz1)*2 / dt_1_3;
 }
 
 void EdgeAccelerationHolonomic::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAccelerationHolonomic()");
-  double acc_x, acc_y, acc_rot;
-  getAccelerationHolonomic(cfg_, _vertices, acc_x, acc_y, acc_rot);
+  double lax, lay, aaz;
+  getAccelerationHolonomic(cfg_, _vertices, lax, lay, aaz);
 
-  _error[0] = penaltyBoundToInterval(acc_x,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(acc_y,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(lay,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAccelerationHolonomic::computeError() translational: _error[0]=%f\n",_error[0]);
   ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAccelerationHolonomic::computeError() strafing: _error[1]=%f\n",_error[1]);
   ROS_ASSERT_MSG(std::isfinite(_error[2]), "EdgeAccelerationHolonomic::computeError() rotational: _error[2]=%f\n",_error[2]);
 }
 
-inline void getAccelerationHolonomicStart(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& acc_lin_x, double& acc_lin_y, double& acc_rot)
+inline void getAccelerationHolonomicStart(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& lay, double& aaz)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
   const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
   // VELOCITY & ACCELERATION
-  Eigen::Vector2d diff = pose2->position() - pose1->position();
+  Eigen::Vector2d ds = pose2->position() - pose1->position();
 
   double cos_theta1 = std::cos(pose1->theta());
   double sin_theta1 = std::sin(pose1->theta());
 
   // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
-  double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
-  double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+  double dx_1_2 =  cos_theta1*ds.x() + sin_theta1*ds.y();
+  double dy_1_2 = -sin_theta1*ds.x() + cos_theta1*ds.y();
 
-  double vel1_x = _measurement->linear.x;
-  double vel1_y = _measurement->linear.y;
-  double vel2_x = p1_dx / dt->dt();
-  double vel2_y = p1_dy / dt->dt();
+  double lvx1 = _measurement->linear.x;
+  double lvy1 = _measurement->linear.y;
+  double lvx2 = dx_1_2 / dt->dt();
+  double lvy2 = dy_1_2 / dt->dt();
 
   // ANGULAR ACCELERATION
-  double omega1 = _measurement->angular.z;
-  double omega2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
+  double avz1 = _measurement->angular.z;
+  double avz2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
 
-  acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
-  acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
-  acc_rot  = (omega2 - omega1) / dt->dt();
+  lax  = (lvx2 - lvx1) / dt->dt();
+  lay  = (lvy2 - lvy1) / dt->dt();
+  aaz  = (avz2 - avz1) / dt->dt();
 }
 
 void EdgeAccelerationHolonomicStart::computeError()
 {
   ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationHolonomicStart()");
-  double acc_lin_x, acc_lin_y, acc_rot;
-  getAccelerationHolonomicStart(cfg_, _measurement, _vertices, acc_lin_x, acc_lin_y, acc_rot);
+  double lax, lay, aaz;
+  getAccelerationHolonomicStart(cfg_, _measurement, _vertices, lax, lay, aaz);
 
-  _error[0] = penaltyBoundToInterval(acc_lin_x,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(acc_lin_y,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(lay,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAccelerationHolonomicStart::computeError() translational: _error[0]=%f\n",_error[0]);
   ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAccelerationHolonomicStart::computeError() strafing: _error[1]=%f\n",_error[1]);
   ROS_ASSERT_MSG(std::isfinite(_error[2]), "EdgeAccelerationHolonomicStart::computeError() rotational: _error[2]=%f\n",_error[2]);
 }
 
-inline void getAccelerationHolonomicGoal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& acc_lin_x, double& acc_lin_y, double& acc_rot)
+inline void getAccelerationHolonomicGoal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& lay, double& aaz)
 {
-  const VertexPose* pose_pre_goal = static_cast<const VertexPose*>(_vertices[0]);
-  const VertexPose* pose_goal = static_cast<const VertexPose*>(_vertices[1]);
+  const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
+  const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
   // VELOCITY & ACCELERATION
 
-  Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();
+  Eigen::Vector2d ds = pose2->position() - pose1->position();
 
-  double cos_theta1 = std::cos(pose_pre_goal->theta());
-  double sin_theta1 = std::sin(pose_pre_goal->theta());
+  double cos_theta1 = std::cos(pose1->theta());
+  double sin_theta1 = std::sin(pose1->theta());
 
   // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
-  double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
-  double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+  double dx_1_2 =  cos_theta1*ds.x() + sin_theta1*ds.y();
+  double dy_1_2 = -sin_theta1*ds.x() + cos_theta1*ds.y();
 
-  double vel1_x = p1_dx / dt->dt();
-  double vel1_y = p1_dy / dt->dt();
-  double vel2_x = _measurement->linear.x;
-  double vel2_y = _measurement->linear.y;
+  double lvx1 = dx_1_2 / dt->dt();
+  double lvy1 = dy_1_2 / dt->dt();
+  double lvx2 = _measurement->linear.x;
+  double lvy2 = _measurement->linear.y;
 
   // ANGULAR ACCELERATION
-  double omega1 = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta()) / dt->dt();
-  double omega2 = _measurement->angular.z;
+  double avz1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
+  double avz2 = _measurement->angular.z;
 
-  acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
-  acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
-  acc_rot  = (omega2 - omega1) / dt->dt();
+  lax  = (lvx2 - lvx1) / dt->dt();
+  lay  = (lvy2 - lvy1) / dt->dt();
+  aaz  = (avz2 - avz1) / dt->dt();
 }
 
 void EdgeAccelerationHolonomicGoal::computeError()
 {
   ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationHolonomicGoal()");
-  double acc_lin_x, acc_lin_y, acc_rot;
-  getAccelerationHolonomicGoal(cfg_, _measurement, _vertices, acc_lin_x, acc_lin_y, acc_rot);
+  double lax, lay, aaz;
+  getAccelerationHolonomicGoal(cfg_, _measurement, _vertices, lax, lay, aaz);
 
-  _error[0] = penaltyBoundToInterval(acc_lin_x,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(acc_lin_y,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(acc_rot,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(lay,cfg_->robot.acc_lim_y,cfg_->optim.penalty_epsilon);
+  _error[2] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
 
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAccelerationHolonomicGoal::computeError() translational: _error[0]=%f\n",_error[0]);
   ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAccelerationHolonomicGoal::computeError() strafing: _error[1]=%f\n",_error[1]);
@@ -348,12 +370,12 @@ inline void getAccelerationHolonomicNormalized(const TebConfig* cfg_, const g2o:
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
   const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexPose* pose3 = static_cast<const VertexPose*>(_vertices[2]);
-  const VertexTimeDiff* dt1 = static_cast<const VertexTimeDiff*>(_vertices[3]);
-  const VertexTimeDiff* dt2 = static_cast<const VertexTimeDiff*>(_vertices[4]);
+  const VertexTimeDiff* dt_1_2 = static_cast<const VertexTimeDiff*>(_vertices[3]);
+  const VertexTimeDiff* dt_2_3 = static_cast<const VertexTimeDiff*>(_vertices[4]);
 
   // VELOCITY & ACCELERATION
-  Eigen::Vector2d diff1 = pose2->position() - pose1->position();
-  Eigen::Vector2d diff2 = pose3->position() - pose2->position();
+  Eigen::Vector2d ds_1_2 = pose2->position() - pose1->position();
+  Eigen::Vector2d ds_2_3 = pose3->position() - pose2->position();
 
   double cos_theta1 = std::cos(pose1->theta());
   double sin_theta1 = std::sin(pose1->theta());
@@ -361,31 +383,31 @@ inline void getAccelerationHolonomicNormalized(const TebConfig* cfg_, const g2o:
   double sin_theta2 = std::sin(pose2->theta());
 
   // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
-  double p1_dx =  cos_theta1*diff1.x() + sin_theta1*diff1.y();
-  double p1_dy = -sin_theta1*diff1.x() + cos_theta1*diff1.y();
+  double dx_1_2 =  cos_theta1*ds_1_2.x() + sin_theta1*ds_1_2.y();
+  double dy_1_2 = -sin_theta1*ds_1_2.x() + cos_theta1*ds_1_2.y();
   // transform pose3 into robot frame pose2 (inverse 2d rotation matrix)
-  double p2_dx =  cos_theta2*diff2.x() + sin_theta2*diff2.y();
-  double p2_dy = -sin_theta2*diff2.x() + cos_theta2*diff2.y();
+  double dx_2_3 =  cos_theta2*ds_2_3.x() + sin_theta2*ds_2_3.y();
+  double dy_2_3 = -sin_theta2*ds_2_3.x() + cos_theta2*ds_2_3.y();
 
-  double vel1_x = p1_dx / dt1->dt();
-  double vel1_y = p1_dy / dt1->dt();
-  double vel2_x = p2_dx / dt2->dt();
-  double vel2_y = p2_dy / dt2->dt();
-
-  double dt12 = dt1->dt() + dt2->dt();
-
-  double acc_x  = (vel2_x - vel1_x)*2 / dt12;
-  double acc_y  = (vel2_y - vel1_y)*2 / dt12;
+  double lvx1 = dx_1_2 / dt_1_2->dt();
+  double lvy1 = dy_1_2 / dt_1_2->dt();
+  double lvx2 = dx_2_3 / dt_2_3->dt();
+  double lvy2 = dy_2_3 / dt_2_3->dt();
 
   // ANGULAR ACCELERATION
-  double omega1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt1->dt();
-  double omega2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt2->dt();
-  double acc_rot  = (omega2 - omega1)*2 / dt12;
+  double avz1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt_1_2->dt();
+  double avz2 = g2o::normalize_theta(pose3->theta() - pose2->theta()) / dt_2_3->dt();
+
+  double dt_1_3 = dt_1_2->dt() + dt_2_3->dt();
+
+  double lax  = (lvx2 - lvx1)*2 / dt_1_3;
+  double lay  = (lvy2 - lvy1)*2 / dt_1_3;
+  double aaz  = (avz2 - avz1)*2 / dt_1_3;
 
   // normalize
-  a1 = acc_x / cfg_->robot.acc_lim_x;
-  a2 = acc_y / cfg_->robot.acc_lim_y;
-  a3 = acc_rot / cfg_->robot.acc_lim_theta;
+  a1 = lax / cfg_->robot.acc_lim_x;
+  a2 = lay / cfg_->robot.acc_lim_y;
+  a3 = aaz / cfg_->robot.acc_lim_theta;
 
   ROS_ASSERT_MSG(std::isfinite(a1), "getAccelerationHolonomicNormalized(): a1=%f\n",a1);
   ROS_ASSERT_MSG(std::isfinite(a2), "getAccelerationHolonomicNormalized(): a2=%f\n",a2);
@@ -409,32 +431,32 @@ inline void getAccelerationHolonomicNormalizedStart(const TebConfig* cfg_, const
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
   // VELOCITY & ACCELERATION
-  Eigen::Vector2d diff = pose2->position() - pose1->position();
+  Eigen::Vector2d ds = pose2->position() - pose1->position();
 
   double cos_theta1 = std::cos(pose1->theta());
   double sin_theta1 = std::sin(pose1->theta());
 
   // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
-  double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
-  double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+  double dx_1_2 =  cos_theta1*ds.x() + sin_theta1*ds.y();
+  double dy_1_2 = -sin_theta1*ds.x() + cos_theta1*ds.y();
 
-  double vel1_x = _measurement->linear.x;
-  double vel1_y = _measurement->linear.y;
-  double vel2_x = p1_dx / dt->dt();
-  double vel2_y = p1_dy / dt->dt();
-
-  double acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
-  double acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
+  double lvx1 = _measurement->linear.x;
+  double lvy1 = _measurement->linear.y;
+  double lvx2 = dx_1_2 / dt->dt();
+  double lvy2 = dy_1_2 / dt->dt();
 
   // ANGULAR ACCELERATION
-  double omega1 = _measurement->angular.z;
-  double omega2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
-  double acc_rot  = (omega2 - omega1) / dt->dt();
+  double avz1 = _measurement->angular.z;
+  double avz2 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
+
+  double lax  = (lvx2 - lvx1) / dt->dt();
+  double lay  = (lvy2 - lvy1) / dt->dt();
+  double aaz  = (avz2 - avz1) / dt->dt();
 
   // normalize
-  a1 = acc_lin_x / cfg_->robot.acc_lim_x;
-  a2 = acc_lin_y / cfg_->robot.acc_lim_y;
-  a3 = acc_rot / cfg_->robot.acc_lim_theta;
+  a1 = lax / cfg_->robot.acc_lim_x;
+  a2 = lay / cfg_->robot.acc_lim_y;
+  a3 = aaz / cfg_->robot.acc_lim_theta;
 
   ROS_ASSERT_MSG(std::isfinite(a1), "getAccelerationHolonomicNormalizedStart(): a1=%f\n",a1);
   ROS_ASSERT_MSG(std::isfinite(a2), "getAccelerationHolonomicNormalizedStart(): a2=%f\n",a2);
@@ -453,38 +475,38 @@ void EdgeAccelerationHolonomic0Start::computeError()
 
 inline void getAccelerationHolonomicNormalizedGoal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
 {
-  const VertexPose* pose_pre_goal = static_cast<const VertexPose*>(_vertices[0]);
-  const VertexPose* pose_goal = static_cast<const VertexPose*>(_vertices[1]);
+  const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
+  const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
 
   // VELOCITY & ACCELERATION
 
-  Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();
+  Eigen::Vector2d ds = pose2->position() - pose1->position();
 
-  double cos_theta1 = std::cos(pose_pre_goal->theta());
-  double sin_theta1 = std::sin(pose_pre_goal->theta());
+  double cos_theta1 = std::cos(pose1->theta());
+  double sin_theta1 = std::sin(pose1->theta());
 
   // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
-  double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
-  double p1_dy = -sin_theta1*diff.x() + cos_theta1*diff.y();
+  double dx_1_2 =  cos_theta1*ds.x() + sin_theta1*ds.y();
+  double dy_1_2 = -sin_theta1*ds.x() + cos_theta1*ds.y();
 
-  double vel1_x = p1_dx / dt->dt();
-  double vel1_y = p1_dy / dt->dt();
-  double vel2_x = _measurement->linear.x;
-  double vel2_y = _measurement->linear.y;
-
-  double acc_lin_x  = (vel2_x - vel1_x) / dt->dt();
-  double acc_lin_y  = (vel2_y - vel1_y) / dt->dt();
+  double lvx1 = dx_1_2 / dt->dt();
+  double lvy1 = dy_1_2 / dt->dt();
+  double lvx2 = _measurement->linear.x;
+  double lvy2 = _measurement->linear.y;
 
   // ANGULAR ACCELERATION
-  double omega1 = g2o::normalize_theta(pose_goal->theta() - pose_pre_goal->theta()) / dt->dt();
-  double omega2 = _measurement->angular.z;
-  double acc_rot  = (omega2 - omega1) / dt->dt();
+  double avz1 = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->dt();
+  double avz2 = _measurement->angular.z;
+
+  double lax  = (lvx2 - lvx1) / dt->dt();
+  double lay  = (lvy2 - lvy1) / dt->dt();
+  double aaz  = (avz2 - avz1) / dt->dt();
 
   // normalize
-  a1 = acc_lin_x / cfg_->robot.acc_lim_x;
-  a2 = acc_lin_y / cfg_->robot.acc_lim_y;
-  a3 = acc_rot / cfg_->robot.acc_lim_theta;
+  a1 = lax / cfg_->robot.acc_lim_x;
+  a2 = lay / cfg_->robot.acc_lim_y;
+  a3 = aaz / cfg_->robot.acc_lim_theta;
 
   ROS_ASSERT_MSG(std::isfinite(a1), "getAccelerationHolonomicNormalizedGoal(): a1=%f\n",a1);
   ROS_ASSERT_MSG(std::isfinite(a2), "getAccelerationHolonomicNormalizedGoal(): a2=%f\n",a2);
