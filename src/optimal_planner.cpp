@@ -126,7 +126,6 @@ void TebOptimalPlanner::registerG2OTypes()
 
   factory->registerType("EDGE_TIME_OPTIMAL", new g2o::HyperGraphElementCreator<EdgeTimeOptimal>);
   factory->registerType("EDGE_VELOCITY", new g2o::HyperGraphElementCreator<EdgeVelocity>);
-  factory->registerType("EDGE_VELOCITY_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC0", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic0>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC1", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic1>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC2", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic2>);
@@ -137,9 +136,6 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_ACCELERATION", new g2o::HyperGraphElementCreator<EdgeAcceleration>);
   factory->registerType("EDGE_ACCELERATION_START", new g2o::HyperGraphElementCreator<EdgeAccelerationStart>);
   factory->registerType("EDGE_ACCELERATION_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationGoal>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicStart>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomicGoal>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC0", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic0>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC0_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic0Start>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC0_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic0Goal>);
@@ -910,24 +906,6 @@ void TebOptimalPlanner::AddEdgesVelocity()
         }
         break;
       default:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = cfg_->optim.weight_max_vel_x;
-          information(1,1) = cfg_->optim.weight_max_vel_y;
-          information(2,2) = cfg_->optim.weight_max_vel_theta;
-
-          for (int i=0; i < n - 1; ++i)
-          {
-            EdgeVelocityHolonomic* velocity_edge = new EdgeVelocityHolonomic;
-            velocity_edge->setVertex(0,teb_.PoseVertex(i));
-            velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
-            velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
-            velocity_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(velocity_edge);
-          }
-        }
         break;
     }
   }
@@ -1334,53 +1312,6 @@ void TebOptimalPlanner::AddEdgesAcceleration()
         }
         break;
       default:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = cfg_->optim.weight_acc_lim_x;
-          information(1,1) = cfg_->optim.weight_acc_lim_y;
-          information(2,2) = cfg_->optim.weight_acc_lim_theta;
-
-          // check if an initial velocity should be taken into accound
-          if (vel_start_.first)
-          {
-            EdgeAccelerationHolonomicStart* acceleration_edge = new EdgeAccelerationHolonomicStart;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(0));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
-            acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // now add the usual acceleration edge for each tuple of three teb poses
-          for (int i=0; i < n - 2; ++i)
-          {
-            EdgeAccelerationHolonomic* acceleration_edge = new EdgeAccelerationHolonomic;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(i));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(i+1));
-            acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
-            acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
-            acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // check if a goal velocity should be taken into accound
-          if (vel_goal_.first)
-          {
-            EdgeAccelerationHolonomicGoal* acceleration_edge = new EdgeAccelerationHolonomicGoal;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(n-2));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
-            acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-        }
         break;
     }
   }

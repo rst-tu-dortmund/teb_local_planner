@@ -166,46 +166,6 @@ public:
 
 
 /**
- * @class EdgeVelocityHolonomic
- * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [vx,vy,omega]^T ) \cdot weight \f$. \n
- * \e vx denotes the translational velocity w.r.t. x-axis (computed using finite differneces). \n
- * \e vy denotes the translational velocity w.r.t. y-axis (computed using finite differneces). \n
- * \e omega is calculated using the difference quotient of both yaw angles followed by a normalization to [-pi, pi]. \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: the first component represents the translational velocity w.r.t. x-axis,
- * the second one w.r.t. the y-axis and the third one the rotational velocity.
- * @see TebOptimalPlanner::AddEdgesVelocity
- * @remarks Do not forget to call setTebConfig()
- */
-class EdgeVelocityHolonomic : public BaseTebMultiEdge<3, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeVelocityHolonomic()
-  {
-    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
  * @class EdgeVelocityHolonomic0
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
  *

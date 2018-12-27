@@ -105,39 +105,6 @@ void EdgeVelocity::computeError()
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
 }
 
-inline void getVelocityHolonomic(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& lvx, double& lvy, double& avz)
-{
-  const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
-  const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
-  const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
-  Eigen::Vector2d ds = pose2->position() - pose1->position();
-
-  double cos_theta1 = std::cos(pose1->theta());
-  double sin_theta1 = std::sin(pose1->theta());
-
-  // transform pose2 into current robot frame pose1 (inverse 2d rotation matrix)
-  double dx =  cos_theta1*ds.x() + sin_theta1*ds.y();
-  double dy = -sin_theta1*ds.x() + cos_theta1*ds.y();
-
-  lvx = dx / dt->estimate();
-  lvy = dy / dt->estimate();
-  avz = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->estimate();
-}
-
-void EdgeVelocityHolonomic::computeError()
-{
-  ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic()");
-  double lvx, lvy, avz;
-  getVelocityHolonomic(cfg_, _vertices, lvx, lvy, avz);
-
-  _error[0] = penaltyBoundToInterval(lvx, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(lvy, cfg_->robot.max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
-  _error[2] = penaltyBoundToInterval(avz, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
-
-  ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]) && std::isfinite(_error[2]),
-                 "EdgeVelocityHolonomic::computeError() _error[0]=%f _error[1]=%f _error[2]=%f\n",_error[0],_error[1],_error[2]);
-}
-
 inline void getVelocityHolonomicNormalized(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
