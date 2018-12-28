@@ -71,33 +71,33 @@
 namespace teb_local_planner
 {
 
-inline void getVelocity(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& lvx, double& avz)
+inline void getVelocity2(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& lvx, double& avz)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
   const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
-  const Eigen::Vector2d ds = pose2->estimate().position() - pose1->estimate().position();
+  const Eigen::Vector2d ds = pose2->position() - pose1->position();
 
   double dist = ds.norm();
-  const double dz = g2o::normalize_theta(pose2->theta() - pose1->theta());
-  if (cfg_->trajectory.exact_arc_length && dz != 0)
-  {
-      double radius =  dist/(2*sin(dz/2));
-      dist = fabs( dz * radius ); // actual arg length!
+  double dz = g2o::normalize_theta(pose2->theta() - pose1->theta());
+
+  double base = dt->dt();
+  if (cfg_->trajectory.exact_arc_length && std::fabs(dz) > 0.05) {
+      base *= std::fabs(2.0 * std::sin(0.5 * dz) / dz);
   }
-  lvx = dist / dt->estimate();
 
-  //lvx *= g2o::sign(ds[0]*cos(pose1->theta()) + ds[1]*sin(pose1->theta())); // consider direction
-  lvx *= fast_sigmoid( 100 * (ds.x()*cos(pose1->theta()) + ds.y()*sin(pose1->theta())) ); // consider direction
-
-  avz = dz / dt->estimate();
+  lvx = dist / base;
+  avz = dz / dt->dt();
+  // consider direction
+  //lvx *= g2o::sign(ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta()));
+  lvx *= fast_sigmoid(100.0 * (ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta())));
 }
 
 void EdgeVelocity::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocity()");
   double lvx, avz;
-  getVelocity(cfg_, _vertices, lvx, avz);
+  getVelocity2(cfg_, _vertices, lvx, avz);
 
   _error[0] = penaltyBoundToInterval(lvx, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
   _error[1] = penaltyBoundToInterval(avz, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
@@ -105,39 +105,43 @@ void EdgeVelocity::computeError()
   ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
 }
 
-inline void getVelocityHolonomicNormalized(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
+inline void getVelocity3(const TebConfig* cfg_, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
   const VertexPose* pose2 = static_cast<const VertexPose*>(_vertices[1]);
   const VertexTimeDiff* dt = static_cast<const VertexTimeDiff*>(_vertices[2]);
-  Eigen::Vector2d ds = pose2->position() - pose1->position();
+  const Eigen::Vector2d ds = pose2->position() - pose1->position();
 
   double cos_theta1 = std::cos(pose1->theta());
   double sin_theta1 = std::sin(pose1->theta());
-
   // transform pose2 into current robot frame pose1 (inverse 2d rotation matrix)
   double dx =  cos_theta1*ds.x() + sin_theta1*ds.y();
   double dy = -sin_theta1*ds.x() + cos_theta1*ds.y();
+  double dz = g2o::normalize_theta(pose2->theta() - pose1->theta());
 
-  double lvx = dx / dt->estimate();
-  double lvy = dy / dt->estimate();
-  double avz = g2o::normalize_theta(pose2->theta() - pose1->theta()) / dt->estimate();
+  double base = dt->dt();
+  if (cfg_->trajectory.exact_arc_length && std::fabs(dz) > 0.05) {
+      base *= 2.0 * std::sin(0.5 * dz) / dz;
+  }
 
+  double lvx = dx / base;
+  double lvy = dy / base;
+  double avz = dz / dt->dt();
   // normalize
   a1 = lvx / cfg_->robot.max_vel_x;
   a2 = lvy / cfg_->robot.max_vel_y;
   a3 = avz / cfg_->robot.max_vel_theta;
 
-  ROS_ASSERT_MSG(std::isfinite(a1), "getVelocityHolonomicNormalized(): a1=%f\n",a1);
-  ROS_ASSERT_MSG(std::isfinite(a2), "getVelocityHolonomicNormalized(): a2=%f\n",a2);
-  ROS_ASSERT_MSG(std::isfinite(a3), "getVelocityHolonomicNormalized(): a3=%f\n",a3);
+  ROS_ASSERT_MSG(std::isfinite(a1), "getVelocity3(): a1=%f\n",a1);
+  ROS_ASSERT_MSG(std::isfinite(a2), "getVelocity3(): a2=%f\n",a2);
+  ROS_ASSERT_MSG(std::isfinite(a3), "getVelocity3(): a3=%f\n",a3);
 }
 
 void EdgeVelocityHolonomic0::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic0()");
   double a1, a2, a3;
-  getVelocityHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
+  getVelocity3(cfg_, _vertices, a1, a2, a3);
 
   // error
   _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
@@ -147,7 +151,7 @@ void EdgeVelocityHolonomic1::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic1()");
   double a1, a2, a3;
-  getVelocityHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
+  getVelocity3(cfg_, _vertices, a1, a2, a3);
 
   // error
   _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
@@ -160,7 +164,7 @@ void EdgeVelocityHolonomic2::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic2()");
   double a1, a2, a3;
-  getVelocityHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
+  getVelocity3(cfg_, _vertices, a1, a2, a3);
 
   // error
   _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
@@ -173,7 +177,7 @@ void EdgeVelocityHolonomic3::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic3()");
   double a1, a2, a3;
-  getVelocityHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
+  getVelocity3(cfg_, _vertices, a1, a2, a3);
 
   // error
   _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
@@ -185,7 +189,7 @@ void EdgeVelocityHolonomic4::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic4()");
   double a1, a2, a3;
-  getVelocityHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
+  getVelocity3(cfg_, _vertices, a1, a2, a3);
 
   // error
   _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
@@ -197,7 +201,7 @@ void EdgeVelocityHolonomic5::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic5()");
   double a1, a2, a3;
-  getVelocityHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
+  getVelocity3(cfg_, _vertices, a1, a2, a3);
 
   // error
   _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
@@ -209,7 +213,7 @@ void EdgeVelocityHolonomic6::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeVelocityHolonomic6()");
   double a1, a2, a3;
-  getVelocityHolonomicNormalized(cfg_, _vertices, a1, a2, a3);
+  getVelocity3(cfg_, _vertices, a1, a2, a3);
 
   // error
   _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
