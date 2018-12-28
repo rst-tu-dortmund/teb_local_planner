@@ -308,191 +308,30 @@ public:
 
 
 /**
- * @class EdgeAccelerationHolonomic0
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
- *
- *       x
- *
- * y   |----|
- *     | ?? |
- *     |----|
- *
- * This is for Holonomic type 0: ideal
- *
- * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a]^T ) \cdot weight \f$. \n
- * \e a denotes the normalized acceleration (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 1: a represents the normalized acceleration.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic0Start
- * @see EdgeAccelerationHolonomic0Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic0Start() and EdgeAccelerationHolonomic0Goal() for defining boundary values!
- */
-class EdgeAccelerationHolonomic0 : public BaseTebMultiEdge<1, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic0()
-  {
-    this->resize(5);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic0Start
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
- *
- *       x
- *
- * y   |----|
- *     | ?? |
- *     |----|
- *
- * This is for Holonomic type 0: ideal
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a]^T ) \cdot weight \f$. \n
- * \e a denotes the normalized acceleration (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 1: a represents the normalized acceleration.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic0
- * @see EdgeAccelerationHolonomic0Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic0Goal() for defining boundary values at the end of the trajectory!
- */
-class EdgeAccelerationHolonomic0Start : public BaseTebMultiEdge<1, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic0Start()
-  {
-    this->resize(3);
-    _measurement = NULL;
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the initial velocity that is taken into account for calculating the acceleration
-   * @param vel_start twist message containing the translational and rotational velocity
-   */
-  void setInitialVelocity(const geometry_msgs::Twist& vel_start)
-  {
-    _measurement = &vel_start;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic0Goal
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
- *
- *       x
- *
- * y   |----|
- *     | ?? |
- *     |----|
- *
- * This is for Holonomic type 0: ideal
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a]^T ) \cdot weight \f$. \n
- * \e a denotes the normalized acceleration (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 1: a represents the normalized acceleration.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic0
- * @see EdgeAccelerationHolonomic0Start
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic0Start() for defining boundary (initial) values at the end of the trajectory
- */
-class EdgeAccelerationHolonomic0Goal : public BaseTebMultiEdge<1, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic0Goal()
-  {
-    _measurement = NULL;
-    this->resize(3);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
-   * @param vel_goal twist message containing the translational and rotational velocity
-   */
-  void setGoalVelocity(const geometry_msgs::Twist& vel_goal)
-  {
-    _measurement = &vel_goal;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
  * @class EdgeAccelerationHolonomic1
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
  *
  *       x
- *    /      \
+ *
  * y   |----|
- *     |    |
+ *     | ?? |
  *     |----|
- *    \      /
- * This is for Holonomic type 1: 4 wheels, 45 degrees
+ *
+ * This is for Holonomic type 0: ideal
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
+ * \f$ \min \textrm{penaltyInterval}( [a]^T ) \cdot weight \f$. \n
+ * \e a denotes the normalized acceleration (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
+ * The dimension of the error / cost vector is 1: a represents the normalized acceleration.
  * @see TebOptimalPlanner::AddEdgesAcceleration
  * @see EdgeAccelerationHolonomic1Start
  * @see EdgeAccelerationHolonomic1Goal
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomic1Start() and EdgeAccelerationHolonomic1Goal() for defining boundary values!
  */
-class EdgeAccelerationHolonomic1 : public BaseTebMultiEdge<4, double>
+class EdgeAccelerationHolonomic1 : public BaseTebMultiEdge<1, double>
 {
 public:
 
@@ -520,27 +359,27 @@ public:
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
  *
  *       x
- *    /      \
+ *
  * y   |----|
- *     |    |
+ *     | ?? |
  *     |----|
- *    \      /
- * This is for Holonomic type 1: 4 wheels, 45 degrees
+ *
+ * This is for Holonomic type 0: ideal
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
+ * \f$ \min \textrm{penaltyInterval}( [a]^T ) \cdot weight \f$. \n
+ * \e a denotes the normalized acceleration (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
+ * The dimension of the error / cost vector is 1: a represents the normalized acceleration.
  * @see TebOptimalPlanner::AddEdgesAcceleration
  * @see EdgeAccelerationHolonomic1
  * @see EdgeAccelerationHolonomic1Goal
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomic1Goal() for defining boundary values at the end of the trajectory!
  */
-class EdgeAccelerationHolonomic1Start : public BaseTebMultiEdge<4, const geometry_msgs::Twist*>
+class EdgeAccelerationHolonomic1Start : public BaseTebMultiEdge<1, const geometry_msgs::Twist*>
 {
 public:
 
@@ -577,27 +416,27 @@ public:
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
  *
  *       x
- *    /      \
+ *
  * y   |----|
- *     |    |
+ *     | ?? |
  *     |----|
- *    \      /
- * This is for Holonomic type 1: 4 wheels, 45 degrees
+ *
+ * This is for Holonomic type 0: ideal
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
+ * \f$ \min \textrm{penaltyInterval}( [a]^T ) \cdot weight \f$. \n
+ * \e a denotes the normalized acceleration (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
+ * The dimension of the error / cost vector is 1: a represents the normalized acceleration.
  * @see TebOptimalPlanner::AddEdgesAcceleration
  * @see EdgeAccelerationHolonomic1
  * @see EdgeAccelerationHolonomic1Start
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomic1Start() for defining boundary (initial) values at the end of the trajectory
  */
-class EdgeAccelerationHolonomic1Goal : public BaseTebMultiEdge<4, const geometry_msgs::Twist*>
+class EdgeAccelerationHolonomic1Goal : public BaseTebMultiEdge<1, const geometry_msgs::Twist*>
 {
 public:
 
@@ -630,177 +469,19 @@ public:
 
 
 /**
- * @class EdgeAccelerationHolonomic2
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
- *
- *       x
- *       --
- * y   |----|
- *   | |    | |
- *     |----|
- *       --
- * This is for Holonomic type 2: 4 wheels, 0 degrees
- *
- * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic2Start
- * @see EdgeAccelerationHolonomic2Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic2Start() and EdgeAccelerationHolonomic2Goal() for defining boundary values!
- */
-class EdgeAccelerationHolonomic2 : public BaseTebMultiEdge<4, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic2()
-  {
-    this->resize(5);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic2Start
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
- *
- *       x
- *       --
- * y   |----|
- *   | |    | |
- *     |----|
- *       --
- * This is for Holonomic type 2: 4 wheels, 0 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic2
- * @see EdgeAccelerationHolonomic2Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic2Goal() for defining boundary values at the end of the trajectory!
- */
-class EdgeAccelerationHolonomic2Start : public BaseTebMultiEdge<4, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic2Start()
-  {
-    this->resize(3);
-    _measurement = NULL;
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the initial velocity that is taken into account for calculating the acceleration
-   * @param vel_start twist message containing the translational and rotational velocity
-   */
-  void setInitialVelocity(const geometry_msgs::Twist& vel_start)
-  {
-    _measurement = &vel_start;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic2Goal
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
- *
- *       x
- *       --
- * y   |----|
- *   | |    | |
- *     |----|
- *       --
- * This is for Holonomic type 2: 4 wheels, 0 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic2
- * @see EdgeAccelerationHolonomic2Start
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic2Start() for defining boundary (initial) values at the end of the trajectory
- */
-class EdgeAccelerationHolonomic2Goal : public BaseTebMultiEdge<4, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic2Goal()
-  {
-    _measurement = NULL;
-    this->resize(3);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
-   * @param vel_goal twist message containing the translational and rotational velocity
-   */
-  void setGoalVelocity(const geometry_msgs::Twist& vel_goal)
-  {
-    _measurement = &vel_goal;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
  * @class EdgeAccelerationHolonomic3
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
  *
- *       x
- *       --
- * y   |----|
- *     |    |
- *     |----|
- *    \      /
- * This is for Holonomic type 3: 3 wheels, 0 degrees
+ *       x              x              x              x
+ *       --          /              /      \              \
+ * y   |----|     y   |----|     y   |----|     y   |----|
+ *     |    |         |    | |       |    |       | |    |
+ *     |----|         |----|         |----|         |----|
+ *    \      /       \                 --                 /
+ * This is for holonomic type 3: 3 wheels, 0 degrees
+ *                       type 4: 3 wheels, 30 degrees
+ *                       type 5: 3 wheels, 60 degrees
+ *                       type 6: 3 wheels, 90 degrees
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
  * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
@@ -841,13 +522,16 @@ public:
  * @class EdgeAccelerationHolonomic3Start
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
  *
- *       x
- *       --
- * y   |----|
- *     |    |
- *     |----|
- *    \      /
- * This is for Holonomic type 3: 3 wheels, 0 degrees
+ *       x              x              x              x
+ *       --          /              /      \              \
+ * y   |----|     y   |----|     y   |----|     y   |----|
+ *     |    |         |    | |       |    |       | |    |
+ *     |----|         |----|         |----|         |----|
+ *    \      /       \                 --                 /
+ * This is for holonomic type 3: 3 wheels, 0 degrees
+ *                       type 4: 3 wheels, 30 degrees
+ *                       type 5: 3 wheels, 60 degrees
+ *                       type 6: 3 wheels, 90 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
@@ -898,13 +582,16 @@ public:
  * @class EdgeAccelerationHolonomic3Goal
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
  *
- *       x
- *       --
- * y   |----|
- *     |    |
- *     |----|
- *    \      /
- * This is for Holonomic type 3: 3 wheels, 0 degrees
+ *       x              x              x              x
+ *       --          /              /      \              \
+ * y   |----|     y   |----|     y   |----|     y   |----|
+ *     |    |         |    | |       |    |       | |    |
+ *     |----|         |----|         |----|         |----|
+ *    \      /       \                 --                 /
+ * This is for holonomic type 3: 3 wheels, 0 degrees
+ *                       type 4: 3 wheels, 30 degrees
+ *                       type 5: 3 wheels, 60 degrees
+ *                       type 6: 3 wheels, 90 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
@@ -955,27 +642,28 @@ public:
  * @class EdgeAccelerationHolonomic4
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
  *
- *       x
- *    /
- * y   |----|
- *     |    | |
- *     |----|
- *    \
- * This is for Holonomic type 4: 3 wheels, 30 degrees
+ *       x              x
+ *    /      \          --
+ * y   |----|     y   |----|
+ *     |    |       | |    | |
+ *     |----|         |----|
+ *    \      /          --
+ * This is for holonomic type 1: 4 wheels, 45 degrees
+ *                       type 2: 4 wheels, 0 degrees
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
  * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
  * @see TebOptimalPlanner::AddEdgesAcceleration
  * @see EdgeAccelerationHolonomic4Start
  * @see EdgeAccelerationHolonomic4Goal
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomic4Start() and EdgeAccelerationHolonomic4Goal() for defining boundary values!
  */
-class EdgeAccelerationHolonomic4 : public BaseTebMultiEdge<3, double>
+class EdgeAccelerationHolonomic4 : public BaseTebMultiEdge<4, double>
 {
 public:
 
@@ -1002,28 +690,29 @@ public:
  * @class EdgeAccelerationHolonomic4Start
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
  *
- *       x
- *    /
- * y   |----|
- *     |    | |
- *     |----|
- *    \
- * This is for Holonomic type 4: 3 wheels, 30 degrees
+ *       x              x
+ *    /      \          --
+ * y   |----|     y   |----|
+ *     |    |       | |    | |
+ *     |----|         |----|
+ *    \      /          --
+ * This is for holonomic type 1: 4 wheels, 45 degrees
+ *                       type 2: 4 wheels, 0 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
  * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
  * @see TebOptimalPlanner::AddEdgesAcceleration
  * @see EdgeAccelerationHolonomic4
  * @see EdgeAccelerationHolonomic4Goal
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomic4Goal() for defining boundary values at the end of the trajectory!
  */
-class EdgeAccelerationHolonomic4Start : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
+class EdgeAccelerationHolonomic4Start : public BaseTebMultiEdge<4, const geometry_msgs::Twist*>
 {
 public:
 
@@ -1059,28 +748,29 @@ public:
  * @class EdgeAccelerationHolonomic4Goal
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
  *
- *       x
- *    /
- * y   |----|
- *     |    | |
- *     |----|
- *    \
- * This is for Holonomic type 4: 3 wheels, 30 degrees
+ *       x              x
+ *    /      \          --
+ * y   |----|     y   |----|
+ *     |    |       | |    | |
+ *     |----|         |----|
+ *    \      /          --
+ * This is for holonomic type 1: 4 wheels, 45 degrees
+ *                       type 2: 4 wheels, 0 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
  * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
+ * The dimension of the error / cost vector is 4: they represent the normalized acceleration of 4 wheels.
  * @see TebOptimalPlanner::AddEdgesAcceleration
  * @see EdgeAccelerationHolonomic4
  * @see EdgeAccelerationHolonomic4Start
  * @remarks Do not forget to call setTebConfig()
  * @remarks Refer to EdgeAccelerationHolonomic4Start() for defining boundary (initial) values at the end of the trajectory
  */
-class EdgeAccelerationHolonomic4Goal : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
+class EdgeAccelerationHolonomic4Goal : public BaseTebMultiEdge<4, const geometry_msgs::Twist*>
 {
 public:
 
@@ -1088,328 +778,6 @@ public:
    * @brief Construct edge.
    */
   EdgeAccelerationHolonomic4Goal()
-  {
-    _measurement = NULL;
-    this->resize(3);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
-   * @param vel_goal twist message containing the translational and rotational velocity
-   */
-  void setGoalVelocity(const geometry_msgs::Twist& vel_goal)
-  {
-    _measurement = &vel_goal;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic5
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
- *
- *       x
- *    /      \
- * y   |----|
- *     |    |
- *     |----|
- *       --
- * This is for Holonomic type 3: 3 wheels, 60 degrees
- *
- * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic5Start
- * @see EdgeAccelerationHolonomic5Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic5Start() and EdgeAccelerationHolonomic5Goal() for defining boundary values!
- */
-class EdgeAccelerationHolonomic5 : public BaseTebMultiEdge<3, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic5()
-  {
-    this->resize(5);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic5Start
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
- *
- *       x
- *    /      \
- * y   |----|
- *     |    |
- *     |----|
- *       --
- * This is for Holonomic type 3: 3 wheels, 60 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic5
- * @see EdgeAccelerationHolonomic5Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic5Goal() for defining boundary values at the end of the trajectory!
- */
-class EdgeAccelerationHolonomic5Start : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic5Start()
-  {
-    this->resize(3);
-    _measurement = NULL;
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the initial velocity that is taken into account for calculating the acceleration
-   * @param vel_start twist message containing the translational and rotational velocity
-   */
-  void setInitialVelocity(const geometry_msgs::Twist& vel_start)
-  {
-    _measurement = &vel_start;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic5Goal
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
- *
- *       x
- *    /      \
- * y   |----|
- *     |    |
- *     |----|
- *       --
- * This is for Holonomic type 3: 3 wheels, 60 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic5
- * @see EdgeAccelerationHolonomic5Start
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic5Start() for defining boundary (initial) values at the end of the trajectory
- */
-class EdgeAccelerationHolonomic5Goal : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic5Goal()
-  {
-    _measurement = NULL;
-    this->resize(3);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the goal / final velocity that is taken into account for calculating the acceleration
-   * @param vel_goal twist message containing the translational and rotational velocity
-   */
-  void setGoalVelocity(const geometry_msgs::Twist& vel_goal)
-  {
-    _measurement = &vel_goal;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic6
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
- *
- *       x
- *           \
- * y   |----|
- *   | |    |
- *     |----|
- *           /
- * This is for Holonomic type 4: 3 wheels, 90 degrees
- *
- * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic6Start
- * @see EdgeAccelerationHolonomic6Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic6Start() and EdgeAccelerationHolonomic6Goal() for defining boundary values!
- */
-class EdgeAccelerationHolonomic6 : public BaseTebMultiEdge<3, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic6()
-  {
-    this->resize(5);
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic6Start
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
- *
- *       x
- *           \
- * y   |----|
- *   | |    |
- *     |----|
- *           /
- * This is for Holonomic type 4: 3 wheels, 90 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic6
- * @see EdgeAccelerationHolonomic6Goal
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic6Goal() for defining boundary values at the end of the trajectory!
- */
-class EdgeAccelerationHolonomic6Start : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic6Start()
-  {
-    this->resize(3);
-    _measurement = NULL;
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-  /**
-   * @brief Set the initial velocity that is taken into account for calculating the acceleration
-   * @param vel_start twist message containing the translational and rotational velocity
-   */
-  void setInitialVelocity(const geometry_msgs::Twist& vel_start)
-  {
-    _measurement = &vel_start;
-  }
-
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
-
-/**
- * @class EdgeAccelerationHolonomic6Goal
- * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
- *
- *       x
- *           \
- * y   |----|
- *   | |    |
- *     |----|
- *           /
- * This is for Holonomic type 4: 3 wheels, 90 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
- * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation() \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
- * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesAcceleration
- * @see EdgeAccelerationHolonomic6
- * @see EdgeAccelerationHolonomic6Start
- * @remarks Do not forget to call setTebConfig()
- * @remarks Refer to EdgeAccelerationHolonomic6Start() for defining boundary (initial) values at the end of the trajectory
- */
-class EdgeAccelerationHolonomic6Goal : public BaseTebMultiEdge<3, const geometry_msgs::Twist*>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeAccelerationHolonomic6Goal()
   {
     _measurement = NULL;
     this->resize(3);

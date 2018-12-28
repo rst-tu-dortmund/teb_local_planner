@@ -112,19 +112,6 @@ inline void getAcceleration2(const TebConfig* cfg_, const g2o::HyperGraph::Verte
   aaz  = (avz2 - avz1) / dt2_1_3;
 }
 
-void EdgeAcceleration::computeError()
-{
-  ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAcceleration()");
-  double lax, aaz;
-  getAcceleration2(cfg_, _vertices, lax, aaz);
-
-  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
-
-  ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAcceleration::computeError() translational: _error[0]=%f\n",_error[0]);
-  ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAcceleration::computeError() rotational: _error[1]=%f\n",_error[1]);
-}
-
 inline void getAcceleration2Start(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& aaz)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
@@ -153,19 +140,6 @@ inline void getAcceleration2Start(const TebConfig* cfg_, const geometry_msgs::Tw
   aaz  = (avz2 - avz1) / dt2;
 }
 
-void EdgeAccelerationStart::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationStart()");
-  double lax, aaz;
-  getAcceleration2Start(cfg_, _measurement, _vertices, lax, aaz);
-
-  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
-
-  ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAccelerationStart::computeError() translational: _error[0]=%f\n",_error[0]);
-  ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAccelerationStart::computeError() rotational: _error[1]=%f\n",_error[1]);
-}
-
 inline void getAcceleration2Goal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& lax, double& aaz)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
@@ -192,6 +166,32 @@ inline void getAcceleration2Goal(const TebConfig* cfg_, const geometry_msgs::Twi
   double dt2 = 0.5 * dt->dt();
   lax  = (lvx2 - lvx1) / dt2;
   aaz  = (avz2 - avz1) / dt2;
+}
+
+void EdgeAcceleration::computeError()
+{
+  ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAcceleration()");
+  double lax, aaz;
+  getAcceleration2(cfg_, _vertices, lax, aaz);
+
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+
+  ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAcceleration::computeError() translational: _error[0]=%f\n",_error[0]);
+  ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAcceleration::computeError() rotational: _error[1]=%f\n",_error[1]);
+}
+
+void EdgeAccelerationStart::computeError()
+{
+  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationStart()");
+  double lax, aaz;
+  getAcceleration2Start(cfg_, _measurement, _vertices, lax, aaz);
+
+  _error[0] = penaltyBoundToInterval(lax,cfg_->robot.acc_lim_x,cfg_->optim.penalty_epsilon);
+  _error[1] = penaltyBoundToInterval(aaz,cfg_->robot.acc_lim_theta,cfg_->optim.penalty_epsilon);
+
+  ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeAccelerationStart::computeError() translational: _error[0]=%f\n",_error[0]);
+  ROS_ASSERT_MSG(std::isfinite(_error[1]), "EdgeAccelerationStart::computeError() rotational: _error[1]=%f\n",_error[1]);
 }
 
 void EdgeAccelerationGoal::computeError()
@@ -263,16 +263,6 @@ inline void getAcceleration3(const TebConfig* cfg_, const g2o::HyperGraph::Verte
   ROS_ASSERT_MSG(std::isfinite(a3), "getAcceleration3(): a3=%f\n",a3);
 }
 
-void EdgeAccelerationHolonomic0::computeError()
-{
-  ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAccelerationHolonomic0()");
-  double a1, a2, a3;
-  getAcceleration3(cfg_, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
 inline void getAcceleration3Start(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
 {
   const VertexPose* pose1 = static_cast<const VertexPose*>(_vertices[0]);
@@ -311,16 +301,6 @@ inline void getAcceleration3Start(const TebConfig* cfg_, const geometry_msgs::Tw
   ROS_ASSERT_MSG(std::isfinite(a1), "getAcceleration3Start(): a1=%f\n",a1);
   ROS_ASSERT_MSG(std::isfinite(a2), "getAcceleration3Start(): a2=%f\n",a2);
   ROS_ASSERT_MSG(std::isfinite(a3), "getAcceleration3Start(): a3=%f\n",a3);
-}
-
-void EdgeAccelerationHolonomic0Start::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationHolonomic0Start()");
-  double a1, a2, a3;
-  getAcceleration3Start(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 inline void getAcceleration3Goal(const TebConfig* cfg_, const geometry_msgs::Twist* _measurement, const g2o::HyperGraph::VertexContainer _vertices, double& a1, double& a2, double& a3)
@@ -363,16 +343,6 @@ inline void getAcceleration3Goal(const TebConfig* cfg_, const geometry_msgs::Twi
   ROS_ASSERT_MSG(std::isfinite(a3), "getAcceleration3Goal(): a3=%f\n",a3);
 }
 
-void EdgeAccelerationHolonomic0Goal::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationHolonomic0Goal()");
-  double a1, a2, a3;
-  getAcceleration3Goal(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
 void EdgeAccelerationHolonomic1::computeError()
 {
   ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAccelerationHolonomic1()");
@@ -380,10 +350,7 @@ void EdgeAccelerationHolonomic1::computeError()
   getAcceleration3(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic1Start::computeError()
@@ -393,10 +360,7 @@ void EdgeAccelerationHolonomic1Start::computeError()
   getAcceleration3Start(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic1Goal::computeError()
@@ -406,49 +370,7 @@ void EdgeAccelerationHolonomic1Goal::computeError()
   getAcceleration3Goal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic2::computeError()
-{
-  ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAccelerationHolonomic2()");
-  double a1, a2, a3;
-  getAcceleration3(cfg_, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic2Start::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationHolonomic2Start()");
-  double a1, a2, a3;
-  getAcceleration3Start(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic2Goal::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationHolonomic2Goal()");
-  double a1, a2, a3;
-  getAcceleration3Goal(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  _error[0] = penaltyBoundToInterval(error_0_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
 }
 
 void EdgeAccelerationHolonomic3::computeError()
@@ -458,9 +380,28 @@ void EdgeAccelerationHolonomic3::computeError()
   getAcceleration3(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  switch (cfg_->robot.omni_type) {
+  case 3:
+      _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 4:
+      _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 5:
+      _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 6:
+      _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  }
 }
 
 void EdgeAccelerationHolonomic3Start::computeError()
@@ -470,9 +411,28 @@ void EdgeAccelerationHolonomic3Start::computeError()
   getAcceleration3Start(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  switch (cfg_->robot.omni_type) {
+  case 3:
+      _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 4:
+      _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 5:
+      _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 6:
+      _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  }
 }
 
 void EdgeAccelerationHolonomic3Goal::computeError()
@@ -482,9 +442,28 @@ void EdgeAccelerationHolonomic3Goal::computeError()
   getAcceleration3Goal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  switch (cfg_->robot.omni_type) {
+  case 3:
+      _error[0] = penaltyBoundToInterval(error_3_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_3_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_3_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 4:
+      _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 5:
+      _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 6:
+      _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  }
 }
 
 void EdgeAccelerationHolonomic4::computeError()
@@ -494,9 +473,20 @@ void EdgeAccelerationHolonomic4::computeError()
   getAcceleration3(cfg_, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  switch (cfg_->robot.omni_type) {
+  case 1:
+      _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 2:
+      _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  }
 }
 
 void EdgeAccelerationHolonomic4Start::computeError()
@@ -506,9 +496,20 @@ void EdgeAccelerationHolonomic4Start::computeError()
   getAcceleration3Start(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  switch (cfg_->robot.omni_type) {
+  case 1:
+      _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 2:
+      _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  }
 }
 
 void EdgeAccelerationHolonomic4Goal::computeError()
@@ -518,81 +519,20 @@ void EdgeAccelerationHolonomic4Goal::computeError()
   getAcceleration3Goal(cfg_, _measurement, _vertices, a1, a2, a3);
 
   // error
-  _error[0] = penaltyBoundToInterval(error_4_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_4_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_4_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic5::computeError()
-{
-  ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAccelerationHolonomic5()");
-  double a1, a2, a3;
-  getAcceleration3(cfg_, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic5Start::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationHolonomic5Start()");
-  double a1, a2, a3;
-  getAcceleration3Start(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic5Goal::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationHolonomic5Goal()");
-  double a1, a2, a3;
-  getAcceleration3Goal(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_5_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_5_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_5_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic6::computeError()
-{
-  ROS_ASSERT_MSG(cfg_, "You must call setTebConfig() on EdgeAccelerationHolonomic6()");
-  double a1, a2, a3;
-  getAcceleration3(cfg_, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic6Start::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setStartVelocity() on EdgeAccelerationHolonomic6Start()");
-  double a1, a2, a3;
-  getAcceleration3Start(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-}
-
-void EdgeAccelerationHolonomic6Goal::computeError()
-{
-  ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setGoalVelocity() on EdgeAccelerationHolonomic6Goal()");
-  double a1, a2, a3;
-  getAcceleration3Goal(cfg_, _measurement, _vertices, a1, a2, a3);
-
-  // error
-  _error[0] = penaltyBoundToInterval(error_6_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[1] = penaltyBoundToInterval(error_6_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
-  _error[2] = penaltyBoundToInterval(error_6_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+  switch (cfg_->robot.omni_type) {
+  case 1:
+      _error[0] = penaltyBoundToInterval(error_1_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_1_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_1_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[3] = penaltyBoundToInterval(error_1_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  case 2:
+      _error[0] = penaltyBoundToInterval(error_2_1(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[1] = penaltyBoundToInterval(error_2_2(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[2] = penaltyBoundToInterval(error_2_3(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      _error[3] = penaltyBoundToInterval(error_2_4(a1, a2, a3), 1.0, cfg_->optim.penalty_epsilon);
+      break;
+  }
 }
 
 }; // end namespace

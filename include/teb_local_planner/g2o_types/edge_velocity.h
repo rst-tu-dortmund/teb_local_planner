@@ -166,7 +166,7 @@ public:
 
 
 /**
- * @class EdgeVelocityHolonomic0
+ * @class EdgeVelocityHolonomic1
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
  *
  *       x
@@ -186,52 +186,7 @@ public:
  * @see TebOptimalPlanner::AddEdgesVelocity
  * @remarks Do not forget to call setTebConfig()
  */
-class EdgeVelocityHolonomic0 : public BaseTebMultiEdge<1, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeVelocityHolonomic0()
-  {
-    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
- * @class EdgeVelocityHolonomic1
- * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
- *
- *       x
- *    /      \
- * y   |----|
- *     |    |
- *     |----|
- *    \      /
- * This is for Holonomic type 1: 4 wheels, 45 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3},v_{w4}]^T ) \cdot weight \f$. \n
- * \e v_{w1} \dots v_{w4} denote the normalized velocity of wheel 1 to wheel 4 (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 4: they represent the normalized velocity of 4 wheels.
- * @see TebOptimalPlanner::AddEdgesVelocity
- * @remarks Do not forget to call setTebConfig()
- */
-class EdgeVelocityHolonomic1 : public BaseTebMultiEdge<4, double>
+class EdgeVelocityHolonomic1 : public BaseTebMultiEdge<1, double>
 {
 public:
 
@@ -256,61 +211,19 @@ public:
 
 
 /**
- * @class EdgeVelocityHolonomic2
- * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
- *
- *       x
- *       --
- * y   |----|
- *   | |    | |
- *     |----|
- *       --
- * This is for Holonomic type 2: 4 wheels, 0 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3},v_{w4}]^T ) \cdot weight \f$. \n
- * \e v_{w1} \dots v_{w4} denote the normalized velocity of wheel 1 to wheel 4 (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 4: they represent the normalized velocity of 4 wheels.
- * @see TebOptimalPlanner::AddEdgesVelocity
- * @remarks Do not forget to call setTebConfig()
- */
-class EdgeVelocityHolonomic2 : public BaseTebMultiEdge<4, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeVelocityHolonomic2()
-  {
-    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
  * @class EdgeVelocityHolonomic3
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
  *
- *       x
- *       --
- * y   |----|
- *     |    |
- *     |----|
- *    \      /
- * This is for Holonomic type 3: 3 wheels, 0 degrees
+ *       x              x              x              x
+ *       --          /              /      \              \
+ * y   |----|     y   |----|     y   |----|     y   |----|
+ *     |    |         |    | |       |    |       | |    |
+ *     |----|         |----|         |----|         |----|
+ *    \      /       \                 --                 /
+ * This is for holonomic type 3: 3 wheels, 0 degrees
+ *                       type 4: 3 wheels, 30 degrees
+ *                       type 5: 3 wheels, 60 degrees
+ *                       type 6: 3 wheels, 90 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
  * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
@@ -349,24 +262,25 @@ public:
  * @class EdgeVelocityHolonomic4
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
  *
- *       x
- *    /
- * y   |----|
- *     |    | |
- *     |----|
- *    \
- * This is for Holonomic type 4: 3 wheels, 30 degrees
+ *       x              x
+ *    /      \          --
+ * y   |----|     y   |----|
+ *     |    |       | |    | |
+ *     |----|         |----|
+ *    \      /          --
+ * This is for holonomic type 1: 4 wheels, 45 degrees
+ *                       type 2: 4 wheels, 0 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
- * \e v_{w1} \dots v_{w3} denote the normalized velocity of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3},v_{w4}]^T ) \cdot weight \f$. \n
+ * \e v_{w1} \dots v_{w4} denote the normalized velocity of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: they represent the normalized velocity of 3 wheels.
+ * The dimension of the error / cost vector is 4: they represent the normalized velocity of 4 wheels.
  * @see TebOptimalPlanner::AddEdgesVelocity
  * @remarks Do not forget to call setTebConfig()
  */
-class EdgeVelocityHolonomic4 : public BaseTebMultiEdge<3, double>
+class EdgeVelocityHolonomic4 : public BaseTebMultiEdge<4, double>
 {
 public:
 
@@ -374,96 +288,6 @@ public:
    * @brief Construct edge.
    */
   EdgeVelocityHolonomic4()
-  {
-    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
- * @class EdgeVelocityHolonomic5
- * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
- *
- *       x
- *    /      \
- * y   |----|
- *     |    |
- *     |----|
- *       --
- * This is for Holonomic type 5: 3 wheels, 60 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
- * \e v_{w1} \dots v_{w3} denote the normalized velocity of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: they represent the normalized velocity of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesVelocity
- * @remarks Do not forget to call setTebConfig()
- */
-class EdgeVelocityHolonomic5 : public BaseTebMultiEdge<3, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeVelocityHolonomic5()
-  {
-    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
-  }
-
-  /**
-   * @brief Actual cost function
-   */
-  void computeError();
-
-public:
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-};
-
-
-/**
- * @class EdgeVelocityHolonomic6
- * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
- *
- *       x
- *           \
- * y   |----|
- *   | |    |
- *     |----|
- *           /
- * This is for Holonomic type 4: 3 wheels, 90 degrees
- *
- * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
- * \e v_{w1} \dots v_{w3} denote the normalized velocity of wheel 1 to wheel 3 (computed using finite differneces). \n
- * \e weight can be set using setInformation(). \n
- * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: they represent the normalized velocity of 3 wheels.
- * @see TebOptimalPlanner::AddEdgesVelocity
- * @remarks Do not forget to call setTebConfig()
- */
-class EdgeVelocityHolonomic6 : public BaseTebMultiEdge<3, double>
-{
-public:
-
-  /**
-   * @brief Construct edge.
-   */
-  EdgeVelocityHolonomic6()
   {
     this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
   }

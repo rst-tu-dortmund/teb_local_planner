@@ -126,37 +126,21 @@ void TebOptimalPlanner::registerG2OTypes()
 
   factory->registerType("EDGE_TIME_OPTIMAL", new g2o::HyperGraphElementCreator<EdgeTimeOptimal>);
   factory->registerType("EDGE_VELOCITY", new g2o::HyperGraphElementCreator<EdgeVelocity>);
-  factory->registerType("EDGE_VELOCITY_HOLONOMIC0", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic0>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC1", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic1>);
-  factory->registerType("EDGE_VELOCITY_HOLONOMIC2", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic2>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC3", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic3>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC4", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic4>);
-  factory->registerType("EDGE_VELOCITY_HOLONOMIC5", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic5>);
-  factory->registerType("EDGE_VELOCITY_HOLONOMIC6", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic6>);
   factory->registerType("EDGE_ACCELERATION", new g2o::HyperGraphElementCreator<EdgeAcceleration>);
   factory->registerType("EDGE_ACCELERATION_START", new g2o::HyperGraphElementCreator<EdgeAccelerationStart>);
   factory->registerType("EDGE_ACCELERATION_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationGoal>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC0", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic0>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC0_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic0Start>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC0_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic0Goal>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC1", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic1>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC1_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic1Start>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC1_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic1Goal>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC2", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic2>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC2_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic2Start>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC2_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic2Goal>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC3", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic3>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC3_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic3Start>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC3_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic3Goal>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC4", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic4>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC4_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic4Start>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC4_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic4Goal>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC5", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic5>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC5_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic5Start>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC5_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic5Goal>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC6", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic6>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC6_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic6Start>);
-  factory->registerType("EDGE_ACCELERATION_HOLONOMIC6_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic6Goal>);
   factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
   factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
   factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
@@ -764,149 +748,90 @@ void TebOptimalPlanner::AddEdgesVelocity()
       return; // if weight equals zero skip adding edges!
 
     int n = teb_.sizePoses();
+    Eigen::Matrix<double,1,1> information1;
+    Eigen::Matrix<double,3,3> information3;
+    Eigen::Matrix<double,4,4> information4;
+    information1.fill(0);
+    information3.fill(0);
+    information4.fill(0);
     switch (cfg_->robot.omni_type) {
       case 0:
-        {
-          Eigen::Matrix<double,1,1> information;
-          information.fill(0);
-          information(0,0) = weight_0_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-
-          for (int i=0; i < n - 1; ++i)
-          {
-            EdgeVelocityHolonomic0* velocity_edge = new EdgeVelocityHolonomic0;
-            velocity_edge->setVertex(0,teb_.PoseVertex(i));
-            velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
-            velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
-            velocity_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(velocity_edge);
-          }
-        }
-        break;
+          information1(0,0) = weight_0_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          break;
       case 1:
-        {
-          Eigen::Matrix<double,4,4> information;
-          information.fill(0);
-          information(0,0) = weight_1_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(1,1) = weight_1_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(2,2) = weight_1_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(3,3) = weight_1_4(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-
+          information4(0,0) = weight_1_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information4(1,1) = weight_1_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information4(2,2) = weight_1_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information4(3,3) = weight_1_4(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          break;
+      case 2:
+          information4(0,0) = weight_2_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information4(1,1) = weight_2_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information4(2,2) = weight_2_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information4(3,3) = weight_2_4(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          break;
+      case 3:
+          information3(0,0) = weight_3_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(1,1) = weight_3_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(2,2) = weight_3_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          break;
+      case 4:
+          information3(0,0) = weight_4_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(1,1) = weight_4_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(2,2) = weight_4_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          break;
+      case 5:
+          information3(0,0) = weight_5_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(1,1) = weight_5_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(2,2) = weight_5_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          break;
+      case 6:
+          information3(0,0) = weight_6_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(1,1) = weight_6_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          information3(2,2) = weight_6_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
+          break;
+    }
+    switch (cfg_->robot.omni_type) {
+      case 0:
           for (int i=0; i < n - 1; ++i)
           {
             EdgeVelocityHolonomic1* velocity_edge = new EdgeVelocityHolonomic1;
             velocity_edge->setVertex(0,teb_.PoseVertex(i));
             velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
             velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
+            velocity_edge->setInformation(information1);
             velocity_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(velocity_edge);
           }
-        }
-        break;
+          break;
+      case 1:
       case 2:
-        {
-          Eigen::Matrix<double,4,4> information;
-          information.fill(0);
-          information(0,0) = weight_2_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(1,1) = weight_2_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(2,2) = weight_2_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(3,3) = weight_2_4(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-
-          for (int i=0; i < n - 1; ++i)
-          {
-            EdgeVelocityHolonomic2* velocity_edge = new EdgeVelocityHolonomic2;
-            velocity_edge->setVertex(0,teb_.PoseVertex(i));
-            velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
-            velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
-            velocity_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(velocity_edge);
-          }
-        }
-        break;
-      case 3:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_3_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(1,1) = weight_3_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(2,2) = weight_3_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-
-          for (int i=0; i < n - 1; ++i)
-          {
-            EdgeVelocityHolonomic3* velocity_edge = new EdgeVelocityHolonomic3;
-            velocity_edge->setVertex(0,teb_.PoseVertex(i));
-            velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
-            velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
-            velocity_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(velocity_edge);
-          }
-        }
-        break;
-      case 4:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_4_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(1,1) = weight_4_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(2,2) = weight_4_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-
           for (int i=0; i < n - 1; ++i)
           {
             EdgeVelocityHolonomic4* velocity_edge = new EdgeVelocityHolonomic4;
             velocity_edge->setVertex(0,teb_.PoseVertex(i));
             velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
             velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
+            velocity_edge->setInformation(information4);
             velocity_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(velocity_edge);
           }
-        }
-        break;
+          break;
+      case 3:
+      case 4:
       case 5:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_5_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(1,1) = weight_5_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(2,2) = weight_5_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-
-          for (int i=0; i < n - 1; ++i)
-          {
-            EdgeVelocityHolonomic5* velocity_edge = new EdgeVelocityHolonomic5;
-            velocity_edge->setVertex(0,teb_.PoseVertex(i));
-            velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
-            velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
-            velocity_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(velocity_edge);
-          }
-        }
-        break;
       case 6:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_6_1(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(1,1) = weight_6_2(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-          information(2,2) = weight_6_3(cfg_->optim.weight_max_vel_x, cfg_->optim.weight_max_vel_y, cfg_->optim.weight_max_vel_theta);
-
           for (int i=0; i < n - 1; ++i)
           {
-            EdgeVelocityHolonomic6* velocity_edge = new EdgeVelocityHolonomic6;
+            EdgeVelocityHolonomic3* velocity_edge = new EdgeVelocityHolonomic3;
             velocity_edge->setVertex(0,teb_.PoseVertex(i));
             velocity_edge->setVertex(1,teb_.PoseVertex(i+1));
             velocity_edge->setVertex(2,teb_.TimeDiffVertex(i));
-            velocity_edge->setInformation(information);
+            velocity_edge->setInformation(information3);
             velocity_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(velocity_edge);
           }
-        }
-        break;
-      default:
-        break;
+          break;
     }
   }
 }
@@ -967,63 +892,51 @@ void TebOptimalPlanner::AddEdgesAcceleration()
   }
   else // holonomic robot
   {
+    Eigen::Matrix<double,1,1> information1;
+    Eigen::Matrix<double,3,3> information3;
+    Eigen::Matrix<double,4,4> information4;
+    information1.fill(0);
+    information3.fill(0);
+    information4.fill(0);
     switch (cfg_->robot.omni_type) {
       case 0:
-        {
-          Eigen::Matrix<double,1,1> information;
-          information.fill(0);
-          information(0,0) = weight_0_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-
-          // check if an initial velocity should be taken into accound
-          if (vel_start_.first)
-          {
-            EdgeAccelerationHolonomic0Start* acceleration_edge = new EdgeAccelerationHolonomic0Start;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(0));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
-            acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // now add the usual acceleration edge for each tuple of three teb poses
-          for (int i=0; i < n - 2; ++i)
-          {
-            EdgeAccelerationHolonomic0* acceleration_edge = new EdgeAccelerationHolonomic0;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(i));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(i+1));
-            acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
-            acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
-            acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // check if a goal velocity should be taken into accound
-          if (vel_goal_.first)
-          {
-            EdgeAccelerationHolonomic0Goal* acceleration_edge = new EdgeAccelerationHolonomic0Goal;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(n-2));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
-            acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-        }
-        break;
+          information1(0,0) = weight_0_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          break;
       case 1:
-        {
-          Eigen::Matrix<double,4,4> information;
-          information.fill(0);
-          information(0,0) = weight_1_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(1,1) = weight_1_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(2,2) = weight_1_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(3,3) = weight_1_4(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-
+          information4(0,0) = weight_1_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information4(1,1) = weight_1_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information4(2,2) = weight_1_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information4(3,3) = weight_1_4(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          break;
+      case 2:
+          information4(0,0) = weight_2_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information4(1,1) = weight_2_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information4(2,2) = weight_2_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information4(3,3) = weight_2_4(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          break;
+      case 3:
+          information3(0,0) = weight_3_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(1,1) = weight_3_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(2,2) = weight_3_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+        break;
+      case 4:
+          information3(0,0) = weight_4_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(1,1) = weight_4_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(2,2) = weight_4_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+        break;
+      case 5:
+          information3(0,0) = weight_5_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(1,1) = weight_5_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(2,2) = weight_5_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+        break;
+      case 6:
+          information3(0,0) = weight_6_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(1,1) = weight_6_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+          information3(2,2) = weight_6_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
+        break;
+    }
+    switch (cfg_->robot.omni_type) {
+      case 0:
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
           {
@@ -1032,7 +945,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             acceleration_edge->setVertex(1,teb_.PoseVertex(1));
             acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
             acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information1);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
@@ -1046,7 +959,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
             acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
             acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information1);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
@@ -1059,119 +972,13 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
             acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
             acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information1);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
-        }
-        break;
+          break;
+      case 1:
       case 2:
-        {
-          Eigen::Matrix<double,4,4> information;
-          information.fill(0);
-          information(0,0) = weight_2_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(1,1) = weight_2_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(2,2) = weight_2_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(3,3) = weight_2_4(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-
-          // check if an initial velocity should be taken into accound
-          if (vel_start_.first)
-          {
-            EdgeAccelerationHolonomic2Start* acceleration_edge = new EdgeAccelerationHolonomic2Start;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(0));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
-            acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // now add the usual acceleration edge for each tuple of three teb poses
-          for (int i=0; i < n - 2; ++i)
-          {
-            EdgeAccelerationHolonomic2* acceleration_edge = new EdgeAccelerationHolonomic2;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(i));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(i+1));
-            acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
-            acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
-            acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // check if a goal velocity should be taken into accound
-          if (vel_goal_.first)
-          {
-            EdgeAccelerationHolonomic2Goal* acceleration_edge = new EdgeAccelerationHolonomic2Goal;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(n-2));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
-            acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-        }
-        break;
-      case 3:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_3_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(1,1) = weight_3_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(2,2) = weight_3_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-
-          // check if an initial velocity should be taken into accound
-          if (vel_start_.first)
-          {
-            EdgeAccelerationHolonomic3Start* acceleration_edge = new EdgeAccelerationHolonomic3Start;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(0));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
-            acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // now add the usual acceleration edge for each tuple of three teb poses
-          for (int i=0; i < n - 2; ++i)
-          {
-            EdgeAccelerationHolonomic3* acceleration_edge = new EdgeAccelerationHolonomic3;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(i));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(i+1));
-            acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
-            acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
-            acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // check if a goal velocity should be taken into accound
-          if (vel_goal_.first)
-          {
-            EdgeAccelerationHolonomic3Goal* acceleration_edge = new EdgeAccelerationHolonomic3Goal;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(n-2));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
-            acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-        }
-        break;
-      case 4:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_4_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(1,1) = weight_4_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(2,2) = weight_4_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
           {
@@ -1180,7 +987,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             acceleration_edge->setVertex(1,teb_.PoseVertex(1));
             acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
             acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information4);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
@@ -1194,7 +1001,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
             acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
             acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information4);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
@@ -1207,78 +1014,24 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
             acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
             acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information4);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
-        }
-        break;
+          break;
+      case 3:
+      case 4:
       case 5:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_5_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(1,1) = weight_5_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(2,2) = weight_5_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-
-          // check if an initial velocity should be taken into accound
-          if (vel_start_.first)
-          {
-            EdgeAccelerationHolonomic5Start* acceleration_edge = new EdgeAccelerationHolonomic5Start;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(0));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
-            acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // now add the usual acceleration edge for each tuple of three teb poses
-          for (int i=0; i < n - 2; ++i)
-          {
-            EdgeAccelerationHolonomic5* acceleration_edge = new EdgeAccelerationHolonomic5;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(i));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(i+1));
-            acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
-            acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
-            acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-
-          // check if a goal velocity should be taken into accound
-          if (vel_goal_.first)
-          {
-            EdgeAccelerationHolonomic5Goal* acceleration_edge = new EdgeAccelerationHolonomic5Goal;
-            acceleration_edge->setVertex(0,teb_.PoseVertex(n-2));
-            acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
-            acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
-            acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
-            acceleration_edge->setTebConfig(*cfg_);
-            optimizer_->addEdge(acceleration_edge);
-          }
-        }
-        break;
       case 6:
-        {
-          Eigen::Matrix<double,3,3> information;
-          information.fill(0);
-          information(0,0) = weight_6_1(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(1,1) = weight_6_2(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-          information(2,2) = weight_6_3(cfg_->optim.weight_acc_lim_x, cfg_->optim.weight_acc_lim_y, cfg_->optim.weight_acc_lim_theta);
-
           // check if an initial velocity should be taken into accound
           if (vel_start_.first)
           {
-            EdgeAccelerationHolonomic6Start* acceleration_edge = new EdgeAccelerationHolonomic6Start;
+            EdgeAccelerationHolonomic3Start* acceleration_edge = new EdgeAccelerationHolonomic3Start;
             acceleration_edge->setVertex(0,teb_.PoseVertex(0));
             acceleration_edge->setVertex(1,teb_.PoseVertex(1));
             acceleration_edge->setVertex(2,teb_.TimeDiffVertex(0));
             acceleration_edge->setInitialVelocity(vel_start_.second);
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information3);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
@@ -1286,13 +1039,13 @@ void TebOptimalPlanner::AddEdgesAcceleration()
           // now add the usual acceleration edge for each tuple of three teb poses
           for (int i=0; i < n - 2; ++i)
           {
-            EdgeAccelerationHolonomic6* acceleration_edge = new EdgeAccelerationHolonomic6;
+            EdgeAccelerationHolonomic3* acceleration_edge = new EdgeAccelerationHolonomic3;
             acceleration_edge->setVertex(0,teb_.PoseVertex(i));
             acceleration_edge->setVertex(1,teb_.PoseVertex(i+1));
             acceleration_edge->setVertex(2,teb_.PoseVertex(i+2));
             acceleration_edge->setVertex(3,teb_.TimeDiffVertex(i));
             acceleration_edge->setVertex(4,teb_.TimeDiffVertex(i+1));
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information3);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
@@ -1300,19 +1053,16 @@ void TebOptimalPlanner::AddEdgesAcceleration()
           // check if a goal velocity should be taken into accound
           if (vel_goal_.first)
           {
-            EdgeAccelerationHolonomic6Goal* acceleration_edge = new EdgeAccelerationHolonomic6Goal;
+            EdgeAccelerationHolonomic3Goal* acceleration_edge = new EdgeAccelerationHolonomic3Goal;
             acceleration_edge->setVertex(0,teb_.PoseVertex(n-2));
             acceleration_edge->setVertex(1,teb_.PoseVertex(n-1));
             acceleration_edge->setVertex(2,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
             acceleration_edge->setGoalVelocity(vel_goal_.second);
-            acceleration_edge->setInformation(information);
+            acceleration_edge->setInformation(information3);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
           }
-        }
-        break;
-      default:
-        break;
+          break;
     }
   }
 }
