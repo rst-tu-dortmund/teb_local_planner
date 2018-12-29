@@ -58,9 +58,9 @@ namespace teb_local_planner
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a, omegadot } ]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [a, \dot{omega}} ]^T ) \cdot weight \f$. \n
  * \e a is calculated using the difference quotient (twice) and the position parts of all three poses \n
- * \e omegadot is calculated using the difference quotient of the yaw angles followed by a normalization to [-pi, pi]. \n
+ * \e \dot{omega} is calculated using the difference quotient of the yaw angles followed by a normalization to [-pi, pi]. \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
  * The dimension of the error / cost vector is 2: the first component represents the translational acceleration and
@@ -151,7 +151,7 @@ public:
       _jacobianOplus[1](0,0) = -aux0 * ( deltaS1[0] / aux1 + deltaS2[0] / aux2 ) * dev_border_acc; // acc x2
       _jacobianOplus[1](0,1) = -aux0 * ( deltaS1[1] / aux1 + deltaS2[1] / aux2 ) * dev_border_acc; // acc y2
       _jacobianOplus[2](0,0) = aux0 * deltaS2[0] / aux2 * dev_border_acc; // acc x3
-      _jacobianOplus[2](0,1) = aux0 * deltaS2[1] / aux2 * dev_border_acc; // acc y3	
+      _jacobianOplus[2](0,1) = aux0 * deltaS2[1] / aux2 * dev_border_acc; // acc y3
       _jacobianOplus[2](0,0) = 0;
       _jacobianOplus[2](0,1) = 0;
       _jacobianOplus[3](0,0) = aux0 * (aux3 + vel1 * dt1_inv) * dev_border_acc; // acc deltaT1
@@ -160,11 +160,11 @@ public:
     else
     {
       _jacobianOplus[0](0,0) = 0; // acc x1
-      _jacobianOplus[0](0,1) = 0; // acc y1	
+      _jacobianOplus[0](0,1) = 0; // acc y1
       _jacobianOplus[1](0,0) = 0; // acc x2
       _jacobianOplus[1](0,1) = 0; // acc y2
       _jacobianOplus[2](0,0) = 0; // acc x3
-      _jacobianOplus[2](0,1) = 0; // acc y3	
+      _jacobianOplus[2](0,1) = 0; // acc y3
       _jacobianOplus[3](0,0) = 0; // acc deltaT1
       _jacobianOplus[4](0,0) = 0; // acc deltaT2
     }
@@ -183,7 +183,7 @@ public:
       _jacobianOplus[4](1,0) = 0; // omegadot deltaT2
       _jacobianOplus[5](1,0) = 0; // omegadot angle1
       _jacobianOplus[6](1,0) = 0; // omegadot angle2
-      _jacobianOplus[7](1,0) = 0; // omegadot angle3			
+      _jacobianOplus[7](1,0) = 0; // omegadot angle3
     }
 
     _jacobianOplus[0](1,0) = 0; // omegadot x1
@@ -211,9 +211,9 @@ public:
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a, omegadot ]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [a, \dot{omega}]^T ) \cdot weight \f$. \n
  * \e a is calculated using the difference quotient (twice) and the position parts of the poses. \n
- * \e omegadot is calculated using the difference quotient of the yaw angles followed by a normalization to [-pi, pi].  \n
+ * \e \dot{omega} is calculated using the difference quotient of the yaw angles followed by a normalization to [-pi, pi]. \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
  * The dimension of the error / cost vector is 2: the first component represents the translational acceleration and
@@ -230,7 +230,7 @@ public:
 
   /**
    * @brief Construct edge.
-   */	
+   */
   EdgeAccelerationStart()
   {
     _measurement = NULL;
@@ -262,9 +262,9 @@ public:
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a, omegadot ]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [a, \dot{omega}]^T ) \cdot weight \f$. \n
  * \e a is calculated using the difference quotient (twice) and the position parts of the poses \n
- * \e omegadot is calculated using the difference quotient of the yaw angles followed by a normalization to [-pi, pi].  \n
+ * \e \dot{omega} is calculated using the difference quotient of the yaw angles followed by a normalization to [-pi, pi]. \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
  * The dimension of the error / cost vector is 2: the first component represents the translational acceleration and
@@ -473,19 +473,19 @@ public:
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration.
  *
  *       x              x              x              x
- *       --          /              /      \              \
- * y   |----|     y   |----|     y   |----|     y   |----|
+ *       --          /                                    \
+ * y   |----|     y   |----|     y / |----| \   y   |----|
  *     |    |         |    | |       |    |       | |    |
- *     |----|         |----|         |----|         |----|
- *    \      /       \                 --                 /
+ *   \ |----| /       |----|         |----|         |----|
+ *                   \                 --                 /
  * This is for holonomic type 3: 3 wheels, 0 degrees
  *                       type 4: 3 wheels, 30 degrees
  *                       type 5: 3 wheels, 60 degrees
  *                       type 6: 3 wheels, 90 degrees
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1}, a_{w2}, a_{w3}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w3} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
  * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
@@ -523,11 +523,11 @@ public:
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the beginning of the trajectory.
  *
  *       x              x              x              x
- *       --          /              /      \              \
- * y   |----|     y   |----|     y   |----|     y   |----|
+ *       --          /                                    \
+ * y   |----|     y   |----|     y / |----| \   y   |----|
  *     |    |         |    | |       |    |       | |    |
- *     |----|         |----|         |----|         |----|
- *    \      /       \                 --                 /
+ *   \ |----| /       |----|         |----|         |----|
+ *                   \                 --                 /
  * This is for holonomic type 3: 3 wheels, 0 degrees
  *                       type 4: 3 wheels, 30 degrees
  *                       type 5: 3 wheels, 60 degrees
@@ -535,8 +535,8 @@ public:
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1}, a_{w2}, a_{w3}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w3} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
  * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
@@ -583,11 +583,11 @@ public:
  * @brief Edge defining the cost function for limiting the translational and rotational acceleration at the end of the trajectory.
  *
  *       x              x              x              x
- *       --          /              /      \              \
- * y   |----|     y   |----|     y   |----|     y   |----|
+ *       --          /                                    \
+ * y   |----|     y   |----|     y / |----| \   y   |----|
  *     |    |         |    | |       |    |       | |    |
- *     |----|         |----|         |----|         |----|
- *    \      /       \                 --                 /
+ *   \ |----| /       |----|         |----|         |----|
+ *                   \                 --                 /
  * This is for holonomic type 3: 3 wheels, 0 degrees
  *                       type 4: 3 wheels, 30 degrees
  *                       type 5: 3 wheels, 60 degrees
@@ -595,8 +595,8 @@ public:
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
- * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1}, a_{w2}, a_{w3}]^T ) \cdot weight \f$. \n
+ * \e a_{w1} \dots a_{w3} denote the normalized acceleration of wheel 1 to wheel 3 (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
  * The dimension of the error / cost vector is 3: they represent the normalized acceleration of 3 wheels.
@@ -652,7 +652,7 @@ public:
  *                       type 2: 4 wheels, 0 degrees
  *
  * The edge depends on five vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \mathbf{s}_{ip2}, \Delta T_i, \Delta T_{ip1} \f$ and minimizes:
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1}, a_{w2}, a_{w3}, a_{w4}]^T ) \cdot weight \f$. \n
  * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n
@@ -701,7 +701,7 @@ public:
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setInitialVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1}, a_{w2}, a_{w3}, a_{w4}]^T ) \cdot weight \f$. \n
  * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
@@ -759,7 +759,7 @@ public:
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$, an initial velocity defined by setGoalVelocity()
  * and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [a_{w1},a_{w2},a_{w3},a_{w4}]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [a_{w1}, a_{w2}, a_{w3}, a_{w4}]^T ) \cdot weight \f$. \n
  * \e a_{w1} \dots a_{w4} denote the normalized acceleration of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation() \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval() \n

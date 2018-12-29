@@ -46,8 +46,8 @@
 
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/vertex_timediff.h>
-#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/g2o_types/penalties.h>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 
 namespace teb_local_planner
 {
@@ -57,7 +57,7 @@ namespace teb_local_planner
  * @brief Edge defining the cost function for limiting the translational and rotational velocity.
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v,omega]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [v, omega]^T ) \cdot weight \f$. \n
  * \e v is calculated using the difference quotient and the position parts of both poses. \n
  * \e omega is calculated using the difference quotient of both yaw angles followed by a normalization to [-pi, pi]. \n
  * \e weight can be set using setInformation(). \n
@@ -73,7 +73,7 @@ public:
 
   /**
    * @brief Construct edge.
-   */	
+   */
   EdgeVelocity()
   {
     this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
@@ -120,7 +120,7 @@ public:
     {
       double aux3 = dev_border_vel / aux1;
       _jacobianOplus[0](0,0) = -deltaS[0] * aux3; // vel x1
-      _jacobianOplus[0](0,1) = -deltaS[1] * aux3; // vel y1	
+      _jacobianOplus[0](0,1) = -deltaS[1] * aux3; // vel y1
       _jacobianOplus[1](0,0) = deltaS[0] * aux3; // vel x2
       _jacobianOplus[1](0,1) = deltaS[1] * aux3; // vel y2
       _jacobianOplus[2](0,0) = -vel * aux2 * dev_border_vel; // vel deltaT
@@ -128,9 +128,9 @@ public:
     else
     {
       _jacobianOplus[0](0,0) = 0; // vel x1
-      _jacobianOplus[0](0,1) = 0; // vel y1	
+      _jacobianOplus[0](0,1) = 0; // vel y1
       _jacobianOplus[1](0,0) = 0; // vel x2
-      _jacobianOplus[1](0,1) = 0; // vel y2	
+      _jacobianOplus[1](0,1) = 0; // vel y2
       _jacobianOplus[2](0,0) = 0; // vel deltaT
     }
 
@@ -145,7 +145,7 @@ public:
     {
       _jacobianOplus[2](1,0) = 0; // omega deltaT
       _jacobianOplus[0](1,2) = 0; // omega angle1
-      _jacobianOplus[1](1,2) = 0; // omega angle2			
+      _jacobianOplus[1](1,2) = 0; // omega angle2
     }
 
     _jacobianOplus[0](1,0) = 0; // omega x1
@@ -215,18 +215,18 @@ public:
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
  *
  *       x              x              x              x
- *       --          /              /      \              \
- * y   |----|     y   |----|     y   |----|     y   |----|
+ *       --          /                                    \
+ * y   |----|     y   |----|     y / |----| \   y   |----|
  *     |    |         |    | |       |    |       | |    |
- *     |----|         |----|         |----|         |----|
- *    \      /       \                 --                 /
+ *   \ |----| /       |----|         |----|         |----|
+ *                   \                 --                 /
  * This is for holonomic type 3: 3 wheels, 0 degrees
  *                       type 4: 3 wheels, 30 degrees
  *                       type 5: 3 wheels, 60 degrees
  *                       type 6: 3 wheels, 90 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3}]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [v_{w1}, v_{w2}, v_{w3}]^T ) \cdot weight \f$. \n
  * \e v_{w1} \dots v_{w3} denote the normalized velocity of wheel 1 to wheel 3 (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
@@ -272,7 +272,7 @@ public:
  *                       type 2: 4 wheels, 0 degrees
  *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v_{w1},v_{w2},v_{w3},v_{w4}]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [v_{w1}, v_{w2}, v_{w3}, v_{w4}]^T ) \cdot weight \f$. \n
  * \e v_{w1} \dots v_{w4} denote the normalized velocity of wheel 1 to wheel 4 (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n

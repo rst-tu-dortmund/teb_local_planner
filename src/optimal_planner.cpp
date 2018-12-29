@@ -141,6 +141,18 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC4", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic4>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC4_START", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic4Start>);
   factory->registerType("EDGE_ACCELERATION_HOLONOMIC4_GOAL", new g2o::HyperGraphElementCreator<EdgeAccelerationHolonomic4Goal>);
+  factory->registerType("EDGE_JERK", new g2o::HyperGraphElementCreator<EdgeJerk>);
+  factory->registerType("EDGE_JERK_START", new g2o::HyperGraphElementCreator<EdgeJerkStart>);
+  factory->registerType("EDGE_JERK_GOAL", new g2o::HyperGraphElementCreator<EdgeJerkGoal>);
+  factory->registerType("EDGE_JERK_HOLONOMIC1", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic1>);
+  factory->registerType("EDGE_JERK_HOLONOMIC1_START", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic1Start>);
+  factory->registerType("EDGE_JERK_HOLONOMIC1_GOAL", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic1Goal>);
+  factory->registerType("EDGE_JERK_HOLONOMIC3", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic3>);
+  factory->registerType("EDGE_JERK_HOLONOMIC3_START", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic3Start>);
+  factory->registerType("EDGE_JERK_HOLONOMIC3_GOAL", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic3Goal>);
+  factory->registerType("EDGE_JERK_HOLONOMIC4", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic4>);
+  factory->registerType("EDGE_JERK_HOLONOMIC4_START", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic4Start>);
+  factory->registerType("EDGE_JERK_HOLONOMIC4_GOAL", new g2o::HyperGraphElementCreator<EdgeJerkHolonomic4Goal>);
   factory->registerType("EDGE_KINEMATICS_DIFF_DRIVE", new g2o::HyperGraphElementCreator<EdgeKinematicsDiffDrive>);
   factory->registerType("EDGE_KINEMATICS_CARLIKE", new g2o::HyperGraphElementCreator<EdgeKinematicsCarlike>);
   factory->registerType("EDGE_OBSTACLE", new g2o::HyperGraphElementCreator<EdgeObstacle>);
@@ -337,6 +349,8 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
   AddEdgesVelocity();
 
   AddEdgesAcceleration();
+
+  AddEdgesJerk();
 
   AddEdgesTimeOptimal();	
 
@@ -843,14 +857,14 @@ void TebOptimalPlanner::AddEdgesAcceleration()
 
   int n = teb_.sizePoses();
 
-  if (cfg_->robot.max_vel_y == 0 || cfg_->robot.acc_lim_y == 0) // non-holonomic robot
+  if (cfg_->robot.max_vel_y == 0) // non-holonomic robot
   {
     Eigen::Matrix<double,2,2> information;
     information.fill(0);
     information(0,0) = cfg_->optim.weight_acc_lim_x;
     information(1,1) = cfg_->optim.weight_acc_lim_theta;
 
-    // check if an initial velocity should be taken into accound
+    // check if an initial velocity should be taken into account
     if (vel_start_.first)
     {
       EdgeAccelerationStart* acceleration_edge = new EdgeAccelerationStart;
@@ -877,7 +891,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
       optimizer_->addEdge(acceleration_edge);
     }
 
-    // check if a goal velocity should be taken into accound
+    // check if a goal velocity should be taken into account
     if (vel_goal_.first)
     {
       EdgeAccelerationGoal* acceleration_edge = new EdgeAccelerationGoal;
@@ -937,7 +951,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
     }
     switch (cfg_->robot.omni_type) {
       case 0:
-          // check if an initial velocity should be taken into accound
+          // check if an initial velocity should be taken into account
           if (vel_start_.first)
           {
             EdgeAccelerationHolonomic1Start* acceleration_edge = new EdgeAccelerationHolonomic1Start;
@@ -964,7 +978,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             optimizer_->addEdge(acceleration_edge);
           }
 
-          // check if a goal velocity should be taken into accound
+          // check if a goal velocity should be taken into account
           if (vel_goal_.first)
           {
             EdgeAccelerationHolonomic1Goal* acceleration_edge = new EdgeAccelerationHolonomic1Goal;
@@ -979,7 +993,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
           break;
       case 1:
       case 2:
-          // check if an initial velocity should be taken into accound
+          // check if an initial velocity should be taken into account
           if (vel_start_.first)
           {
             EdgeAccelerationHolonomic4Start* acceleration_edge = new EdgeAccelerationHolonomic4Start;
@@ -1006,7 +1020,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             optimizer_->addEdge(acceleration_edge);
           }
 
-          // check if a goal velocity should be taken into accound
+          // check if a goal velocity should be taken into account
           if (vel_goal_.first)
           {
             EdgeAccelerationHolonomic4Goal* acceleration_edge = new EdgeAccelerationHolonomic4Goal;
@@ -1023,7 +1037,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
       case 4:
       case 5:
       case 6:
-          // check if an initial velocity should be taken into accound
+          // check if an initial velocity should be taken into account
           if (vel_start_.first)
           {
             EdgeAccelerationHolonomic3Start* acceleration_edge = new EdgeAccelerationHolonomic3Start;
@@ -1050,7 +1064,7 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             optimizer_->addEdge(acceleration_edge);
           }
 
-          // check if a goal velocity should be taken into accound
+          // check if a goal velocity should be taken into account
           if (vel_goal_.first)
           {
             EdgeAccelerationHolonomic3Goal* acceleration_edge = new EdgeAccelerationHolonomic3Goal;
@@ -1061,6 +1075,263 @@ void TebOptimalPlanner::AddEdgesAcceleration()
             acceleration_edge->setInformation(information3);
             acceleration_edge->setTebConfig(*cfg_);
             optimizer_->addEdge(acceleration_edge);
+          }
+          break;
+    }
+  }
+}
+
+
+
+void TebOptimalPlanner::AddEdgesJerk()
+{
+  if (cfg_->optim.weight_jerk_lim_x==0  && cfg_->optim.weight_jerk_lim_theta==0)
+    return; // if weight equals zero skip adding edges!
+
+  int n = teb_.sizePoses();
+
+  if (cfg_->robot.max_vel_y == 0) // non-holonomic robot
+  {
+    Eigen::Matrix<double,2,2> information;
+    information.fill(0);
+    information(0,0) = cfg_->optim.weight_jerk_lim_x;
+    information(1,1) = cfg_->optim.weight_jerk_lim_theta;
+
+    // check if an initial velocity should be taken into account
+    if (vel_start_.first)
+    {
+      EdgeJerkStart* jerk_edge = new EdgeJerkStart;
+      jerk_edge->setVertex(0,teb_.PoseVertex(0));
+      jerk_edge->setVertex(1,teb_.PoseVertex(1));
+      jerk_edge->setVertex(2,teb_.PoseVertex(2));
+      jerk_edge->setVertex(3,teb_.TimeDiffVertex(0));
+      jerk_edge->setVertex(4,teb_.TimeDiffVertex(1));
+      jerk_edge->setInitialVelocity(vel_start_.second);
+      jerk_edge->setInformation(information);
+      jerk_edge->setTebConfig(*cfg_);
+      optimizer_->addEdge(jerk_edge);
+    }
+
+    // now add the usual jerk edge for each tuple of three teb poses
+    for (int i=0; i < n - 3; ++i)
+    {
+      EdgeJerk* jerk_edge = new EdgeJerk;
+      jerk_edge->setVertex(0,teb_.PoseVertex(i));
+      jerk_edge->setVertex(1,teb_.PoseVertex(i+1));
+      jerk_edge->setVertex(2,teb_.PoseVertex(i+2));
+      jerk_edge->setVertex(3,teb_.PoseVertex(i+3));
+      jerk_edge->setVertex(4,teb_.TimeDiffVertex(i));
+      jerk_edge->setVertex(5,teb_.TimeDiffVertex(i+1));
+      jerk_edge->setVertex(6,teb_.TimeDiffVertex(i+2));
+      jerk_edge->setInformation(information);
+      jerk_edge->setTebConfig(*cfg_);
+      optimizer_->addEdge(jerk_edge);
+    }
+
+    // check if a goal velocity should be taken into account
+    if (vel_goal_.first)
+    {
+      EdgeJerkGoal* jerk_edge = new EdgeJerkGoal;
+      jerk_edge->setVertex(0,teb_.PoseVertex(n-3));
+      jerk_edge->setVertex(1,teb_.PoseVertex(n-2));
+      jerk_edge->setVertex(2,teb_.PoseVertex(n-1));
+      jerk_edge->setVertex(3,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-2 ));
+      jerk_edge->setVertex(4,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
+      jerk_edge->setGoalVelocity(vel_goal_.second);
+      jerk_edge->setInformation(information);
+      jerk_edge->setTebConfig(*cfg_);
+      optimizer_->addEdge(jerk_edge);
+    }
+  }
+  else // holonomic robot
+  {
+    Eigen::Matrix<double,1,1> information1;
+    Eigen::Matrix<double,3,3> information3;
+    Eigen::Matrix<double,4,4> information4;
+    information1.fill(0);
+    information3.fill(0);
+    information4.fill(0);
+    switch (cfg_->robot.omni_type) {
+      case 0:
+          information1(0,0) = weight_0_1(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          break;
+      case 1:
+          information4(0,0) = weight_1_1(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information4(1,1) = weight_1_2(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information4(2,2) = weight_1_3(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information4(3,3) = weight_1_4(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          break;
+      case 2:
+          information4(0,0) = weight_2_1(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information4(1,1) = weight_2_2(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information4(2,2) = weight_2_3(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information4(3,3) = weight_2_4(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          break;
+      case 3:
+          information3(0,0) = weight_3_1(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(1,1) = weight_3_2(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(2,2) = weight_3_3(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+        break;
+      case 4:
+          information3(0,0) = weight_4_1(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(1,1) = weight_4_2(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(2,2) = weight_4_3(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+        break;
+      case 5:
+          information3(0,0) = weight_5_1(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(1,1) = weight_5_2(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(2,2) = weight_5_3(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+        break;
+      case 6:
+          information3(0,0) = weight_6_1(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(1,1) = weight_6_2(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+          information3(2,2) = weight_6_3(cfg_->optim.weight_jerk_lim_x, cfg_->optim.weight_jerk_lim_y, cfg_->optim.weight_jerk_lim_theta);
+        break;
+    }
+    switch (cfg_->robot.omni_type) {
+      case 0:
+          // check if an initial velocity should be taken into account
+          if (vel_start_.first)
+          {
+            EdgeJerkHolonomic1Start* jerk_edge = new EdgeJerkHolonomic1Start;
+            jerk_edge->setVertex(0,teb_.PoseVertex(0));
+            jerk_edge->setVertex(1,teb_.PoseVertex(1));
+            jerk_edge->setVertex(2,teb_.PoseVertex(2));
+            jerk_edge->setVertex(3,teb_.TimeDiffVertex(0));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex(1));
+            jerk_edge->setInitialVelocity(vel_start_.second);
+            jerk_edge->setInformation(information1);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+
+          // now add the usual jerk edge for each tuple of three teb poses
+          for (int i=0; i < n - 3; ++i)
+          {
+            EdgeJerkHolonomic1* jerk_edge = new EdgeJerkHolonomic1;
+            jerk_edge->setVertex(0,teb_.PoseVertex(i));
+            jerk_edge->setVertex(1,teb_.PoseVertex(i+1));
+            jerk_edge->setVertex(2,teb_.PoseVertex(i+2));
+            jerk_edge->setVertex(3,teb_.PoseVertex(i+3));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex(i));
+            jerk_edge->setVertex(5,teb_.TimeDiffVertex(i+1));
+            jerk_edge->setVertex(6,teb_.TimeDiffVertex(i+2));
+            jerk_edge->setInformation(information1);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+
+          // check if a goal velocity should be taken into account
+          if (vel_goal_.first)
+          {
+            EdgeJerkHolonomic1Goal* jerk_edge = new EdgeJerkHolonomic1Goal;
+            jerk_edge->setVertex(0,teb_.PoseVertex(n-3));
+            jerk_edge->setVertex(1,teb_.PoseVertex(n-2));
+            jerk_edge->setVertex(2,teb_.PoseVertex(n-1));
+            jerk_edge->setVertex(3,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-2 ));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
+            jerk_edge->setGoalVelocity(vel_goal_.second);
+            jerk_edge->setInformation(information1);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+          break;
+      case 1:
+      case 2:
+          // check if an initial velocity should be taken into account
+          if (vel_start_.first)
+          {
+            EdgeJerkHolonomic4Start* jerk_edge = new EdgeJerkHolonomic4Start;
+            jerk_edge->setVertex(0,teb_.PoseVertex(0));
+            jerk_edge->setVertex(1,teb_.PoseVertex(1));
+            jerk_edge->setVertex(2,teb_.PoseVertex(2));
+            jerk_edge->setVertex(3,teb_.TimeDiffVertex(0));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex(1));
+            jerk_edge->setInitialVelocity(vel_start_.second);
+            jerk_edge->setInformation(information4);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+
+          // now add the usual jerk edge for each tuple of three teb poses
+          for (int i=0; i < n - 3; ++i)
+          {
+            EdgeJerkHolonomic4* jerk_edge = new EdgeJerkHolonomic4;
+            jerk_edge->setVertex(0,teb_.PoseVertex(i));
+            jerk_edge->setVertex(1,teb_.PoseVertex(i+1));
+            jerk_edge->setVertex(2,teb_.PoseVertex(i+2));
+            jerk_edge->setVertex(3,teb_.PoseVertex(i+3));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex(i));
+            jerk_edge->setVertex(5,teb_.TimeDiffVertex(i+1));
+            jerk_edge->setVertex(6,teb_.TimeDiffVertex(i+2));
+            jerk_edge->setInformation(information4);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+
+          // check if a goal velocity should be taken into account
+          if (vel_goal_.first)
+          {
+            EdgeJerkHolonomic4Goal* jerk_edge = new EdgeJerkHolonomic4Goal;
+            jerk_edge->setVertex(0,teb_.PoseVertex(n-3));
+            jerk_edge->setVertex(1,teb_.PoseVertex(n-2));
+            jerk_edge->setVertex(2,teb_.PoseVertex(n-1));
+            jerk_edge->setVertex(3,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-2 ));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
+            jerk_edge->setGoalVelocity(vel_goal_.second);
+            jerk_edge->setInformation(information4);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+          break;
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+          // check if an initial velocity should be taken into account
+          if (vel_start_.first)
+          {
+            EdgeJerkHolonomic3Start* jerk_edge = new EdgeJerkHolonomic3Start;
+            jerk_edge->setVertex(0,teb_.PoseVertex(0));
+            jerk_edge->setVertex(1,teb_.PoseVertex(1));
+            jerk_edge->setVertex(2,teb_.PoseVertex(2));
+            jerk_edge->setVertex(3,teb_.TimeDiffVertex(0));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex(1));
+            jerk_edge->setInitialVelocity(vel_start_.second);
+            jerk_edge->setInformation(information3);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+
+          // now add the usual jerk edge for each tuple of three teb poses
+          for (int i=0; i < n - 3; ++i)
+          {
+            EdgeJerkHolonomic3* jerk_edge = new EdgeJerkHolonomic3;
+            jerk_edge->setVertex(0,teb_.PoseVertex(i));
+            jerk_edge->setVertex(1,teb_.PoseVertex(i+1));
+            jerk_edge->setVertex(2,teb_.PoseVertex(i+2));
+            jerk_edge->setVertex(3,teb_.PoseVertex(i+3));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex(i));
+            jerk_edge->setVertex(5,teb_.TimeDiffVertex(i+1));
+            jerk_edge->setVertex(6,teb_.TimeDiffVertex(i+2));
+            jerk_edge->setInformation(information3);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
+          }
+
+          // check if a goal velocity should be taken into account
+          if (vel_goal_.first)
+          {
+            EdgeJerkHolonomic3Goal* jerk_edge = new EdgeJerkHolonomic3Goal;
+            jerk_edge->setVertex(0,teb_.PoseVertex(n-3));
+            jerk_edge->setVertex(1,teb_.PoseVertex(n-2));
+            jerk_edge->setVertex(2,teb_.PoseVertex(n-1));
+            jerk_edge->setVertex(3,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-2 ));
+            jerk_edge->setVertex(4,teb_.TimeDiffVertex( teb_.sizeTimeDiffs()-1 ));
+            jerk_edge->setGoalVelocity(vel_goal_.second);
+            jerk_edge->setInformation(information3);
+            jerk_edge->setTebConfig(*cfg_);
+            optimizer_->addEdge(jerk_edge);
           }
           break;
     }
@@ -1286,7 +1557,7 @@ void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pos
 
   Eigen::Vector2d deltaS = pose2.position() - pose1.position();
 
-  if (cfg_->robot.max_vel_y == 0) // nonholonomic robot
+  if (cfg_->robot.max_vel_y == 0) // non-holonomic robot
   {
     Eigen::Vector2d conf1dir( cos(pose1.theta()), sin(pose1.theta()) );
     // translational velocity

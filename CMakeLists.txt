@@ -190,6 +190,7 @@ add_library(teb_local_planner
    src/teb_local_planner_ros.cpp
    src/graph_search.cpp
    src/g2o_types/edge_acceleration.cpp
+   src/g2o_types/edge_jerk.cpp
    src/g2o_types/edge_velocity.cpp
 )
 

@@ -131,7 +131,7 @@ inline void getAcceleration2Start(const TebConfig* cfg_, const geometry_msgs::Tw
   double lvx2 = dist / base;
   double avz2 = dz / dt->dt();
   // consider directions
-  //lvx *= g2o::sign(ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta()));
+  //lvx2 *= g2o::sign(ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta()));
   lvx2 *= fast_sigmoid(100.0 * (ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta())));
 
   double dt2 = 0.5 * dt->dt();
@@ -159,8 +159,8 @@ inline void getAcceleration2Goal(const TebConfig* cfg_, const geometry_msgs::Twi
   double lvx2 = _measurement->linear.x;
   double avz2 = _measurement->angular.z;
   // consider directions
-  //lvx *= g2o::sign(ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta()));
-  lvx2 *= fast_sigmoid(100.0 * (ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta())));
+  //lvx1 *= g2o::sign(ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta()));
+  lvx1 *= fast_sigmoid(100.0 * (ds.x() * cos(pose1->theta()) + ds.y() * sin(pose1->theta())));
 
   double dt2 = 0.5 * dt->dt();
   lax  = (lvx2 - lvx1) / dt2;
