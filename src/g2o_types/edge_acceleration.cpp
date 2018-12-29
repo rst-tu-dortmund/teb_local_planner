@@ -85,7 +85,6 @@ inline void getAcceleration2(const TebConfig* cfg_, const g2o::HyperGraph::Verte
   double dz_1_2 = g2o::normalize_theta(pose2->theta() - pose1->theta());
   double dz_2_3 = g2o::normalize_theta(pose3->theta() - pose2->theta());
 
-  // use exact arc length instead of Euclidean approximation
   double base1 = dt_1_2->dt();
   double base2 = dt_2_3->dt();
   if (cfg_->trajectory.exact_arc_length) {
@@ -230,7 +229,6 @@ inline void getAcceleration3(const TebConfig* cfg_, const g2o::HyperGraph::Verte
   double dy_2_3 = -sin_theta2*ds_2_3.x() + cos_theta2*ds_2_3.y();
   double dz_2_3 = g2o::normalize_theta(pose3->theta() - pose2->theta());
 
-  // use exact arc length instead of Euclidean approximation
   double base1 = dt_1_2->dt();
   double base2 = dt_2_3->dt();
   if (cfg_->trajectory.exact_arc_length) {
@@ -250,9 +248,18 @@ inline void getAcceleration3(const TebConfig* cfg_, const g2o::HyperGraph::Verte
   double avz2 = dz_2_3 / dt_2_3->dt();
 
   double dt2_1_3 = 0.5 * (dt_1_2->dt() + dt_2_3->dt());
-  double lax  = (lvx2 - lvx1) / dt2_1_3;
-  double lay  = (lvy2 - lvy1) / dt2_1_3;
-  double aaz  = (avz2 - avz1) / dt2_1_3;
+  double dlvx  = lvx2 - lvx1;
+  double dlvy  = lvy2 - lvy1;
+  double davz  = avz2 - avz1;
+
+  double base = dt2_1_3;
+  if (cfg_->trajectory.exact_arc_length && std::fabs(davz) > 0.05) {
+      base *= std::fabs(2.0 * std::sin(0.5 * davz) / davz);
+  }
+
+  double lax = dlvx / base;
+  double lay = dlvy / base;
+  double aaz = davz / dt2_1_3;
   // normalize
   a1 = lax / cfg_->robot.acc_lim_x;
   a2 = lay / cfg_->robot.acc_lim_y;
@@ -290,9 +297,18 @@ inline void getAcceleration3Start(const TebConfig* cfg_, const geometry_msgs::Tw
   double avz2 = dz / dt->dt();
 
   double dt2 = 0.5 * dt->dt();
-  double lax  = (lvx2 - lvx1) / dt2;
-  double lay  = (lvy2 - lvy1) / dt2;
-  double aaz  = (avz2 - avz1) / dt2;
+  double dlvx  = lvx2 - lvx1;
+  double dlvy  = lvy2 - lvy1;
+  double davz  = avz2 - avz1;
+
+  base = dt2;
+  if (cfg_->trajectory.exact_arc_length && std::fabs(davz) > 0.05) {
+      base *= std::fabs(2.0 * std::sin(0.5 * davz) / davz);
+  }
+
+  double lax = dlvx / base;
+  double lay = dlvy / base;
+  double aaz = davz / dt2;
   // normalize
   a1 = lax / cfg_->robot.acc_lim_x;
   a2 = lay / cfg_->robot.acc_lim_y;
@@ -330,9 +346,18 @@ inline void getAcceleration3Goal(const TebConfig* cfg_, const geometry_msgs::Twi
   double avz2 = _measurement->angular.z;
 
   double dt2 = 0.5 * dt->dt();
-  double lax  = (lvx2 - lvx1) / dt2;
-  double lay  = (lvy2 - lvy1) / dt2;
-  double aaz  = (avz2 - avz1) / dt2;
+  double dlvx  = lvx2 - lvx1;
+  double dlvy  = lvy2 - lvy1;
+  double davz  = avz2 - avz1;
+
+  base = dt2;
+  if (cfg_->trajectory.exact_arc_length && std::fabs(davz) > 0.05) {
+      base *= std::fabs(2.0 * std::sin(0.5 * davz) / davz);
+  }
+
+  double lax = dlvx / base;
+  double lay = dlvy / base;
+  double aaz = davz / dt2;
   // normalize
   a1 = lax / cfg_->robot.acc_lim_x;
   a2 = lay / cfg_->robot.acc_lim_y;
