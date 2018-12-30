@@ -88,14 +88,18 @@ public:
   struct Robot
   {
     double max_vel_x; //!< Maximum translational velocity of the robot
-    double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
+    double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards  (will be ignored for holonomic robots!)
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
     double max_vel_theta; //!< Maximum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_y; //!< Maximum strafing acceleration of the robot
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
+    double jerk_lim_x; //!< Maximum translational jerk of the robot
+    double jerk_lim_y; //!< Maximum strafing jerk of the robot
+    double jerk_lim_theta; //!< Maximum angular jerk of the robot
     double min_turning_radius; //!< Minimum turning radius of a carlike robot (diff-drive robot: zero); 
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
+    int omni_type; //!< Type of the holonomic robot, possible choices are 0..6. Type 0: ideal; lim x:y should be 1:1. Type 1: 4 wheel, 45 deg; lim x:y should be 1:1. Type 2: 4 wheel, 0 deg; lim x:y should be 1:1. Type 3: 3 wheel, 0 deg; lim x:y should be 2:sqrt(3). Type 4: 3 wheel, 30 deg; lim x:y should be sqrt(3):2. Type 5: 3 wheel, 60 deg; lim x:y should be 2:sqrt(3). Type 6: 3 wheel, 90 deg; lim x:y should be sqrt(3):2.
     bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
     bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
   } robot; //!< Robot related parameters
@@ -145,6 +149,9 @@ public:
     double weight_acc_lim_x; //!< Optimization weight for satisfying the maximum allowed translational acceleration
     double weight_acc_lim_y; //!< Optimization weight for satisfying the maximum allowed strafing acceleration (in use only for holonomic robots)
     double weight_acc_lim_theta; //!< Optimization weight for satisfying the maximum allowed angular acceleration
+    double weight_jerk_lim_x; //!< Optimization weight for satisfying the maximum allowed translational jerk
+    double weight_jerk_lim_y; //!< Optimization weight for satisfying the maximum allowed strafing jerk (in use only for holonomic robots)
+    double weight_jerk_lim_theta; //!< Optimization weight for satisfying the maximum allowed angular jerk
     double weight_kinematics_nh; //!< Optimization weight for satisfying the non-holonomic kinematics
     double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities, only diffdrive robot)
     double weight_kinematics_turning_radius; //!< Optimization weight for enforcing a minimum turning radius (carlike robots)
@@ -246,8 +253,12 @@ public:
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
+    robot.jerk_lim_x = 1.0;
+    robot.jerk_lim_y = 1.0;
+    robot.jerk_lim_theta = 1.0;
     robot.min_turning_radius = 0;
     robot.wheelbase = 1.0;
+    robot.omni_type = 0;
     robot.cmd_angle_instead_rotvel = false;
     robot.is_footprint_dynamic = false;
     
@@ -287,6 +298,9 @@ public:
     optim.weight_acc_lim_x = 1;
     optim.weight_acc_lim_y = 1;
     optim.weight_acc_lim_theta = 1;
+    optim.weight_jerk_lim_x = 1;
+    optim.weight_jerk_lim_y = 1;
+    optim.weight_jerk_lim_theta = 1;
     optim.weight_kinematics_nh = 1000;
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_kinematics_turning_radius = 1;

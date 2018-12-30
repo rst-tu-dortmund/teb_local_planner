@@ -189,6 +189,9 @@ add_library(teb_local_planner
    src/homotopy_class_planner.cpp
    src/teb_local_planner_ros.cpp
    src/graph_search.cpp
+   src/g2o_types/edge_acceleration.cpp
+   src/g2o_types/edge_jerk.cpp
+   src/g2o_types/edge_velocity.cpp
 )
 
 # Dynamic reconfigure: make sure configure headers are built before any node using them

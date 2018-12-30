@@ -73,8 +73,12 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
   nh.param("acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
   nh.param("acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
+  nh.param("jerk_lim_x", robot.jerk_lim_x, robot.jerk_lim_x);
+  nh.param("jerk_lim_y", robot.jerk_lim_y, robot.jerk_lim_y);
+  nh.param("jerk_lim_theta", robot.jerk_lim_theta, robot.jerk_lim_theta);
   nh.param("min_turning_radius", robot.min_turning_radius, robot.min_turning_radius);
   nh.param("wheelbase", robot.wheelbase, robot.wheelbase);
+  nh.param("omni_type", robot.omni_type, robot.omni_type);
   nh.param("cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh.param("is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
   
@@ -110,6 +114,9 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_acc_lim_x", optim.weight_acc_lim_x, optim.weight_acc_lim_x);
   nh.param("weight_acc_lim_y", optim.weight_acc_lim_y, optim.weight_acc_lim_y);
   nh.param("weight_acc_lim_theta", optim.weight_acc_lim_theta, optim.weight_acc_lim_theta);
+  nh.param("weight_jerk_lim_x", optim.weight_jerk_lim_x, optim.weight_jerk_lim_x);
+  nh.param("weight_jerk_lim_y", optim.weight_jerk_lim_y, optim.weight_jerk_lim_y);
+  nh.param("weight_jerk_lim_theta", optim.weight_jerk_lim_theta, optim.weight_jerk_lim_theta);
   nh.param("weight_kinematics_nh", optim.weight_kinematics_nh, optim.weight_kinematics_nh);
   nh.param("weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
   nh.param("weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
@@ -184,8 +191,12 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.acc_lim_x = cfg.acc_lim_x;
   robot.acc_lim_y = cfg.acc_lim_y;
   robot.acc_lim_theta = cfg.acc_lim_theta;
+  robot.jerk_lim_x = cfg.jerk_lim_x;
+  robot.jerk_lim_y = cfg.jerk_lim_y;
+  robot.jerk_lim_theta = cfg.jerk_lim_theta;
   robot.min_turning_radius = cfg.min_turning_radius;
   robot.wheelbase = cfg.wheelbase;
+  robot.omni_type = cfg.omni_type;
   robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   
   // GoalTolerance
@@ -218,6 +229,9 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_acc_lim_x = cfg.weight_acc_lim_x;
   optim.weight_acc_lim_y = cfg.weight_acc_lim_y;
   optim.weight_acc_lim_theta = cfg.weight_acc_lim_theta;
+  optim.weight_jerk_lim_x = cfg.weight_jerk_lim_x;
+  optim.weight_jerk_lim_y = cfg.weight_jerk_lim_y;
+  optim.weight_jerk_lim_theta = cfg.weight_jerk_lim_theta;
   optim.weight_kinematics_nh = cfg.weight_kinematics_nh;
   optim.weight_kinematics_forward_drive = cfg.weight_kinematics_forward_drive;
   optim.weight_kinematics_turning_radius = cfg.weight_kinematics_turning_radius;
@@ -264,22 +278,31 @@ void TebConfig::checkParameters() const
   if (robot.max_vel_x_backwards <= 0)
     ROS_WARN("TebLocalPlannerROS() Param Warning: Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
   
+  if (robot.max_vel_y != 0 && robot.max_vel_x_backwards != robot.max_vel_x)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x_backwards will be replaced by max_vel_x when running in holonomic robot mode.");
+
   // bounds smaller than penalty epsilon
-  if (robot.max_vel_x <= optim.penalty_epsilon)
+  if (robot.max_vel_y == 0 && robot.max_vel_x <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
-  if (robot.max_vel_x_backwards <= optim.penalty_epsilon)
+  if (robot.max_vel_y == 0 && robot.max_vel_x_backwards <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x_backwards <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
-  if (robot.max_vel_theta <= optim.penalty_epsilon)
+  if (robot.max_vel_y == 0 && robot.max_vel_theta <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
-  if (robot.acc_lim_x <= optim.penalty_epsilon)
+  if (robot.max_vel_y == 0 && robot.acc_lim_x <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: acc_lim_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
-  if (robot.acc_lim_theta <= optim.penalty_epsilon)
+  if (robot.max_vel_y == 0 && robot.acc_lim_theta <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: acc_lim_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
       
+  if (robot.max_vel_y == 0 && robot.jerk_lim_x <= optim.penalty_epsilon)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: jerk_lim_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+
+  if (robot.max_vel_y == 0 && robot.jerk_lim_theta <= optim.penalty_epsilon)
+    ROS_WARN("TebLocalPlannerROS() Param Warning: jerk_lim_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+
   // dt_ref and dt_hyst
   if (trajectory.dt_ref <= trajectory.dt_hysteresis)
     ROS_WARN("TebLocalPlannerROS() Param Warning: dt_ref <= dt_hysteresis. The hysteresis is not allowed to be greater or equal!. Undefined behavior... Change at least one of them!");

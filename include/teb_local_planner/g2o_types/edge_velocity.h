@@ -32,7 +32,7 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Notes:
  * The following class is derived from a class defined by the
  * g2o-framework. g2o is licensed under the terms of the BSD License.
@@ -46,23 +46,18 @@
 
 #include <teb_local_planner/g2o_types/vertex_pose.h>
 #include <teb_local_planner/g2o_types/vertex_timediff.h>
-#include <teb_local_planner/g2o_types/base_teb_edges.h>
 #include <teb_local_planner/g2o_types/penalties.h>
-#include <teb_local_planner/teb_config.h>
-
-
-#include <iostream>
+#include <teb_local_planner/g2o_types/base_teb_edges.h>
 
 namespace teb_local_planner
 {
 
-  
 /**
  * @class EdgeVelocity
  * @brief Edge defining the cost function for limiting the translational and rotational velocity.
- * 
+ *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [v,omega]^T ) \cdot weight \f$. \n
+ * \f$ \min \textrm{penaltyInterval}( [v, omega]^T ) \cdot weight \f$. \n
  * \e v is calculated using the difference quotient and the position parts of both poses. \n
  * \e omega is calculated using the difference quotient of both yaw angles followed by a normalization to [-pi, pi]. \n
  * \e weight can be set using setInformation(). \n
@@ -71,50 +66,23 @@ namespace teb_local_planner
  * the second one the rotational velocity.
  * @see TebOptimalPlanner::AddEdgesVelocity
  * @remarks Do not forget to call setTebConfig()
- */  
+ */
 class EdgeVelocity : public BaseTebMultiEdge<2, double>
 {
 public:
-  
+
   /**
    * @brief Construct edge.
-   */	      
+   */
   EdgeVelocity()
   {
     this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
   }
-  
+
   /**
    * @brief Actual cost function
-   */  
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocity()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    
-    const Eigen::Vector2d deltaS = conf2->estimate().position() - conf1->estimate().position();
-    
-    double dist = deltaS.norm();
-    const double angle_diff = g2o::normalize_theta(conf2->theta() - conf1->theta());
-    if (cfg_->trajectory.exact_arc_length && angle_diff != 0)
-    {
-        double radius =  dist/(2*sin(angle_diff/2));
-        dist = fabs( angle_diff * radius ); // actual arg length!
-    }
-    double vel = dist / deltaT->estimate();
-    
-//     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
-    vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
-    
-    const double omega = angle_diff / deltaT->estimate();
-  
-    _error[0] = penaltyBoundToInterval(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
-
-    ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeVelocity::computeError() _error[0]=%f _error[1]=%f\n",_error[0],_error[1]);
-  }
+   */
+  void computeError();
 
 #ifdef USE_ANALYTIC_JACOBI
 #if 0 //TODO the hardcoded jacobian does not include the changing direction (just the absolute value)
@@ -129,30 +97,30 @@ public:
     const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    
+
     Eigen::Vector2d deltaS = conf2->position() - conf1->position();
     double dist = deltaS.norm();
     double aux1 = dist*deltaT->estimate();
     double aux2 = 1/deltaT->estimate();
-    
+
     double vel = dist * aux2;
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) * aux2;
-    
+
     double dev_border_vel = penaltyBoundToIntervalDerivative(vel, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x,cfg_->optim.penalty_epsilon);
     double dev_border_omega = penaltyBoundToIntervalDerivative(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
-    
+
     _jacobianOplus[0].resize(2,3); // conf1
     _jacobianOplus[1].resize(2,3); // conf2
     _jacobianOplus[2].resize(2,1); // deltaT
-    
+
 //  if (aux1==0) aux1=1e-6;
 //  if (aux2==0) aux2=1e-6;
-    
+
     if (dev_border_vel!=0)
     {
       double aux3 = dev_border_vel / aux1;
       _jacobianOplus[0](0,0) = -deltaS[0] * aux3; // vel x1
-      _jacobianOplus[0](0,1) = -deltaS[1] * aux3; // vel y1	
+      _jacobianOplus[0](0,1) = -deltaS[1] * aux3; // vel y1
       _jacobianOplus[1](0,0) = deltaS[0] * aux3; // vel x2
       _jacobianOplus[1](0,1) = deltaS[1] * aux3; // vel y2
       _jacobianOplus[2](0,0) = -vel * aux2 * dev_border_vel; // vel deltaT
@@ -160,12 +128,12 @@ public:
     else
     {
       _jacobianOplus[0](0,0) = 0; // vel x1
-      _jacobianOplus[0](0,1) = 0; // vel y1	
+      _jacobianOplus[0](0,1) = 0; // vel y1
       _jacobianOplus[1](0,0) = 0; // vel x2
-      _jacobianOplus[1](0,1) = 0; // vel y2	
+      _jacobianOplus[1](0,1) = 0; // vel y2
       _jacobianOplus[2](0,0) = 0; // vel deltaT
     }
-    
+
     if (dev_border_omega!=0)
     {
       double aux4 = aux2 * dev_border_omega;
@@ -177,7 +145,7 @@ public:
     {
       _jacobianOplus[2](1,0) = 0; // omega deltaT
       _jacobianOplus[0](1,2) = 0; // omega angle1
-      _jacobianOplus[1](1,2) = 0; // omega angle2			
+      _jacobianOplus[1](1,2) = 0; // omega angle2
     }
 
     _jacobianOplus[0](1,0) = 0; // omega x1
@@ -189,80 +157,148 @@ public:
   }
 #endif
 #endif
- 
-  
+
 public:
-  
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
 
 
-
-
-
-
 /**
- * @class EdgeVelocityHolonomic
+ * @class EdgeVelocityHolonomic1
  * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
- * 
+ *
+ *       x
+ *
+ * y   |----|
+ *     | ?? |
+ *     |----|
+ *
+ * This is for Holonomic type 0: ideal
+ *
  * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
- * \f$ \min \textrm{penaltyInterval}( [vx,vy,omega]^T ) \cdot weight \f$. \n
- * \e vx denotes the translational velocity w.r.t. x-axis (computed using finite differneces). \n
- * \e vy denotes the translational velocity w.r.t. y-axis (computed using finite differneces). \n
- * \e omega is calculated using the difference quotient of both yaw angles followed by a normalization to [-pi, pi]. \n
+ * \f$ \min \textrm{penaltyInterval}( [v]^T ) \cdot weight \f$. \n
+ * \e v denotes the normalized velocity (computed using finite differneces). \n
  * \e weight can be set using setInformation(). \n
  * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
- * The dimension of the error / cost vector is 3: the first component represents the translational velocity w.r.t. x-axis,
- * the second one w.r.t. the y-axis and the third one the rotational velocity.
+ * The dimension of the error / cost vector is 1: a represents the normalized velocity.
  * @see TebOptimalPlanner::AddEdgesVelocity
  * @remarks Do not forget to call setTebConfig()
- */  
-class EdgeVelocityHolonomic : public BaseTebMultiEdge<3, double>
+ */
+class EdgeVelocityHolonomic1 : public BaseTebMultiEdge<1, double>
 {
 public:
-  
+
   /**
    * @brief Construct edge.
-   */       
-  EdgeVelocityHolonomic()
+   */
+  EdgeVelocityHolonomic1()
   {
     this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
   }
-  
+
   /**
    * @brief Actual cost function
-   */  
-  void computeError()
-  {
-    ROS_ASSERT_MSG(cfg_, "You must call setTebConfig on EdgeVelocityHolonomic()");
-    const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
-    const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
-    const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
-    Eigen::Vector2d deltaS = conf2->position() - conf1->position();
-    
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta()); 
-    
-    // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
-    double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
-    double r_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
-    
-    double vx = r_dx / deltaT->estimate();
-    double vy = r_dy / deltaT->estimate();
-    double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-    
-    _error[0] = penaltyBoundToInterval(vx, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(vy, cfg_->robot.max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
-    _error[2] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
+   */
+  void computeError();
 
-    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]) && std::isfinite(_error[2]),
-                   "EdgeVelocityHolonomic::computeError() _error[0]=%f _error[1]=%f _error[2]=%f\n",_error[0],_error[1],_error[2]);
-  }
- 
-  
 public:
-  
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+
+/**
+ * @class EdgeVelocityHolonomic3
+ * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
+ *
+ *       x              x              x              x
+ *       --          /                                    \
+ * y   |----|     y   |----|     y / |----| \   y   |----|
+ *     |    |         |    | |       |    |       | |    |
+ *   \ |----| /       |----|         |----|         |----|
+ *                   \                 --                 /
+ * This is for holonomic type 3: 3 wheels, 0 degrees
+ *                       type 4: 3 wheels, 30 degrees
+ *                       type 5: 3 wheels, 60 degrees
+ *                       type 6: 3 wheels, 90 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [v_{w1}, v_{w2}, v_{w3}]^T ) \cdot weight \f$. \n
+ * \e v_{w1} \dots v_{w3} denote the normalized velocity of wheel 1 to wheel 3 (computed using finite differneces). \n
+ * \e weight can be set using setInformation(). \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
+ * The dimension of the error / cost vector is 3: they represent the normalized velocity of 3 wheels.
+ * @see TebOptimalPlanner::AddEdgesVelocity
+ * @remarks Do not forget to call setTebConfig()
+ */
+class EdgeVelocityHolonomic3 : public BaseTebMultiEdge<3, double>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeVelocityHolonomic3()
+  {
+    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError();
+
+public:
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+
+/**
+ * @class EdgeVelocityHolonomic4
+ * @brief Edge defining the cost function for limiting the translational and rotational velocity according to x,y and theta.
+ *
+ *       x              x
+ *    /      \          --
+ * y   |----|     y   |----|
+ *     |    |       | |    | |
+ *     |----|         |----|
+ *    \      /          --
+ * This is for holonomic type 1: 4 wheels, 45 degrees
+ *                       type 2: 4 wheels, 0 degrees
+ *
+ * The edge depends on three vertices \f$ \mathbf{s}_i, \mathbf{s}_{ip1}, \Delta T_i \f$ and minimizes: \n
+ * \f$ \min \textrm{penaltyInterval}( [v_{w1}, v_{w2}, v_{w3}, v_{w4}]^T ) \cdot weight \f$. \n
+ * \e v_{w1} \dots v_{w4} denote the normalized velocity of wheel 1 to wheel 4 (computed using finite differneces). \n
+ * \e weight can be set using setInformation(). \n
+ * \e penaltyInterval denotes the penalty function, see penaltyBoundToInterval(). \n
+ * The dimension of the error / cost vector is 4: they represent the normalized velocity of 4 wheels.
+ * @see TebOptimalPlanner::AddEdgesVelocity
+ * @remarks Do not forget to call setTebConfig()
+ */
+class EdgeVelocityHolonomic4 : public BaseTebMultiEdge<4, double>
+{
+public:
+
+  /**
+   * @brief Construct edge.
+   */
+  EdgeVelocityHolonomic4()
+  {
+    this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
+  }
+
+  /**
+   * @brief Actual cost function
+   */
+  void computeError();
+
+public:
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };

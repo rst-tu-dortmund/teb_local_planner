@@ -62,6 +62,7 @@
 // g2o custom edges and vertices for the TEB planner
 #include <teb_local_planner/g2o_types/edge_velocity.h>
 #include <teb_local_planner/g2o_types/edge_acceleration.h>
+#include <teb_local_planner/g2o_types/edge_jerk.h>
 #include <teb_local_planner/g2o_types/edge_kinematics.h>
 #include <teb_local_planner/g2o_types/edge_time_optimal.h>
 #include <teb_local_planner/g2o_types/edge_obstacle.h>
@@ -597,7 +598,17 @@ protected:
    * @see optimizeGraph
    */
   void AddEdgesAcceleration();
-  
+
+  /**
+   * @brief Add all edges (local cost functions) for limiting the translational and angular jerk.
+   * @see EdgeJerk
+   * @see EdgeJerkStart
+   * @see EdgeJerkGoal
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesJerk();
+
   /**
    * @brief Add all edges (local cost functions) for minimizing the transition time (resp. minimize time differences)
    * @see EdgeTimeOptimal
