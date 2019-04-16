@@ -123,6 +123,7 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("VERTEX_TIMEDIFF", new g2o::HyperGraphElementCreator<VertexTimeDiff>);
 
   factory->registerType("EDGE_TIME_OPTIMAL", new g2o::HyperGraphElementCreator<EdgeTimeOptimal>);
+  factory->registerType("EDGE_SHORTEST_PATH", new g2o::HyperGraphElementCreator<EdgeShortestPath>);
   factory->registerType("EDGE_VELOCITY", new g2o::HyperGraphElementCreator<EdgeVelocity>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic>);
   factory->registerType("EDGE_ACCELERATION", new g2o::HyperGraphElementCreator<EdgeAcceleration>);
@@ -329,6 +330,8 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
   AddEdgesAcceleration();
 
   AddEdgesTimeOptimal();	
+
+  AddEdgesShortestPath();
   
   if (cfg_->robot.min_turning_radius == 0 || cfg_->optim.weight_kinematics_turning_radius == 0)
     AddEdgesKinematicsDiffDrive(); // we have a differential drive robot
@@ -879,6 +882,25 @@ void TebOptimalPlanner::AddEdgesTimeOptimal()
     timeoptimal_edge->setInformation(information);
     timeoptimal_edge->setTebConfig(*cfg_);
     optimizer_->addEdge(timeoptimal_edge);
+  }
+}
+
+void TebOptimalPlanner::AddEdgesShortestPath()
+{
+  if (cfg_->optim.weight_shortest_path==0)
+    return; // if weight equals zero skip adding edges!
+
+  Eigen::Matrix<double,1,1> information;
+  information.fill(cfg_->optim.weight_shortest_path);
+
+  for (int i=0; i < teb_.sizePoses()-1; ++i)
+  {
+    EdgeShortestPath* shortest_path_edge = new EdgeShortestPath;
+    shortest_path_edge->setVertex(0,teb_.PoseVertex(i));
+    shortest_path_edge->setVertex(1,teb_.PoseVertex(i+1));
+    shortest_path_edge->setInformation(information);
+    shortest_path_edge->setTebConfig(*cfg_);
+    optimizer_->addEdge(shortest_path_edge);
   }
 }
 
