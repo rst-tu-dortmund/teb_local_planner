@@ -1221,8 +1221,12 @@ bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* c
   
   for (int i=0; i <= look_ahead_idx; ++i)
   {           
-    if ( costmap_model->footprintCost(teb().Pose(i).x(), teb().Pose(i).y(), teb().Pose(i).theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 )
+    if ( costmap_model->footprintCost(teb().Pose(i).x(), teb().Pose(i).y(), teb().Pose(i).theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 ) {
+      if (visualization_) {
+        visualization_->publishRobotFootprintModel(teb_.Pose(i), *robot_model_);
+      }
       return false;
+    }
     
     // check if distance between two poses is higher than the robot radius and interpolate in that case
     // (if obstacles are pushing two consecutive poses away, the center between two consecutive poses might coincide with the obstacle ;-)!
@@ -1232,8 +1236,13 @@ bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* c
       {
         // check one more time
         PoseSE2 center = PoseSE2::average(teb().Pose(i), teb().Pose(i+1));
-        if ( costmap_model->footprintCost(center.x(), center.y(), center.theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 )
+        if ( costmap_model->footprintCost(center.x(), center.y(), center.theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 ) {
+          if (visualization_) {
+            visualization_->publishRobotFootprintModel(center, *robot_model_);
+          }
           return false;
+        }
+          
       }
       
     }
