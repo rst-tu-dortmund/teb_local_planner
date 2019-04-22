@@ -163,7 +163,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     validateFootprints(robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_.obstacles.min_obstacle_dist);
         
     // setup callback for custom obstacles
-    custom_obst_sub_ = nh.subscribe("obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
+    custom_obst_sub_ = nh.subscribe("/custom_obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
 
     // setup callback for custom via-points
     via_points_sub_ = nh.subscribe("via_points", 1, &TebLocalPlannerROS::customViaPointsCB, this);
