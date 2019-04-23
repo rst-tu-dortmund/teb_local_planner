@@ -70,7 +70,7 @@
 // costmap
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_converter/costmap_converter_interface.h>
-
+#include <costmap_converter/costmap_to_polygons.h>
 
 // dynamic reconfigure
 #include <teb_local_planner/TebLocalPlannerReconfigureConfig.h>
