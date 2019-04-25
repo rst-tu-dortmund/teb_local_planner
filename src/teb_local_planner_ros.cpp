@@ -122,14 +122,15 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     robot_base_frame_ = costmap_ros_->getBaseFrameID();
     
     //Initialize a costmap to polygon converter
-    // if (!cfg_.obstacles.costmap_converter_plugin.empty())
-    // {
-    //   try
-    //   {
-        // costmap_converter_ = costmap_converter_loader_.createInstance(converter_plugin);
-        costmap_converter_ = boost::make_shared<costmap_converter::CostmapToPolygonsDBSMCCH>();
+    if (!cfg_.obstacles.costmap_converter_plugin.empty())
+    {
+      try
+      {
+        costmap_converter_ = costmap_converter_loader_.createInstance(cfg_.obstacles.costmap_converter_plugin);
+        std::string converter_name = costmap_converter_loader_.getName(cfg_.obstacles.costmap_converter_plugin);
+        // costmap_converter_ = boost::make_shared<costmap_converter::CostmapToPolygonsDBSMCCH>();
         ROS_INFO("INITALIZED");
-        std::string converter_name = "costmap_converter::CostmapToPolygonsDBSMCCH";
+        // std::string converter_name = "costmap_converter::CostmapToPolygonsDBSMCCH";
         // replace '::' by '/' to convert the c++ namespace to a NodeHandle namespace
         boost::replace_all(converter_name, "::", "/");
         costmap_converter_->setOdomTopic(cfg_.odom_topic);
@@ -141,15 +142,15 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
         
         costmap_converter_->startWorker(ros::Rate(cfg_.obstacles.costmap_converter_rate), costmap_, cfg_.obstacles.costmap_converter_spin_thread);
         ROS_INFO_STREAM("Costmap conversion plugin " << cfg_.obstacles.costmap_converter_plugin << " loaded.");        
-    //   }
-    //   catch(pluginlib::PluginlibException& ex)
-    //   {
-    //     ROS_WARN("The specified costmap converter plugin cannot be loaded. All occupied costmap cells are treaten as point obstacles. Error message: %s", ex.what());
-    //     costmap_converter_.reset();
-    //   }
-    // }
-    // else 
-    //   ROS_INFO("No costmap conversion plugin specified. All occupied costmap cells are treaten as point obstacles.");
+      }
+      catch(pluginlib::PluginlibException& ex)
+      {
+        ROS_WARN("The specified costmap converter plugin cannot be loaded. All occupied costmap cells are treaten as point obstacles. Error message: %s", ex.what());
+        costmap_converter_.reset();
+      }
+    }
+    else 
+      ROS_INFO("No costmap conversion plugin specified. All occupied costmap cells are treaten as point obstacles.");
 
     // Get footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
