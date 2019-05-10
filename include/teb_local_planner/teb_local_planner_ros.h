@@ -80,6 +80,9 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
+//Speed Limiter Manager
+#include <base_local_planner/speed_limiters/speed_limit_manager.h>
+
 
 namespace teb_local_planner
 {
@@ -400,6 +403,8 @@ private:
     
   // flags
   bool initialized_; //!< Keeps track about the correct initialization of this class
+
+  base_local_planner::SpeedLimitManager speed_limit_manager_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
