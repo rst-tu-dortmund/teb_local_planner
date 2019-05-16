@@ -82,6 +82,7 @@ public:
     double force_reinit_new_goal_dist; //!< Reinitialize the trajectory if a previous goal is updated with a seperation of more than the specified value in meters (skip hot-starting)
     int feasibility_check_no_poses; //!< Specify up to which pose on the predicted plan the feasibility should be checked each sampling interval.
     bool publish_feedback; //!< Publish planner feedback containing the full trajectory and a list of active obstacles (should be enabled only for evaluation or debugging purposes)
+    double prune_distance; //!< Distance between robot and via_points of global plan which is used for pruning
   } trajectory; //!< Trajectory related parameters
     
   //! Robot related parameters
