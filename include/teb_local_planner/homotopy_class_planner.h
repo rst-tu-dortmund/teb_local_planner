@@ -491,6 +491,11 @@ public:
    */
   const EquivalenceClassContainer& getEquivalenceClassRef() const  {return equivalence_classes_;}
 
+  bool isInBestTebClass(const EquivalenceClassPtr& eq_class) const;
+
+  int numTebsInClass(const EquivalenceClassPtr& eq_class) const;
+
+  int numTebsInBestTebClass() const;
 
 protected:
 
@@ -537,6 +542,7 @@ protected:
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   TebOptimalPlannerPtr best_teb_; //!< Store the current best teb.
+  EquivalenceClassPtr best_teb_eq_class_; //!< Store the equivalence class of the current best teb
   RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
 
   const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization

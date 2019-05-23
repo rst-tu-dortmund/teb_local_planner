@@ -199,7 +199,12 @@ bool HomotopyClassPlanner::addEquivalenceClassIfNew(const EquivalenceClassPtr& e
   }
 
   if (hasEquivalenceClass(eq_class))
-    return false;
+  {
+    // Allow up to configured number of Tebs that are in the same homotopy
+    // class as the current (best) Teb to avoid being stuck in a local minimum
+    if (!isInBestTebClass(eq_class) || numTebsInBestTebClass() >= cfg_->hcp.max_number_plans_in_current_class)
+      return false;
+  }
 
   // Homotopy class not found -> Add to class-list, return that the h-signature is new
   equivalence_classes_.push_back(std::make_pair(eq_class,lock));
@@ -218,9 +223,10 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
   if (has_best_teb)
   {
     std::iter_swap(tebs_.begin(), it_best_teb);  // Putting the last best teb at the beginning of the container
-    addEquivalenceClassIfNew(calculateEquivalenceClass(best_teb_->teb().poses().begin(),
+    best_teb_eq_class_ = calculateEquivalenceClass(best_teb_->teb().poses().begin(),
       best_teb_->teb().poses().end(), getCplxFromVertexPosePtr , obstacles_,
-      best_teb_->teb().timediffs().begin(), best_teb_->teb().timediffs().end()));
+      best_teb_->teb().timediffs().begin(), best_teb_->teb().timediffs().end());
+    addEquivalenceClassIfNew(best_teb_eq_class_);
   }
   // Collect h-signatures for all existing TEBs and store them together with the corresponding iterator / pointer:
 //   typedef std::list< std::pair<TebOptPlannerContainer::iterator, std::complex<long double> > > TebCandidateType;
@@ -374,6 +380,33 @@ TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start
   return TebOptimalPlannerPtr();
 }
 
+
+bool HomotopyClassPlanner::isInBestTebClass(const EquivalenceClassPtr& eq_class) const
+{
+  bool answer = false;
+  if (best_teb_eq_class_)
+    answer = best_teb_eq_class_->isEqual(*eq_class);
+  return answer;
+}
+
+int HomotopyClassPlanner::numTebsInClass(const EquivalenceClassPtr& eq_class) const
+{
+  int count = 0;
+  for (const std::pair<EquivalenceClassPtr, bool>& eqrel : equivalence_classes_)
+  {
+    if (eq_class->isEqual(*eqrel.first))
+      ++count;
+  }
+  return count;
+}
+
+int HomotopyClassPlanner::numTebsInBestTebClass() const
+{
+  int count = 0;
+  if (best_teb_eq_class_)
+    count = numTebsInClass(best_teb_eq_class_);
+  return count;
+}
 
 TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity)
 {
