@@ -70,6 +70,9 @@ void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obsta
   else
     graph_search_ = boost::shared_ptr<GraphSearchInterface>(new ProbRoadmapGraph(*cfg_, this));
 
+  std::random_device rd;
+  random_.seed(rd());
+
   initialized_ = true;
 
   setVisualization(visual);
@@ -339,6 +342,7 @@ void HomotopyClassPlanner::exploreEquivalenceClassesAndInitTebs(const PoseSE2& s
 {
   // first process old trajectories
   renewAndAnalyzeOldTebs(cfg_->hcp.delete_detours_backwards);
+  randomlyDropTebs();
 
   // inject initial plan if available and not yet captured
   if (initial_plan_)
@@ -526,6 +530,31 @@ TebOptimalPlannerPtr HomotopyClassPlanner::getInitialPlanTEB()
         ROS_DEBUG("HomotopyClassPlanner::getInitialPlanTEB(): initial TEB not found in the set of available trajectories.");
 
     return TebOptimalPlannerPtr();
+}
+
+void HomotopyClassPlanner::randomlyDropTebs()
+{
+  if (cfg_->hcp.selection_dropping_probability == 0.0)
+  {
+    return;
+  }
+  // interate both vectors in parallel
+  auto it_eqrel = equivalence_classes_.begin();
+  auto it_teb = tebs_.begin();
+  while (it_teb != tebs_.end() && it_eqrel != equivalence_classes_.end())
+  {
+    if (it_teb->get() != best_teb_.get()  // Always preserve the "best" teb
+        && (random_() <= cfg_->hcp.selection_dropping_probability * random_.max()))
+    {
+      it_teb = tebs_.erase(it_teb);
+      it_eqrel = equivalence_classes_.erase(it_eqrel);
+    }
+    else
+    {
+      ++it_teb;
+      ++it_eqrel;
+    }
+  }
 }
 
 TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()

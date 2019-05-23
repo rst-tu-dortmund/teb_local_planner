@@ -497,6 +497,19 @@ public:
 
   int numTebsInBestTebClass() const;
 
+  /**
+   * @brief Randomly drop non-optimal TEBs to so we can explore other alternatives
+   *
+   * The HCP has a tendency to become "fixated" once its tebs_ list becomes
+   * fully populated, repeatedly refining and evaluating paths from the same
+   * few homotopy classes until the robot moves far enough for a teb to become
+   * invalid. As a result, it can fail to discover a more optimal path. This
+   * function alleviates this problem by randomly dropping TEBs other than the
+   * current "best" one with a probability controlled by
+   * selection_dropping_probability parameter.
+   */
+  void randomlyDropTebs();
+
 protected:
 
   /** @name Explore new paths and keep only a single one for each homotopy class */
@@ -558,6 +571,7 @@ protected:
 
   ros::Time last_eq_class_switching_time_; //!< Store the time at which the equivalence class changed recently
 
+  std::default_random_engine random_;
   bool initialized_; //!< Keeps track about the correct initialization of this class
 
   TebOptimalPlannerPtr last_best_teb_;  //!< Points to the plan used in the previous control cycle
