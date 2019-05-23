@@ -1001,35 +1001,35 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoi
     EdgeTimeOptimal* edge_time_optimal = dynamic_cast<EdgeTimeOptimal*>(*it);
     if (edge_time_optimal!=NULL && !alternative_time_cost)
     {
-      cost_ += edge_time_optimal->getError().squaredNorm();
+      cost_ += edge_time_optimal->chi2();
       continue;
     }
 
     EdgeKinematicsDiffDrive* edge_kinematics_dd = dynamic_cast<EdgeKinematicsDiffDrive*>(*it);
     if (edge_kinematics_dd!=NULL)
     {
-      cost_ += edge_kinematics_dd->getError().squaredNorm();
+      cost_ += edge_kinematics_dd->chi2();
       continue;
     }
     
     EdgeKinematicsCarlike* edge_kinematics_cl = dynamic_cast<EdgeKinematicsCarlike*>(*it);
     if (edge_kinematics_cl!=NULL)
     {
-      cost_ += edge_kinematics_cl->getError().squaredNorm();
+      cost_ += edge_kinematics_cl->chi2();
       continue;
     }
     
     EdgeVelocity* edge_velocity = dynamic_cast<EdgeVelocity*>(*it);
     if (edge_velocity!=NULL)
     {
-      cost_ += edge_velocity->getError().squaredNorm();
+      cost_ += edge_velocity->chi2();
       continue;
     }
     
     EdgeAcceleration* edge_acceleration = dynamic_cast<EdgeAcceleration*>(*it);
     if (edge_acceleration!=NULL)
     {
-      cost_ += edge_acceleration->getError().squaredNorm();
+      cost_ += edge_acceleration->chi2();
       continue;
     }
     
