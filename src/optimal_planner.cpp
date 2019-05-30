@@ -998,38 +998,19 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoi
   // since we aren't storing edge pointers, we need to check every edge
   for (std::vector<g2o::OptimizableGraph::Edge*>::const_iterator it = optimizer_->activeEdges().begin(); it!= optimizer_->activeEdges().end(); it++)
   {
-    EdgeObstacle* edge_obstacle = dynamic_cast<EdgeObstacle*>(*it);
-    if (edge_obstacle!=NULL)
+    double cur_cost = (*it)->chi2();
+
+    if (dynamic_cast<EdgeObstacle*>(*it) != nullptr
+        || dynamic_cast<EdgeInflatedObstacle*>(*it) != nullptr
+        || dynamic_cast<EdgeDynamicObstacle*>(*it) != nullptr)
     {
-      cost_ += edge_obstacle->getError().squaredNorm() * obst_cost_scale;
-      continue;
+      cur_cost *= obst_cost_scale;
     }
-    
-    EdgeInflatedObstacle* edge_inflated_obstacle = dynamic_cast<EdgeInflatedObstacle*>(*it);
-    if (edge_inflated_obstacle!=NULL)
+    else if (dynamic_cast<EdgeViaPoint*>(*it) != nullptr)
     {
-      cost_ += std::sqrt(std::pow(edge_inflated_obstacle->getError()[0],2) * obst_cost_scale 
-               + std::pow(edge_inflated_obstacle->getError()[1],2));
-      continue;
+      cur_cost *= viapoint_cost_scale;
     }
-    
-    EdgeDynamicObstacle* edge_dyn_obstacle = dynamic_cast<EdgeDynamicObstacle*>(*it);
-    if (edge_dyn_obstacle!=NULL)
-    {
-      cost_ += edge_dyn_obstacle->getError().squaredNorm() * obst_cost_scale;
-      continue;
-    }
-    
-    EdgeViaPoint* edge_viapoint = dynamic_cast<EdgeViaPoint*>(*it);
-    if (edge_viapoint!=NULL)
-    {
-      cost_ += edge_viapoint->getError().squaredNorm() * viapoint_cost_scale;
-      continue;
-    }
-    else
-    {
-      cost_ += (*it)->chi2();
-    }
+    cost_ += cur_cost;
   }
 
   // delete temporary created graph
