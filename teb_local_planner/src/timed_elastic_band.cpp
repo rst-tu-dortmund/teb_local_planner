@@ -89,9 +89,10 @@ void TimedElasticBand::addPoseAndTimeDiff(double x, double y, double angle, doub
     addPose(x,y,angle,false);
     addTimeDiff(dt,false);
   }
-  else 
+  else {
     RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"),
                  "Method addPoseAndTimeDiff: Add one single Pose first. Timediff describes the time difference between last conf and given conf");
+  }
   return;
 }
 
@@ -103,8 +104,9 @@ void TimedElasticBand::addPoseAndTimeDiff(const PoseSE2& pose, double dt)
   {
     addPose(pose,false);
     addTimeDiff(dt,false);
-  } else
+  } else {
     RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"), "Method addPoseAndTimeDiff: Add one single Pose first. Timediff describes the time difference between last conf and given conf");
+  }
   return;
 }
 
@@ -114,9 +116,10 @@ void TimedElasticBand::addPoseAndTimeDiff(const Eigen::Ref<const Eigen::Vector2d
   {
     addPose(position, theta,false);
     addTimeDiff(dt,false);
-  } else 
+  } else {
     RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"),
                  "Method addPoseAndTimeDiff: Add one single Pose first. Timediff describes the time difference between last conf and given conf");
+  }
   return;
 }
 

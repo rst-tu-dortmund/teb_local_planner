@@ -1,0 +1,25 @@
+teb_local_planner_costmap2d:
+  teb_local_planner_costmap2d:
+    ros__parameters:
+      use_sim_time: True
+      robot_radius: 0.1
+      obstacle_layer:
+        enabled: True
+      always_send_full_costmap: True
+      observation_sources: scan
+      scan:
+        topic: /scan
+        max_obstacle_height: 10.0
+        clearing: True
+        marking: True
+
+teb_local_planner_node:
+  ros__parameters:
+    use_sim_time: True
+    footprint_model/type: circular
+    footprint_model/radius: 0.1
+#   costmap_converter_plugin: costmap_converter::CostmapToPolygonsDBSMCCH
+    costmap_converter_spin_thread: False
+    costmap_converter_rate: 5
+    enable_homotopy_class_planning: False
+    

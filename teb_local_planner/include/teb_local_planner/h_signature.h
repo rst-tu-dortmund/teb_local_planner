@@ -39,6 +39,8 @@
 #ifndef H_SIGNATURE_H_
 #define H_SIGNATURE_H_
 
+#include <boost/math/special_functions.hpp>
+
 #include <teb_local_planner/equivalence_relations.h>
 #include <teb_local_planner/misc.h>
 #include <teb_local_planner/obstacles.h>

@@ -136,6 +136,7 @@ void TebLocalPlannerROS::initialize(rclcpp::Node::SharedPtr node, TFBufferPtr tf
       {
         costmap_converter_ = costmap_converter_loader_.createSharedInstance(cfg_.obstacles.costmap_converter_plugin);
         std::string converter_name = costmap_converter_loader_.getName(cfg_.obstacles.costmap_converter_plugin);
+        RCLCPP_INFO(nh_->get_logger(), "library path : %s", costmap_converter_loader_.getClassLibraryPath("costmap_converter").c_str());
         // replace '::' by '/' to convert the c++ namespace to a NodeHandle namespace
         boost::replace_all(converter_name, "::", "/");
         costmap_converter_->setOdomTopic(cfg_.odom_topic);
@@ -152,8 +153,9 @@ void TebLocalPlannerROS::initialize(rclcpp::Node::SharedPtr node, TFBufferPtr tf
         costmap_converter_.reset();
       }
     }
-    else 
+    else {
       RCLCPP_INFO(nh_->get_logger(), "No costmap conversion plugin specified. All occupied costmap cells are treaten as point obstacles.");
+    }
   
     
     // Get footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
@@ -188,6 +190,9 @@ void TebLocalPlannerROS::initialize(rclcpp::Node::SharedPtr node, TFBufferPtr tf
     // set initialized flag
     initialized_ = true;
 
+    // This should be called since to prevent different time sources exception
+    time_last_infeasible_plan_ = nh_->now();
+    time_last_oscillation_ = nh_->now();
     RCLCPP_DEBUG(nh_->get_logger(), "teb_local_planner plugin initialized.");
   }
   else
@@ -523,7 +528,8 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
                   global_frame_, tf2::timeFromSec(0),
                   custom_obstacle_msg_.header.frame_id, tf2::timeFromSec(0),
                   custom_obstacle_msg_.header.frame_id, tf2::durationFromSec(0.5));
-      tf2::fromMsg(obstacle_to_map, obstacle_to_map_eig);
+      obstacle_to_map_eig = tf2::transformToEigen(obstacle_to_map);
+      //tf2::fromMsg(obstacle_to_map.transform, obstacle_to_map_eig);
     }
     catch (tf2::TransformException ex)
     {
@@ -1017,6 +1023,7 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::msg::Path::ConstShare
      
 RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(const rclcpp::Node::SharedPtr& nh_)
 {
+
   std::string model_name; 
   if (!nh_->get_parameter("footprint_model/type", model_name))
   {

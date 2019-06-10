@@ -71,6 +71,7 @@ TebOptimalPlanner::~TebOptimalPlanner()
 
 void TebOptimalPlanner::initialize(rclcpp::Node::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
+  node_ = node;
   // init optimizer (set solver and block ordering settings)
   optimizer_ = initOptimizer();
   

@@ -27,7 +27,7 @@
 
   <!-- <depend>dynamic_reconfigure</depend> -->
   <depend>geometry_msgs</depend>
-  <depend>interactive_markers</depend>
+  <!-- <depend>interactive_markers</depend> -->
   <depend>libg2o</depend>
   <depend>nav2_costmap_2d</depend>
   <depend>nav2_msgs</depend>

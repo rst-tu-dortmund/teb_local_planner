@@ -74,8 +74,7 @@ TebVisualization::TebVisualization(rclcpp::Node::SharedPtr& nh, const TebConfig&
 
 void TebVisualization::initialize(rclcpp::Node::SharedPtr& nh, const TebConfig& cfg)
 {
-  if (initialized_)
-    RCLCPP_WARN(nh_->get_logger(), "TebVisualization already initialized. Reinitalizing...");
+  RCLCPP_WARN_EXPRESSION(nh_->get_logger(), initialized_, "TebVisualization already initialized. Reinitalizing...");
   
   // set config
   cfg_ = &cfg;

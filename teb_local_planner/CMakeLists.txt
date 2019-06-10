@@ -17,6 +17,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(costmap_converter REQUIRED)
 find_package(dwb_core REQUIRED)
+find_package(dwb_critics REQUIRED)
 find_package(nav_2d_utils REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 #find_package(interactive_markers REQUIRED)
@@ -27,6 +28,9 @@ find_package(std_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(teb_msgs REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_eigen REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
 message(STATUS "System: ${CMAKE_SYSTEM}")
@@ -50,14 +54,13 @@ elseif (EXISTS "FindEigen.cmake")
 endif (EXISTS "FindEigen3.cmake")
 
 set(EXTERNAL_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS} ${SUITESPARSE_INCLUDE_DIRS} ${G2O_INCLUDE_DIR})
-set(EXTERNAL_LIBS ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
+set(EXTERNAL_LIBS ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
 
 #add dynamic reconfigure api
 #find_package(catkin REQUIRED dynamic_reconfigure)
 #generate_dynamic_reconfigure_options(
 #  cfg/TebLocalPlannerReconfigure.cfg
 #)
-
 ###########
 ## Build ##
 ###########
@@ -70,6 +73,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${costmap_converter_INCLUDE_DIRS}
   ${dwb_core_INCLUDE_DIRS}
+  ${dwb_critics_INCLUDE_DIRS}
   ${nav_2d_utils_INCLUDE_DIRS}
   ${nav2_costmap_2d_INCLUDE_DIRS}
   ${geometry_msgs_INCLUDE_DIRS}
@@ -79,6 +83,9 @@ include_directories(
   ${pluginlib_INCLUDE_DIRS}
   ${teb_msgs_INCLUDE_DIRS}
   ${tf2_INCLUDE_DIRS}
+  ${tf2_eigen_INCLUDE_DIRS}
+  ${tf2_geometry_msgs_INCLUDE_DIRS}
+  ${tf2_ros_INCLUDE_DIRS}
   ${visualization_msgs_INCLUDE_DIRS}
   ${EXTERNAL_INCLUDE_DIRS}
 )
@@ -104,6 +111,7 @@ add_library(teb_local_planner SHARED
 set(ament_dependencies
     costmap_converter
     dwb_core
+    dwb_critics
     nav_2d_utils
     nav2_costmap_2d
     geometry_msgs
@@ -113,6 +121,9 @@ set(ament_dependencies
     pluginlib
     teb_msgs
     tf2
+    tf2_eigen
+    tf2_geometry_msgs
+    tf2_ros
     visualization_msgs
 )
 ament_target_dependencies(teb_local_planner
@@ -120,16 +131,26 @@ ament_target_dependencies(teb_local_planner
 )
 target_link_libraries(teb_local_planner
    ${EXTERNAL_LIBS}
-   ${catkin_LIBRARIES}
+)
+
+add_executable(teb_local_planner_node
+    src/teb_local_planner_node.cpp
+)
+#ament_target_dependencies(teb_local_planner_node
+#    ${ament_dependencies}
+#)
+target_link_libraries(teb_local_planner_node
+    teb_local_planner
+    ${EXTERNAL_LIBS}
 )
 
 ## Build additional executables
-add_executable(test_optim_node src/test_optim_node.cpp)
+#add_executable(test_optim_node src/test_optim_node.cpp)
 
-target_link_libraries(test_optim_node
-   teb_local_planner
-   ${EXTERNAL_LIBS}
-)
+#target_link_libraries(test_optim_node
+#   teb_local_planner
+#   ${EXTERNAL_LIBS}
+#)
 
 
 #############
@@ -140,9 +161,9 @@ target_link_libraries(test_optim_node
 install(TARGETS teb_local_planner
    DESTINATION lib
 )
-#install(TARGETS test_optim_node
-#   DESTINATION bin
-#)
+install(TARGETS teb_local_planner_node
+   DESTINATION bin
+)
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/
