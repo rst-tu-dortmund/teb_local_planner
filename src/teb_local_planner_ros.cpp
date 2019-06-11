@@ -377,13 +377,13 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return false;
   }
   double max_vel_x =  cfg_.robot.max_vel_x;
-  double max_ang_z = cfg_.robot.max_vel_theta;
+  double max_vel_theta = cfg_.robot.max_vel_theta;
   speed_limit_manager_.setPlan(transformed_plan);
-  bool status = speed_limit_manager_.calculateLimits(max_vel_x, max_ang_z);
+  bool status = speed_limit_manager_.calculateLimits(max_vel_x, max_vel_theta);
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
   saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, max_vel_x, cfg_.robot.max_vel_y,
-                   max_ang_z, cfg_.robot.max_vel_x_backwards);
+                   max_vel_theta, cfg_.robot.max_vel_x_backwards);
 
   // convert rot-vel to steering angle if desired (carlike robot).
   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
