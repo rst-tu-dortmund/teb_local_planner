@@ -184,6 +184,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
     marker.type = visualization_msgs::msg::Marker::POINTS;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.lifetime = rclcpp::Duration(2, 0);
+    marker.pose.orientation.w = 1.0;
     
     for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
     {
@@ -246,6 +247,8 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.lifetime = rclcpp::Duration(2, 0);
+      marker.pose.orientation.w = 1.0;
+
       geometry_msgs::msg::Point start;
       start.x = pobst->start().x();
       start.y = pobst->start().y();
@@ -286,6 +289,7 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.lifetime = rclcpp::Duration(2, 0);
+      marker.pose.orientation.w = 1.0;
       
       for (Point2dContainer::const_iterator vertex = pobst->vertices().begin(); vertex != pobst->vertices().end(); ++vertex)
       {
@@ -332,6 +336,7 @@ void TebVisualization::publishViaPoints(const std::vector< Eigen::Vector2d, Eige
   marker.type = visualization_msgs::msg::Marker::POINTS;
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.lifetime = rclcpp::Duration(2, 0);
+  marker.pose.orientation.w = 1.0;
   
   for (std::size_t i=0; i < via_points.size(); ++i)
   {
@@ -364,6 +369,7 @@ if ( printErrorWhenNotInitialized() )
   marker.id = 0;
   marker.type = visualization_msgs::msg::Marker::LINE_LIST;
   marker.action = visualization_msgs::msg::Marker::ADD;
+  marker.pose.orientation.w = 1.0;
   
   // Iterate through teb pose sequence
   for( TebOptPlannerContainer::const_iterator it_teb = teb_planner.begin(); it_teb != teb_planner.end(); ++it_teb )

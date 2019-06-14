@@ -71,6 +71,9 @@ void HomotopyClassPlanner::initialize(rclcpp::Node::SharedPtr node, const TebCon
   else
     graph_search_ = std::shared_ptr<GraphSearchInterface>(new ProbRoadmapGraph(*cfg_, this));
 
+  // This is needed to prevent different time sources error
+  last_eq_class_switching_time_ = rclcpp::Time(0, 0, node->get_clock()->get_clock_type());
+
   initialized_ = true;
 
   setVisualization(visual);
@@ -432,7 +435,7 @@ void HomotopyClassPlanner::optimizeAllTEBs(int iter_innerloop, int iter_outerloo
 
     for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
     {
-        auto functor = [&]() {
+        auto functor = [&, it_teb]() {
             it_teb->get()->optimizeTEB(iter_innerloop, iter_outerloop,
                                        true, cfg_->hcp.selection_obst_cost_scale, cfg_->hcp.selection_viapoint_cost_scale,
                                        cfg_->hcp.selection_alternative_time_cost);
@@ -441,9 +444,11 @@ void HomotopyClassPlanner::optimizeAllTEBs(int iter_innerloop, int iter_outerloo
         teb_threads.emplace_back(functor);
     }
 
-    for(auto & thread : teb_threads)
-        if(thread.joinable())
+    for(auto & thread : teb_threads) {
+        if(thread.joinable()) {
             thread.join();
+        }
+    }
   }
   else
   {

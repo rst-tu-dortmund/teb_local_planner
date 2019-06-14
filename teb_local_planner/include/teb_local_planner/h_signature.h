@@ -311,8 +311,9 @@ public:
             next_transition_time += (nextpose-pose).norm() / cfg_->robot.max_vel_x; // Approximate the time, if no time is known
           else // otherwise use the time information from the teb trajectory
           {
-            if (std::distance(path_iter, path_end) != std::distance(timediff_iter, timediff_end.get()))
+            if (std::distance(path_iter, path_end) != std::distance(timediff_iter, timediff_end.get())) {
               RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"), "Size of poses and timediff vectors does not match. This is a bug.");
+            }
             next_transition_time += (*timediff_iter)->dt();
           }
 
@@ -379,8 +380,9 @@ public:
         return true; // Found! Homotopy class already exists, therefore nothing added
         }
       }
-      else
-          RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"), "Cannot compare HSignature3d equivalence classes with types other than HSignature3d.");
+      else {
+        RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"), "Cannot compare HSignature3d equivalence classes with types other than HSignature3d.");
+      }
 
       return false;
     }

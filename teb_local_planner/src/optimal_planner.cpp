@@ -303,7 +303,7 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const ge
     vel_goal_.first = true; // we just reactivate and use the previously set velocity (should be zero if nothing was modified)
       
   // now optimize
-  return optimizeTEB(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations);
+  return optimizeTEB(cfg_->optim.no_inner_iterations, cfg_->optim.no_outer_iterations, true);
 }
 
 

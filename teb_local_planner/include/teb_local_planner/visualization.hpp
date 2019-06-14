@@ -59,6 +59,7 @@ void TebVisualization::publishGraph(const GraphType& graph, const std::string& n
   marker.header.stamp = nh_->now();
   marker.ns = ns_prefix + "Edges";
   marker.id = 0;
+  marker.pose.orientation.w = 1.0;
 // #define TRIANGLE
 #ifdef TRIANGLE
   marker.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
