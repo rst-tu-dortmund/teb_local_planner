@@ -533,7 +533,6 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
     double min_cost = std::numeric_limits<double>::max(); // maximum cost
     double min_cost_last_best = std::numeric_limits<double>::max();
     double min_cost_initial_plan_teb = std::numeric_limits<double>::max();
-    TebOptimalPlannerPtr last_best_teb;
     TebOptimalPlannerPtr initial_plan_teb = getInitialPlanTEB();
 
     // check if last best_teb is still a valid candidate
@@ -541,11 +540,11 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
     {
         // get cost of this candidate
         min_cost_last_best = best_teb_->getCurrentCost() * cfg_->hcp.selection_cost_hysteresis; // small hysteresis
-        last_best_teb = best_teb_;
+        last_best_teb_ = best_teb_;
     }
     else
     {
-      last_best_teb.reset();
+      last_best_teb_.reset();
     }
 
     if (initial_plan_teb) // the validity was already checked in getInitialPlanTEB()
@@ -568,7 +567,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
 
         double teb_cost;
 
-        if (*it_teb == last_best_teb)
+        if (*it_teb == last_best_teb_)
             teb_cost = min_cost_last_best; // skip already known cost value of the last best_teb
         else if (*it_teb == initial_plan_teb)
             teb_cost = min_cost_initial_plan_teb;
@@ -614,7 +613,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
 //   }
 
     // check if we are allowed to change
-    if (last_best_teb && best_teb_ != last_best_teb)
+    if (last_best_teb_ && best_teb_ != last_best_teb_)
     {
       ros::Time now = ros::Time::now();
       if ((now-last_eq_class_switching_time_).toSec() > cfg_->hcp.switching_blocking_period)
@@ -625,7 +624,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
       {
         ROS_DEBUG("HomotopyClassPlanner::selectBestTeb(): Switching equivalence classes blocked (check parameter switching_blocking_period.");
         // block switching, so revert best_teb_
-        best_teb_ = last_best_teb;
+        best_teb_ = last_best_teb_;
       }
 
     }
@@ -654,11 +653,55 @@ int HomotopyClassPlanner::bestTebIdx() const
 bool HomotopyClassPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
                                                 double inscribed_radius, double circumscribed_radius, int look_ahead_idx)
 {
-  TebOptimalPlannerPtr best = bestTeb();
-  if (!best)
-    return false;
+  bool feasible = false;
+  while(ros::ok() && !feasible && tebs_.size() > 0)
+  {
+    TebOptimalPlannerPtr best = findBestTeb();
+    if (!best)
+    {
+      ROS_ERROR("Couldn't retrieve the best plan");
+      return false;
+    }
+    feasible = best->isTrajectoryFeasible(costmap_model,footprint_spec, inscribed_radius, circumscribed_radius, look_ahead_idx);
+    if(!feasible)
+    {
+      removeTeb(best);
+      if(last_best_teb_ && (last_best_teb_ == best)) // Same plan as before.
+        return feasible;                             // Not failing could result in oscillations between trajectories.
+    }
+  }
+  return feasible;
+}
 
-  return best->isTrajectoryFeasible(costmap_model,footprint_spec, inscribed_radius, circumscribed_radius, look_ahead_idx);
+TebOptimalPlannerPtr HomotopyClassPlanner::findBestTeb()
+{
+  if(tebs_.empty())
+    return TebOptimalPlannerPtr();
+  if (!best_teb_ || std::find(tebs_.begin(), tebs_.end(), best_teb_) == tebs_.end())
+    best_teb_ = selectBestTeb();
+  return best_teb_;
+}
+
+TebOptPlannerContainer::iterator HomotopyClassPlanner::removeTeb(TebOptimalPlannerPtr& teb)
+{
+  TebOptPlannerContainer::iterator return_iterator = tebs_.end();
+  if(equivalence_classes_.size() != tebs_.size())
+  {
+      ROS_ERROR("removeTeb: size of eq classes != size of tebs");
+      return return_iterator;
+  }
+  auto it_eq_classes = equivalence_classes_.begin();
+  for(auto it = tebs_.begin(); it != tebs_.end(); ++it)
+  {
+    if(*it == teb)
+    {
+      return_iterator = tebs_.erase(it);
+      equivalence_classes_.erase(it_eq_classes);
+      break;
+    }
+    ++it_eq_classes;
+  }
+  return return_iterator;
 }
 
 void HomotopyClassPlanner::setPreferredTurningDir(RotType dir)
