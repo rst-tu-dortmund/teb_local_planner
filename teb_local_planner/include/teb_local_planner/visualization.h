@@ -55,6 +55,10 @@
 // std
 #include <iterator>
 
+#include <nav2_util/lifecycle_node.hpp>
+
+#include <rclcpp_lifecycle/lifecycle_publisher.hpp>
+
 // messages
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
@@ -89,7 +93,7 @@ public:
    * @param nh local rclcpp::Node::SharedPtr
    * @param cfg const reference to the TebConfig class for parameters
    */
-  TebVisualization(rclcpp::Node::SharedPtr& nh, const TebConfig& cfg);
+  TebVisualization(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg);
   
   /**
    * @brief Initializes the class and registers topics.
@@ -98,7 +102,7 @@ public:
    * @param nh local rclcpp::Node::SharedPtr
    * @param cfg const reference to the TebConfig class for parameters
    */
-  void initialize(rclcpp::Node::SharedPtr& nh, const TebConfig& cfg);
+  void initialize(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg);
   
   
   /** @name Publish to topics */
@@ -247,12 +251,13 @@ protected:
    */
   bool printErrorWhenNotInitialized() const;
 
-  rclcpp::Node::SharedPtr nh_;
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr global_plan_pub_; //!< Publisher for the global plan
-  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr local_plan_pub_; //!< Publisher for the local plan
-  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr teb_poses_pub_; //!< Publisher for the trajectory pose sequence
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr teb_marker_pub_; //!< Publisher for visualization markers
-  rclcpp::Publisher<teb_msgs::msg::FeedbackMsg>::SharedPtr feedback_pub_; //!< Publisher for the feedback message for analysis and debug purposes
+  std::shared_ptr<nav2_util::LifecycleNode> nh_;
+  
+  rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>::SharedPtr global_plan_pub_; //!< Publisher for the global plan
+  rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>::SharedPtr local_plan_pub_; //!< Publisher for the local plan
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PoseArray>::SharedPtr teb_poses_pub_; //!< Publisher for the trajectory pose sequence
+  rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::Marker>::SharedPtr teb_marker_pub_; //!< Publisher for visualization markers
+  rclcpp_lifecycle::LifecyclePublisher<teb_msgs::msg::FeedbackMsg>::SharedPtr feedback_pub_; //!< Publisher for the feedback message for analysis and debug purposes
   
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   

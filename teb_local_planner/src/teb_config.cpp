@@ -41,7 +41,7 @@
 namespace teb_local_planner
 {
     
-void TebConfig::loadRosParamFromNodeHandle(const rclcpp::Node::SharedPtr& nh)
+void TebConfig::loadRosParamFromNodeHandle(const std::shared_ptr<nav2_util::LifecycleNode> nh)
 {
   nh->get_parameter_or("odom_topic", odom_topic, odom_topic);
   nh->get_parameter_or("map_frame", map_frame, map_frame);
@@ -256,7 +256,7 @@ void TebConfig::loadRosParamFromNodeHandle(const rclcpp::Node::SharedPtr& nh)
 //}
     
     
-void TebConfig::checkParameters(const rclcpp::Node::SharedPtr& nh) const
+void TebConfig::checkParameters(const std::shared_ptr<nav2_util::LifecycleNode> nh) const
 {
   // positive backward velocity?
   if (robot.max_vel_x_backwards <= 0)
@@ -310,7 +310,7 @@ void TebConfig::checkParameters(const rclcpp::Node::SharedPtr& nh) const
   
 }    
 
-void TebConfig::checkDeprecated(const rclcpp::Node::SharedPtr& nh) const
+void TebConfig::checkDeprecated(const std::shared_ptr<nav2_util::LifecycleNode> nh) const
 {
   rclcpp::Parameter dummy;
 

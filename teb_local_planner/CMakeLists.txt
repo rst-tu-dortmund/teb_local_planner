@@ -22,7 +22,6 @@ find_package(nav_2d_utils REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 #find_package(interactive_markers REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(motion_msg REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -78,7 +77,6 @@ include_directories(
   ${nav_2d_utils_INCLUDE_DIRS}
   ${nav2_costmap_2d_INCLUDE_DIRS}
   ${geometry_msgs_INCLUDE_DIRS}
-  ${motion_msg_INCLUDE_DIRS}
   ${nav_msgs_INCLUDE_DIRS}
   ${rclcpp_INCLUDE_DIRS}
   ${std_msgs_INCLUDE_DIRS}
@@ -135,17 +133,6 @@ target_link_libraries(teb_local_planner
    ${EXTERNAL_LIBS}
 )
 
-add_executable(teb_local_planner_node
-    src/teb_local_planner_node.cpp
-)
-ament_target_dependencies(teb_local_planner_node
-    motion_msg
-)
-target_link_libraries(teb_local_planner_node
-    teb_local_planner
-    ${EXTERNAL_LIBS}
-)
-
 ## Build additional executables
 #add_executable(test_optim_node src/test_optim_node.cpp)
 
@@ -162,9 +149,6 @@ target_link_libraries(teb_local_planner_node
 ## Mark executables and/or libraries for installation
 install(TARGETS teb_local_planner
    DESTINATION lib
-)
-install(TARGETS teb_local_planner_node
-   DESTINATION bin
 )
 
 ## Mark cpp header files for installation
@@ -196,12 +180,12 @@ ament_package()
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(homotopy_class_planner_test
-      test/homotopy_class_planner_test.cpp
-  )
-  target_link_libraries(homotopy_class_planner_test
-      teb_local_planner
-  )
+  #ament_add_gtest(homotopy_class_planner_test
+  #    test/homotopy_class_planner_test.cpp
+  #)
+  #target_link_libraries(homotopy_class_planner_test
+  #    teb_local_planner
+  #)
 endif()
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_teb_local_planner.cpp)

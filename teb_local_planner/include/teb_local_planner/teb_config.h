@@ -39,6 +39,7 @@
 #ifndef TEB_CONFIG_H_
 #define TEB_CONFIG_H_
 
+#include <nav2_util/lifecycle_node.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
@@ -358,7 +359,7 @@ public:
    * @brief Load parmeters from the ros param server.
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    */
-  void loadRosParamFromNodeHandle(const rclcpp::Node::SharedPtr& nh);
+  void loadRosParamFromNodeHandle(const std::shared_ptr<nav2_util::LifecycleNode> nh);
   
   /**
    * @brief Reconfigure parameters from the dynamic_reconfigure config.
@@ -376,13 +377,13 @@ public:
    * Call this method whenever parameters are changed using public interfaces to inform the user
    * about some improper uses.
    */
-  void checkParameters(const rclcpp::Node::SharedPtr& nh) const;
+  void checkParameters(const std::shared_ptr<nav2_util::LifecycleNode> nh) const;
   
   /**
    * @brief Check if some deprecated parameters are found and print warnings
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    */
-  void checkDeprecated(const rclcpp::Node::SharedPtr& nh) const;
+  void checkDeprecated(const std::shared_ptr<nav2_util::LifecycleNode> nh) const;
   
   /**
    * @brief Return the internal config mutex

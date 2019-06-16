@@ -50,6 +50,8 @@
 
 #include <nav2_costmap_2d/costmap_2d.hpp>
 
+#include <nav2_util/lifecycle_node.hpp>
+
 // messages
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -206,7 +208,7 @@ public:
   {
   }
 
-  rclcpp::Node::SharedPtr node_{nullptr};
+  std::shared_ptr<nav2_util::LifecycleNode> node_{nullptr};
 };
 
 //! Abbrev. for shared instances of PlannerInterface or it's subclasses 

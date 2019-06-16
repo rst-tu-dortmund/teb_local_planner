@@ -71,9 +71,10 @@
 
 #include <dwb_core/common_types.hpp>
 
-#include <nav_2d_utils/odom_subscriber.hpp>
+#include <nav2_util/lifecycle_node.hpp>
 #include <nav2_costmap_2d/costmap_2d_ros.hpp>
-
+#include <nav_2d_msgs/msg/pose2_d_stamped.hpp>
+#include <nav_2d_msgs/msg/twist2_d_stamped.hpp>
 // dynamic reconfigure
 //#include <teb_local_planner/TebLocalPlannerReconfigureConfig.h>
 //#include <dynamic_reconfigure/server.h>
@@ -89,7 +90,7 @@ using dwb_core::CostmapROSPtr;
   * @brief Implements the actual abstract navigation stack routines of the teb_local_planner plugin
   * @todo Escape behavior, more efficient obstacle handling
   */
-class TebLocalPlannerROS
+class TebLocalPlannerROS : public nav2_util::LifecycleHelperInterface
 {
 
 public:
@@ -103,13 +104,18 @@ public:
     */
   ~TebLocalPlannerROS();
 
+  nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
+  nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+
   /**
     * @brief Initializes the teb plugin
     * @param node The name of the instance
     * @param tf Pointer to a transform listener
     * @param costmap_ros Cost map representing occupied and free space
     */
-  void initialize(rclcpp::Node::SharedPtr node, TFBufferPtr tf, CostmapROSPtr costmap_ros);
+  void initialize(std::shared_ptr<nav2_util::LifecycleNode> node, TFBufferPtr tf, CostmapROSPtr costmap_ros);
 
   /**
     * @brief Set the plan that the teb local planner is following
@@ -120,10 +126,13 @@ public:
 
   /**
     * @brief Given the current position, orientation, and velocity of the robot, compute velocity commands to send to the base
-    * @param cmd_vel Will be filled with the velocity command to be passed to the robot base
-    * @return True if a valid trajectory was found, false otherwise
+    * @param pose is the current position
+    * @param velocity is the current velocity
+    * @return velocity commands to send to the base
     */
-  bool computeVelocityCommands(geometry_msgs::msg::Twist& cmd_vel);
+  nav_2d_msgs::msg::Twist2DStamped computeVelocityCommands(
+    const nav_2d_msgs::msg::Pose2DStamped & pose,
+    const nav_2d_msgs::msg::Twist2D & velocity);
 
   /**
     * @brief  Check if the goal pose has been achieved
@@ -153,7 +162,7 @@ public:
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    * @return Robot footprint model used for optimization
    */
-  static RobotFootprintModelPtr getRobotFootprintFromParamServer(const rclcpp::Node::SharedPtr& nh);
+  RobotFootprintModelPtr getRobotFootprintFromParamServer();
   
     /** 
    * @brief Set the footprint from the given XmlRpcValue.
@@ -352,7 +361,8 @@ protected:
 private:
   // Definition of member variables
 
-  rclcpp::Node::SharedPtr nh_;
+  std::shared_ptr<nav2_util::LifecycleNode> nh_;
+  rclcpp::Node::SharedPtr intra_proc_node_;
   // external objects (store weak pointers)
   CostmapROSPtr costmap_ros_; //!< Pointer to the costmap ros wrapper, received from the navigation stack
   nav2_costmap_2d::Costmap2D* costmap_; //!< Pointer to the 2d costmap (obtained from the costmap ros wrapper)
@@ -368,8 +378,6 @@ private:
   FailureDetector failure_detector_; //!< Detect if the robot got stucked
   
   std::vector<geometry_msgs::msg::PoseStamped> global_plan_; //!< Store the current global plan
-  
-  std::shared_ptr<nav_2d_utils::OdomSubscriber> odom_helper_; //!< Provides an interface to receive the current velocity from the robot
   
   pluginlib::ClassLoader<costmap_converter::BaseCostmapToPolygons> costmap_converter_loader_; //!< Load costmap converter plugins at runtime
   std::shared_ptr<costmap_converter::BaseCostmapToPolygons> costmap_converter_; //!< Store the current costmap_converter  

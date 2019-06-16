@@ -67,12 +67,12 @@ TebVisualization::TebVisualization() : nh_(nullptr), initialized_(false)
 {
 }
 
-TebVisualization::TebVisualization(rclcpp::Node::SharedPtr& nh, const TebConfig& cfg) : nh_(nh), initialized_(false)
+TebVisualization::TebVisualization(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg) : nh_(nh), initialized_(false)
 {
   initialize(nh, cfg);
 }
 
-void TebVisualization::initialize(rclcpp::Node::SharedPtr& nh, const TebConfig& cfg)
+void TebVisualization::initialize(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg)
 {
   RCLCPP_WARN_EXPRESSION(nh_->get_logger(), initialized_, "TebVisualization already initialized. Reinitalizing...");
   
