@@ -37,8 +37,6 @@
  *********************************************************************/
 
 // ros stuff
-#include <nav2_navfn_planner/navfn_planner.hpp>
-
 #include <teb_local_planner/visualization.h>
 #include <teb_local_planner/optimal_planner.h>
 
@@ -67,12 +65,12 @@ TebVisualization::TebVisualization() : nh_(nullptr), initialized_(false)
 {
 }
 
-TebVisualization::TebVisualization(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg) : nh_(nh), initialized_(false)
+TebVisualization::TebVisualization(nav2_util::LifecycleNode::SharedPtr nh, const TebConfig& cfg) : nh_(nh), initialized_(false)
 {
   initialize(nh, cfg);
 }
 
-void TebVisualization::initialize(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg)
+void TebVisualization::initialize(nav2_util::LifecycleNode::SharedPtr nh, const TebConfig& cfg)
 {
   RCLCPP_WARN_EXPRESSION(nh_->get_logger(), initialized_, "TebVisualization already initialized. Reinitalizing...");
   
@@ -503,6 +501,33 @@ bool TebVisualization::printErrorWhenNotInitialized() const
     return true;
   }
   return false;
+}
+
+nav2_util::CallbackReturn 
+TebVisualization::on_activate(const rclcpp_lifecycle::State & state) {
+  global_plan_pub_->on_activate();
+  local_plan_pub_->on_activate();
+  teb_poses_pub_->on_activate();
+  teb_marker_pub_->on_activate();
+  feedback_pub_->on_activate();
+}
+
+nav2_util::CallbackReturn 
+TebVisualization::on_deactivate(const rclcpp_lifecycle::State & state) {
+  global_plan_pub_->on_deactivate();
+  local_plan_pub_->on_deactivate();
+  teb_poses_pub_->on_deactivate();
+  teb_marker_pub_->on_deactivate();
+  feedback_pub_->on_deactivate();
+}
+
+nav2_util::CallbackReturn 
+TebVisualization::on_cleanup(const rclcpp_lifecycle::State & state) {
+  global_plan_pub_.reset();
+  local_plan_pub_.reset();
+  teb_poses_pub_.reset();
+  teb_marker_pub_.reset();
+  feedback_pub_.reset();
 }
 
 } // namespace teb_local_planner

@@ -208,7 +208,7 @@ public:
   {
   }
 
-  std::shared_ptr<nav2_util::LifecycleNode> node_{nullptr};
+  nav2_util::LifecycleNode::SharedPtr node_{nullptr};
 };
 
 //! Abbrev. for shared instances of PlannerInterface or it's subclasses 

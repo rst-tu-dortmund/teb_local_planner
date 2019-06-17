@@ -93,7 +93,7 @@ public:
    * @param nh local rclcpp::Node::SharedPtr
    * @param cfg const reference to the TebConfig class for parameters
    */
-  TebVisualization(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg);
+  TebVisualization(nav2_util::LifecycleNode::SharedPtr nh, const TebConfig& cfg);
   
   /**
    * @brief Initializes the class and registers topics.
@@ -102,7 +102,7 @@ public:
    * @param nh local rclcpp::Node::SharedPtr
    * @param cfg const reference to the TebConfig class for parameters
    */
-  void initialize(std::shared_ptr<nav2_util::LifecycleNode> nh, const TebConfig& cfg);
+  void initialize(nav2_util::LifecycleNode::SharedPtr nh, const TebConfig& cfg);
   
   
   /** @name Publish to topics */
@@ -231,6 +231,10 @@ public:
    */
   void publishFeedbackMessage(const TebOptimalPlanner& teb_planner, const ObstContainer& obstacles);
   
+  nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state);
+  nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state);
+  nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state);
+  
   //@}
 
   /**
@@ -251,7 +255,7 @@ protected:
    */
   bool printErrorWhenNotInitialized() const;
 
-  std::shared_ptr<nav2_util::LifecycleNode> nh_;
+  nav2_util::LifecycleNode::SharedPtr nh_;
   
   rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>::SharedPtr global_plan_pub_; //!< Publisher for the global plan
   rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>::SharedPtr local_plan_pub_; //!< Publisher for the local plan

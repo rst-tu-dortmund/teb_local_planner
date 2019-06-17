@@ -56,7 +56,7 @@ protected:
   // The action server callback
   void followPath(const std::shared_ptr<GoalHandle> goal_handle);
 
-  bool isGoalReached(const nav_2d_msgs::msg::Pose2DStamped & pose2d);
+  bool isGoalReached();
   void publishVelocity(const nav_2d_msgs::msg::Twist2DStamped & velocity);
   void publishZeroVelocity();
   bool getRobotPose(nav_2d_msgs::msg::Pose2DStamped & pose2d);

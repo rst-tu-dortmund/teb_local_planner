@@ -54,8 +54,7 @@ TebController::on_configure(const rclcpp_lifecycle::State & state)
 
   auto node = shared_from_this();
 
-  planner_ = std::make_unique<teb_local_planner::TebLocalPlannerROS>(
-    node, costmap_ros_->getTfBuffer(), costmap_ros_);
+  planner_ = std::make_unique<teb_local_planner::TebLocalPlannerROS>(node, costmap_ros_->getTfBuffer(), costmap_ros_);
   planner_->on_configure(state);
 
   odom_sub_ = std::make_shared<nav_2d_utils::OdomSubscriber>(*this);
@@ -168,7 +167,7 @@ TebController::followPath(const std::shared_ptr<GoalHandle> goal_handle)
         RCLCPP_INFO(get_logger(), "No pose. Stopping the robot");
         publishZeroVelocity();
       } else {
-        if (isGoalReached(pose2d)) {
+        if (isGoalReached()) {
           RCLCPP_INFO(get_logger(), "Reached the goal");
           break;
         }
@@ -228,10 +227,9 @@ void TebController::publishZeroVelocity()
   publishVelocity(velocity);
 }
 
-bool TebController::isGoalReached(const nav_2d_msgs::msg::Pose2DStamped & pose2d)
+bool TebController::isGoalReached()
 {
-  nav_2d_msgs::msg::Twist2D velocity = odom_sub_->getTwist();
-  return planner_->isGoalReached(pose2d, velocity);
+  return planner_->isGoalReached();
 }
 
 bool TebController::getRobotPose(nav_2d_msgs::msg::Pose2DStamped & pose2d)
@@ -244,5 +242,4 @@ bool TebController::getRobotPose(nav_2d_msgs::msg::Pose2DStamped & pose2d)
   pose2d = nav_2d_utils::poseStampedToPose2D(current_pose);
   return true;
 }
-
 }  // namespace dwb_controller

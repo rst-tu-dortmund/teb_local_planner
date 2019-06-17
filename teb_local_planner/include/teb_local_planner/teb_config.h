@@ -40,6 +40,7 @@
 #define TEB_CONFIG_H_
 
 #include <nav2_util/lifecycle_node.hpp>
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
@@ -53,7 +54,6 @@
 
 namespace teb_local_planner
 {
-
 /**
  * @class TebConfig
  * @brief Config class for the teb_local_planner and its components.
@@ -61,7 +61,8 @@ namespace teb_local_planner
 class TebConfig
 {
 public:
-
+  using UniquePtr = std::unique_ptr<TebConfig>;
+  
   std::string odom_topic; //!< Topic name of the odometry message, provided by the robot driver or simulator
   std::string map_frame; //!< Global planning frame
 
@@ -354,12 +355,14 @@ public:
 
 
   }
+  
+  void declareParameters(const nav2_util::LifecycleNode::SharedPtr nh);
 
   /**
    * @brief Load parmeters from the ros param server.
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    */
-  void loadRosParamFromNodeHandle(const std::shared_ptr<nav2_util::LifecycleNode> nh);
+  void loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh);
   
   /**
    * @brief Reconfigure parameters from the dynamic_reconfigure config.
@@ -377,13 +380,13 @@ public:
    * Call this method whenever parameters are changed using public interfaces to inform the user
    * about some improper uses.
    */
-  void checkParameters(const std::shared_ptr<nav2_util::LifecycleNode> nh) const;
+  void checkParameters(const nav2_util::LifecycleNode::SharedPtr nh) const;
   
   /**
    * @brief Check if some deprecated parameters are found and print warnings
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    */
-  void checkDeprecated(const std::shared_ptr<nav2_util::LifecycleNode> nh) const;
+  void checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh) const;
   
   /**
    * @brief Return the internal config mutex
@@ -393,8 +396,6 @@ public:
 private:
   std::mutex config_mutex_; //!< Mutex for config accesses and changes
 };
-
-
 } // namespace teb_local_planner
 
 #endif

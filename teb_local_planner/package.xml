@@ -29,10 +29,15 @@
   <depend>geometry_msgs</depend>
   <!-- <depend>interactive_markers</depend> -->
   <depend>libg2o</depend>
+  <depend>dwb_core</depend>
+  <depend>dwb_controller</depend>
+  <depend>dwb_critics</depend>
   <depend>nav2_costmap_2d</depend>
   <depend>nav2_msgs</depend>
+  <depend>nav2_util</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
   <depend>std_msgs</depend>
   <depend>teb_msgs</depend>
   <depend>tf2</depend>

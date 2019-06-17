@@ -95,9 +95,12 @@ class TebLocalPlannerROS : public nav2_util::LifecycleHelperInterface
 
 public:
   /**
-    * @brief Default constructor of the teb plugin
+    * @brief Constructor of the teb plugin
+    * @param node The node of the instance
+    * @param tf Pointer to a transform listener
+    * @param costmap_ros Cost map representing occupied and free space
     */
-  TebLocalPlannerROS();
+  explicit TebLocalPlannerROS(nav2_util::LifecycleNode::SharedPtr node, TFBufferPtr tf, CostmapROSPtr costmap_ros);
 
   /**
     * @brief  Destructor of the plugin
@@ -111,11 +114,8 @@ public:
 
   /**
     * @brief Initializes the teb plugin
-    * @param node The name of the instance
-    * @param tf Pointer to a transform listener
-    * @param costmap_ros Cost map representing occupied and free space
     */
-  void initialize(std::shared_ptr<nav2_util::LifecycleNode> node, TFBufferPtr tf, CostmapROSPtr costmap_ros);
+  void initialize();
 
   /**
     * @brief Set the plan that the teb local planner is following
@@ -190,7 +190,7 @@ public:
 //  static double getNumberFromXMLRPC(XmlRpc::XmlRpcValue& value, const std::string& full_param_name);
   
   //@}
-  
+
 protected:
 
   /**
@@ -355,18 +355,17 @@ protected:
   
   
   void configureBackupModes(std::vector<geometry_msgs::msg::PoseStamped>& transformed_plan,  int& goal_idx);
-
-
   
 private:
   // Definition of member variables
 
-  std::shared_ptr<nav2_util::LifecycleNode> nh_;
+  nav2_util::LifecycleNode::SharedPtr nh_;
   rclcpp::Node::SharedPtr intra_proc_node_;
   // external objects (store weak pointers)
   CostmapROSPtr costmap_ros_; //!< Pointer to the costmap ros wrapper, received from the navigation stack
   nav2_costmap_2d::Costmap2D* costmap_; //!< Pointer to the 2d costmap (obtained from the costmap ros wrapper)
   TFBufferPtr tf_; //!< pointer to Transform Listener
+  TebConfig::UniquePtr cfg_; //!< Config class that stores and manages all related parameters
     
   // internal objects (memory management owned)
   PlannerInterfacePtr planner_; //!< Instance of the underlying optimal planner class
@@ -374,7 +373,6 @@ private:
   ViaPointContainer via_points_; //!< Container of via-points that should be considered during local trajectory optimization
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   std::shared_ptr<dwb_critics::ObstacleFootprintCritic> costmap_model_;
-  TebConfig cfg_; //!< Config class that stores and manages all related parameters
   FailureDetector failure_detector_; //!< Detect if the robot got stucked
   
   std::vector<geometry_msgs::msg::PoseStamped> global_plan_; //!< Store the current global plan
