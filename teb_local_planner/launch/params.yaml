@@ -1,5 +1,5 @@
-local_costmap:
-  local_costmap:
+converter_costmap:
+  converter_costmap:
     ros__parameters:
       use_sim_time: True
       width: 3
@@ -19,6 +19,34 @@ local_costmap:
         max_obstacle_height: 3.0
         clearing: True
         marking: True
+  converter_costmap_client:
+    ros__parameters:
+      use_sim_time: True
+  converter_costmap_rclcpp_node:
+    ros__parameters:
+      use_sim_time: True
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: True
+      width: 4
+      height: 4
+      resolution: 0.03
+      rolling_window: False
+      robot_radius: 0.17
+      obstacle_layer:
+        enabled: True
+      inflation_layer:
+        inflation_radius: 0.1
+      always_send_full_costmap: True
+      observation_sources: scan
+      update_frequency: 15.0
+      scan:
+        topic: /scan
+        max_obstacle_height: 3.0
+        clearing: True
+        marking: True
   local_costmap_client:
     ros__parameters:
       use_sim_time: True
@@ -32,9 +60,10 @@ teb_controller:
     footprint_model/type: circular
     footprint_model/radius: 0.17
     min_obstacle_dist: 0.2
+    inflation_dist: 0.3
     costmap_converter_plugin: costmap_converter::CostmapToPolygonsDBSMCCH
     costmap_converter_spin_thread: True
-    costmap_converter_rate: 20
+    costmap_converter_rate: 15
     enable_homotopy_class_planning: True
     enable_multithreading: True
     #weight_obstacle: 100.0
@@ -44,10 +73,10 @@ teb_controller:
     max_samples: 20
     max_global_plan_lookahead_dist: 1.0
     visualize_hc_graph: True
-    max_vel_x: 0.7
-    max_vel_theta: 0.9
-    acc_lim_x: 0.7
-    acc_lim_theta: 0.5
+    max_vel_x: 0.26
+    max_vel_theta: 1.0
+    acc_lim_x: 2.5
+    acc_lim_theta: 3.2
 
 costmap_converter:
   ros__parameters:
