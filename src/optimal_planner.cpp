@@ -1010,6 +1010,10 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoi
     {
       cur_cost *= viapoint_cost_scale;
     }
+    else if (dynamic_cast<EdgeTimeOptimal*>(*it) != nullptr && alternative_time_cost)
+    {
+      continue; // skip these edges if alternative_time_cost is active
+    }
     cost_ += cur_cost;
   }
 
