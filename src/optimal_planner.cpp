@@ -440,9 +440,8 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
         if(cfg_->obstacles.include_dynamic_obstacles && obst->isDynamic())
           continue;
 
-          // calculate distance to current pose
-          // TODO we ignore the robot footprint here in the association stage
-          double dist = obst->getMinimumDistance(teb_.Pose(i).position());
+          // calculate distance to robot model
+          double dist = robot_model_->calculateDistance(teb_.Pose(i), obst.get());
           
           // force considering obstacle if really close to the current pose
         if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
