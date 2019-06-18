@@ -119,13 +119,14 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
 
 
 
-void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns)
+void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns,
+                                                  const std_msgs::ColorRGBA &color)
 {
   if ( printErrorWhenNotInitialized() )
     return;
   
   std::vector<visualization_msgs::Marker> markers;
-  robot_model.visualizeRobot(current_pose, markers);
+  robot_model.visualizeRobot(current_pose, markers, color);
   if (markers.empty())
     return;
   
@@ -452,6 +453,16 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
   }
   
   feedback_pub_.publish(msg);
+}
+
+std_msgs::ColorRGBA TebVisualization::toColorMsg(double a, double r, double g, double b)
+{
+  std_msgs::ColorRGBA color;
+  color.a = a;
+  color.r = r;
+  color.g = g;
+  color.b = b;
+  return color;
 }
 
 bool TebVisualization::printErrorWhenNotInitialized() const
