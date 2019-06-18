@@ -998,69 +998,19 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoi
   // since we aren't storing edge pointers, we need to check every edge
   for (std::vector<g2o::OptimizableGraph::Edge*>::const_iterator it = optimizer_->activeEdges().begin(); it!= optimizer_->activeEdges().end(); it++)
   {
-    EdgeTimeOptimal* edge_time_optimal = dynamic_cast<EdgeTimeOptimal*>(*it);
-    if (edge_time_optimal!=NULL && !alternative_time_cost)
-    {
-      cost_ += edge_time_optimal->getError().squaredNorm();
-      continue;
-    }
+    double cur_cost = (*it)->chi2();
 
-    EdgeKinematicsDiffDrive* edge_kinematics_dd = dynamic_cast<EdgeKinematicsDiffDrive*>(*it);
-    if (edge_kinematics_dd!=NULL)
+    if (dynamic_cast<EdgeObstacle*>(*it) != nullptr
+        || dynamic_cast<EdgeInflatedObstacle*>(*it) != nullptr
+        || dynamic_cast<EdgeDynamicObstacle*>(*it) != nullptr)
     {
-      cost_ += edge_kinematics_dd->getError().squaredNorm();
-      continue;
+      cur_cost *= obst_cost_scale;
     }
-    
-    EdgeKinematicsCarlike* edge_kinematics_cl = dynamic_cast<EdgeKinematicsCarlike*>(*it);
-    if (edge_kinematics_cl!=NULL)
+    else if (dynamic_cast<EdgeViaPoint*>(*it) != nullptr)
     {
-      cost_ += edge_kinematics_cl->getError().squaredNorm();
-      continue;
+      cur_cost *= viapoint_cost_scale;
     }
-    
-    EdgeVelocity* edge_velocity = dynamic_cast<EdgeVelocity*>(*it);
-    if (edge_velocity!=NULL)
-    {
-      cost_ += edge_velocity->getError().squaredNorm();
-      continue;
-    }
-    
-    EdgeAcceleration* edge_acceleration = dynamic_cast<EdgeAcceleration*>(*it);
-    if (edge_acceleration!=NULL)
-    {
-      cost_ += edge_acceleration->getError().squaredNorm();
-      continue;
-    }
-    
-    EdgeObstacle* edge_obstacle = dynamic_cast<EdgeObstacle*>(*it);
-    if (edge_obstacle!=NULL)
-    {
-      cost_ += edge_obstacle->getError().squaredNorm() * obst_cost_scale;
-      continue;
-    }
-    
-    EdgeInflatedObstacle* edge_inflated_obstacle = dynamic_cast<EdgeInflatedObstacle*>(*it);
-    if (edge_inflated_obstacle!=NULL)
-    {
-      cost_ += std::sqrt(std::pow(edge_inflated_obstacle->getError()[0],2) * obst_cost_scale 
-               + std::pow(edge_inflated_obstacle->getError()[1],2));
-      continue;
-    }
-    
-    EdgeDynamicObstacle* edge_dyn_obstacle = dynamic_cast<EdgeDynamicObstacle*>(*it);
-    if (edge_dyn_obstacle!=NULL)
-    {
-      cost_ += edge_dyn_obstacle->getError().squaredNorm() * obst_cost_scale;
-      continue;
-    }
-    
-    EdgeViaPoint* edge_viapoint = dynamic_cast<EdgeViaPoint*>(*it);
-    if (edge_viapoint!=NULL)
-    {
-      cost_ += edge_viapoint->getError().squaredNorm() * viapoint_cost_scale;
-      continue;
-    }
+    cost_ += cur_cost;
   }
 
   // delete temporary created graph
