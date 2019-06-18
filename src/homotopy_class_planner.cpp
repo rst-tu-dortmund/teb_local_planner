@@ -419,6 +419,11 @@ void HomotopyClassPlanner::optimizeAllTEBs(int iter_innerloop, int iter_outerloo
   // optimize TEBs in parallel since they are independend of each other
   if (cfg_->hcp.enable_multithreading)
   {
+    // Must prevent .join_all() from throwing exception if interruption was
+    // requested, as this can lead to multiple threads operating on the same
+    // TEB, which leads to SIGSEGV
+    boost::this_thread::disable_interruption di;
+
     boost::thread_group teb_threads;
     for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
     {
@@ -463,6 +468,7 @@ void HomotopyClassPlanner::deleteTebDetours(double threshold)
         it_teb = tebs_.erase(it_teb);
         it_eqclasses = equivalence_classes_.erase(it_eqclasses);
         modified = true;
+        continue;
       }
     }
 
