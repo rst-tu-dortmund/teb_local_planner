@@ -144,6 +144,11 @@ void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, c
   
 }
 
+void TebVisualization::publishInfeasibleRobotPose(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model)
+{
+  publishRobotFootprintModel(current_pose, robot_model, "InfeasibleRobotPoses", toColorMsg(0.5, 0.8, 0.0, 0.0));
+}
+
 
 void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
 {

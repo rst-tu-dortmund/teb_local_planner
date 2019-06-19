@@ -138,6 +138,14 @@ public:
    */
   void publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns = "RobotFootprintModel",
                                   const std_msgs::ColorRGBA& color = toColorMsg(0.5, 0.0, 0.8, 0.0));
+
+  /**
+   * @brief Publish the robot footprints related to infeasible poses
+   *
+   * @param current_pose Current pose of the robot
+   * @param robot_model Subclass of BaseRobotFootprintModel
+   */
+  void publishInfeasibleRobotPose(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model);
   
   /**
    * @brief Publish obstacle positions to the ros topic \e ../../teb_markers
@@ -145,7 +153,7 @@ public:
    * @param obstacles Obstacle container
    */
   void publishObstacles(const ObstContainer& obstacles) const;
-  
+
   /**
    * @brief Publish via-points to the ros topic \e ../../teb_markers
    * @param via_points via-point container
