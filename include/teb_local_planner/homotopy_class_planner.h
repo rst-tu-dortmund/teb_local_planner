@@ -435,6 +435,23 @@ public:
         return true; // Found! Homotopy class already exists, therefore nothing added
       return false;
   }
+  /**
+   * @brief Checks if the orientation of the computed trajectories differs from that of the best plan of more than the
+   *  specified threshold and eventually deletes them.
+   * @param orient_threshold: Threshold paramter for allowed orientation changes in radians
+   * @param len_orientation_vector: length of the vector used to compute the start orientation
+   */
+  void deletePlansDetouringBackwards(const double orient_threshold, const double len_orientation_vector);
+  /**
+   * @brief Given a plan, computes its start orientation using a vector of length >= len_orientation_vector
+   *        starting from the initial pose.
+   * @param plan: Teb to be analyzed
+   * @param len_orientation_vector: min length of the vector used to compute the start orientation
+   * @param orientation: computed start orientation
+   * @return: Could the vector for the orientation check be computed? (False if the plan has no pose with a distance
+   *          > len_orientation_vector from the start poseq)
+   */
+  bool computeStartOrientation(const TebOptimalPlannerPtr plan, const double len_orientation_vector, double& orientation);
 
 
   /**

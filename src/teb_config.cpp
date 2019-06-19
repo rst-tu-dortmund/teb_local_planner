@@ -145,9 +145,11 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("viapoints_all_candidates", hcp.viapoints_all_candidates, hcp.viapoints_all_candidates);
   nh.param("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph); 
   nh.param("visualize_with_time_as_z_axis_scale", hcp.visualize_with_time_as_z_axis_scale, hcp.visualize_with_time_as_z_axis_scale);
+  nh.param("delete_detours_backwards", hcp.delete_detours_backwards, hcp.delete_detours_backwards);
+  nh.param("detours_orientation_tolerance", hcp.detours_orientation_tolerance, hcp.detours_orientation_tolerance);
+  nh.param("length_start_orientation_vector", hcp.length_start_orientation_vector, hcp.length_start_orientation_vector);
   
   // Recovery
-  
   nh.param("shrink_horizon_backup", recovery.shrink_horizon_backup, recovery.shrink_horizon_backup);
   nh.param("shrink_horizon_min_duration", recovery.shrink_horizon_min_duration, recovery.shrink_horizon_min_duration);
   nh.param("oscillation_recovery", recovery.oscillation_recovery, recovery.oscillation_recovery);
