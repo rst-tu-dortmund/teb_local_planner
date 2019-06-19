@@ -223,6 +223,21 @@ public:
   virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
                                     double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1);
 
+  /**
+   * @brief In case of empty best teb, scores again the available plans to find the best one.
+   *        The best_teb_ variable is updated consequently.
+   * @return Shared pointer to the best TebOptimalPlanner that contains the selected trajectory (TimedElasticBand).
+   *         An empty pointer is returned if no plan is available.
+   */
+  TebOptimalPlannerPtr findBestTeb();
+
+  /**
+   * @brief Removes the specified teb and the corresponding homotopy class from the list of available ones.
+   * @param pointer to the teb Band to be removed
+   * @return Iterator to the next valid teb if available, else to the end of the tebs container.
+   */
+  TebOptPlannerContainer::iterator removeTeb(TebOptimalPlannerPtr& teb);
+
   //@}
 
   /** @name Visualization */
@@ -528,6 +543,8 @@ protected:
   ros::Time last_eq_class_switching_time_; //!< Store the time at which the equivalence class changed recently
 
   bool initialized_; //!< Keeps track about the correct initialization of this class
+
+  TebOptimalPlannerPtr last_best_teb_;  //!< Points to the plan used in the previous control cycle
 
 
 
