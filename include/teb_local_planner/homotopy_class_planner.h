@@ -281,15 +281,6 @@ public:
    */
   void exploreEquivalenceClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel);
 
-
-  /**
-   * @brief Check all available trajectories (TEBs) for detours and delete found ones.
-   * @see TimedElasticBand::detectDetoursBackwards
-   * @param threshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg)
-   */
-  void deleteTebDetours(double threshold=0.0);
-
-
   /**
    * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it using a generic 2D reference path
    *
@@ -487,7 +478,7 @@ public:
   /**
    * @brief Internal helper function that adds a new equivalence class to the list of known classes only if it is unique.
    * @param eq_class equivalence class that should be tested
-   * @param lock if \c true, exclude the H-signature from deletion, e.g. in deleteTebDetours().
+   * @param lock if \c true, exclude the H-signature from deletion.
    * @return \c true if the h-signature was added and no duplicate was found, \c false otherwise
    */
   bool addEquivalenceClassIfNew(const EquivalenceClassPtr& eq_class, bool lock=false);
@@ -519,7 +510,7 @@ protected:
    * First all old h-signatures are deleted, since they could be invalid for this planning step (obstacle position may changed).
    * Afterwards the h-signatures are calculated for each existing TEB/trajectory and is inserted to the list of known h-signatures.
    * Doing this is important to prefer already optimized trajectories in contrast to initialize newly explored coarse paths.
-   * @param delete_detours if this param is \c true, all existing TEBs are cleared from detour-candidates by utilizing deleteTebDetours().
+   * @param delete_detours if this param is \c true, all existing TEBs are cleared from detour-candidates calling deletePlansGoingBackwards().
    */
   void renewAndAnalyzeOldTebs(bool delete_detours);
 

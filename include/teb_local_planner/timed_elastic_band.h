@@ -625,22 +625,6 @@ public:
   double getAccumulatedDistance() const;
   
   /**
-   * @brief Detect whether the trajectory contains detours.
-   * 
-   * Two different cases forces the method to return \c true : \n
-   * 	1. The trajectory contain parts that increase the distance to the goal. \n
-   * 	   This is checked by comparing the orientations theta_i with the goal heading. \n
-   * 	   If the scalar product is below the \c threshold param, the method returns \c true.
-   * 	2. The trajectory consist of backwards motions at the beginning of the trajectory,
-   * 	   e.g. the second pose is behind the start pose w.r.t. to the same goal heading.
-   * 
-   * Detours are not critical, but can be takein into account if multiple trajectory candidates are avaiable.
-   * @param threshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg)
-   * @return \c true if one of both cases mentioned above are satisfied, false otherwise
-   */
-  bool detectDetoursBackwards(double threshold=0) const;
-  
-  /**
    * @brief Check if all trajectory points are contained in a specific region
    * 
    * The specific region is a circle around the current robot position (Pose(0)) with given radius \c radius.

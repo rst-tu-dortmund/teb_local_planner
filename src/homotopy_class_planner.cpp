@@ -733,6 +733,12 @@ void HomotopyClassPlanner::deletePlansDetouringBackwards(const double orient_thr
       it_teb = removeTeb(*it_teb);  // Plan detouring backwards
       continue;
     }
+    if(!it_teb->get()->isOptimized())
+    {
+      ROS_DEBUG("Removing a teb because it's not optimized");
+      it_teb = removeTeb(*it_teb);  // Deletes tebs that cannot be optimized (last optim call failed)
+      continue;
+    }
     ++it_teb;
   }
 }
