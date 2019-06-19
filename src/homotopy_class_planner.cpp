@@ -215,10 +215,10 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
   equivalence_classes_.clear();
 
   // Adding the equivalence class of the latest best_teb_ first
-  bool has_best_teb = best_teb_ && std::find(tebs_.begin(), tebs_.end(), best_teb_) != tebs_.end();
+  TebOptPlannerContainer::iterator it_best_teb = best_teb_ ? std::find(tebs_.begin(), tebs_.end(), best_teb_) : tebs_.end();
+  bool has_best_teb = it_best_teb != tebs_.end();
   if (has_best_teb)
   {
-    TebOptPlannerContainer::iterator it_best_teb = std::find(tebs_.begin(), tebs_.end(), best_teb_);
     std::iter_swap(tebs_.begin(), it_best_teb);  // Putting the last best teb at the beginning of the container
     addEquivalenceClassIfNew(calculateEquivalenceClass(best_teb_->teb().poses().begin(),
       best_teb_->teb().poses().end(), getCplxFromVertexPosePtr , obstacles_,
