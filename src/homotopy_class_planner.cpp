@@ -214,12 +214,22 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
   // clear old h-signatures (since they could be changed due to new obstacle positions.
   equivalence_classes_.clear();
 
+  // Adding the equivalence class of the latest best_teb_ first
+  TebOptPlannerContainer::iterator it_best_teb = best_teb_ ? std::find(tebs_.begin(), tebs_.end(), best_teb_) : tebs_.end();
+  bool has_best_teb = it_best_teb != tebs_.end();
+  if (has_best_teb)
+  {
+    std::iter_swap(tebs_.begin(), it_best_teb);  // Putting the last best teb at the beginning of the container
+    addEquivalenceClassIfNew(calculateEquivalenceClass(best_teb_->teb().poses().begin(),
+      best_teb_->teb().poses().end(), getCplxFromVertexPosePtr , obstacles_,
+      best_teb_->teb().timediffs().begin(), best_teb_->teb().timediffs().end()));
+  }
   // Collect h-signatures for all existing TEBs and store them together with the corresponding iterator / pointer:
 //   typedef std::list< std::pair<TebOptPlannerContainer::iterator, std::complex<long double> > > TebCandidateType;
 //   TebCandidateType teb_candidates;
 
-  // get new homotopy classes and delete multiple TEBs per homotopy class
-  TebOptPlannerContainer::iterator it_teb = tebs_.begin();
+  // get new homotopy classes and delete multiple TEBs per homotopy class. Skips the best teb if available (added before).
+  TebOptPlannerContainer::iterator it_teb = has_best_teb ? std::next(tebs_.begin(), 1) : tebs_.begin();
   while(it_teb != tebs_.end())
   {
     // delete Detours if there is at least one other TEB candidate left in the container
