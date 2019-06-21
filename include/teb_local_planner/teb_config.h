@@ -150,7 +150,8 @@ public:
     double weight_kinematics_nh; //!< Optimization weight for satisfying the non-holonomic kinematics
     double weight_kinematics_forward_drive; //!< Optimization weight for forcing the robot to choose only forward directions (positive transl. velocities, only diffdrive robot)
     double weight_kinematics_turning_radius; //!< Optimization weight for enforcing a minimum turning radius (carlike robots)
-    double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t transition time
+    double weight_optimaltime; //!< Optimization weight for contracting the trajectory w.r.t. transition time
+    double weight_shortest_path; //!< Optimization weight for contracting the trajectory w.r.t. path length
     double weight_obstacle; //!< Optimization weight for satisfying a minimum separation from obstacles
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles    
@@ -296,6 +297,7 @@ public:
     optim.weight_kinematics_forward_drive = 1;
     optim.weight_kinematics_turning_radius = 1;
     optim.weight_optimaltime = 1;
+    optim.weight_shortest_path = 0;
     optim.weight_obstacle = 50;
     optim.weight_inflation = 0.1;
     optim.weight_dynamic_obstacle = 50;

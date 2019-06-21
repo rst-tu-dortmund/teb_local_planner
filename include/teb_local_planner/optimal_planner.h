@@ -64,6 +64,7 @@
 #include <teb_local_planner/g2o_types/edge_acceleration.h>
 #include <teb_local_planner/g2o_types/edge_kinematics.h>
 #include <teb_local_planner/g2o_types/edge_time_optimal.h>
+#include <teb_local_planner/g2o_types/edge_shortest_path.h>
 #include <teb_local_planner/g2o_types/edge_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
 #include <teb_local_planner/g2o_types/edge_via_point.h>
@@ -605,6 +606,14 @@ protected:
    * @see optimizeGraph
    */
   void AddEdgesTimeOptimal();
+
+  /**
+   * @brief Add all edges (local cost functions) for minimizing the path length
+   * @see EdgeShortestPath
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesShortestPath();
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles
