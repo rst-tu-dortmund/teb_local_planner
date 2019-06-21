@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.12 (2019-06-21)
+-------------------
 
 * Allow scripts to be executable and usable by rosrun after catkin_make install and through the catkin release process (thanks to Devon Ash)
 * Add nonlinear part to obstacle cost to improve narrow gap behavior.
