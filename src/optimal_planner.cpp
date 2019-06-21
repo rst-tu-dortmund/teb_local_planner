@@ -1175,7 +1175,13 @@ bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* c
   for (int i=0; i <= look_ahead_idx; ++i)
   {           
     if ( costmap_model->footprintCost(teb().Pose(i).x(), teb().Pose(i).y(), teb().Pose(i).theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 )
+    {
+      if (visualization_)
+      {
+        visualization_->publishInfeasibleRobotPose(teb().Pose(i), *robot_model_);
+      }
       return false;
+    }
     // Checks if the distance between two poses is higher than the robot radius or the orientation diff is bigger than the specified threshold
     // and interpolates in that case.
     // (if obstacles are pushing two consecutive poses away, the center between two consecutive poses might coincide with the obstacle ;-)!
@@ -1199,7 +1205,7 @@ bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* c
           {
             if (visualization_) 
             {
-              visualization_->publishRobotFootprintModel(intermediate_pose, *robot_model_);
+              visualization_->publishInfeasibleRobotPose(intermediate_pose, *robot_model_);
             }
             return false;
           }

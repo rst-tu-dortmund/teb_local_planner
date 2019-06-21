@@ -98,8 +98,9 @@ public:
     * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
     * @param[out] markers container of marker messages describing the robot shape
+    * @param color Color of the footprint
     */
-  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const {}
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const {}
   
   
   /**
@@ -231,8 +232,9 @@ public:
     * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
     * @param[out] markers container of marker messages describing the robot shape
+    * @param color Color of the footprint
     */
-  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
   {
     markers.resize(1);
     visualization_msgs::Marker& marker = markers.back();
@@ -240,10 +242,7 @@ public:
     current_pose.toPoseMsg(marker.pose);
     marker.scale.x = marker.scale.y = 2*radius_; // scale = diameter
     marker.scale.z = 0.05;
-    marker.color.a = 0.5;
-    marker.color.r = 0.0;
-    marker.color.g = 0.8;
-    marker.color.b = 0.0;
+    marker.color = color;
   }
   
   /**
@@ -327,15 +326,10 @@ public:
     * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
     * @param[out] markers container of marker messages describing the robot shape
+    * @param color Color of the footprint
     */
-  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
-  {
-    std_msgs::ColorRGBA color;
-    color.a  = 0.5;
-    color.r  = 0.0;
-    color.g = 0.8;
-    color.b  = 0.0;
-    
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+  {    
     Eigen::Vector2d dir = current_pose.orientationUnitVec();
     if (front_radius_>0)
     {
@@ -477,15 +471,10 @@ public:
     * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
     * @param[out] markers container of marker messages describing the robot shape
+    * @param color Color of the footprint
     */
-  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
   {   
-    std_msgs::ColorRGBA color;
-    color.a  = 0.5;
-    color.r  = 0.0;
-    color.g = 0.8;
-    color.b  = 0.0;
-  
     markers.push_back(visualization_msgs::Marker());
     visualization_msgs::Marker& marker = markers.front();
     marker.type = visualization_msgs::Marker::LINE_STRIP;
@@ -606,18 +595,13 @@ public:
     * The header, namespace, id and marker lifetime will be overwritten.
     * @param current_pose Current robot pose
     * @param[out] markers container of marker messages describing the robot shape
+    * @param color Color of the footprint
     */
-  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers ) const 
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
   {
     if (vertices_.empty())
       return;
-    
-    std_msgs::ColorRGBA color;
-    color.a  = 0.5;
-    color.r  = 0.0;
-    color.g = 0.8;
-    color.b  = 0.0;
-  
+
     markers.push_back(visualization_msgs::Marker());
     visualization_msgs::Marker& marker = markers.front();
     marker.type = visualization_msgs::Marker::LINE_STRIP;
