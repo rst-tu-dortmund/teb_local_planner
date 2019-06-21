@@ -379,8 +379,11 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   double max_vel_x =  cfg_.robot.max_vel_x;
   double max_vel_theta = cfg_.robot.max_vel_theta;
   speed_limit_manager_.setPlan(transformed_plan);
-  bool status = speed_limit_manager_.calculateLimits(max_vel_x, max_vel_theta);
-  
+  if (!speed_limit_manager_.calculateLimits(max_vel_x, max_vel_theta)) 
+  {
+    ROS_DEBUG("One of the speed limiters failed");
+  }
+
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
   saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, max_vel_x, cfg_.robot.max_vel_y,
                    max_vel_theta, cfg_.robot.max_vel_x_backwards);
