@@ -381,7 +381,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   speed_limit_manager_.setPlan(transformed_plan);
   if (!speed_limit_manager_.calculateLimits(max_vel_x, max_vel_theta)) 
   {
-    ROS_DEBUG("One of the speed limiters failed");
+    ROS_WARN_THROTTLE(10.0, "One of the speed limiters failed");
   }
 
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
