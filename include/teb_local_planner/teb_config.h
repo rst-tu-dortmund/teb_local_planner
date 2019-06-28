@@ -191,6 +191,7 @@ public:
     bool delete_detours_backwards; //!< If enabled, the planner will discard the plans detouring backwards with respect to the best plan
     double detours_orientation_tolerance; //!< A plan is considered a detour if its start orientation differs more than this from the best plan
     double length_start_orientation_vector; //!< Length of the vector used to compute the start orientation of a plan
+    double max_ratio_detours_duration_best_duration; //!< Detours are discarted if their execution time / the execution time of the best teb is > this
   } hcp;
   
   //! Recovery/backup related parameters
@@ -334,6 +335,7 @@ public:
     hcp.delete_detours_backwards = true;
     hcp.detours_orientation_tolerance = M_PI / 2.0;
     hcp.length_start_orientation_vector = 0.4;
+    hcp.max_ratio_detours_duration_best_duration = 3.0;
     
     // Recovery
     

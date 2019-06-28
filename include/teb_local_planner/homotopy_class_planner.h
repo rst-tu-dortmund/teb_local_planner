@@ -429,6 +429,7 @@ public:
   /**
    * @brief Checks if the orientation of the computed trajectories differs from that of the best plan of more than the
    *  specified threshold and eventually deletes them.
+   *  Also deletes detours with a duration much bigger than the duration of the best_teb (duration / best duration > max_ratio_detours_duration_best_duration).
    * @param orient_threshold: Threshold paramter for allowed orientation changes in radians
    * @param len_orientation_vector: length of the vector used to compute the start orientation
    */

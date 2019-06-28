@@ -148,6 +148,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("delete_detours_backwards", hcp.delete_detours_backwards, hcp.delete_detours_backwards);
   nh.param("detours_orientation_tolerance", hcp.detours_orientation_tolerance, hcp.detours_orientation_tolerance);
   nh.param("length_start_orientation_vector", hcp.length_start_orientation_vector, hcp.length_start_orientation_vector);
+  nh.param("max_ratio_detours_duration_best_duration", hcp.max_ratio_detours_duration_best_duration, hcp.max_ratio_detours_duration_best_duration);
   
   // Recovery
   nh.param("shrink_horizon_backup", recovery.shrink_horizon_backup, recovery.shrink_horizon_backup);

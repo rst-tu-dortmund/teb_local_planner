@@ -706,6 +706,7 @@ void HomotopyClassPlanner::deletePlansDetouringBackwards(const double orient_thr
     return;  // A moving direction wasn't chosen yet
   }
   double current_movement_orientation;
+  double best_plan_duration = std::max(best_teb_->teb().getSumOfAllTimeDiffs(), 1.0);
   if(!computeStartOrientation(best_teb_, len_orientation_vector, current_movement_orientation))
     return;  // The plan is shorter than len_orientation_vector
   for(auto it_teb = tebs_.begin(); it_teb != tebs_.end();)
@@ -737,6 +738,12 @@ void HomotopyClassPlanner::deletePlansDetouringBackwards(const double orient_thr
     {
       ROS_DEBUG("Removing a teb because it's not optimized");
       it_teb = removeTeb(*it_teb);  // Deletes tebs that cannot be optimized (last optim call failed)
+      continue;
+    }
+    if(it_teb->get()->teb().getSumOfAllTimeDiffs() / best_plan_duration > cfg_->hcp.max_ratio_detours_duration_best_duration)
+    {
+      ROS_DEBUG("Removing a teb because it's duration is much longer than that of the best teb");
+      it_teb = removeTeb(*it_teb);
       continue;
     }
     ++it_teb;
