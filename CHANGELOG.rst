@@ -2,6 +2,15 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Avoiding h signature interpolation between coincident poses (thanks to Marco Bassa)
+* New strategy for the deletion of detours: Detours are now determined w.r.t. the least-cost alternative and not w.r.t. just the goal heading.
+  Deletion of additional alternatives applies if either an initial backward motion is detected, if the transition time is much bigger than the duration of the best teb
+  and if a teb cannot be optimized (thanks to Marco Bassa).
+  Optionally allowing the usage of the initial plan orientation when initializing new tebs.
+* Contributors: Christoph Rösmann, Marco Bassa
+
 0.6.12 (2019-06-21)
 -------------------
 
