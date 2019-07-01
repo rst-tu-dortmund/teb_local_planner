@@ -238,7 +238,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   robot_vel_.angular.z = tf2::getYaw(robot_vel_tf.pose.orientation);
   
   // prune global plan to cut off parts of the past (spatially before the robot)
-  pruneGlobalPlan(*tf_, robot_pose, global_plan_);
+  pruneGlobalPlan(*tf_, robot_pose, global_plan_, cfg_.trajectory.global_plan_prune_distance);
 
   // Transform global plan to the frame of interest (w.r.t. the local costmap)
   std::vector<geometry_msgs::PoseStamped> transformed_plan;

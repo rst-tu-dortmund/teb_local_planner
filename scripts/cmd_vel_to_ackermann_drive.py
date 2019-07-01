@@ -20,9 +20,15 @@ def cmd_callback(data):
   global ackermann_cmd_topic
   global frame_id
   global pub
+  global cmd_angle_instead_rotvel
   
   v = data.linear.x
-  steering = convert_trans_rot_vel_to_steering_angle(v, data.angular.z, wheelbase)
+  # if cmd_angle_instead_rotvel is true, the rotational velocity is already converted in the C++ node
+  # in this case this script only needs to do the msg conversion from twist to Ackermann drive
+  if cmd_angle_instead_rotvel:
+    steering = data.angular.z
+  else:
+    steering = convert_trans_rot_vel_to_steering_angle(v, data.angular.z, wheelbase)
   
   msg = AckermannDriveStamped()
   msg.header.stamp = rospy.Time.now()
@@ -45,6 +51,7 @@ if __name__ == '__main__':
     ackermann_cmd_topic = rospy.get_param('~ackermann_cmd_topic', '/ackermann_cmd')
     wheelbase = rospy.get_param('~wheelbase', 1.0)
     frame_id = rospy.get_param('~frame_id', 'odom')
+    cmd_angle_instead_rotvel = rospy.get_param('/move_base/TebLocalPlannerROS/cmd_angle_instead_rotvel', False)
     
     rospy.Subscriber(twist_cmd_topic, Twist, cmd_callback, queue_size=1)
     pub = rospy.Publisher(ackermann_cmd_topic, AckermannDriveStamped, queue_size=1)

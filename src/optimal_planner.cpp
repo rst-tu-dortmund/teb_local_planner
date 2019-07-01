@@ -124,6 +124,7 @@ void TebOptimalPlanner::registerG2OTypes()
   factory->registerType("VERTEX_TIMEDIFF", new g2o::HyperGraphElementCreator<VertexTimeDiff>);
 
   factory->registerType("EDGE_TIME_OPTIMAL", new g2o::HyperGraphElementCreator<EdgeTimeOptimal>);
+  factory->registerType("EDGE_SHORTEST_PATH", new g2o::HyperGraphElementCreator<EdgeShortestPath>);
   factory->registerType("EDGE_VELOCITY", new g2o::HyperGraphElementCreator<EdgeVelocity>);
   factory->registerType("EDGE_VELOCITY_HOLONOMIC", new g2o::HyperGraphElementCreator<EdgeVelocityHolonomic>);
   factory->registerType("EDGE_ACCELERATION", new g2o::HyperGraphElementCreator<EdgeAcceleration>);
@@ -330,6 +331,8 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
   AddEdgesAcceleration();
 
   AddEdgesTimeOptimal();	
+
+  AddEdgesShortestPath();
   
   if (cfg_->robot.min_turning_radius == 0 || cfg_->optim.weight_kinematics_turning_radius == 0)
     AddEdgesKinematicsDiffDrive(); // we have a differential drive robot
@@ -441,9 +444,8 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
         if(cfg_->obstacles.include_dynamic_obstacles && obst->isDynamic())
           continue;
 
-          // calculate distance to current pose
-          // TODO we ignore the robot footprint here in the association stage
-          double dist = obst->getMinimumDistance(teb_.Pose(i).position());
+          // calculate distance to robot model
+          double dist = robot_model_->calculateDistance(teb_.Pose(i), obst.get());
           
           // force considering obstacle if really close to the current pose
         if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
@@ -883,6 +885,25 @@ void TebOptimalPlanner::AddEdgesTimeOptimal()
   }
 }
 
+void TebOptimalPlanner::AddEdgesShortestPath()
+{
+  if (cfg_->optim.weight_shortest_path==0)
+    return; // if weight equals zero skip adding edges!
+
+  Eigen::Matrix<double,1,1> information;
+  information.fill(cfg_->optim.weight_shortest_path);
+
+  for (int i=0; i < teb_.sizePoses()-1; ++i)
+  {
+    EdgeShortestPath* shortest_path_edge = new EdgeShortestPath;
+    shortest_path_edge->setVertex(0,teb_.PoseVertex(i));
+    shortest_path_edge->setVertex(1,teb_.PoseVertex(i+1));
+    shortest_path_edge->setInformation(information);
+    shortest_path_edge->setTebConfig(*cfg_);
+    optimizer_->addEdge(shortest_path_edge);
+  }
+}
+
 
 
 void TebOptimalPlanner::AddEdgesKinematicsDiffDrive()
@@ -909,7 +930,7 @@ void TebOptimalPlanner::AddEdgesKinematicsDiffDrive()
 
 void TebOptimalPlanner::AddEdgesKinematicsCarlike()
 {
-  if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_turning_radius)
+  if (cfg_->optim.weight_kinematics_nh==0 && cfg_->optim.weight_kinematics_turning_radius==0)
     return; // if weight equals zero skip adding edges!
 
   // create edge for satisfiying kinematic constraints
@@ -999,69 +1020,23 @@ void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoi
   // since we aren't storing edge pointers, we need to check every edge
   for (std::vector<g2o::OptimizableGraph::Edge*>::const_iterator it = optimizer_->activeEdges().begin(); it!= optimizer_->activeEdges().end(); it++)
   {
-    EdgeTimeOptimal* edge_time_optimal = dynamic_cast<EdgeTimeOptimal*>(*it);
-    if (edge_time_optimal!=NULL && !alternative_time_cost)
-    {
-      cost_ += edge_time_optimal->getError().squaredNorm();
-      continue;
-    }
+    double cur_cost = (*it)->chi2();
 
-    EdgeKinematicsDiffDrive* edge_kinematics_dd = dynamic_cast<EdgeKinematicsDiffDrive*>(*it);
-    if (edge_kinematics_dd!=NULL)
+    if (dynamic_cast<EdgeObstacle*>(*it) != nullptr
+        || dynamic_cast<EdgeInflatedObstacle*>(*it) != nullptr
+        || dynamic_cast<EdgeDynamicObstacle*>(*it) != nullptr)
     {
-      cost_ += edge_kinematics_dd->getError().squaredNorm();
-      continue;
+      cur_cost *= obst_cost_scale;
     }
-    
-    EdgeKinematicsCarlike* edge_kinematics_cl = dynamic_cast<EdgeKinematicsCarlike*>(*it);
-    if (edge_kinematics_cl!=NULL)
+    else if (dynamic_cast<EdgeViaPoint*>(*it) != nullptr)
     {
-      cost_ += edge_kinematics_cl->getError().squaredNorm();
-      continue;
+      cur_cost *= viapoint_cost_scale;
     }
-    
-    EdgeVelocity* edge_velocity = dynamic_cast<EdgeVelocity*>(*it);
-    if (edge_velocity!=NULL)
+    else if (dynamic_cast<EdgeTimeOptimal*>(*it) != nullptr && alternative_time_cost)
     {
-      cost_ += edge_velocity->getError().squaredNorm();
-      continue;
+      continue; // skip these edges if alternative_time_cost is active
     }
-    
-    EdgeAcceleration* edge_acceleration = dynamic_cast<EdgeAcceleration*>(*it);
-    if (edge_acceleration!=NULL)
-    {
-      cost_ += edge_acceleration->getError().squaredNorm();
-      continue;
-    }
-    
-    EdgeObstacle* edge_obstacle = dynamic_cast<EdgeObstacle*>(*it);
-    if (edge_obstacle!=NULL)
-    {
-      cost_ += edge_obstacle->getError().squaredNorm() * obst_cost_scale;
-      continue;
-    }
-    
-    EdgeInflatedObstacle* edge_inflated_obstacle = dynamic_cast<EdgeInflatedObstacle*>(*it);
-    if (edge_inflated_obstacle!=NULL)
-    {
-      cost_ += std::sqrt(std::pow(edge_inflated_obstacle->getError()[0],2) * obst_cost_scale 
-               + std::pow(edge_inflated_obstacle->getError()[1],2));
-      continue;
-    }
-    
-    EdgeDynamicObstacle* edge_dyn_obstacle = dynamic_cast<EdgeDynamicObstacle*>(*it);
-    if (edge_dyn_obstacle!=NULL)
-    {
-      cost_ += edge_dyn_obstacle->getError().squaredNorm() * obst_cost_scale;
-      continue;
-    }
-    
-    EdgeViaPoint* edge_viapoint = dynamic_cast<EdgeViaPoint*>(*it);
-    if (edge_viapoint!=NULL)
-    {
-      cost_ += edge_viapoint->getError().squaredNorm() * viapoint_cost_scale;
-      continue;
-    }
+    cost_ += cur_cost;
   }
 
   // delete temporary created graph
@@ -1223,20 +1198,42 @@ bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* c
   for (int i=0; i <= look_ahead_idx; ++i)
   {           
     if ( costmap_model->footprintCost(teb().Pose(i).x(), teb().Pose(i).y(), teb().Pose(i).theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 )
+    {
+      if (visualization_)
+      {
+        visualization_->publishInfeasibleRobotPose(teb().Pose(i), *robot_model_);
+      }
       return false;
-    
-    // check if distance between two poses is higher than the robot radius and interpolate in that case
+    }
+    // Checks if the distance between two poses is higher than the robot radius or the orientation diff is bigger than the specified threshold
+    // and interpolates in that case.
     // (if obstacles are pushing two consecutive poses away, the center between two consecutive poses might coincide with the obstacle ;-)!
     if (i<look_ahead_idx)
     {
-      if ( (teb().Pose(i+1).position()-teb().Pose(i).position()).norm() > inscribed_radius)
+      double delta_rot = g2o::normalize_theta(g2o::normalize_theta(teb().Pose(i+1).theta()) -
+                                              g2o::normalize_theta(teb().Pose(i).theta()));
+      Eigen::Vector2d delta_dist = teb().Pose(i+1).position()-teb().Pose(i).position();
+      if(fabs(delta_rot) > cfg_->trajectory.min_resolution_collision_check_angular || delta_dist.norm() > inscribed_radius)
       {
-        // check one more time
-        PoseSE2 center = PoseSE2::average(teb().Pose(i), teb().Pose(i+1));
-        if ( costmap_model->footprintCost(center.x(), center.y(), center.theta(), footprint_spec, inscribed_radius, circumscribed_radius) < 0 )
-          return false;
+        int n_additional_samples = std::max(std::ceil(fabs(delta_rot) / cfg_->trajectory.min_resolution_collision_check_angular), 
+                                            std::ceil(delta_dist.norm() / inscribed_radius)) - 1;
+        PoseSE2 intermediate_pose = teb().Pose(i);
+        for(int step = 0; step < n_additional_samples; ++step)
+        {
+          intermediate_pose.position() = intermediate_pose.position() + delta_dist / (n_additional_samples + 1.0);
+          intermediate_pose.theta() = g2o::normalize_theta(intermediate_pose.theta() + 
+                                                           delta_rot / (n_additional_samples + 1.0));
+          if ( costmap_model->footprintCost(intermediate_pose.x(), intermediate_pose.y(), intermediate_pose.theta(),
+            footprint_spec, inscribed_radius, circumscribed_radius) == -1 )
+          {
+            if (visualization_) 
+            {
+              visualization_->publishInfeasibleRobotPose(intermediate_pose, *robot_model_);
+            }
+            return false;
+          }
+        }
       }
-      
     }
   }
   return true;
