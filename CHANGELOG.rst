@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.2 (2019-07-02)
+------------------
 * Allow scripts to be executable and usable by rosrun after catkin_make install and through the catkin release process (thanks to Devon Ash)
 * Add nonlinear part to obstacle cost to improve narrow gap behavior.
   Parameter `obstacle_cost_exponent` defines the exponent of the nonlinear cost term.
