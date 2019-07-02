@@ -547,46 +547,6 @@ int TimedElasticBand::findClosestTrajectoryPose(const Obstacle& obstacle, double
 }
 
 
-
-
-bool TimedElasticBand::detectDetoursBackwards(double threshold) const
-{
-  if (sizePoses()<2) return false;
-  
-  Eigen::Vector2d d_start_goal = BackPose().position() - Pose(0).position();
-  d_start_goal.normalize(); // using scalar_product without normalizing vectors first result in different threshold-effects
-
-  /// detect based on orientation
-  for(int i=0; i < sizePoses(); ++i)
-  {
-    Eigen::Vector2d orient_vector(cos( Pose(i).theta() ), sin( Pose(i).theta() ) );
-    if (orient_vector.dot(d_start_goal) < threshold)
-    {	
-      ROS_DEBUG("detectDetoursBackwards() - mark TEB for deletion: start-orientation vs startgoal-vec");
-      return true; // backward direction found
-    }
-  }
-  
-  /// check if upcoming configuration (next index) ist pushed behind the start (e.g. due to obstacles)
-  // TODO: maybe we need a small hysteresis?
-/*  for (unsigned int i=0;i<2;++i) // check only a few upcoming
-  {
-    if (i+1 >= sizePoses()) break;
-    Eigen::Vector2d start2conf = Pose(i+1).position() - Pose(0).position();
-    double dist = start2conf.norm();
-    start2conf = start2conf/dist; // normalize -> we don't use start2conf.normalize() since we want to use dist later
-    if (start2conf.dot(d_start_goal) < threshold && dist>0.01) // skip very small displacements
-    {
-      ROS_DEBUG("detectDetoursBackwards() - mark TEB for deletion: curvature look-ahead relative to startconf");
-      return true;
-    }
-  }*/	
-  return false;
-}
-
-
-
-
 void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, boost::optional<const PoseSE2&> new_goal, int min_samples)
 {
   // first and simple approach: change only start confs (and virtual start conf for inital velocity)

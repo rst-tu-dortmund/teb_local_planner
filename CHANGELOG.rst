@@ -2,6 +2,42 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.13 (2019-07-01)
+-------------------
+* Avoiding h signature interpolation between coincident poses (thanks to Marco Bassa)
+* New strategy for the deletion of detours: Detours are now determined w.r.t. the least-cost alternative and not w.r.t. just the goal heading.
+  Deletion of additional alternatives applies if either an initial backward motion is detected, if the transition time is much bigger than the duration of the best teb
+  and if a teb cannot be optimized (thanks to Marco Bassa).
+  Optionally allowing the usage of the initial plan orientation when initializing new tebs.
+* Contributors: Christoph Rösmann, Marco Bassa
+
+0.6.12 (2019-06-21)
+-------------------
+
+* Allow scripts to be executable and usable by rosrun after catkin_make install and through the catkin release process (thanks to Devon Ash)
+* Add nonlinear part to obstacle cost to improve narrow gap behavior.
+  Parameter `obstacle_cost_exponent` defines the exponent of the nonlinear cost term.
+  The default linear behavior is achieved by setting this parameter to 1 (default).
+  A value of 4 performed well in some tests and experiments (thanks to Howard Cochran).
+* Parameter `global_plan_prune_distance` added via ros parameter server.
+* Fixed SIGSEGV in optimizeAllTEBs() if main thread is interrupted by boost (thanks to Howard Cochran)
+* Fixed SIGSEGV crash in deleteTebDetours() (thanks to Howard Cochran)
+* On footprint visualization, avoid overshadowing by obstacles (thanks to corot)
+* Do not ignore robot model on the association stage.
+  Important mostly for polygon footprint model (thanks to corot).
+* Adjustable color for footprint visualization
+* Showing (detected) infeasible robot poses in a separate marker namespace and color
+* Added edge for minimizing Euclidean path length (parameter: `weight_shortest_path`)
+* Ackermann steering conversion (python script): fixed direction inversion in backwards mode when `cmd_angle_instead_rotvel` is true (thanks to Tobi Loew)
+* Fixed wrong skipping condition in AddEdgesKinematicsCarlike() (thanks to ShiquLIU)
+* Never discarding the previous best teb in renewAndAnalyzeOldTebs (thanks to Marco Bassa)
+* Allowing for the fallback to a different trajectory when the costmap check fails. This prevents the switch to unfeasible trajectories (thanks to Marco Bassa).
+* Skipping the generation of the homotopy exploration graph in case the maximum number of allowed classes is reached (thanks to Marco Bassa)
+* Changed isTrajectoryFeasible function to allow for a more accurate linear and angular discretization (thanks to Marco Bassa)
+* Function TebOptimalPlanner::computeError() considers now the actual optimizer weights. 
+  As a result, the default value of `selection_obst_cost_scale` is reduced (thanks to Howard Cochran).
+* Contributors: Christoph Rösmann, Devon Ash, Howard Cochran, Marco Bassa, ShiquLIU, Tobi Loew, corot
+
 0.6.11 (2018-08-14)
 -------------------
 * bugfix in calculateHSignature. Fixes #90.
