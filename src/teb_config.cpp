@@ -318,6 +318,10 @@ void TebConfig::checkParameters() const
   
   if (recovery.oscillation_filter_duration < 0)
       ROS_WARN("TebLocalPlannerROS() Param Warning: parameter oscillation_filter_duration must be >= 0");
+
+  // weights
+  if (optim.weight_optimaltime <= 0)
+      ROS_WARN("TebLocalPlannerROS() Param Warning: parameter weight_optimaltime shoud be > 0 (even if weight_shortest_path is in use)");
   
 }    
 
