@@ -39,7 +39,7 @@
 #include <tf2/time.h>
 #include <tf2_ros/buffer_interface.h>
 
-#include <teb_local_planner/optimal_planner.h>
+#include "teb_local_planner/optimal_planner.h"
 
 #include <map>
 #include <limits>

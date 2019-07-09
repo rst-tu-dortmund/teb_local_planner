@@ -40,8 +40,8 @@
 #ifndef ROBOT_FOOTPRINT_MODEL_H
 #define ROBOT_FOOTPRINT_MODEL_H
 
-#include <teb_local_planner/pose_se2.h>
-#include <teb_local_planner/obstacles.h>
+#include "teb_local_planner/pose_se2.h"
+#include "teb_local_planner/obstacles.h"
 #include <visualization_msgs/msg/marker.hpp>
 
 namespace teb_local_planner

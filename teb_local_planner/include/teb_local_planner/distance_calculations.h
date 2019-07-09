@@ -40,7 +40,7 @@
 #define DISTANCE_CALCULATIONS_H
 
 #include <Eigen/Core>
-#include <teb_local_planner/misc.h>
+#include "teb_local_planner/misc.h"
 
 
 namespace teb_local_planner

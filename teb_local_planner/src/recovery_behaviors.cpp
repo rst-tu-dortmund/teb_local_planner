@@ -36,7 +36,7 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <teb_local_planner/recovery_behaviors.h>
+#include "teb_local_planner/recovery_behaviors.h"
 #include <rclcpp/rclcpp.hpp>
 #include <limits>
 #include <functional>

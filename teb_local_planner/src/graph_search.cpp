@@ -36,8 +36,8 @@
  * Authors: Christoph Rösmann, Franz Albers
  *********************************************************************/
 
-#include <teb_local_planner/graph_search.h>
-#include <teb_local_planner/homotopy_class_planner.h>
+#include "teb_local_planner/graph_search.h"
+#include "teb_local_planner/homotopy_class_planner.h"
 
 namespace teb_local_planner
 {

@@ -283,6 +283,6 @@ typedef std::shared_ptr<const TebVisualization> TebVisualizationConstPtr;
 
 
 // Include template method implementations / definitions
-#include <teb_local_planner/visualization.hpp>
+#include "teb_local_planner/visualization.hpp"
 
 #endif /* VISUALIZATION_H_ */

@@ -53,14 +53,14 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <teb_local_planner/planner_interface.h>
-#include <teb_local_planner/teb_config.h>
-#include <teb_local_planner/obstacles.h>
-#include <teb_local_planner/optimal_planner.h>
-#include <teb_local_planner/visualization.h>
-#include <teb_local_planner/robot_footprint_model.h>
-#include <teb_local_planner/equivalence_relations.h>
-#include <teb_local_planner/graph_search.h>
+#include "teb_local_planner/planner_interface.h"
+#include "teb_local_planner/teb_config.h"
+#include "teb_local_planner/obstacles.h"
+#include "teb_local_planner/optimal_planner.h"
+#include "teb_local_planner/visualization.h"
+#include "teb_local_planner/robot_footprint_model.h"
+#include "teb_local_planner/equivalence_relations.h"
+#include "teb_local_planner/graph_search.h"
 
 
 namespace teb_local_planner
@@ -571,6 +571,6 @@ typedef std::shared_ptr<HomotopyClassPlanner> HomotopyClassPlannerPtr;
 } // namespace teb_local_planner
 
 // include template implementations / definitions
-#include <teb_local_planner/homotopy_class_planner.hpp>
+#include "teb_local_planner/homotopy_class_planner.hpp"
 
 #endif /* HOMOTOPY_CLASS_PLANNER_H_ */

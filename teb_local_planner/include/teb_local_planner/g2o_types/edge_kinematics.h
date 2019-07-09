@@ -44,10 +44,10 @@
 #ifndef _EDGE_KINEMATICS_H
 #define _EDGE_KINEMATICS_H
 
-#include <teb_local_planner/g2o_types/vertex_pose.h>
-#include <teb_local_planner/g2o_types/penalties.h>
-#include <teb_local_planner/g2o_types/base_teb_edges.h>
-#include <teb_local_planner/teb_config.h>
+#include "teb_local_planner/g2o_types/vertex_pose.h"
+#include "teb_local_planner/g2o_types/penalties.h"
+#include "teb_local_planner/g2o_types/base_teb_edges.h"
+#include "teb_local_planner/teb_config.h"
 #include "teb_local_planner/misc.h"
 
 #include <cmath>

@@ -37,8 +37,8 @@
  *********************************************************************/
 
 // ros stuff
-#include <teb_local_planner/visualization.h>
-#include <teb_local_planner/optimal_planner.h>
+#include "teb_local_planner/visualization.h"
+#include "teb_local_planner/optimal_planner.h"
 
 namespace teb_local_planner
 {

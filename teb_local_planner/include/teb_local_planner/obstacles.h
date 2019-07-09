@@ -50,7 +50,7 @@
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
 #include <geometry_msgs/msg/quaternion_stamped.hpp>
 
-#include <teb_local_planner/distance_calculations.h>
+#include "teb_local_planner/distance_calculations.h"
 
 
 namespace teb_local_planner

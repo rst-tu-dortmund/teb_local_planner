@@ -36,7 +36,7 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <teb_local_planner/teb_local_planner_ros.h>
+#include "teb_local_planner/teb_local_planner_ros.h"
 
 //#include <tf_conversions/tf_eigen.h>
 #include <boost/algorithm/string.hpp>
@@ -297,7 +297,8 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
 
   // check if global goal is reached
   geometry_msgs::msg::PoseStamped global_goal;
-  nav_2d_utils::transformPose(tf_, robot_pose.header.frame_id, global_plan_.back(), global_goal);
+  rclcpp::Duration transform_tolerance(0, 500 * 1000 * 1000); // 500ms
+  nav_2d_utils::transformPose(tf_, robot_pose.header.frame_id, global_plan_.back(), global_goal, transform_tolerance);
   //tf::poseStampedMsgToTF(global_plan_.back(), global_goal);
   //global_goal.setData( tf_plan_to_global * global_goal );
   double dx = global_goal.pose.position.x - robot_pose_.x();

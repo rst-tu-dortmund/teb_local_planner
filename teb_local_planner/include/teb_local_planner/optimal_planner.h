@@ -43,12 +43,12 @@
 
 
 // teb stuff
-#include <teb_local_planner/teb_config.h>
-#include <teb_local_planner/misc.h>
-#include <teb_local_planner/timed_elastic_band.h>
-#include <teb_local_planner/planner_interface.h>
-#include <teb_local_planner/visualization.h>
-#include <teb_local_planner/robot_footprint_model.h>
+#include "teb_local_planner/teb_config.h"
+#include "teb_local_planner/misc.h"
+#include "teb_local_planner/timed_elastic_band.h"
+#include "teb_local_planner/planner_interface.h"
+#include "teb_local_planner/visualization.h"
+#include "teb_local_planner/robot_footprint_model.h"
 
 // g2o lib stuff
 #include "g2o/core/sparse_optimizer.h"
@@ -60,15 +60,15 @@
 #include "g2o/solvers/cholmod/linear_solver_cholmod.h"
 
 // g2o custom edges and vertices for the TEB planner
-#include <teb_local_planner/g2o_types/edge_velocity.h>
-#include <teb_local_planner/g2o_types/edge_acceleration.h>
-#include <teb_local_planner/g2o_types/edge_kinematics.h>
-#include <teb_local_planner/g2o_types/edge_time_optimal.h>
-#include <teb_local_planner/g2o_types/edge_shortest_path.h>
-#include <teb_local_planner/g2o_types/edge_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_via_point.h>
-#include <teb_local_planner/g2o_types/edge_prefer_rotdir.h>
+#include "teb_local_planner/g2o_types/edge_velocity.h"
+#include "teb_local_planner/g2o_types/edge_acceleration.h"
+#include "teb_local_planner/g2o_types/edge_kinematics.h"
+#include "teb_local_planner/g2o_types/edge_time_optimal.h"
+#include "teb_local_planner/g2o_types/edge_shortest_path.h"
+#include "teb_local_planner/g2o_types/edge_obstacle.h"
+#include "teb_local_planner/g2o_types/edge_dynamic_obstacle.h"
+#include "teb_local_planner/g2o_types/edge_via_point.h"
+#include "teb_local_planner/g2o_types/edge_prefer_rotdir.h"
 
 // messages
 #include <nav_msgs/msg/path.hpp>

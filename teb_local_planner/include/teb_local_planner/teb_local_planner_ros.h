@@ -49,10 +49,10 @@
 
 
 // timed-elastic-band related classes
-#include <teb_local_planner/optimal_planner.h>
-#include <teb_local_planner/homotopy_class_planner.h>
-#include <teb_local_planner/visualization.h>
-#include <teb_local_planner/recovery_behaviors.h>
+#include "teb_local_planner/optimal_planner.h"
+#include "teb_local_planner/homotopy_class_planner.h"
+#include "teb_local_planner/visualization.h"
+#include "teb_local_planner/recovery_behaviors.h"
 
 // message types
 #include <nav_msgs/msg/path.hpp>
@@ -76,7 +76,7 @@
 #include <nav_2d_msgs/msg/pose2_d_stamped.hpp>
 #include <nav_2d_msgs/msg/twist2_d_stamped.hpp>
 // dynamic reconfigure
-//#include <teb_local_planner/TebLocalPlannerReconfigureConfig.h>
+//#include "teb_local_planner/TebLocalPlannerReconfigureConfig.h>
 //#include <dynamic_reconfigure/server.h>
 
 

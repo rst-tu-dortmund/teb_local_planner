@@ -36,7 +36,7 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <teb_local_planner/homotopy_class_planner.h>
+#include "teb_local_planner/homotopy_class_planner.h"
 
 #include <limits>
 

@@ -51,11 +51,11 @@
 #include <complex>
 #include <iterator>
 
-#include <teb_local_planner/obstacles.h>
+#include "teb_local_planner/obstacles.h"
 
 // G2O Types
-#include <teb_local_planner/g2o_types/vertex_pose.h>
-#include <teb_local_planner/g2o_types/vertex_timediff.h>
+#include "teb_local_planner/g2o_types/vertex_pose.h"
+#include "teb_local_planner/g2o_types/vertex_timediff.h"
 
 
 namespace teb_local_planner
@@ -629,7 +629,7 @@ public:
 
 
 // include template implementations / definitions
-#include <teb_local_planner/timed_elastic_band.hpp>
+#include "teb_local_planner/timed_elastic_band.hpp"
 
 
 #endif /* TIMED_ELASTIC_BAND_H_ */

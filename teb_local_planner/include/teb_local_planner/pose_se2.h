@@ -42,7 +42,7 @@
 #include <g2o/stuff/misc.h>
 
 #include <Eigen/Core>
-#include <teb_local_planner/misc.h>
+#include "teb_local_planner/misc.h"
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose2_d.hpp>
 

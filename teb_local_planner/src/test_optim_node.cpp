@@ -36,7 +36,7 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <teb_local_planner/teb_local_planner_ros.h>
+#include "teb_local_planner/teb_local_planner_ros.h"
 
 //#include <interactive_markers/interactive_marker_server.h>
 #include <visualization_msgs/msg/marker.hpp>

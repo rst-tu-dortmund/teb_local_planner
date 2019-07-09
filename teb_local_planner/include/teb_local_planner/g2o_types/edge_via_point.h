@@ -43,8 +43,8 @@
 #ifndef EDGE_VIA_POINT_H_
 #define EDGE_VIA_POINT_H_
 
-#include <teb_local_planner/g2o_types/vertex_pose.h>
-#include <teb_local_planner/g2o_types/base_teb_edges.h>
+#include "teb_local_planner/g2o_types/vertex_pose.h"
+#include "teb_local_planner/g2o_types/base_teb_edges.h"
 #include "teb_local_planner/misc.h"
 
 #include "g2o/core/base_unary_edge.h"

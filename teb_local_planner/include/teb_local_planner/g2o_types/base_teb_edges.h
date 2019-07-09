@@ -44,7 +44,7 @@
 #ifndef _BASE_TEB_EDGES_H_
 #define _BASE_TEB_EDGES_H_
 
-#include <teb_local_planner/teb_config.h>
+#include "teb_local_planner/teb_config.h"
 
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/core/base_unary_edge.h>

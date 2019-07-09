@@ -36,7 +36,7 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <teb_local_planner/teb_config.h>
+#include "teb_local_planner/teb_config.h"
 
 namespace teb_local_planner
 {

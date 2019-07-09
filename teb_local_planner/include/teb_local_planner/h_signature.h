@@ -41,11 +41,11 @@
 
 #include <boost/math/special_functions.hpp>
 
-#include <teb_local_planner/equivalence_relations.h>
-#include <teb_local_planner/misc.h>
-#include <teb_local_planner/obstacles.h>
-#include <teb_local_planner/teb_config.h>
-#include <teb_local_planner/timed_elastic_band.h>
+#include "teb_local_planner/equivalence_relations.h"
+#include "teb_local_planner/misc.h"
+#include "teb_local_planner/obstacles.h"
+#include "teb_local_planner/teb_config.h"
+#include "teb_local_planner/timed_elastic_band.h"
 
 #include <rclcpp/rclcpp.hpp>
 #include <math.h>

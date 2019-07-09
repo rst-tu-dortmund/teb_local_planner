@@ -19,6 +19,7 @@
 #include <string>
 #include <thread>
 
+#include <dwb_controller/progress_checker.hpp>
 #include <dwb_core/common_types.hpp>
 #include <dwb_core/dwb_local_planner.hpp>
 #include <nav_2d_msgs/msg/pose2_d_stamped.hpp>
@@ -54,12 +55,16 @@ protected:
   std::unique_ptr<ActionServer> action_server_;
 
   // The action server callback
-  void followPath(const std::shared_ptr<GoalHandle> goal_handle);
+  void followPath();
 
   bool isGoalReached();
   void publishVelocity(const nav_2d_msgs::msg::Twist2DStamped & velocity);
   void publishZeroVelocity();
   bool getRobotPose(nav_2d_msgs::msg::Pose2DStamped & pose2d);
+  std::vector<geometry_msgs::msg::PoseStamped> pathToPoseVec(const nav2_msgs::msg::Path & path);
+  void setPlannerPath(const nav2_msgs::msg::Path & path);
+  void computeAndPublishVelocity();
+  void updateGlobalPath();
 
   // The TebController contains a costmap node
   std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
@@ -70,7 +75,9 @@ protected:
   rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>::SharedPtr vel_pub_;
 
   // The local planner
-  std::unique_ptr<teb_local_planner::TebLocalPlannerROS> planner_;
+  std::unique_ptr<TebLocalPlannerROS> planner_;
+  
+  std::unique_ptr<dwb_controller::ProgressChecker> progress_checker_;
 };
 
 }  // namespace dwb_controller

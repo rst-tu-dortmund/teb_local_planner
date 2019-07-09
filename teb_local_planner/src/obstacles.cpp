@@ -36,8 +36,8 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <teb_local_planner/obstacles.h>
-// #include <teb_local_planner/misc.h>
+#include "teb_local_planner/obstacles.h"
+// #include "teb_local_planner/misc.h"
 #include <rclcpp/logging.hpp>
 #include <rclcpp/logger.hpp>
 

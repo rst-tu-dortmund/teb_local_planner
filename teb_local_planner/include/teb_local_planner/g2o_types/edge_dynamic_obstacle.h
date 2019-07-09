@@ -44,13 +44,13 @@
 #ifndef EDGE_DYNAMICOBSTACLE_H
 #define EDGE_DYNAMICOBSTACLE_H
 
-#include <teb_local_planner/g2o_types/vertex_pose.h>
-#include <teb_local_planner/g2o_types/vertex_timediff.h>
-#include <teb_local_planner/g2o_types/penalties.h>
-#include <teb_local_planner/g2o_types/base_teb_edges.h>
-#include <teb_local_planner/obstacles.h>
-#include <teb_local_planner/teb_config.h>
-#include <teb_local_planner/robot_footprint_model.h>
+#include "teb_local_planner/g2o_types/vertex_pose.h"
+#include "teb_local_planner/g2o_types/vertex_timediff.h"
+#include "teb_local_planner/g2o_types/penalties.h"
+#include "teb_local_planner/g2o_types/base_teb_edges.h"
+#include "teb_local_planner/obstacles.h"
+#include "teb_local_planner/teb_config.h"
+#include "teb_local_planner/robot_footprint_model.h"
 #include "teb_local_planner/misc.h"
 
 namespace teb_local_planner

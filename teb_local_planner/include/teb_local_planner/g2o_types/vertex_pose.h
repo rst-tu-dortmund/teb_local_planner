@@ -49,7 +49,7 @@
 #include <g2o/core/hyper_graph_action.h>
 #include <g2o/stuff/misc.h>
 
-#include <teb_local_planner/pose_se2.h>
+#include "teb_local_planner/pose_se2.h"
 
 namespace teb_local_planner
 {

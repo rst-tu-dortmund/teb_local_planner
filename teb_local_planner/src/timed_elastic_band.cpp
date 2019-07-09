@@ -36,7 +36,7 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <teb_local_planner/timed_elastic_band.h>
+#include "teb_local_planner/timed_elastic_band.h"
 
 namespace teb_local_planner
 {
