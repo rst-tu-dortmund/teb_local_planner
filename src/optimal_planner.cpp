@@ -1085,7 +1085,7 @@ void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pos
   omega = orientdiff/dt;
 }
 
-bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega) const
+bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const
 {
   if (teb_.sizePoses()<2)
   {
@@ -1095,8 +1095,10 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
     omega = 0;
     return false;
   }
-  
-  double dt = teb_.TimeDiff(0);
+  look_ahead_poses = std::max(1, std::min(look_ahead_poses, teb_.sizePoses() - 1));
+  double dt = 0.0;
+  for(int counter = 0; counter < look_ahead_poses; ++counter)
+    dt += teb_.TimeDiff(counter);
   if (dt<=0)
   {	
     ROS_ERROR("TebOptimalPlanner::getVelocityCommand() - timediff<=0 is invalid!");
@@ -1107,7 +1109,7 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
   }
 	  
   // Get velocity from the first two configurations
-  extractVelocity(teb_.Pose(0), teb_.Pose(1), dt, vx, vy, omega);
+  extractVelocity(teb_.Pose(0), teb_.Pose(look_ahead_poses), dt, vx, vy, omega);
   return true;
 }
 
