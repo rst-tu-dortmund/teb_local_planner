@@ -179,6 +179,8 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     nh_move_base.param("controller_frequency", controller_frequency, controller_frequency);
     failure_detector_.setBufferLength(std::round(cfg_.recovery.oscillation_filter_duration*controller_frequency));
     
+    speed_limit_manager_.initialize(costmap_ros_, name);
+
     // set initialized flag
     initialized_ = true;
 
@@ -374,10 +376,17 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     last_cmd_ = cmd_vel;
     return false;
   }
-  
+  double max_vel_x =  cfg_.robot.max_vel_x;
+  double max_vel_theta = cfg_.robot.max_vel_theta;
+  speed_limit_manager_.setPlan(transformed_plan);
+  if (!speed_limit_manager_.calculateLimits(max_vel_x, max_vel_theta)) 
+  {
+    ROS_WARN_THROTTLE(10.0, "One of the speed limiters failed");
+  }
+
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
-  saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_.robot.max_vel_x, cfg_.robot.max_vel_y,
-                   cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
+  saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, max_vel_x, cfg_.robot.max_vel_y,
+                   max_vel_theta, cfg_.robot.max_vel_x_backwards);
 
   // convert rot-vel to steering angle if desired (carlike robot).
   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
