@@ -19,83 +19,88 @@
 #include <string>
 
 #include <dwb_core/exceptions.hpp>
-#include <nav_2d_utils/conversions.hpp>
 #include <nav2_util/node_utils.hpp>
-
+#include <nav_2d_utils/conversions.hpp>
 
 using namespace std::chrono_literals;
 
-namespace teb_local_planner
-{
+namespace teb_local_planner {
 
-TebController::TebController()
-: LifecycleNode("teb_controller", "", true)
-{
+TebController::TebController() : LifecycleNode("teb_controller", "", true) {
   RCLCPP_INFO(get_logger(), "Creating");
 
-  costmap_ros_ = std::make_shared<nav2_costmap_2d::Costmap2DROS>("local_costmap");
+  costmap_ros_ =
+      std::make_shared<nav2_costmap_2d::Costmap2DROS>("local_costmap");
+  
+  costmap_executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+
   costmap_thread_ = std::make_unique<std::thread>(
-    [](rclcpp_lifecycle::LifecycleNode::SharedPtr node)
-    {rclcpp::spin(node->get_node_base_interface());}, costmap_ros_);
+      [&](rclcpp_lifecycle::LifecycleNode::SharedPtr node) {
+        costmap_executor_->add_node(node->get_node_base_interface());
+        costmap_executor_->spin();
+        costmap_executor_->remove_node(node->get_node_base_interface());
+      },
+      costmap_ros_);
 }
 
-TebController::~TebController()
-{
+TebController::~TebController() {
   RCLCPP_INFO(get_logger(), "Destroying");
+  costmap_executor_->cancel();
   costmap_thread_->join();
 }
 
-nav2_util::CallbackReturn
-TebController::on_configure(const rclcpp_lifecycle::State & state)
-{
+nav2_util::CallbackReturn TebController::on_configure(
+    const rclcpp_lifecycle::State &state) {
   RCLCPP_INFO(get_logger(), "Configuring");
 
   costmap_ros_->on_configure(state);
 
   auto node = shared_from_this();
-  
-  progress_checker_ = std::make_unique<dwb_controller::ProgressChecker>(rclcpp_node_);
 
-  planner_ = std::make_unique<TebLocalPlannerROS>(node, costmap_ros_->getTfBuffer(), costmap_ros_);
+  progress_checker_ =
+      std::make_unique<dwb_controller::ProgressChecker>(rclcpp_node_);
+
+  planner_ = std::make_unique<TebLocalPlannerROS>(
+      node, costmap_ros_->getTfBuffer(), costmap_ros_);
   planner_->on_configure(state);
 
   odom_sub_ = std::make_shared<nav_2d_utils::OdomSubscriber>(*this);
   vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 1);
 
   // Create the action server that we implement with our followPath method
-  action_server_ = std::make_unique<ActionServer>(rclcpp_node_, "FollowPath",
-      std::bind(&TebController::followPath, this));
+  action_server_ = std::make_unique<ActionServer>(
+      rclcpp_node_, "FollowPath", std::bind(&TebController::followPath, this));
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
-TebController::on_activate(const rclcpp_lifecycle::State & state)
-{
+nav2_util::CallbackReturn TebController::on_activate(
+    const rclcpp_lifecycle::State &state) {
   RCLCPP_INFO(get_logger(), "Activating");
 
   planner_->on_activate(state);
   costmap_ros_->on_activate(state);
   vel_pub_->on_activate();
+  action_server_->activate();
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
-TebController::on_deactivate(const rclcpp_lifecycle::State & state)
-{
+nav2_util::CallbackReturn TebController::on_deactivate(
+    const rclcpp_lifecycle::State &state) {
   RCLCPP_INFO(get_logger(), "Deactivating");
 
+  action_server_->deactivate();
   planner_->on_deactivate(state);
   costmap_ros_->on_deactivate(state);
+  publishZeroVelocity();
   vel_pub_->on_deactivate();
 
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
-TebController::on_cleanup(const rclcpp_lifecycle::State & state)
-{
+nav2_util::CallbackReturn TebController::on_cleanup(
+    const rclcpp_lifecycle::State &state) {
   RCLCPP_INFO(get_logger(), "Cleaning up");
 
   // Cleanup the helper classes
@@ -111,24 +116,22 @@ TebController::on_cleanup(const rclcpp_lifecycle::State & state)
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
-TebController::on_error(const rclcpp_lifecycle::State &)
-{
+nav2_util::CallbackReturn TebController::on_error(
+    const rclcpp_lifecycle::State &) {
   RCLCPP_FATAL(get_logger(), "Lifecycle node entered error state");
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-nav2_util::CallbackReturn
-TebController::on_shutdown(const rclcpp_lifecycle::State &)
-{
+nav2_util::CallbackReturn TebController::on_shutdown(
+    const rclcpp_lifecycle::State &) {
   RCLCPP_INFO(get_logger(), "Shutting down");
   return nav2_util::CallbackReturn::SUCCESS;
 }
 
-void
-TebController::followPath()
-{
+void TebController::followPath() {
   using namespace dwb_controller;
+
+  RCLCPP_INFO(get_logger(), "Received a goal, begin following path");
 
   try {
     setPlannerPath(action_server_->get_current_goal()->path);
@@ -136,9 +139,19 @@ TebController::followPath()
 
     rclcpp::Rate loop_rate(100ms);
     while (rclcpp::ok()) {
+      if (action_server_ == nullptr) {
+        RCLCPP_DEBUG(get_logger(), "Action server unavailable. Stopping.");
+        return;
+      }
+
+      if (!action_server_->is_server_active()) {
+        RCLCPP_DEBUG(get_logger(), "Action server is inactive. Stopping.");
+        return;
+      }
+
       if (action_server_->is_cancel_requested()) {
-        RCLCPP_INFO(get_logger(), "Goal was canceled. Cancelling and stopping.");
-        action_server_->cancel_all();
+        RCLCPP_INFO(get_logger(), "Goal was canceled. Stopping the robot.");
+        action_server_->terminate_goals();
         publishZeroVelocity();
         return;
       }
@@ -154,14 +167,14 @@ TebController::followPath()
 
       loop_rate.sleep();
     }
-  } catch (nav_core2::PlannerException & e) {
+  } catch (nav_core2::PlannerException &e) {
     RCLCPP_ERROR(this->get_logger(), e.what());
     publishZeroVelocity();
-    action_server_->abort_all();
+    action_server_->terminate_goals();
     return;
   }
 
-  RCLCPP_DEBUG(get_logger(), "TEB succeeded, setting result");
+  RCLCPP_DEBUG(get_logger(), "DWB succeeded, setting result");
 
   publishZeroVelocity();
 
@@ -169,14 +182,13 @@ TebController::followPath()
   action_server_->succeeded_current();
 }
 
-void TebController::publishVelocity(const nav_2d_msgs::msg::Twist2DStamped & velocity)
-{
+void TebController::publishVelocity(
+    const nav_2d_msgs::msg::Twist2DStamped &velocity) {
   auto cmd_vel = nav_2d_utils::twist2Dto3D(velocity.velocity);
   vel_pub_->publish(cmd_vel);
 }
 
-void TebController::publishZeroVelocity()
-{
+void TebController::publishZeroVelocity() {
   nav_2d_msgs::msg::Twist2DStamped velocity;
   velocity.velocity.x = 0;
   velocity.velocity.y = 0;
@@ -185,13 +197,9 @@ void TebController::publishZeroVelocity()
   publishVelocity(velocity);
 }
 
-bool TebController::isGoalReached()
-{
-  return planner_->isGoalReached();
-}
+bool TebController::isGoalReached() { return planner_->isGoalReached(); }
 
-bool TebController::getRobotPose(nav_2d_msgs::msg::Pose2DStamped & pose2d)
-{
+bool TebController::getRobotPose(nav_2d_msgs::msg::Pose2DStamped &pose2d) {
   geometry_msgs::msg::PoseStamped current_pose;
   if (!costmap_ros_->getRobotPose(current_pose)) {
     RCLCPP_ERROR(this->get_logger(), "Could not get robot pose");
@@ -201,22 +209,21 @@ bool TebController::getRobotPose(nav_2d_msgs::msg::Pose2DStamped & pose2d)
   return true;
 }
 
-std::vector<geometry_msgs::msg::PoseStamped> 
-TebController::pathToPoseVec(const nav2_msgs::msg::Path & path) {
+std::vector<geometry_msgs::msg::PoseStamped> TebController::pathToPoseVec(
+    const nav2_msgs::msg::Path &path) {
   std::vector<geometry_msgs::msg::PoseStamped> pose_stamped_vec;
 
-  for(const auto &p : path.poses) {
-      geometry_msgs::msg::PoseStamped pose_stamped;
-      pose_stamped.header = path.header;
-      pose_stamped.pose = p;
-      pose_stamped_vec.push_back(pose_stamped);
+  for (const auto &p : path.poses) {
+    geometry_msgs::msg::PoseStamped pose_stamped;
+    pose_stamped.header = path.header;
+    pose_stamped.pose = p;
+    pose_stamped_vec.push_back(pose_stamped);
   }
 
   return pose_stamped_vec;
 }
 
-void TebController::setPlannerPath(const nav2_msgs::msg::Path & path)
-{
+void TebController::setPlannerPath(const nav2_msgs::msg::Path &path) {
   auto path2d = pathToPoseVec(path);
 
   RCLCPP_DEBUG(get_logger(), "Providing path to the local planner");
@@ -225,11 +232,10 @@ void TebController::setPlannerPath(const nav2_msgs::msg::Path & path)
   auto end_pose = *(path.poses.end() - 1);
 
   RCLCPP_DEBUG(get_logger(), "Path end point is (%.2f, %.2f)",
-    end_pose.position.x, end_pose.position.y);
+               end_pose.position.x, end_pose.position.y);
 }
 
-void TebController::computeAndPublishVelocity()
-{
+void TebController::computeAndPublishVelocity() {
   nav_2d_msgs::msg::Pose2DStamped pose2d;
 
   if (!getRobotPose(pose2d)) {
@@ -238,17 +244,19 @@ void TebController::computeAndPublishVelocity()
 
   progress_checker_->check(pose2d);
 
-  auto cmd_vel_2d = planner_->computeVelocityCommands(pose2d, odom_sub_->getTwist());
+  auto cmd_vel_2d =
+      planner_->computeVelocityCommands(pose2d, odom_sub_->getTwist());
 
-  RCLCPP_DEBUG(get_logger(), "Publishing velocity at time %.2f", now().seconds());
+  RCLCPP_DEBUG(get_logger(), "Publishing velocity at time %.2f",
+               now().seconds());
   publishVelocity(cmd_vel_2d);
 }
 
-void TebController::updateGlobalPath()
-{
-  if (action_server_->preempt_requested()) {
-    RCLCPP_INFO(get_logger(), "Preempting the goal. Passing the new path to the planner.");
+void TebController::updateGlobalPath() {
+  if (action_server_->is_preempt_requested()) {
+    RCLCPP_INFO(get_logger(),
+                "Preempting the goal. Passing the new path to the planner.");
     setPlannerPath(action_server_->accept_pending_goal()->path);
   }
 }
-}  // namespace dwb_controller
+}  // namespace teb_local_planner

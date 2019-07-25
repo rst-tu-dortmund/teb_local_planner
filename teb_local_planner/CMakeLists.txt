@@ -27,6 +27,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(teb_msgs REQUIRED)
@@ -59,11 +60,6 @@ endif (EXISTS "FindEigen3.cmake")
 set(EXTERNAL_INCLUDE_DIRS ${Eigen_INCLUDE_DIRS} ${SUITESPARSE_INCLUDE_DIRS} ${G2O_INCLUDE_DIR})
 set(EXTERNAL_LIBS ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
 
-#add dynamic reconfigure api
-#find_package(catkin REQUIRED dynamic_reconfigure)
-#generate_dynamic_reconfigure_options(
-#  cfg/TebLocalPlannerReconfigure.cfg
-#)
 ###########
 ## Build ##
 ###########
@@ -111,10 +107,6 @@ add_library(teb_local_planner SHARED
    src/graph_search.cpp
 )
 
-# Dynamic reconfigure: make sure configure headers are built before any node using them
-#add_dependencies(teb_local_planner ${PROJECT_NAME}_gencfg)
-# Generate messages before compiling the lib
-#add_dependencies(teb_local_planner ${PROJECT_NAME}_generate_messages_cpp)
 set(ament_dependencies
     costmap_converter
     dwb_core
@@ -127,6 +119,7 @@ set(ament_dependencies
     nav_msgs
     rclcpp
     rclcpp_action
+    rclcpp_lifecycle
     std_msgs
     pluginlib
     teb_msgs
@@ -185,17 +178,12 @@ install(FILES
   DESTINATION share
 )
 
-#install(DIRECTORY
-#  launch cfg scripts
-#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#  PATTERN ".svn" EXCLUDE
-#)
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 ament_export_include_directories(include)
 ament_export_libraries(teb_local_planner)
 ament_export_dependencies(${ament_dependencies})
 pluginlib_export_plugin_description_file(teb_local_planner teb_local_planner_plugin.xml)
-ament_package()
 
 #############
 ## Testing ##
@@ -210,11 +198,5 @@ if(BUILD_TESTING)
   #    teb_local_planner
   #)
 endif()
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_teb_local_planner.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
 
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+ament_package()

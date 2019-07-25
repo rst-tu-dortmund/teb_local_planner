@@ -77,6 +77,8 @@ protected:
   // The local planner
   std::unique_ptr<TebLocalPlannerROS> planner_;
   
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> costmap_executor_;
+  
   std::unique_ptr<dwb_controller::ProgressChecker> progress_checker_;
 };
 
