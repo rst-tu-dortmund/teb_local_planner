@@ -89,7 +89,18 @@ public:
 
     double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
 
+    // Original obstacle cost.
     _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+
+    if (cfg_->optim.obstacle_cost_exponent != 1.0 && cfg_->obstacles.min_obstacle_dist > 0.0)
+    {
+      // Optional non-linear cost. Note the max cost (before weighting) is
+      // the same as the straight line version and that all other costs are
+      // below the straight line (for positive exponent), so it may be
+      // necessary to increase weight_obstacle and/or the inflation_weight
+      // when using larger exponents.
+      _error[0] = cfg_->obstacles.min_obstacle_dist * std::pow(_error[0] / cfg_->obstacles.min_obstacle_dist, cfg_->optim.obstacle_cost_exponent);
+    }
 
     ROS_ASSERT_MSG(std::isfinite(_error[0]), "EdgeObstacle::computeError() _error[0]=%f\n",_error[0]);
   }
@@ -212,16 +223,30 @@ public:
    */    
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeObstacle()");
+    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeInflatedObstacle()");
     const VertexPose* bandpt = static_cast<const VertexPose*>(_vertices[0]);
 
     double dist = robot_model_->calculateDistance(bandpt->pose(), _measurement);
 
+    // Original "straight line" obstacle cost. The max possible value
+    // before weighting is min_obstacle_dist
     _error[0] = penaltyBoundFromBelow(dist, cfg_->obstacles.min_obstacle_dist, cfg_->optim.penalty_epsilon);
+
+    if (cfg_->optim.obstacle_cost_exponent != 1.0 && cfg_->obstacles.min_obstacle_dist > 0.0)
+    {
+      // Optional non-linear cost. Note the max cost (before weighting) is
+      // the same as the straight line version and that all other costs are
+      // below the straight line (for positive exponent), so it may be
+      // necessary to increase weight_obstacle and/or the inflation_weight
+      // when using larger exponents.
+      _error[0] = cfg_->obstacles.min_obstacle_dist * std::pow(_error[0] / cfg_->obstacles.min_obstacle_dist, cfg_->optim.obstacle_cost_exponent);
+    }
+
+    // Additional linear inflation cost
     _error[1] = penaltyBoundFromBelow(dist, cfg_->obstacles.inflation_dist, 0.0);
 
-    
-    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeObstacle::computeError() _error[0]=%f, _error[1]=%f\n",_error[0], _error[1]);
+
+    ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]), "EdgeInflatedObstacle::computeError() _error[0]=%f, _error[1]=%f\n",_error[0], _error[1]);
   }
 
   /**

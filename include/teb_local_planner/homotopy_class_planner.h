@@ -223,6 +223,21 @@ public:
   virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec,
                                     double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1);
 
+  /**
+   * @brief In case of empty best teb, scores again the available plans to find the best one.
+   *        The best_teb_ variable is updated consequently.
+   * @return Shared pointer to the best TebOptimalPlanner that contains the selected trajectory (TimedElasticBand).
+   *         An empty pointer is returned if no plan is available.
+   */
+  TebOptimalPlannerPtr findBestTeb();
+
+  /**
+   * @brief Removes the specified teb and the corresponding homotopy class from the list of available ones.
+   * @param pointer to the teb Band to be removed
+   * @return Iterator to the next valid teb if available, else to the end of the tebs container.
+   */
+  TebOptPlannerContainer::iterator removeTeb(TebOptimalPlannerPtr& teb);
+
   //@}
 
   /** @name Visualization */
@@ -265,15 +280,6 @@ public:
    * @param @param start_velocity start velocity (optional)
    */
   void exploreEquivalenceClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel);
-
-
-  /**
-   * @brief Check all available trajectories (TEBs) for detours and delete found ones.
-   * @see TimedElasticBand::detectDetoursBackwards
-   * @param threshold Threshold paramter for allowed orientation changes (below 0 -> greater than 90 deg)
-   */
-  void deleteTebDetours(double threshold=0.0);
-
 
   /**
    * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it using a generic 2D reference path
@@ -420,6 +426,24 @@ public:
         return true; // Found! Homotopy class already exists, therefore nothing added
       return false;
   }
+  /**
+   * @brief Checks if the orientation of the computed trajectories differs from that of the best plan of more than the
+   *  specified threshold and eventually deletes them.
+   *  Also deletes detours with a duration much bigger than the duration of the best_teb (duration / best duration > max_ratio_detours_duration_best_duration).
+   * @param orient_threshold: Threshold paramter for allowed orientation changes in radians
+   * @param len_orientation_vector: length of the vector used to compute the start orientation
+   */
+  void deletePlansDetouringBackwards(const double orient_threshold, const double len_orientation_vector);
+  /**
+   * @brief Given a plan, computes its start orientation using a vector of length >= len_orientation_vector
+   *        starting from the initial pose.
+   * @param plan: Teb to be analyzed
+   * @param len_orientation_vector: min length of the vector used to compute the start orientation
+   * @param orientation: computed start orientation
+   * @return: Could the vector for the orientation check be computed? (False if the plan has no pose with a distance
+   *          > len_orientation_vector from the start poseq)
+   */
+  bool computeStartOrientation(const TebOptimalPlannerPtr plan, const double len_orientation_vector, double& orientation);
 
 
   /**
@@ -455,7 +479,7 @@ public:
   /**
    * @brief Internal helper function that adds a new equivalence class to the list of known classes only if it is unique.
    * @param eq_class equivalence class that should be tested
-   * @param lock if \c true, exclude the H-signature from deletion, e.g. in deleteTebDetours().
+   * @param lock if \c true, exclude the H-signature from deletion.
    * @return \c true if the h-signature was added and no duplicate was found, \c false otherwise
    */
   bool addEquivalenceClassIfNew(const EquivalenceClassPtr& eq_class, bool lock=false);
@@ -487,7 +511,7 @@ protected:
    * First all old h-signatures are deleted, since they could be invalid for this planning step (obstacle position may changed).
    * Afterwards the h-signatures are calculated for each existing TEB/trajectory and is inserted to the list of known h-signatures.
    * Doing this is important to prefer already optimized trajectories in contrast to initialize newly explored coarse paths.
-   * @param delete_detours if this param is \c true, all existing TEBs are cleared from detour-candidates by utilizing deleteTebDetours().
+   * @param delete_detours if this param is \c true, all existing TEBs are cleared from detour-candidates calling deletePlansGoingBackwards().
    */
   void renewAndAnalyzeOldTebs(bool delete_detours);
 
@@ -528,6 +552,8 @@ protected:
   ros::Time last_eq_class_switching_time_; //!< Store the time at which the equivalence class changed recently
 
   bool initialized_; //!< Keeps track about the correct initialization of this class
+
+  TebOptimalPlannerPtr last_best_teb_;  //!< Points to the plan used in the previous control cycle
 
 
 

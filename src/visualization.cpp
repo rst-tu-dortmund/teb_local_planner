@@ -119,17 +119,18 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
 
 
 
-void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns)
+void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns,
+                                                  const std_msgs::ColorRGBA &color)
 {
   if ( printErrorWhenNotInitialized() )
     return;
   
   std::vector<visualization_msgs::Marker> markers;
-  robot_model.visualizeRobot(current_pose, markers);
+  robot_model.visualizeRobot(current_pose, markers, color);
   if (markers.empty())
     return;
   
-  int idx = 0;
+  int idx = 1000000;  // avoid overshadowing by obstacles
   for (std::vector<visualization_msgs::Marker>::iterator marker_it = markers.begin(); marker_it != markers.end(); ++marker_it, ++idx)
   {
     marker_it->header.frame_id = cfg_->map_frame;
@@ -141,6 +142,11 @@ void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, c
     teb_marker_pub_.publish(*marker_it);
   }
   
+}
+
+void TebVisualization::publishInfeasibleRobotPose(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model)
+{
+  publishRobotFootprintModel(current_pose, robot_model, "InfeasibleRobotPoses", toColorMsg(0.5, 0.8, 0.0, 0.0));
 }
 
 
@@ -452,6 +458,16 @@ void TebVisualization::publishFeedbackMessage(const TebOptimalPlanner& teb_plann
   }
   
   feedback_pub_.publish(msg);
+}
+
+std_msgs::ColorRGBA TebVisualization::toColorMsg(double a, double r, double g, double b)
+{
+  std_msgs::ColorRGBA color;
+  color.a = a;
+  color.r = r;
+  color.g = g;
+  color.b = b;
+  return color;
 }
 
 bool TebVisualization::printErrorWhenNotInitialized() const
