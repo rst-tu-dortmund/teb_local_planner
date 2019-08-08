@@ -1081,10 +1081,10 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(cons
 
     // check parameters
     XmlRpc::XmlRpcValue footprint_xmlrpc;
-    if (!nh.getParam("footprint_model/vertices", footprint_xmlrpc) )
+    if (!nh.getParam("footprint_model/vertices", footprint_xmlrpc) && (!nh.getParam("vertices/footprint", footprint_xmlrpc) )
     {
       ROS_ERROR_STREAM("Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '" << nh.getNamespace() 
-                       << "/footprint_model/vertices' does not exist. Using point-model instead.");
+                       << "/footprint_model/vertices' or vertices/footprint does not exist. Using point-model instead.");
       return boost::make_shared<PointRobotFootprint>();
     }
     // get vertices
