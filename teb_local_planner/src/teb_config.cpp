@@ -56,10 +56,12 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh) 
   nh->declare_parameter("global_plan_viapoint_sep", rclcpp::ParameterValue(trajectory.global_plan_viapoint_sep));
   nh->declare_parameter("via_points_ordered", rclcpp::ParameterValue(trajectory.via_points_ordered));
   nh->declare_parameter("max_global_plan_lookahead_dist", rclcpp::ParameterValue(trajectory.max_global_plan_lookahead_dist));
+  nh->declare_parameter("global_plan_prune_distance", rclcpp::ParameterValue(trajectory.global_plan_prune_distance));
   nh->declare_parameter("exact_arc_length", rclcpp::ParameterValue(trajectory.exact_arc_length));
   nh->declare_parameter("force_reinit_new_goal_dist", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_dist));
   nh->declare_parameter("feasibility_check_no_poses", rclcpp::ParameterValue(trajectory.feasibility_check_no_poses));
   nh->declare_parameter("publish_feedback", rclcpp::ParameterValue(trajectory.publish_feedback));
+  nh->declare_parameter("min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
   
   // Robot
   nh->declare_parameter("max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
@@ -110,6 +112,7 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh) 
   nh->declare_parameter("weight_kinematics_forward_drive", rclcpp::ParameterValue(optim.weight_kinematics_forward_drive));
   nh->declare_parameter("weight_kinematics_turning_radius", rclcpp::ParameterValue(optim.weight_kinematics_turning_radius));
   nh->declare_parameter("weight_optimaltime", rclcpp::ParameterValue(optim.weight_optimaltime));
+  nh->declare_parameter("weight_shortest_path", rclcpp::ParameterValue(optim.weight_shortest_path));
   nh->declare_parameter("weight_obstacle", rclcpp::ParameterValue(optim.weight_obstacle));
   nh->declare_parameter("weight_inflation", rclcpp::ParameterValue(optim.weight_inflation));
   nh->declare_parameter("weight_dynamic_obstacle", rclcpp::ParameterValue(optim.weight_dynamic_obstacle));
@@ -117,6 +120,7 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh) 
   nh->declare_parameter("weight_viapoint", rclcpp::ParameterValue(optim.weight_viapoint));
   nh->declare_parameter("weight_prefer_rotdir", rclcpp::ParameterValue(optim.weight_prefer_rotdir));
   nh->declare_parameter("weight_adapt_factor", rclcpp::ParameterValue(optim.weight_adapt_factor));
+  nh->declare_parameter("obstacle_cost_exponent", rclcpp::ParameterValue(optim.obstacle_cost_exponent));
   
   // Homotopy Class Planner
   nh->declare_parameter("enable_homotopy_class_planning", rclcpp::ParameterValue(hcp.enable_homotopy_class_planning));
@@ -139,7 +143,11 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh) 
   nh->declare_parameter("viapoints_all_candidates", rclcpp::ParameterValue(hcp.viapoints_all_candidates));
   nh->declare_parameter("visualize_hc_graph", rclcpp::ParameterValue(hcp.visualize_hc_graph));
   nh->declare_parameter("visualize_with_time_as_z_axis_scale", rclcpp::ParameterValue(hcp.visualize_with_time_as_z_axis_scale));
-  
+  nh->declare_parameter("delete_detours_backwards", rclcpp::ParameterValue(hcp.delete_detours_backwards));
+  nh->declare_parameter("detours_orientation_tolerance", rclcpp::ParameterValue(hcp.detours_orientation_tolerance));
+  nh->declare_parameter("length_start_orientation_vector", rclcpp::ParameterValue(hcp.length_start_orientation_vector));
+  nh->declare_parameter("max_ratio_detours_duration_best_duration", rclcpp::ParameterValue(hcp.max_ratio_detours_duration_best_duration));
+
   // Recovery
   
   nh->declare_parameter("shrink_horizon_backup", rclcpp::ParameterValue(recovery.shrink_horizon_backup));
@@ -167,10 +175,12 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or("global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep, trajectory.global_plan_viapoint_sep);
   nh->get_parameter_or("via_points_ordered", trajectory.via_points_ordered, trajectory.via_points_ordered);
   nh->get_parameter_or("max_global_plan_lookahead_dist", trajectory.max_global_plan_lookahead_dist, trajectory.max_global_plan_lookahead_dist);
+  nh->get_parameter_or("global_plan_prune_distance", trajectory.global_plan_prune_distance, trajectory.global_plan_prune_distance);
   nh->get_parameter_or("exact_arc_length", trajectory.exact_arc_length, trajectory.exact_arc_length);
   nh->get_parameter_or("force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
   nh->get_parameter_or("feasibility_check_no_poses", trajectory.feasibility_check_no_poses, trajectory.feasibility_check_no_poses);
   nh->get_parameter_or("publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
+  nh->get_parameter_or("min_resolution_collision_check_angular", trajectory.min_resolution_collision_check_angular, trajectory.min_resolution_collision_check_angular);
   
   // Robot
   nh->get_parameter_or("max_vel_x", robot.max_vel_x, robot.max_vel_x);
@@ -221,6 +231,7 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or("weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
   nh->get_parameter_or("weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
   nh->get_parameter_or("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
+  nh->get_parameter_or("weight_shortest_path", optim.weight_shortest_path, optim.weight_shortest_path);
   nh->get_parameter_or("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
   nh->get_parameter_or("weight_inflation", optim.weight_inflation, optim.weight_inflation);
   nh->get_parameter_or("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);
@@ -228,6 +239,7 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or("weight_viapoint", optim.weight_viapoint, optim.weight_viapoint);
   nh->get_parameter_or("weight_prefer_rotdir", optim.weight_prefer_rotdir, optim.weight_prefer_rotdir);
   nh->get_parameter_or("weight_adapt_factor", optim.weight_adapt_factor, optim.weight_adapt_factor);
+  nh->get_parameter_or("obstacle_cost_exponent", optim.obstacle_cost_exponent, optim.obstacle_cost_exponent);
   
   // Homotopy Class Planner
   nh->get_parameter_or("enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning);
@@ -250,7 +262,11 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or("viapoints_all_candidates", hcp.viapoints_all_candidates, hcp.viapoints_all_candidates);
   nh->get_parameter_or("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph);
   nh->get_parameter_or("visualize_with_time_as_z_axis_scale", hcp.visualize_with_time_as_z_axis_scale, hcp.visualize_with_time_as_z_axis_scale);
-  
+  nh->get_parameter_or("delete_detours_backwards", hcp.delete_detours_backwards, hcp.delete_detours_backwards);
+  nh->get_parameter_or("detours_orientation_tolerance", hcp.detours_orientation_tolerance, hcp.detours_orientation_tolerance);
+  nh->get_parameter_or("length_start_orientation_vector", hcp.length_start_orientation_vector, hcp.length_start_orientation_vector);
+  nh->get_parameter_or("max_ratio_detours_duration_best_duration", hcp.max_ratio_detours_duration_best_duration, hcp.max_ratio_detours_duration_best_duration);
+
   // Recovery
   
   nh->get_parameter_or("shrink_horizon_backup", recovery.shrink_horizon_backup, recovery.shrink_horizon_backup);
@@ -418,6 +434,8 @@ void TebConfig::checkParameters(const nav2_util::LifecycleNode::SharedPtr nh) co
   if (recovery.oscillation_filter_duration < 0)
       RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter oscillation_filter_duration must be >= 0");
   
+  if (optim.weight_optimaltime <= 0)
+      RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter weight_optimaltime shoud be > 0 (even if weight_shortest_path is in use)");
 }    
 
 void TebConfig::checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh) const
