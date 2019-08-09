@@ -277,7 +277,7 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   robot_vel_.angular.z = velocity.theta;
   
   // prune global plan to cut off parts of the past (spatially before the robot)
-  pruneGlobalPlan(robot_pose, global_plan_, cfg_.trajectory.global_plan_prune_distance);
+  pruneGlobalPlan(robot_pose, global_plan_, cfg_->trajectory.global_plan_prune_distance);
 
   // Transform global plan to the frame of interest (w.r.t. the local costmap)
   std::vector<geometry_msgs::msg::PoseStamped> transformed_plan;

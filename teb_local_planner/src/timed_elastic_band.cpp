@@ -218,7 +218,7 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
     {
       if(TimeDiff(i) > dt_ref + dt_hysteresis && sizeTimeDiffs()<max_samples)
       {
-        //ROS_DEBUG("teb_local_planner: autoResize() inserting new bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
+        //RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "teb_local_planner: autoResize() inserting new bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
 
         double newtime = 0.5*TimeDiff(i);
 
@@ -230,7 +230,7 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
       }
       else if(TimeDiff(i) < dt_ref - dt_hysteresis && sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
       {
-        //ROS_DEBUG("teb_local_planner: autoResize() deleting bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
+        //RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "teb_local_planner: autoResize() deleting bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
 
         if(i < ((int)sizeTimeDiffs()-1))
         {

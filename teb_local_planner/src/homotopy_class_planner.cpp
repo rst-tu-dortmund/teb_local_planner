@@ -563,7 +563,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::selectBestTeb()
   // in case we haven't found any teb due to some previous checks, investigate list again
 //   if (!best_teb_ && !tebs_.empty())
 //   {
-//       ROS_DEBUG("all " << tebs_.size() << " tebs rejected previously");
+//       RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "all " << tebs_.size() << " tebs rejected previously");
 //       if (tebs_.size()==1)
 //         best_teb_ = tebs_.front();
 //       else // if multiple TEBs are available:
@@ -632,12 +632,12 @@ bool HomotopyClassPlanner::isTrajectoryFeasible(dwb_critics::ObstacleFootprintCr
                                                 double inscribed_radius, double circumscribed_radius, int look_ahead_idx)
 {
   bool feasible = false;
-  while(ros::ok() && !feasible && tebs_.size() > 0)
+  while(rclcpp::ok() && !feasible && tebs_.size() > 0)
   {
     TebOptimalPlannerPtr best = findBestTeb();
     if (!best)
     {
-      ROS_ERROR("Couldn't retrieve the best plan");
+      RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"), "Couldn't retrieve the best plan");
       return false;
     }
     feasible = best->isTrajectoryFeasible(costmap_model, footprint_spec, inscribed_radius, circumscribed_radius, look_ahead_idx);
@@ -665,7 +665,7 @@ TebOptPlannerContainer::iterator HomotopyClassPlanner::removeTeb(TebOptimalPlann
   TebOptPlannerContainer::iterator return_iterator = tebs_.end();
   if(equivalence_classes_.size() != tebs_.size())
   {
-      ROS_ERROR("removeTeb: size of eq classes != size of tebs");
+      RCLCPP_ERROR(rclcpp::get_logger("teb_local_planner"), "removeTeb: size of eq classes != size of tebs");
       return return_iterator;
   }
   auto it_eq_classes = equivalence_classes_.begin();
@@ -729,14 +729,14 @@ void HomotopyClassPlanner::deletePlansDetouringBackwards(const double orient_thr
     }
     if((*it_teb)->teb().sizePoses() < 2)
     {
-      ROS_DEBUG("Discarding a plan with less than 2 poses");
+      RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "Discarding a plan with less than 2 poses");
       it_teb = removeTeb(*it_teb);
       continue;
     }
     double plan_orientation;
     if(!computeStartOrientation(*it_teb, len_orientation_vector, plan_orientation))
     {
-      ROS_DEBUG("Failed to compute the start orientation for one of the tebs, likely close to the target");
+      RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "Failed to compute the start orientation for one of the tebs, likely close to the target");
       it_teb = removeTeb(*it_teb);
       continue;
     }
@@ -747,13 +747,13 @@ void HomotopyClassPlanner::deletePlansDetouringBackwards(const double orient_thr
     }
     if(!it_teb->get()->isOptimized())
     {
-      ROS_DEBUG("Removing a teb because it's not optimized");
+      RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "Removing a teb because it's not optimized");
       it_teb = removeTeb(*it_teb);  // Deletes tebs that cannot be optimized (last optim call failed)
       continue;
     }
     if(it_teb->get()->teb().getSumOfAllTimeDiffs() / best_plan_duration > cfg_->hcp.max_ratio_detours_duration_best_duration)
     {
-      ROS_DEBUG("Removing a teb because it's duration is much longer than that of the best teb");
+      RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "Removing a teb because it's duration is much longer than that of the best teb");
       it_teb = removeTeb(*it_teb);
       continue;
     }
