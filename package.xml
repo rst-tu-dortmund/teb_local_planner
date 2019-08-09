@@ -39,6 +39,8 @@
   <depend>libg2o</depend>
   <depend>nav_core</depend>
   <depend>nav_msgs</depend>
+  <depend>mbf_costmap_core</depend>
+  <depend>mbf_msgs</depend>
   <depend>pluginlib</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
@@ -48,5 +50,6 @@
 
   <export>
     <nav_core plugin="${prefix}/teb_local_planner_plugin.xml"/>
+    <mbf_costmap_core plugin="${prefix}/teb_local_planner_plugin.xml"/>
   </export>
 </package>

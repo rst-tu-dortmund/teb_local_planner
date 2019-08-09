@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   nav_core
   nav_msgs
+  mbf_costmap_core
+  mbf_msgs
   roscpp
   std_msgs
   pluginlib
