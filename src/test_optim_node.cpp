@@ -60,6 +60,7 @@ ros::Subscriber via_points_sub;
 ros::Subscriber clicked_points_sub;
 std::vector<ros::Subscriber> obst_vel_subs;
 unsigned int no_fixed_obstacles;
+costmap_2d::Costmap2DROS* costmap_ros;
 
 // =========== Function declarations =============
 void CB_mainCycle(const ros::TimerEvent& e);
@@ -147,7 +148,7 @@ int main( int argc, char** argv )
   visual = TebVisualizationPtr(new TebVisualization(n, config));
   
   // Setup robot shape model
-  RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n);
+  RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n, costmap_ros);
   
   // Setup planner (homotopy class planning or just the local teb planner)
   if (config.hcp.enable_homotopy_class_planning)

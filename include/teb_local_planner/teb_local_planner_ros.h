@@ -156,7 +156,7 @@ public:
    * @param nh const reference to the local ros::NodeHandle
    * @return Robot footprint model used for optimization
    */
-  static RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh);
+  static RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh, costmap_2d::Costmap2DROS* costmap_ros);
   
     /** 
    * @brief Set the footprint from the given XmlRpcValue.
@@ -170,6 +170,14 @@ public:
    */
   static Point2dContainer makeFootprintFromXMLRPC(XmlRpc::XmlRpcValue& footprint_xmlrpc, const std::string& full_param_name);
   
+  /** 
+   * @brief Set the footprint from the given std:vector of Point geomtry msgs.
+   * @param footprint_polygon should be an array of arrays, where the top-level array should have 3 or more elements, and the
+   * sub-arrays should all have exactly 2 elements (x and y coordinates).
+   * @return container of vertices describing the polygon
+   */
+  static Point2dContainer makeFootprintFromCostmap(const std::vector<geometry_msgs::Point>& footprint_polygon);
+
   /** 
    * @brief Get a number from the given XmlRpcValue.
    * @remarks This method is copied from costmap_2d/footprint.h, since it is not declared public in all ros distros

@@ -96,7 +96,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf::TransformListener* tf,
     visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
         
     // create robot footprint/contour model for optimization
-    RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
+    RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh, costmap_ros);
     
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
@@ -997,13 +997,21 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::Path::ConstPtr& via_p
   custom_via_points_active_ = !via_points_.empty();
 }
      
-RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(const ros::NodeHandle& nh)
+RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(const ros::NodeHandle& nh, costmap_2d::Costmap2DROS* costmap_ros)
 {
   std::string model_name; 
   if (!nh.getParam("footprint_model/type", model_name))
   {
     ROS_INFO("No robot footprint model specified for trajectory optimization. Using point-shaped model.");
     return boost::make_shared<PointRobotFootprint>();
+  }
+
+  if (model_name.compare("fromCostmap") == 0)
+  {
+    ROS_INFO("Footprint model 'polygon' loaded from Costmap.");
+    const std::vector<geometry_msgs::Point> padded_footprint = costmap_ros->getRobotFootprint();
+    Point2dContainer polygon = makeFootprintFromCostmap(padded_footprint);
+    return boost::make_shared<PolygonRobotFootprint>(polygon);
   }
     
   // point  
@@ -1081,10 +1089,10 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(cons
 
     // check parameters
     XmlRpc::XmlRpcValue footprint_xmlrpc;
-    if (!nh.getParam("footprint_model/vertices", footprint_xmlrpc) )
+    if (!nh.getParam("footprint_model/vertices", footprint_xmlrpc) && (!nh.getParam("vertices/footprint", footprint_xmlrpc) ))
     {
       ROS_ERROR_STREAM("Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '" << nh.getNamespace() 
-                       << "/footprint_model/vertices' does not exist. Using point-model instead.");
+                       << "/footprint_model/vertices' or vertices/footprint does not exist. Using point-model instead.");
       return boost::make_shared<PointRobotFootprint>();
     }
     // get vertices
@@ -1150,6 +1158,29 @@ Point2dContainer TebLocalPlannerROS::makeFootprintFromXMLRPC(XmlRpc::XmlRpcValue
 
     pt.x() = getNumberFromXMLRPC(point[ 0 ], full_param_name);
     pt.y() = getNumberFromXMLRPC(point[ 1 ], full_param_name);
+
+    footprint.push_back(pt);
+  }
+  return footprint;
+}
+
+Point2dContainer TebLocalPlannerROS::makeFootprintFromCostmap(const std::vector<geometry_msgs::Point>& footprint_polygon)
+{
+   // Make sure we have an array of at least 3 elements.
+   if ( footprint_polygon.size() < 3)
+   {
+     throw std::runtime_error("The footprint must be specified as list of lists on the parameter server with at least "
+                              "3 points eg: [[x1, y1], [x2, y2], ..., [xn, yn]]");
+   }
+ 
+   Point2dContainer footprint;
+   Eigen::Vector2d pt;
+ 
+   for (int i = 0; i < footprint_polygon.size(); ++i)
+   {
+     geometry_msgs::Point point = footprint_polygon[ i ];
+     pt.x() = point.x;
+     pt.y() = point.y;
 
     footprint.push_back(pt);
   }
