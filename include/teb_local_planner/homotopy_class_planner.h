@@ -193,9 +193,10 @@ public:
    * @param[out] vx translational velocity [m/s]
    * @param[out] vy strafing velocity which can be nonzero for holonomic robots [m/s]
    * @param[out] omega rotational velocity [rad/s]
+   * @param[in] look_ahead_poses index of the final pose used to compute the velocity command.
    * @return \c true if command is valid, \c false otherwise
    */
-  virtual bool getVelocityCommand(double& vx, double& vy, double& omega) const;
+  virtual bool getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const;
 
   /**
    * @brief Access current best trajectory candidate (that relates to the "best" homotopy class).
