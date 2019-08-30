@@ -383,7 +383,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   }
 
   // Get the velocity command for this sampling interval
-  if (!planner_->getVelocityCommand(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z))
+  if (!planner_->getVelocityCommand(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_.trajectory.control_look_ahead_poses))
   {
     planner_->clearPlanner();
     ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
