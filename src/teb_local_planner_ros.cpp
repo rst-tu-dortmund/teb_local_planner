@@ -234,6 +234,7 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     cmd_vel.angular.z = 0;
     planner_->clearPlanner();
     last_cmd_ = cmd_vel;
+    canceled_ = false;
     return false;
   }
 
