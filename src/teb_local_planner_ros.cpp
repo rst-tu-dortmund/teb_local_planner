@@ -226,6 +226,17 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
     return false;
   }
 
+  if(canceled_)
+  {
+    ROS_WARN("Cancelled called on teb_local_planner publishing zero velocity");
+    cmd_vel.linear.x = 0;
+    cmd_vel.linear.y = 0;
+    cmd_vel.angular.z = 0;
+    planner_->clearPlanner();
+    last_cmd_ = cmd_vel;
+    return false;
+  }
+
   cmd_vel.linear.x = 0;
   cmd_vel.linear.y = 0;
   cmd_vel.angular.z = 0;
@@ -420,6 +431,11 @@ bool TebLocalPlannerROS::computeVelocityCommands(geometry_msgs::Twist& cmd_vel)
   return true;
 }
 
+bool TebLocalPlannerROS::cancel()
+{
+  canceled_ = true;
+  return true;
+}
 
 bool TebLocalPlannerROS::isGoalReached()
 {
