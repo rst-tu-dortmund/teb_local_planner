@@ -86,6 +86,7 @@ public:
     bool publish_feedback; //!< Publish planner feedback containing the full trajectory and a list of active obstacles (should be enabled only for evaluation or debugging purposes)
     double min_resolution_collision_check_angular; //! Min angular resolution used during the costmap collision check. If not respected, intermediate samples are added. [rad]
     int control_look_ahead_poses; //! Index of the pose used to extract the velocity command
+    int prevent_look_ahead_poses_near_goal; //! Prevents control_look_ahead_poses to look within this many poses of the goal in order to prevent overshoot & oscillation when xy_goal_tolerance is very small
   } trajectory; //!< Trajectory related parameters
 
   //! Robot related parameters
@@ -262,7 +263,8 @@ public:
     trajectory.publish_feedback = false;
     trajectory.min_resolution_collision_check_angular = M_PI;
     trajectory.control_look_ahead_poses = 1;
-    
+    trajectory.prevent_look_ahead_poses_near_goal = 0;
+
     // Robot
 
     robot.max_vel_x = 0.4;
