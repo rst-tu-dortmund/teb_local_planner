@@ -1250,16 +1250,17 @@ bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry
     return false;
   
   // check if distance is at least 2m long // hardcoded for now
-  double dist = 0;
-  for (int i=1; i < teb_.sizePoses(); ++i)
   {
-    dist += ( teb_.Pose(i).position() - teb_.Pose(i-1).position() ).norm();
-    if (dist > 2)
-      break;
+    double dist = 0;
+    for (int i=1; i < teb_.sizePoses(); ++i)
+    {
+      dist += ( teb_.Pose(i).position() - teb_.Pose(i-1).position() ).norm();
+      if (dist > 2)
+        break;
+    }
+    if (dist <= 2)
+      return false;
   }
-  if (dist <= 2)
-    return false;
-  
   // check if goal orientation is differing with more than 90° and the horizon is still long enough to exclude parking maneuvers.
   // use case: Sometimes the robot accomplish the following navigation task:
   // 1. wall following 2. 180° curve 3. following along the other side of the wall.
