@@ -2,6 +2,12 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix shadow variable warning
+* Use SYSTEM when including external dependencies headers
+* Contributors: Victor Lopez
+
 0.8.1 (2018-08-14)
 ------------------
 * bugfix in calculateHSignature. Fixes `#90 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/90>`_.
