@@ -170,9 +170,9 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include_directories(include)
 include_directories(
-  include
+  SYSTEM
   ${EXTERNAL_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
