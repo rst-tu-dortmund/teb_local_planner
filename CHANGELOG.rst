@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.2 (2019-09-17)
+------------------
 * Fix shadow variable warning
 * Use SYSTEM when including external dependencies headers
 * Contributors: Victor Lopez
