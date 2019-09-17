@@ -83,6 +83,7 @@
 //Speed Limiter Manager
 #include <base_local_planner/speed_limiters/speed_limit_manager.h>
 
+#include<atomic>
 
 namespace teb_local_planner
 {
@@ -415,7 +416,7 @@ private:
 
   base_local_planner::SpeedLimitManager speed_limit_manager_;
 
-  bool canceled_;
+  std::atomic<bool> canceled_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
