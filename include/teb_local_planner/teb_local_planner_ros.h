@@ -83,6 +83,7 @@
 //Speed Limiter Manager
 #include <base_local_planner/speed_limiters/speed_limit_manager.h>
 
+#include<atomic>
 
 namespace teb_local_planner
 {
@@ -189,6 +190,7 @@ public:
    */
   static double getNumberFromXMLRPC(XmlRpc::XmlRpcValue& value, const std::string& full_param_name);
   
+  bool cancel();
   //@}
   
 protected:
@@ -413,6 +415,8 @@ private:
   bool initialized_; //!< Keeps track about the correct initialization of this class
 
   base_local_planner::SpeedLimitManager speed_limit_manager_;
+
+  std::atomic<bool> canceled_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
