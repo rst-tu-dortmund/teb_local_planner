@@ -39,14 +39,12 @@
 #ifndef TEB_LOCAL_PLANNER_ROS_H_
 #define TEB_LOCAL_PLANNER_ROS_H_
 
+#include <pluginlib/class_loader.hpp>
+
 #include <rclcpp/rclcpp.hpp>
 
-// base local planner base class and utilities
-//#include <nav_core/base_local_planner.h>
-//#include <base_local_planner/goal_functions.h>
-//#include <base_local_planner/odometry_helper_ros.h>
-//#include <base_local_planner/costmap_model.h>
-
+// Navigation2 local planner base class and utilities
+#include <nav2_core/local_planner.hpp>
 
 // timed-elastic-band related classes
 #include "teb_local_planner/optimal_planner.h"
@@ -69,12 +67,8 @@
 // costmap
 #include <costmap_converter/costmap_converter_interface.h>
 
-#include <dwb_core/common_types.hpp>
-
 #include <nav2_util/lifecycle_node.hpp>
 #include <nav2_costmap_2d/costmap_2d_ros.hpp>
-#include <nav_2d_msgs/msg/pose2_d_stamped.hpp>
-#include <nav_2d_msgs/msg/twist2_d_stamped.hpp>
 // dynamic reconfigure
 //#include "teb_local_planner/TebLocalPlannerReconfigureConfig.h>
 //#include <dynamic_reconfigure/server.h>
@@ -82,35 +76,42 @@
 
 namespace teb_local_planner
 {
-using dwb_core::TFBufferPtr;
-using dwb_core::CostmapROSPtr;
+using TFBufferPtr = std::shared_ptr<tf2_ros::Buffer>;
+using CostmapROSPtr = std::shared_ptr<nav2_costmap_2d::Costmap2DROS>;
 
 /**
   * @class TebLocalPlannerROS
   * @brief Implements the actual abstract navigation stack routines of the teb_local_planner plugin
   * @todo Escape behavior, more efficient obstacle handling
   */
-class TebLocalPlannerROS : public nav2_util::LifecycleHelperInterface
+class TebLocalPlannerROS : public nav2_core::LocalPlanner
 {
 
 public:
   /**
     * @brief Constructor of the teb plugin
-    * @param node The node of the instance
-    * @param tf Pointer to a transform listener
-    * @param costmap_ros Cost map representing occupied and free space
     */
-  explicit TebLocalPlannerROS(nav2_util::LifecycleNode::SharedPtr node, TFBufferPtr tf, CostmapROSPtr costmap_ros);
+  TebLocalPlannerROS();
 
   /**
     * @brief  Destructor of the plugin
     */
   ~TebLocalPlannerROS();
-
-  nav2_util::CallbackReturn on_configure(const rclcpp_lifecycle::State & state) override;
-  nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state) override;
-  nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state) override;
-  nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state) override;
+  
+  /**
+   * @brief Configure the teb plugin
+   * 
+   * @param node The node of the instance
+   * @param tf Pointer to a transform listener
+   * @param costmap_ros Cost map representing occupied and free space
+   */
+  void configure(
+    const rclcpp_lifecycle::LifecycleNode::SharedPtr & node,
+    const std::shared_ptr<tf2_ros::Buffer> & tf,
+    const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) override;
+  void activate() override;
+  void deactivate() override;
+  void cleanup() override;
 
   /**
     * @brief Initializes the teb plugin
@@ -120,9 +121,9 @@ public:
   /**
     * @brief Set the plan that the teb local planner is following
     * @param orig_global_plan The plan to pass to the local planner
-    * @return True if the plan was updated successfully, false otherwise
+    * @return
     */
-  bool setPlan(const std::vector<geometry_msgs::msg::PoseStamped>& orig_global_plan);
+  void setPlan(const nav_msgs::msg::Path & orig_global_plan) override;
 
   /**
     * @brief Given the current position, orientation, and velocity of the robot, compute velocity commands to send to the base
@@ -130,9 +131,13 @@ public:
     * @param velocity is the current velocity
     * @return velocity commands to send to the base
     */
-  nav_2d_msgs::msg::Twist2DStamped computeVelocityCommands(
-    const nav_2d_msgs::msg::Pose2DStamped & pose,
-    const nav_2d_msgs::msg::Twist2D & velocity);
+  geometry_msgs::msg::TwistStamped computeVelocityCommands(
+    const geometry_msgs::msg::PoseStamped &pose,
+    const geometry_msgs::msg::Twist &velocity);
+
+  bool isGoalReached(
+    const geometry_msgs::msg::PoseStamped & pose,
+    const geometry_msgs::msg::Twist & velocity) override;
 
   /**
     * @brief  Check if the goal pose has been achieved
