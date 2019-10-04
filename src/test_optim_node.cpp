@@ -257,8 +257,17 @@ void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst
   {
     if (obst_msg->obstacles.at(i).polygon.points.size() == 1 )
     {
-      obst_vector.push_back(ObstaclePtr(new PointObstacle( obst_msg->obstacles.at(i).polygon.points.front().x,
+      if (obst_msg->obstacles.at(i).radius == 0) 
+      {
+        obst_vector.push_back(ObstaclePtr(new PointObstacle( obst_msg->obstacles.at(i).polygon.points.front().x,
                                                            obst_msg->obstacles.at(i).polygon.points.front().y )));
+      }
+      else
+      {
+        obst_vector.push_back(ObstaclePtr(new CircularObstacle( obst_msg->obstacles.at(i).polygon.points.front().x,
+                                                            obst_msg->obstacles.at(i).polygon.points.front().y,
+                                                            obst_msg->obstacles.at(i).radius )));
+      }
     }
     else
     {
