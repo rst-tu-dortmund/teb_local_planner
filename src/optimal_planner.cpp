@@ -1100,7 +1100,14 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
   look_ahead_poses = std::max(1, std::min(look_ahead_poses, teb_.sizePoses() - 1));
   double dt = 0.0;
   for(int counter = 0; counter < look_ahead_poses; ++counter)
+  {
     dt += teb_.TimeDiff(counter);
+    if(dt >= cfg_->trajectory.dt_ref * look_ahead_poses)  // TODO: change to look-ahead time? Refine trajectory?
+    {
+        look_ahead_poses = counter + 1;
+        break;
+    }
+  }
   if (dt<=0)
   {	
     ROS_ERROR("TebOptimalPlanner::getVelocityCommand() - timediff<=0 is invalid!");
