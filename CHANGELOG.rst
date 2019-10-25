@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.14 (2019-10-25)
+-------------------
 * Rename variable instead of scoping it's usage
 * test_optim_node fix circular obstacles (thanks to dtaranta)
 * Fix shadow variable warning (thanks to Victor Lopez)
