@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.3 (2019-10-25)
+------------------
 * Limiting the control look-ahead pose to the first that execeeds the expected look-ahead time (thanks to Marco Bassa)
 * test_optim_node fix circular obstacles (thanks to dtaranta)
 * Fix shadow variable warning (thanks to Victor Lopez)
