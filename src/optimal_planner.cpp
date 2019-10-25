@@ -1252,14 +1252,15 @@ bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry
     return false;
   
   // check if distance is at least 2m long // hardcoded for now
-  double dist = 0;
+ 
+  double traj_dist = 0;
   for (int i=1; i < teb_.sizePoses(); ++i)
   {
-    dist += ( teb_.Pose(i).position() - teb_.Pose(i-1).position() ).norm();
-    if (dist > 2)
+    traj_dist += ( teb_.Pose(i).position() - teb_.Pose(i-1).position() ).norm();
+    if (traj_dist > 2)
       break;
   }
-  if (dist <= 2)
+  if (traj_dist <= 2)
     return false;
   
   // check if goal orientation is differing with more than 90° and the horizon is still long enough to exclude parking maneuvers.
