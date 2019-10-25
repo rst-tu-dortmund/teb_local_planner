@@ -2,6 +2,24 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Limiting the control look-ahead pose to the first that execeeds the expected look-ahead time (thanks to Marco Bassa)
+* test_optim_node fix circular obstacles (thanks to dtaranta)
+* Fix shadow variable warning (thanks to Victor Lopez)
+* Use SYSTEM when including external dependencies headers (thanks to Victor Lopez)
+* Robustify initTrajectoryToGoal if a plan is given (thanks to Rainer Kuemmerle)
+* Adding the option to shift ahead the target pose used to extract the velocity command (thanks to Marco Bassa)
+* Fixed segfault in optimal_planner.cpp when clearing graph with unallocated optimizer.
+  Fixes `#158 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/158>`_.
+* On footprintCost, fail only if footprint is in collision, not outside the map or on unknown space (thanks to corot)
+* Native MoveBaseFlex support added: Implements both nav_core::BaseLocalPlanner and mbf_costmap_core::CostmapController abstract interfaces (thanks to corot)
+* added warning if parameter optimal_time is <= 0
+* Nonlinear obstacle cost from EdgeInflatedObstacle also added to EdgeObstacle.
+  See `#140 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/140>`_.
+* Fixed proper initialization of parameter obstacle_cost_exponent in case it is not loaded from the parameter server
+* Contributors: Christoph Rösmann, Marco Bassa, Rainer Kuemmerle, Victor Lopez, corot, dtaranta
+
 0.8.2 (2019-07-02)
 ------------------
 * Allow scripts to be executable and usable by rosrun after catkin_make install and through the catkin release process (thanks to Devon Ash)
