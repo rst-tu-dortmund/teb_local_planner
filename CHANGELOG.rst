@@ -2,6 +2,22 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Rename variable instead of scoping it's usage
+* test_optim_node fix circular obstacles (thanks to dtaranta)
+* Fix shadow variable warning (thanks to Victor Lopez)
+* Use SYSTEM when including external dependencies headers (thanks to Victor Lopez)
+* Limiting the control look-ahead pose to the first that execeeds the expected look-ahead time (thanks to Marco Bassa)
+* Adding the option to shift ahead the target pose used to extract the velocity command (thanks to Marco Bassa)
+* Fixed segfault in optimal_planner.cpp when clearing graph with unallocated optimizer.
+  Fixes `#158 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/158>`_.
+* Added warning if parameter optimal_time is <= 0
+* Nonlinear obstacle cost from EdgeInflatedObstacle also added to EdgeObstacle.
+  See `#140 <https://github.com/rst-tu-dortmund/teb_local_planner/issues/140>`_.
+* Fixed proper initialization of parameter obstacle_cost_exponent in case it is not loaded from the parameter server
+* Contributors: Christoph Rösmann, Marco Bassa, Victor Lopez, dtaranta
+
 0.6.13 (2019-07-01)
 -------------------
 * Avoiding h signature interpolation between coincident poses (thanks to Marco Bassa)
