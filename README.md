@@ -11,9 +11,9 @@ Build status of the *kinetic-devel* branch:
 - ROS Buildfarm (Kinetic): [![Kinetic Status](http://build.ros.org/buildStatus/icon?job=Kdev__teb_local_planner__ubuntu_xenial_amd64)](http://build.ros.org/job/Kdev__teb_local_planner__ubuntu_xenial_amd64/)
 
 ### Port to ROS2
-This branch is the teb_local_planner package ported to ROS2(Dashing Diademata). Currently, it is compatible with [Navigation2(dashing-devel branch)](https://github.com/ros-planning/navigation2/tree/dashing-devel). You can test teb_local_planner with Navigation2 and TurtleBot3 simulation by launching the following command.
+This branch is the teb_local_planner package ported to ROS2(Dashing Diademata). Currently, it is currently compatible with [Navigation2(master branch)](https://github.com/ros-planning/navigation2/tree/master)([226f06c](https://github.com/ros-planning/navigation2/commit/226f06ce282c727ca240ce8be0cb4b093e26343b)). You can test teb_local_planner with Navigation2 and TurtleBot3 simulation by launching the following command.
 ```
-ros2 launch teb_local_planner teb_simulation_launch.py
+ros2 launch teb_local_planner teb_tb3_simulation_launch.py
 ```
 
 ### Papers Describing the Approach

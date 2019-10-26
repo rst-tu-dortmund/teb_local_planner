@@ -25,9 +25,8 @@
 
   <depend>geometry_msgs</depend>
   <depend>libg2o</depend>
-  <depend>dwb_core</depend>
-  <depend>dwb_controller</depend>
   <depend>dwb_critics</depend>
+  <depend>nav2_core</depend>
   <depend>nav2_costmap_2d</depend>
   <depend>nav2_msgs</depend>
   <depend>nav2_util</depend>
@@ -45,5 +44,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <nav2_core plugin="${prefix}/teb_local_planner_plugin.xml" />
   </export>
 </package>

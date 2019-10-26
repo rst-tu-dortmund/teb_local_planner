@@ -16,10 +16,9 @@ endif()
 ## Find catkin macros and libraries
 find_package(ament_cmake REQUIRED)
 find_package(costmap_converter REQUIRED)
-find_package(dwb_core REQUIRED)
-find_package(dwb_controller REQUIRED)
 find_package(dwb_critics REQUIRED)
 find_package(nav_2d_utils REQUIRED)
+find_package(nav2_core REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(nav2_util REQUIRED)
 #find_package(interactive_markers REQUIRED)
@@ -70,25 +69,6 @@ set(EXTERNAL_LIBS ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
-  ${costmap_converter_INCLUDE_DIRS}
-  ${dwb_core_INCLUDE_DIRS}
-  ${dwb_controller_INCLUDE_DIRS}
-  ${dwb_critics_INCLUDE_DIRS}
-  ${nav_2d_utils_INCLUDE_DIRS}
-  ${nav2_util_INCLUDE_DIRS}
-  ${nav2_costmap_2d_INCLUDE_DIRS}
-  ${geometry_msgs_INCLUDE_DIRS}
-  ${nav_msgs_INCLUDE_DIRS}
-  ${rclcpp_INCLUDE_DIRS}
-  ${rclcpp_action_INCLUDE_DIRS}
-  ${std_msgs_INCLUDE_DIRS}
-  ${pluginlib_INCLUDE_DIRS}
-  ${teb_msgs_INCLUDE_DIRS}
-  ${tf2_INCLUDE_DIRS}
-  ${tf2_eigen_INCLUDE_DIRS}
-  ${tf2_geometry_msgs_INCLUDE_DIRS}
-  ${tf2_ros_INCLUDE_DIRS}
-  ${visualization_msgs_INCLUDE_DIRS}
   ${EXTERNAL_INCLUDE_DIRS}
 )
 
@@ -103,16 +83,14 @@ add_library(teb_local_planner SHARED
    src/teb_config.cpp
    src/homotopy_class_planner.cpp
    src/teb_local_planner_ros.cpp
-   src/teb_controller.cpp
    src/graph_search.cpp
 )
 
 set(ament_dependencies
     costmap_converter
-    dwb_core
-    dwb_controller
     dwb_critics
     nav_2d_utils
+    nav2_core
     nav2_costmap_2d
     nav2_util
     geometry_msgs
@@ -135,15 +113,6 @@ ament_target_dependencies(teb_local_planner
 target_link_libraries(teb_local_planner
    ${EXTERNAL_LIBS}
 )
-add_executable(teb_controller
-  src/main.cpp
-)
-target_link_libraries(teb_controller
-  teb_local_planner
-)
-ament_target_dependencies(teb_controller
-   ${ament_dependencies}
-)
 
 ## Build additional executables
 #add_executable(test_optim_node src/test_optim_node.cpp)
@@ -163,10 +132,6 @@ install(TARGETS teb_local_planner
    DESTINATION lib
 )
 
-install(TARGETS teb_controller
-   DESTINATION bin
-)
-
 ## Mark cpp header files for installation
 install(DIRECTORY include/
    DESTINATION include/
@@ -183,7 +148,7 @@ install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 ament_export_include_directories(include)
 ament_export_libraries(teb_local_planner)
 ament_export_dependencies(${ament_dependencies})
-pluginlib_export_plugin_description_file(teb_local_planner teb_local_planner_plugin.xml)
+pluginlib_export_plugin_description_file(nav2_core teb_local_planner_plugin.xml)
 
 #############
 ## Testing ##

@@ -54,32 +54,23 @@
 #include "g2o/solvers/csparse/linear_solver_csparse.h"
 #include "g2o/solvers/cholmod/linear_solver_cholmod.h"
 
+#include <nav2_core/exceptions.hpp>
 #include <nav2_costmap_2d/footprint.hpp>
 #include <nav_2d_utils/tf_help.hpp>
-#include <dwb_core/exceptions.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_eigen/tf2_eigen.h>
-
-// register this planner as a BaseLocalPlanner plugin
-//PLUGINLIB_EXPORT_CLASS(teb_local_planner::TebLocalPlannerROS, nav_core::BaseLocalPlanner)
 
 namespace teb_local_planner
 {
   
 
-TebLocalPlannerROS::TebLocalPlannerROS(
-  nav2_util::LifecycleNode::SharedPtr node, TFBufferPtr tf, CostmapROSPtr costmap_ros) 
-    : nh_(node), costmap_ros_(costmap_ros), tf_(tf), cfg_(new TebConfig()), costmap_model_(nullptr),
+TebLocalPlannerROS::TebLocalPlannerROS() 
+    : nh_(nullptr), costmap_ros_(nullptr), tf_(nullptr), cfg_(new TebConfig()), costmap_model_(nullptr), intra_proc_node_(nullptr),
                                            costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
                                            custom_via_points_active_(false), goal_reached_(false), no_infeasible_plans_(0),
                                            last_preferred_rotdir_(RotType::none), initialized_(false)
 {
-  // declare parameters (ros2-dashing)
-  intra_proc_node_.reset( 
-          new rclcpp::Node("costmap_converter", nh_->get_namespace(), 
-            rclcpp::NodeOptions()));
-  cfg_->declareParameters(nh_);
 }
 
 
@@ -97,7 +88,12 @@ void TebLocalPlannerROS::initialize()
   // check if the plugin is already initialized
   if(!initialized_)
   {	
-	        
+    // declare parameters (ros2-dashing)
+    intra_proc_node_.reset( 
+            new rclcpp::Node("costmap_converter", nh_->get_namespace(), 
+              rclcpp::NodeOptions()));
+    cfg_->declareParameters(nh_);
+
     // get parameters of TebConfig via the nodehandle and override the default config
     cfg_->loadRosParamFromNodeHandle(nh_);
     
@@ -207,20 +203,37 @@ void TebLocalPlannerROS::initialize()
   }
 }
 
+void TebLocalPlannerROS::configure(
+    const rclcpp_lifecycle::LifecycleNode::SharedPtr & node,
+    const std::shared_ptr<tf2_ros::Buffer> & tf,
+    const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) {
+  nh_ = node;
+  costmap_ros_ = costmap_ros;
+  tf_ = tf;
 
+  initialize();
+  
+  return;
+}
 
-bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::msg::PoseStamped>& orig_global_plan)
+void TebLocalPlannerROS::setPlan(const nav_msgs::msg::Path & orig_global_plan)
 {
   // check if plugin is initialized
   if(!initialized_)
   {
     RCLCPP_ERROR(nh_->get_logger(), "teb_local_planner has not been initialized, please call initialize() before using this planner");
-    return false;
+    return;
   }
 
   // store the global plan
   global_plan_.clear();
-  global_plan_ = orig_global_plan;
+  global_plan_.reserve(orig_global_plan.poses.size());
+  for(const auto &in_pose :orig_global_plan.poses) {
+    geometry_msgs::msg::PoseStamped out_pose;
+    out_pose.pose = in_pose.pose;
+    out_pose.header = orig_global_plan.header;
+    global_plan_.push_back(out_pose);
+  }
 
   // we do not clear the local planner here, since setPlan is called frequently whenever the global planner updates the plan.
   // the local planner checks whether it is required to reinitialize the trajectory or not within each velocity computation step.  
@@ -228,41 +241,28 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::msg::PoseStamp
   // reset goal_reached_ flag
   goal_reached_ = false;
   
-  return true;
+  return;
 }
 
 
-nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
-  const nav_2d_msgs::msg::Pose2DStamped & pose,
-  const nav_2d_msgs::msg::Twist2D & velocity)
+geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
+  const geometry_msgs::msg::PoseStamped &pose,
+  const geometry_msgs::msg::Twist &velocity)
 {
-  const auto twist3DTo2DStamped = [](
-      const geometry_msgs::msg::Twist &twist3d, 
-      const std::string &frame_id,
-      const rclcpp::Time &time_stamp) {
-    nav_2d_msgs::msg::Twist2DStamped twist2d_stamp;
-    
-    twist2d_stamp.header.frame_id = frame_id;
-    twist2d_stamp.header.stamp = time_stamp;
-    twist2d_stamp.velocity.x = twist3d.linear.x;
-    twist2d_stamp.velocity.y = twist3d.linear.y;
-    twist2d_stamp.velocity.theta = twist3d.angular.z;
-    
-    return twist2d_stamp;
-  };
-
   // check if plugin initialized
   if(!initialized_)
   {
-    throw nav_core2::PlannerException(
+    throw nav2_core::PlannerException(
       std::string("teb_local_planner has not been initialized, please call initialize() before using this planner")
     );
   }
-  geometry_msgs::msg::Twist cmd_vel;
+  geometry_msgs::msg::TwistStamped cmd_vel;
   
-  cmd_vel.linear.x = 0;
-  cmd_vel.linear.y = 0;
-  cmd_vel.angular.z = 0;
+  cmd_vel.header.stamp = nh_->now();
+  cmd_vel.header.frame_id = robot_base_frame_;
+  cmd_vel.twist.linear.x = 0;
+  cmd_vel.twist.linear.y = 0;
+  cmd_vel.twist.angular.z = 0;
   goal_reached_ = false;  
   
   // Get robot pose
@@ -272,9 +272,7 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   robot_pose_.toPoseMsg(robot_pose.pose);
   
   // Get robot velocity
-  robot_vel_.linear.x = velocity.x;
-  robot_vel_.linear.y = velocity.y;
-  robot_vel_.angular.z = velocity.theta;
+  robot_vel_ = velocity;
   
   // prune global plan to cut off parts of the past (spatially before the robot)
   pruneGlobalPlan(robot_pose, global_plan_, cfg_->trajectory.global_plan_prune_distance);
@@ -286,7 +284,7 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   if (!transformGlobalPlan(global_plan_, robot_pose, *costmap_, global_frame_, cfg_->trajectory.max_global_plan_lookahead_dist,
                            transformed_plan, &goal_idx, &tf_plan_to_global))
   {
-    throw nav_core2::PlannerException(
+    throw nav2_core::PlannerException(
       std::string("Could not transform the global plan to the frame of the controller")
     );
   }
@@ -309,7 +307,7 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
     && (!cfg_->goal_tolerance.complete_global_plan || via_points_.size() == 0))
   {
     goal_reached_ = true;
-    return twist3DTo2DStamped(cmd_vel, robot_base_frame_, nh_->now());
+    return cmd_vel;
   }
   
   
@@ -320,7 +318,7 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty())
   {
-    throw nav_core2::PlannerException(
+    throw nav2_core::PlannerException(
       std::string("Transformed plan is empty. Cannot determine a local plan.")
     );
   }
@@ -376,9 +374,9 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
     
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = nh_->now();
-    last_cmd_ = cmd_vel;
+    last_cmd_ = cmd_vel.twist;
     
-    throw nav_core2::PlannerException(
+    throw nav2_core::PlannerException(
       std::string("teb_local_planner was not able to obtain a local plan for the current setting.")
     );
   }
@@ -394,37 +392,35 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_->trajectory.feasibility_check_no_poses);
   if (!feasible)
   {
-    cmd_vel.linear.x = 0;
-    cmd_vel.linear.y = 0;
-    cmd_vel.angular.z = 0;
+    cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
    
     // now we reset everything to start again with the initialization of new trajectories.
     planner_->clearPlanner();
 
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = nh_->now();
-    last_cmd_ = cmd_vel;
+    last_cmd_ = cmd_vel.twist;
     
-    throw nav_core2::PlannerException(
+    throw nav2_core::PlannerException(
       std::string("TebLocalPlannerROS: trajectory is not feasible. Resetting planner...")
     );
   }
 
   // Get the velocity command for this sampling interval
-  if (!planner_->getVelocityCommand(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z))
+  if (!planner_->getVelocityCommand(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z))
   {
     planner_->clearPlanner();
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = nh_->now();
-    last_cmd_ = cmd_vel;
+    last_cmd_ = cmd_vel.twist;
     
-    throw nav_core2::PlannerException(
+    throw nav2_core::PlannerException(
       std::string("TebLocalPlannerROS: velocity command invalid. Resetting planner...")
     );
   }
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
-  saturateVelocity(cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z, cfg_->robot.max_vel_x, cfg_->robot.max_vel_y,
+  saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_->robot.max_vel_x, cfg_->robot.max_vel_y,
                    cfg_->robot.max_vel_theta, cfg_->robot.max_vel_x_backwards);
 
   // convert rot-vel to steering angle if desired (carlike robot).
@@ -432,17 +428,17 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   // and opposed to the other constraints not affected by penalty_epsilon. The user might add a safety margin to the parameter itself.
   if (cfg_->robot.cmd_angle_instead_rotvel)
   {
-    cmd_vel.angular.z = convertTransRotVelToSteeringAngle(cmd_vel.linear.x, cmd_vel.angular.z, cfg_->robot.wheelbase, 0.95*cfg_->robot.min_turning_radius);
-    if (!std::isfinite(cmd_vel.angular.z))
+    cmd_vel.twist.angular.z = convertTransRotVelToSteeringAngle(cmd_vel.twist.linear.x, cmd_vel.twist.angular.z, cfg_->robot.wheelbase, 0.95*cfg_->robot.min_turning_radius);
+    if (!std::isfinite(cmd_vel.twist.angular.z))
     {
-      cmd_vel.linear.x = cmd_vel.linear.y = cmd_vel.angular.z = 0;
-      last_cmd_ = cmd_vel;
+      cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
+      last_cmd_ = cmd_vel.twist;
       planner_->clearPlanner();
 
       ++no_infeasible_plans_; // increase number of infeasible solutions in a row
       time_last_infeasible_plan_ = nh_->now();
       
-      throw nav_core2::PlannerException(
+      throw nav2_core::PlannerException(
         std::string("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...")
       );
     }
@@ -452,7 +448,7 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   no_infeasible_plans_ = 0;
   
   // store last command (for recovery analysis etc.)
-  last_cmd_ = cmd_vel;
+  last_cmd_ = cmd_vel.twist;
   
   // Now visualize everything    
   planner_->visualize();
@@ -460,9 +456,14 @@ nav_2d_msgs::msg::Twist2DStamped TebLocalPlannerROS::computeVelocityCommands(
   visualization_->publishViaPoints(via_points_);
   visualization_->publishGlobalPlan(global_plan_);
   
-  return twist3DTo2DStamped(cmd_vel, robot_base_frame_, nh_->now());
+  return cmd_vel;
 }
 
+bool TebLocalPlannerROS::isGoalReached(
+  const geometry_msgs::msg::PoseStamped &,
+  const geometry_msgs::msg::Twist &) {
+  return isGoalReached();
+}
 
 bool TebLocalPlannerROS::isGoalReached()
 {
@@ -474,8 +475,6 @@ bool TebLocalPlannerROS::isGoalReached()
   }
   return false;
 }
-
-
 
 void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
 {  
@@ -1192,28 +1191,26 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
   return std::make_shared<PointRobotFootprint>();
 }
 
-nav2_util::CallbackReturn TebLocalPlannerROS::on_configure(const rclcpp_lifecycle::State & state) {
-  initialize();
-  
-  return nav2_util::CallbackReturn::SUCCESS;
-}
-nav2_util::CallbackReturn TebLocalPlannerROS::on_activate(const rclcpp_lifecycle::State & state) {
+void TebLocalPlannerROS::activate() {
+  rclcpp_lifecycle::State state;
   visualization_->on_activate(state);
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return;
 }
-nav2_util::CallbackReturn TebLocalPlannerROS::on_deactivate(const rclcpp_lifecycle::State & state) {
+void TebLocalPlannerROS::deactivate() {
+  rclcpp_lifecycle::State state;
   visualization_->on_deactivate(state);
 
-  return nav2_util::CallbackReturn::SUCCESS;
+  return;
 }
-nav2_util::CallbackReturn TebLocalPlannerROS::on_cleanup(const rclcpp_lifecycle::State & state) {
+void TebLocalPlannerROS::cleanup() {
   visualization_.reset();
   costmap_converter_->stopWorker();
   
-  return nav2_util::CallbackReturn::SUCCESS;
+  return;
 }
 
 } // end namespace teb_local_planner
 
-
+// register this planner as a nav2_core::LocalPlanner plugin
+PLUGINLIB_EXPORT_CLASS(teb_local_planner::TebLocalPlannerROS, nav2_core::LocalPlanner)
