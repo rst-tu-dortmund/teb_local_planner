@@ -225,8 +225,8 @@ void TimedElasticBand::setTimeDiffVertexFixed(int index, bool status)
 
 void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples, bool fast_mode)
 {  
+  ROS_ASSERT(sizeTimeDiffs() == 0 || sizeTimeDiffs() + 1 == sizePoses());
   /// iterate through all TEB states and add/remove states!
-
   bool modified = true;
 
   for (int rep = 0; rep < 100 && modified; ++rep) // actually it should be while(), but we want to make sure to not get stuck in some oscillation, hence max 100 repitions.
@@ -256,6 +256,12 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
           TimeDiff(i+1) = TimeDiff(i+1) + TimeDiff(i);
           deleteTimeDiff(i);
           deletePose(i+1);
+        }
+        else
+        { // last motion should be adjusted, shift time to the interval before
+          TimeDiff(i-1) += TimeDiff(i);
+          deleteTimeDiff(i);
+          deletePose(i);
         }
 
         modified = true;
