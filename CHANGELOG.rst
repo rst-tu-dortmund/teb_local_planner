@@ -2,6 +2,12 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed TEB autoResize if last TimeDiff is small
+* Add a rotational threshold for identifying a warm start goal
+* Contributors: Rainer Kümmerle
+
 0.8.3 (2019-10-25)
 ------------------
 * Limiting the control look-ahead pose to the first that execeeds the expected look-ahead time (thanks to Marco Bassa)
