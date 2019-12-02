@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.4 (2019-12-02)
+------------------
 * Fixed TEB autoResize if last TimeDiff is small
 * Add a rotational threshold for identifying a warm start goal
 * Contributors: Rainer Kümmerle
