@@ -682,15 +682,6 @@ void HomotopyClassPlanner::setPreferredTurningDir(RotType dir)
   }
 }
 
-bool HomotopyClassPlanner::isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const
-{
-  TebOptimalPlannerPtr best = bestTeb();
-  if (!best)
-    return false;
-
-  return best->isHorizonReductionAppropriate(initial_plan);
-}
-
 void HomotopyClassPlanner::computeCurrentCost(std::vector<double>& cost, double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)
 {
   for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
