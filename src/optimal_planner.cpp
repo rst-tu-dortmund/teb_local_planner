@@ -1317,7 +1317,7 @@ bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry
       ROS_DEBUG("TebOptimalPlanner::isHorizonReductionAppropriate(): Distance between consecutive poses > 0.9*min_obstacle_dist");
       return true;
     }
-    ref_path_length += dist;
+    teb_length += dist;
   }
   if (ref_path_length>0 && teb_length/ref_path_length < 0.7) // now check ratio
   {
