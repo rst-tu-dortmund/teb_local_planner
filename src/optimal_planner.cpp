@@ -1259,23 +1259,24 @@ bool TebOptimalPlanner::isTrajectoryFeasible(base_local_planner::CostmapModel* c
 
 bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const
 {
-  if (teb_.sizePoses() < int( 1.5*double(cfg_->trajectory.min_samples) ) ) // trajectory is short already
+  if (teb_.sizePoses() <= 2 || teb_.sizePoses() < int( 1.5*double(cfg_->trajectory.min_samples) )) // trajectory is short already
     return false;
   
   // check if distance is at least 2m long // hardcoded for now
  
-  double traj_dist = 0;
-  for (int i=1; i < teb_.sizePoses(); ++i)
+  double teb_length = 0;
+  int teb_idx = 1;
+  for ( ; teb_idx < teb_.sizePoses(); ++teb_idx)
   {
-    traj_dist += ( teb_.Pose(i).position() - teb_.Pose(i-1).position() ).norm();
-    if (traj_dist > 2)
+    teb_length += ( teb_.Pose(teb_idx).position() - teb_.Pose(teb_idx-1).position() ).norm();
+    if (teb_length > 2)
       break;
   }
-  if (traj_dist <= 2)
+  if (teb_length <= 2)
     return false;
   
-  // check if goal orientation is differing with more than 90° and the horizon is still long enough to exclude parking maneuvers.
-  // use case: Sometimes the robot accomplish the following navigation task:
+  // check if goal orientation differs with more than 90° and the horizon is still long enough to exclude parking maneuvers.
+  // use case: Sometimes the robot accomplishes the following navigation task:
   // 1. wall following 2. 180° curve 3. following along the other side of the wall.
   // If the trajectory is too long, the trajectory might intersect with the obstace and the optimizer does 
   // push the trajectory to the correct side.
@@ -1308,10 +1309,11 @@ bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry
   } 
   
   // check distances along the teb trajectory (by the way, we also check if the distance between two poses is > obst_dist)
-  double teb_length = 0;
-  for (int i = 1; i < teb_.sizePoses(); ++i )
+  // we continue at teb_idx+1
+  ++teb_idx;
+  for ( ; teb_idx < teb_.sizePoses(); ++teb_idx )
   {
-    double dist = (teb_.Pose(i).position() - teb_.Pose(i-1).position()).norm();
+    double dist = (teb_.Pose(teb_idx).position() - teb_.Pose(teb_idx-1).position()).norm();
     if (dist > 0.95*cfg_->obstacles.min_obstacle_dist)
     {
       ROS_DEBUG("TebOptimalPlanner::isHorizonReductionAppropriate(): Distance between consecutive poses > 0.9*min_obstacle_dist");
