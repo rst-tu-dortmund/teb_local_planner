@@ -44,7 +44,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 // Navigation2 local planner base class and utilities
-#include <nav2_core/local_planner.hpp>
+#include <nav2_core/controller.hpp>
 
 // timed-elastic-band related classes
 #include "teb_local_planner/optimal_planner.h"
@@ -84,7 +84,7 @@ using CostmapROSPtr = std::shared_ptr<nav2_costmap_2d::Costmap2DROS>;
   * @brief Implements the actual abstract navigation stack routines of the teb_local_planner plugin
   * @todo Escape behavior, more efficient obstacle handling
   */
-class TebLocalPlannerROS : public nav2_core::LocalPlanner
+class TebLocalPlannerROS : public nav2_core::Controller
 {
 
 public:
@@ -107,6 +107,7 @@ public:
    */
   void configure(
     const rclcpp_lifecycle::LifecycleNode::SharedPtr & node,
+    std::string name,
     const std::shared_ptr<tf2_ros::Buffer> & tf,
     const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) override;
   void activate() override;
