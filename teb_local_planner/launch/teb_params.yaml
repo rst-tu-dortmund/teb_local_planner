@@ -72,28 +72,29 @@ bt_navigator_rclcpp_node:
 controller_server:
   ros__parameters:
     use_sim_time: True
+    controller_frequency: 20
     controller_plugin_types: ["teb_local_planner::TebLocalPlannerROS"]
-    controller_plugin_ids: ["FollowPath"]
-    footprint_model/type: circular
-    footprint_model/radius: 0.17
-    min_obstacle_dist: 0.1
-    inflation_dist: 0.1
-    costmap_converter_plugin: costmap_converter::CostmapToPolygonsDBSMCCH
-    costmap_converter_spin_thread: True
-    costmap_converter_rate: 15
-    enable_homotopy_class_planning: True
-    enable_multithreading: True
-    #weight_obstacle: 100.0
-    optimization_verbose: False
-    teb_autoresize: True
-    min_samples: 3
-    max_samples: 20
-    max_global_plan_lookahead_dist: 1.0
-    visualize_hc_graph: True
-    max_vel_x: 0.26
-    max_vel_theta: 1.0
-    acc_lim_x: 2.5
-    acc_lim_theta: 3.2
+    controller_plugin_ids: ["DynamicFollowPath"]
+    DynamicFollowPath.footprint_model.type: circular
+    DynamicFollowPath.footprint_model.radius: 0.17
+    DynamicFollowPath.min_obstacle_dist: 0.1
+    DynamicFollowPath.inflation_dist: 0.1
+    DynamicFollowPath.costmap_converter_plugin: costmap_converter::CostmapToPolygonsDBSMCCH
+    DynamicFollowPath.costmap_converter_spin_thread: True
+    DynamicFollowPath.costmap_converter_rate: 15
+    DynamicFollowPath.enable_homotopy_class_planning: True
+    DynamicFollowPath.enable_multithreading: True
+    #DynamicFollowPath.weight_obstacle: 100.0
+    DynamicFollowPath.optimization_verbose: False
+    DynamicFollowPath.teb_autoresize: True
+    DynamicFollowPath.min_samples: 3
+    DynamicFollowPath.max_samples: 20
+    DynamicFollowPath.max_global_plan_lookahead_dist: 1.0
+    DynamicFollowPath.visualize_hc_graph: True
+    DynamicFollowPath.max_vel_x: 0.26
+    DynamicFollowPath.max_vel_theta: 1.0
+    DynamicFollowPath.acc_lim_x: 2.5
+    DynamicFollowPath.acc_lim_theta: 3.2
 
 costmap_converter:
   ros__parameters:

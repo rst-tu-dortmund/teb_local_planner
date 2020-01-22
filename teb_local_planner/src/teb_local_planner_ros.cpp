@@ -92,10 +92,10 @@ void TebLocalPlannerROS::initialize()
     intra_proc_node_.reset( 
             new rclcpp::Node("costmap_converter", nh_->get_namespace(), 
               rclcpp::NodeOptions()));
-    cfg_->declareParameters(nh_);
+    cfg_->declareParameters(nh_, name_);
 
     // get parameters of TebConfig via the nodehandle and override the default config
-    cfg_->loadRosParamFromNodeHandle(nh_);
+    cfg_->loadRosParamFromNodeHandle(nh_, name_);
     
     // reserve some memory for obstacles
     obstacles_.reserve(500);
@@ -186,7 +186,8 @@ void TebLocalPlannerROS::initialize()
     // initialize failure detector
     //rclcpp::Node::SharedPtr nh_move_base("~");
     double controller_frequency = 5;
-    nh_->get_parameter_or("controller_frequency", controller_frequency, controller_frequency);
+    nh_->declare_parameter("controller_frequency", controller_frequency);
+    nh_->get_parameter("controller_frequency", controller_frequency);
     failure_detector_.setBufferLength(std::round(cfg_->recovery.oscillation_filter_duration*controller_frequency));
     
     // set initialized flag
@@ -211,6 +212,7 @@ void TebLocalPlannerROS::configure(
   nh_ = node;
   costmap_ros_ = costmap_ros;
   tf_ = tf;
+  name_ = name;
 
   initialize();
   
@@ -1063,9 +1065,18 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::msg::Path::ConstShare
      
 RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
 {
+  nh_->declare_parameter(name_ + "." + "footprint_model.type");
+  nh_->declare_parameter(name_ + "." + "footprint_model.radius");
+  nh_->declare_parameter(name_ + "." + "footprint_model.line_start");
+  nh_->declare_parameter(name_ + "." + "footprint_model.line_end");
+  nh_->declare_parameter(name_ + "." + "footprint_model.front_offset");
+  nh_->declare_parameter(name_ + "." + "footprint_model.front_radius");
+  nh_->declare_parameter(name_ + "." + "footprint_model.rear_offset");
+  nh_->declare_parameter(name_ + "." + "footprint_model.rear_radius");
+  nh_->declare_parameter(name_ + "." + "footprint_model.vertices");
 
   std::string model_name; 
-  if (!nh_->get_parameter("footprint_model/type", model_name))
+  if (!nh_->get_parameter(name_ + "." + "footprint_model.type", model_name))
   {
     RCLCPP_INFO(nh_->get_logger(), "No robot footprint model specified for trajectory optimization. Using point-shaped model.");
     return std::make_shared<PointRobotFootprint>();
@@ -1083,10 +1094,10 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
   {
     // get radius
     double radius;
-    if (!nh_->get_parameter("footprint_model/radius", radius))
+    if (!nh_->get_parameter(name_ + "." + "footprint_model.radius", radius))
     {
       RCLCPP_ERROR(nh_->get_logger(),
-                   "Footprint model 'circular' cannot be loaded for trajectory optimization, since param '%s/footprint_model/radius' does not exist. Using point-model instead.",
+                   "Footprint model 'circular' cannot be loaded for trajectory optimization, since param '%s.footprint_model.radius' does not exist. Using point-model instead.",
                    nh_->get_namespace());
 
       return std::make_shared<PointRobotFootprint>();
@@ -1100,20 +1111,20 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
   if (model_name.compare("line") == 0)
   {
     // check parameters
-    if (!nh_->get_parameter("footprint_model/line_start", dummy) || !nh_->get_parameter("footprint_model/line_end", dummy))
+    if (!nh_->get_parameter(name_ + "." + "footprint_model.line_start", dummy) || !nh_->get_parameter(name_ + "." + "footprint_model.line_end", dummy))
     {
       RCLCPP_ERROR(nh_->get_logger(),
-                   "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s/footprint_model/line_start' and/or '.../line_end' do not exist. Using point-model instead.",
+                   "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not exist. Using point-model instead.",
                    nh_->get_namespace());
       return std::make_shared<PointRobotFootprint>();
     }
     // get line coordinates
     std::vector<double> line_start, line_end;
-    nh_->get_parameter("footprint_model/line_start", line_start);
-    nh_->get_parameter("footprint_model/line_end", line_end);
+    nh_->get_parameter(name_ + "." + "footprint_model.line_start", line_start);
+    nh_->get_parameter(name_ + "." + "footprint_model.line_end", line_end);
     if (line_start.size() != 2 || line_end.size() != 2)
     {
-      RCLCPP_ERROR(nh_->get_logger(), "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s/footprint_model/line_start' and/or '.../line_end' do not contain x and y coordinates (2D). Using point-model instead.",
+      RCLCPP_ERROR(nh_->get_logger(), "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not contain x and y coordinates (2D). Using point-model instead.",
                    nh_->get_namespace());
       return std::make_shared<PointRobotFootprint>();
     }
@@ -1129,19 +1140,19 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
   if (model_name.compare("two_circles") == 0)
   {
     // check parameters
-    if (!nh_->get_parameter("footprint_model/front_offset", dummy) || !nh_->get_parameter("footprint_model/front_radius", dummy)
-        || !nh_->get_parameter("footprint_model/rear_offset", dummy) || !nh_->get_parameter("footprint_model/rear_radius", dummy))
+    if (!nh_->get_parameter(name_ + "." + "footprint_model.front_offset", dummy) || !nh_->get_parameter(name_ + "." + "footprint_model.front_radius", dummy)
+        || !nh_->get_parameter(name_ + "." + "footprint_model.rear_offset", dummy) || !nh_->get_parameter(name_ + "." + "footprint_model.rear_radius", dummy))
     {
       RCLCPP_ERROR(nh_->get_logger(),
-                   "Footprint model 'two_circles' cannot be loaded for trajectory optimization, since params '%s/footprint_model/front_offset', '.../front_radius', '.../rear_offset' and '.../rear_radius' do not exist. Using point-model instead.",
+                   "Footprint model 'two_circles' cannot be loaded for trajectory optimization, since params '%s.footprint_model.front_offset', '.../front_radius', '.../rear_offset' and '.../rear_radius' do not exist. Using point-model instead.",
                    nh_->get_namespace());
       return std::make_shared<PointRobotFootprint>();
     }
     double front_offset, front_radius, rear_offset, rear_radius;
-    nh_->get_parameter("footprint_model/front_offset", front_offset);
-    nh_->get_parameter("footprint_model/front_radius", front_radius);
-    nh_->get_parameter("footprint_model/rear_offset", rear_offset);
-    nh_->get_parameter("footprint_model/rear_radius", rear_radius);
+    nh_->get_parameter(name_ + "." + "footprint_model.front_offset", front_offset);
+    nh_->get_parameter(name_ + "." + "footprint_model.front_radius", front_radius);
+    nh_->get_parameter(name_ + "." + "footprint_model.rear_offset", rear_offset);
+    nh_->get_parameter(name_ + "." + "footprint_model.rear_radius", rear_radius);
     RCLCPP_INFO(nh_->get_logger(),
                 "Footprint model 'two_circles' (front_offset: %fm, front_radius: %fm, rear_offset: %fm, rear_radius: %fm) loaded for trajectory optimization.",
                 front_offset, front_radius, rear_offset, rear_radius);
@@ -1156,10 +1167,10 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
     // check parameters
     std::string footprint_string;
 
-    if (!nh_->get_parameter("footprint_model/vertices", footprint_string) )
+    if (!nh_->get_parameter(name_ + "." + "footprint_model.vertices", footprint_string) )
     {
       RCLCPP_ERROR(nh_->get_logger(),
-                   "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s/footprint_model/vertices' does not exist. Using point-model instead.",
+                   "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s.footprint_model.vertices' does not exist. Using point-model instead.",
                    nh_->get_namespace());
 
       return std::make_shared<PointRobotFootprint>();
@@ -1179,7 +1190,7 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
     else
     {
       RCLCPP_ERROR(nh_->get_logger(),
-                "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s/footprint_model/vertices' does not define an array of coordinates. Using point-model instead.",
+                "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s.footprint_model.vertices' does not define an array of coordinates. Using point-model instead.",
                 nh_->get_namespace());
       return std::make_shared<PointRobotFootprint>();
     }
@@ -1187,7 +1198,7 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
   }
   
   // otherwise
-  RCLCPP_WARN(nh_->get_logger(), "Unknown robot footprint model specified with parameter '%s/footprint_model/type'. Using point model instead.",
+  RCLCPP_WARN(nh_->get_logger(), "Unknown robot footprint model specified with parameter '%s.footprint_model.type'. Using point model instead.",
                   nh_->get_namespace());
   return std::make_shared<PointRobotFootprint>();
 }
