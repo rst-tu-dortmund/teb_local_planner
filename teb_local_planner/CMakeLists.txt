@@ -63,9 +63,6 @@ set(EXTERNAL_LIBS ${Boost_LIBRARIES} ${SUITESPARSE_LIBRARIES} ${G2O_LIBRARIES})
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(include)
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
@@ -114,13 +111,7 @@ target_link_libraries(teb_local_planner
    ${EXTERNAL_LIBS}
 )
 
-## Build additional executables
-#add_executable(test_optim_node src/test_optim_node.cpp)
-
-#target_link_libraries(test_optim_node
-#   teb_local_planner
-#   ${EXTERNAL_LIBS}
-#)
+target_compile_definitions(teb_local_planner PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 
 #############
