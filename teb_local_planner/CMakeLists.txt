@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(teb_local_planner)
 
 # Set to Release in order to speed up the program significantly
-#set(CMAKE_BUILD_TYPE Release) #None, Debug, Release, RelWithDebInfo, MinSizeRel
+set(CMAKE_BUILD_TYPE Release) #None, Debug, Release, RelWithDebInfo, MinSizeRel
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
