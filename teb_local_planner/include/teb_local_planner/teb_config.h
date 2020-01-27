@@ -356,13 +356,13 @@ public:
 
   }
   
-  void declareParameters(const nav2_util::LifecycleNode::SharedPtr nh);
+  void declareParameters(const nav2_util::LifecycleNode::SharedPtr, const std::string name);
 
   /**
    * @brief Load parmeters from the ros param server.
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    */
-  void loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh);
+  void loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name);
   
   /**
    * @brief Reconfigure parameters from the dynamic_reconfigure config.
@@ -386,7 +386,7 @@ public:
    * @brief Check if some deprecated parameters are found and print warnings
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    */
-  void checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh) const;
+  void checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name) const;
   
   /**
    * @brief Return the internal config mutex

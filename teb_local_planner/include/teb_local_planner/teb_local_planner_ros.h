@@ -414,6 +414,7 @@ private:
     
   // flags
   bool initialized_; //!< Keeps track about the correct initialization of this class
+  std::string name_; //!< Name of plugin ID
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

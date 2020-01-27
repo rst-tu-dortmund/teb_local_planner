@@ -41,244 +41,244 @@
 namespace teb_local_planner
 {
 
-void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh) {
-  nh->declare_parameter("odom_topic", rclcpp::ParameterValue(odom_topic));
-  nh->declare_parameter("map_frame", rclcpp::ParameterValue(map_frame));
+void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name) {
+  nh->declare_parameter(name + "." + "odom_topic", rclcpp::ParameterValue(odom_topic));
+  nh->declare_parameter(name + "." + "map_frame", rclcpp::ParameterValue(map_frame));
   
   // Trajectory
-  nh->declare_parameter("teb_autosize", rclcpp::ParameterValue(trajectory.teb_autosize));
-  nh->declare_parameter("dt_ref", rclcpp::ParameterValue(trajectory.dt_ref));
-  nh->declare_parameter("dt_hysteresis", rclcpp::ParameterValue(trajectory.dt_hysteresis));
-  nh->declare_parameter("min_samples", rclcpp::ParameterValue(trajectory.min_samples));
-  nh->declare_parameter("max_samples", rclcpp::ParameterValue(trajectory.max_samples));
-  nh->declare_parameter("global_plan_overwrite_orientation", rclcpp::ParameterValue(trajectory.global_plan_overwrite_orientation));
-  nh->declare_parameter("allow_init_with_backwards_motion", rclcpp::ParameterValue(trajectory.allow_init_with_backwards_motion));
-  nh->declare_parameter("global_plan_viapoint_sep", rclcpp::ParameterValue(trajectory.global_plan_viapoint_sep));
-  nh->declare_parameter("via_points_ordered", rclcpp::ParameterValue(trajectory.via_points_ordered));
-  nh->declare_parameter("max_global_plan_lookahead_dist", rclcpp::ParameterValue(trajectory.max_global_plan_lookahead_dist));
-  nh->declare_parameter("global_plan_prune_distance", rclcpp::ParameterValue(trajectory.global_plan_prune_distance));
-  nh->declare_parameter("exact_arc_length", rclcpp::ParameterValue(trajectory.exact_arc_length));
-  nh->declare_parameter("force_reinit_new_goal_dist", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_dist));
-  nh->declare_parameter("feasibility_check_no_poses", rclcpp::ParameterValue(trajectory.feasibility_check_no_poses));
-  nh->declare_parameter("publish_feedback", rclcpp::ParameterValue(trajectory.publish_feedback));
-  nh->declare_parameter("min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
+  nh->declare_parameter(name + "." + "teb_autosize", rclcpp::ParameterValue(trajectory.teb_autosize));
+  nh->declare_parameter(name + "." + "dt_ref", rclcpp::ParameterValue(trajectory.dt_ref));
+  nh->declare_parameter(name + "." + "dt_hysteresis", rclcpp::ParameterValue(trajectory.dt_hysteresis));
+  nh->declare_parameter(name + "." + "min_samples", rclcpp::ParameterValue(trajectory.min_samples));
+  nh->declare_parameter(name + "." + "max_samples", rclcpp::ParameterValue(trajectory.max_samples));
+  nh->declare_parameter(name + "." + "global_plan_overwrite_orientation", rclcpp::ParameterValue(trajectory.global_plan_overwrite_orientation));
+  nh->declare_parameter(name + "." + "allow_init_with_backwards_motion", rclcpp::ParameterValue(trajectory.allow_init_with_backwards_motion));
+  nh->declare_parameter(name + "." + "global_plan_viapoint_sep", rclcpp::ParameterValue(trajectory.global_plan_viapoint_sep));
+  nh->declare_parameter(name + "." + "via_points_ordered", rclcpp::ParameterValue(trajectory.via_points_ordered));
+  nh->declare_parameter(name + "." + "max_global_plan_lookahead_dist", rclcpp::ParameterValue(trajectory.max_global_plan_lookahead_dist));
+  nh->declare_parameter(name + "." + "global_plan_prune_distance", rclcpp::ParameterValue(trajectory.global_plan_prune_distance));
+  nh->declare_parameter(name + "." + "exact_arc_length", rclcpp::ParameterValue(trajectory.exact_arc_length));
+  nh->declare_parameter(name + "." + "force_reinit_new_goal_dist", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_dist));
+  nh->declare_parameter(name + "." + "feasibility_check_no_poses", rclcpp::ParameterValue(trajectory.feasibility_check_no_poses));
+  nh->declare_parameter(name + "." + "publish_feedback", rclcpp::ParameterValue(trajectory.publish_feedback));
+  nh->declare_parameter(name + "." + "min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
   
   // Robot
-  nh->declare_parameter("max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
-  nh->declare_parameter("max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
-  nh->declare_parameter("max_vel_y", rclcpp::ParameterValue(robot.max_vel_y));
-  nh->declare_parameter("max_vel_theta", rclcpp::ParameterValue(robot.max_vel_theta));
-  nh->declare_parameter("acc_lim_x", rclcpp::ParameterValue(robot.acc_lim_x));
-  nh->declare_parameter("acc_lim_y", rclcpp::ParameterValue(robot.acc_lim_y));
-  nh->declare_parameter("acc_lim_theta", rclcpp::ParameterValue(robot.acc_lim_theta));
-  nh->declare_parameter("min_turning_radius", rclcpp::ParameterValue(robot.min_turning_radius));
-  nh->declare_parameter("wheelbase", rclcpp::ParameterValue(robot.wheelbase));
-  nh->declare_parameter("cmd_angle_instead_rotvel", rclcpp::ParameterValue(robot.cmd_angle_instead_rotvel));
-  nh->declare_parameter("is_footprint_dynamic", rclcpp::ParameterValue(robot.is_footprint_dynamic));
+  nh->declare_parameter(name + "." + "max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
+  nh->declare_parameter(name + "." + "max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
+  nh->declare_parameter(name + "." + "max_vel_y", rclcpp::ParameterValue(robot.max_vel_y));
+  nh->declare_parameter(name + "." + "max_vel_theta", rclcpp::ParameterValue(robot.max_vel_theta));
+  nh->declare_parameter(name + "." + "acc_lim_x", rclcpp::ParameterValue(robot.acc_lim_x));
+  nh->declare_parameter(name + "." + "acc_lim_y", rclcpp::ParameterValue(robot.acc_lim_y));
+  nh->declare_parameter(name + "." + "acc_lim_theta", rclcpp::ParameterValue(robot.acc_lim_theta));
+  nh->declare_parameter(name + "." + "min_turning_radius", rclcpp::ParameterValue(robot.min_turning_radius));
+  nh->declare_parameter(name + "." + "wheelbase", rclcpp::ParameterValue(robot.wheelbase));
+  nh->declare_parameter(name + "." + "cmd_angle_instead_rotvel", rclcpp::ParameterValue(robot.cmd_angle_instead_rotvel));
+  nh->declare_parameter(name + "." + "is_footprint_dynamic", rclcpp::ParameterValue(robot.is_footprint_dynamic));
   
   // GoalTolerance
-  nh->declare_parameter("xy_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.xy_goal_tolerance));
-  nh->declare_parameter("yaw_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.yaw_goal_tolerance));
-  nh->declare_parameter("free_goal_vel", rclcpp::ParameterValue(goal_tolerance.free_goal_vel));
-  nh->declare_parameter("complete_global_plan", rclcpp::ParameterValue(goal_tolerance.complete_global_plan));
+  nh->declare_parameter(name + "." + "xy_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.xy_goal_tolerance));
+  nh->declare_parameter(name + "." + "yaw_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.yaw_goal_tolerance));
+  nh->declare_parameter(name + "." + "free_goal_vel", rclcpp::ParameterValue(goal_tolerance.free_goal_vel));
+  nh->declare_parameter(name + "." + "complete_global_plan", rclcpp::ParameterValue(goal_tolerance.complete_global_plan));
 
   // Obstacles
-  nh->declare_parameter("min_obstacle_dist", rclcpp::ParameterValue(obstacles.min_obstacle_dist));
-  nh->declare_parameter("inflation_dist", rclcpp::ParameterValue(obstacles.inflation_dist));
-  nh->declare_parameter("dynamic_obstacle_inflation_dist", rclcpp::ParameterValue(obstacles.dynamic_obstacle_inflation_dist));
-  nh->declare_parameter("include_dynamic_obstacles", rclcpp::ParameterValue(obstacles.include_dynamic_obstacles));
-  nh->declare_parameter("include_costmap_obstacles", rclcpp::ParameterValue(obstacles.include_costmap_obstacles));
-  nh->declare_parameter("costmap_obstacles_behind_robot_dist", rclcpp::ParameterValue(obstacles.costmap_obstacles_behind_robot_dist));
-  nh->declare_parameter("obstacle_poses_affected", rclcpp::ParameterValue(obstacles.obstacle_poses_affected));
-  nh->declare_parameter("legacy_obstacle_association", rclcpp::ParameterValue(obstacles.legacy_obstacle_association));
-  nh->declare_parameter("obstacle_association_force_inclusion_factor", rclcpp::ParameterValue(obstacles.obstacle_association_force_inclusion_factor));
-  nh->declare_parameter("obstacle_association_cutoff_factor", rclcpp::ParameterValue(obstacles.obstacle_association_cutoff_factor));
-  nh->declare_parameter("costmap_converter_plugin", rclcpp::ParameterValue(obstacles.costmap_converter_plugin));
-  nh->declare_parameter("costmap_converter_spin_thread", rclcpp::ParameterValue(obstacles.costmap_converter_spin_thread));
+  nh->declare_parameter(name + "." + "min_obstacle_dist", rclcpp::ParameterValue(obstacles.min_obstacle_dist));
+  nh->declare_parameter(name + "." + "inflation_dist", rclcpp::ParameterValue(obstacles.inflation_dist));
+  nh->declare_parameter(name + "." + "dynamic_obstacle_inflation_dist", rclcpp::ParameterValue(obstacles.dynamic_obstacle_inflation_dist));
+  nh->declare_parameter(name + "." + "include_dynamic_obstacles", rclcpp::ParameterValue(obstacles.include_dynamic_obstacles));
+  nh->declare_parameter(name + "." + "include_costmap_obstacles", rclcpp::ParameterValue(obstacles.include_costmap_obstacles));
+  nh->declare_parameter(name + "." + "costmap_obstacles_behind_robot_dist", rclcpp::ParameterValue(obstacles.costmap_obstacles_behind_robot_dist));
+  nh->declare_parameter(name + "." + "obstacle_poses_affected", rclcpp::ParameterValue(obstacles.obstacle_poses_affected));
+  nh->declare_parameter(name + "." + "legacy_obstacle_association", rclcpp::ParameterValue(obstacles.legacy_obstacle_association));
+  nh->declare_parameter(name + "." + "obstacle_association_force_inclusion_factor", rclcpp::ParameterValue(obstacles.obstacle_association_force_inclusion_factor));
+  nh->declare_parameter(name + "." + "obstacle_association_cutoff_factor", rclcpp::ParameterValue(obstacles.obstacle_association_cutoff_factor));
+  nh->declare_parameter(name + "." + "costmap_converter_plugin", rclcpp::ParameterValue(obstacles.costmap_converter_plugin));
+  nh->declare_parameter(name + "." + "costmap_converter_spin_thread", rclcpp::ParameterValue(obstacles.costmap_converter_spin_thread));
   
   // Optimization
-  nh->declare_parameter("no_inner_iterations", rclcpp::ParameterValue(optim.no_inner_iterations));
-  nh->declare_parameter("no_outer_iterations", rclcpp::ParameterValue(optim.no_outer_iterations));
-  nh->declare_parameter("optimization_activate", rclcpp::ParameterValue(optim.optimization_activate));
-  nh->declare_parameter("optimization_verbose", rclcpp::ParameterValue(optim.optimization_verbose));
-  nh->declare_parameter("penalty_epsilon", rclcpp::ParameterValue(optim.penalty_epsilon));
-  nh->declare_parameter("weight_max_vel_x", rclcpp::ParameterValue(optim.weight_max_vel_x));
-  nh->declare_parameter("weight_max_vel_y", rclcpp::ParameterValue(optim.weight_max_vel_y));
-  nh->declare_parameter("weight_max_vel_theta", rclcpp::ParameterValue(optim.weight_max_vel_theta));
-  nh->declare_parameter("weight_acc_lim_x", rclcpp::ParameterValue(optim.weight_acc_lim_x));
-  nh->declare_parameter("weight_acc_lim_y", rclcpp::ParameterValue(optim.weight_acc_lim_y));
-  nh->declare_parameter("weight_acc_lim_theta", rclcpp::ParameterValue(optim.weight_acc_lim_theta));
-  nh->declare_parameter("weight_kinematics_nh", rclcpp::ParameterValue(optim.weight_kinematics_nh));
-  nh->declare_parameter("weight_kinematics_forward_drive", rclcpp::ParameterValue(optim.weight_kinematics_forward_drive));
-  nh->declare_parameter("weight_kinematics_turning_radius", rclcpp::ParameterValue(optim.weight_kinematics_turning_radius));
-  nh->declare_parameter("weight_optimaltime", rclcpp::ParameterValue(optim.weight_optimaltime));
-  nh->declare_parameter("weight_shortest_path", rclcpp::ParameterValue(optim.weight_shortest_path));
-  nh->declare_parameter("weight_obstacle", rclcpp::ParameterValue(optim.weight_obstacle));
-  nh->declare_parameter("weight_inflation", rclcpp::ParameterValue(optim.weight_inflation));
-  nh->declare_parameter("weight_dynamic_obstacle", rclcpp::ParameterValue(optim.weight_dynamic_obstacle));
-  nh->declare_parameter("weight_dynamic_obstacle_inflation", rclcpp::ParameterValue(optim.weight_dynamic_obstacle_inflation));
-  nh->declare_parameter("weight_viapoint", rclcpp::ParameterValue(optim.weight_viapoint));
-  nh->declare_parameter("weight_prefer_rotdir", rclcpp::ParameterValue(optim.weight_prefer_rotdir));
-  nh->declare_parameter("weight_adapt_factor", rclcpp::ParameterValue(optim.weight_adapt_factor));
-  nh->declare_parameter("obstacle_cost_exponent", rclcpp::ParameterValue(optim.obstacle_cost_exponent));
+  nh->declare_parameter(name + "." + "no_inner_iterations", rclcpp::ParameterValue(optim.no_inner_iterations));
+  nh->declare_parameter(name + "." + "no_outer_iterations", rclcpp::ParameterValue(optim.no_outer_iterations));
+  nh->declare_parameter(name + "." + "optimization_activate", rclcpp::ParameterValue(optim.optimization_activate));
+  nh->declare_parameter(name + "." + "optimization_verbose", rclcpp::ParameterValue(optim.optimization_verbose));
+  nh->declare_parameter(name + "." + "penalty_epsilon", rclcpp::ParameterValue(optim.penalty_epsilon));
+  nh->declare_parameter(name + "." + "weight_max_vel_x", rclcpp::ParameterValue(optim.weight_max_vel_x));
+  nh->declare_parameter(name + "." + "weight_max_vel_y", rclcpp::ParameterValue(optim.weight_max_vel_y));
+  nh->declare_parameter(name + "." + "weight_max_vel_theta", rclcpp::ParameterValue(optim.weight_max_vel_theta));
+  nh->declare_parameter(name + "." + "weight_acc_lim_x", rclcpp::ParameterValue(optim.weight_acc_lim_x));
+  nh->declare_parameter(name + "." + "weight_acc_lim_y", rclcpp::ParameterValue(optim.weight_acc_lim_y));
+  nh->declare_parameter(name + "." + "weight_acc_lim_theta", rclcpp::ParameterValue(optim.weight_acc_lim_theta));
+  nh->declare_parameter(name + "." + "weight_kinematics_nh", rclcpp::ParameterValue(optim.weight_kinematics_nh));
+  nh->declare_parameter(name + "." + "weight_kinematics_forward_drive", rclcpp::ParameterValue(optim.weight_kinematics_forward_drive));
+  nh->declare_parameter(name + "." + "weight_kinematics_turning_radius", rclcpp::ParameterValue(optim.weight_kinematics_turning_radius));
+  nh->declare_parameter(name + "." + "weight_optimaltime", rclcpp::ParameterValue(optim.weight_optimaltime));
+  nh->declare_parameter(name + "." + "weight_shortest_path", rclcpp::ParameterValue(optim.weight_shortest_path));
+  nh->declare_parameter(name + "." + "weight_obstacle", rclcpp::ParameterValue(optim.weight_obstacle));
+  nh->declare_parameter(name + "." + "weight_inflation", rclcpp::ParameterValue(optim.weight_inflation));
+  nh->declare_parameter(name + "." + "weight_dynamic_obstacle", rclcpp::ParameterValue(optim.weight_dynamic_obstacle));
+  nh->declare_parameter(name + "." + "weight_dynamic_obstacle_inflation", rclcpp::ParameterValue(optim.weight_dynamic_obstacle_inflation));
+  nh->declare_parameter(name + "." + "weight_viapoint", rclcpp::ParameterValue(optim.weight_viapoint));
+  nh->declare_parameter(name + "." + "weight_prefer_rotdir", rclcpp::ParameterValue(optim.weight_prefer_rotdir));
+  nh->declare_parameter(name + "." + "weight_adapt_factor", rclcpp::ParameterValue(optim.weight_adapt_factor));
+  nh->declare_parameter(name + "." + "obstacle_cost_exponent", rclcpp::ParameterValue(optim.obstacle_cost_exponent));
   
   // Homotopy Class Planner
-  nh->declare_parameter("enable_homotopy_class_planning", rclcpp::ParameterValue(hcp.enable_homotopy_class_planning));
-  nh->declare_parameter("enable_multithreading", rclcpp::ParameterValue(hcp.enable_multithreading));
-  nh->declare_parameter("simple_exploration", rclcpp::ParameterValue(hcp.simple_exploration));
-  nh->declare_parameter("max_number_classes", rclcpp::ParameterValue(hcp.max_number_classes));
-  nh->declare_parameter("selection_obst_cost_scale", rclcpp::ParameterValue(hcp.selection_obst_cost_scale));
-  nh->declare_parameter("selection_prefer_initial_plan", rclcpp::ParameterValue(hcp.selection_prefer_initial_plan));
-  nh->declare_parameter("selection_viapoint_cost_scale", rclcpp::ParameterValue(hcp.selection_viapoint_cost_scale));
-  nh->declare_parameter("selection_cost_hysteresis", rclcpp::ParameterValue(hcp.selection_cost_hysteresis));
-  nh->declare_parameter("selection_alternative_time_cost", rclcpp::ParameterValue(hcp.selection_alternative_time_cost));
-  nh->declare_parameter("switching_blocking_period", rclcpp::ParameterValue(hcp.switching_blocking_period));
-  nh->declare_parameter("roadmap_graph_samples", rclcpp::ParameterValue(hcp.roadmap_graph_no_samples));
-  nh->declare_parameter("roadmap_graph_area_width", rclcpp::ParameterValue(hcp.roadmap_graph_area_width));
-  nh->declare_parameter("roadmap_graph_area_length_scale", rclcpp::ParameterValue(hcp.roadmap_graph_area_length_scale));
-  nh->declare_parameter("h_signature_prescaler", rclcpp::ParameterValue(hcp.h_signature_prescaler));
-  nh->declare_parameter("h_signature_threshold", rclcpp::ParameterValue(hcp.h_signature_threshold));
-  nh->declare_parameter("obstacle_keypoint_offset", rclcpp::ParameterValue(hcp.obstacle_keypoint_offset));
-  nh->declare_parameter("obstacle_heading_threshold", rclcpp::ParameterValue(hcp.obstacle_heading_threshold));
-  nh->declare_parameter("viapoints_all_candidates", rclcpp::ParameterValue(hcp.viapoints_all_candidates));
-  nh->declare_parameter("visualize_hc_graph", rclcpp::ParameterValue(hcp.visualize_hc_graph));
-  nh->declare_parameter("visualize_with_time_as_z_axis_scale", rclcpp::ParameterValue(hcp.visualize_with_time_as_z_axis_scale));
-  nh->declare_parameter("delete_detours_backwards", rclcpp::ParameterValue(hcp.delete_detours_backwards));
-  nh->declare_parameter("detours_orientation_tolerance", rclcpp::ParameterValue(hcp.detours_orientation_tolerance));
-  nh->declare_parameter("length_start_orientation_vector", rclcpp::ParameterValue(hcp.length_start_orientation_vector));
-  nh->declare_parameter("max_ratio_detours_duration_best_duration", rclcpp::ParameterValue(hcp.max_ratio_detours_duration_best_duration));
+  nh->declare_parameter(name + "." + "enable_homotopy_class_planning", rclcpp::ParameterValue(hcp.enable_homotopy_class_planning));
+  nh->declare_parameter(name + "." + "enable_multithreading", rclcpp::ParameterValue(hcp.enable_multithreading));
+  nh->declare_parameter(name + "." + "simple_exploration", rclcpp::ParameterValue(hcp.simple_exploration));
+  nh->declare_parameter(name + "." + "max_number_classes", rclcpp::ParameterValue(hcp.max_number_classes));
+  nh->declare_parameter(name + "." + "selection_obst_cost_scale", rclcpp::ParameterValue(hcp.selection_obst_cost_scale));
+  nh->declare_parameter(name + "." + "selection_prefer_initial_plan", rclcpp::ParameterValue(hcp.selection_prefer_initial_plan));
+  nh->declare_parameter(name + "." + "selection_viapoint_cost_scale", rclcpp::ParameterValue(hcp.selection_viapoint_cost_scale));
+  nh->declare_parameter(name + "." + "selection_cost_hysteresis", rclcpp::ParameterValue(hcp.selection_cost_hysteresis));
+  nh->declare_parameter(name + "." + "selection_alternative_time_cost", rclcpp::ParameterValue(hcp.selection_alternative_time_cost));
+  nh->declare_parameter(name + "." + "switching_blocking_period", rclcpp::ParameterValue(hcp.switching_blocking_period));
+  nh->declare_parameter(name + "." + "roadmap_graph_samples", rclcpp::ParameterValue(hcp.roadmap_graph_no_samples));
+  nh->declare_parameter(name + "." + "roadmap_graph_area_width", rclcpp::ParameterValue(hcp.roadmap_graph_area_width));
+  nh->declare_parameter(name + "." + "roadmap_graph_area_length_scale", rclcpp::ParameterValue(hcp.roadmap_graph_area_length_scale));
+  nh->declare_parameter(name + "." + "h_signature_prescaler", rclcpp::ParameterValue(hcp.h_signature_prescaler));
+  nh->declare_parameter(name + "." + "h_signature_threshold", rclcpp::ParameterValue(hcp.h_signature_threshold));
+  nh->declare_parameter(name + "." + "obstacle_keypoint_offset", rclcpp::ParameterValue(hcp.obstacle_keypoint_offset));
+  nh->declare_parameter(name + "." + "obstacle_heading_threshold", rclcpp::ParameterValue(hcp.obstacle_heading_threshold));
+  nh->declare_parameter(name + "." + "viapoints_all_candidates", rclcpp::ParameterValue(hcp.viapoints_all_candidates));
+  nh->declare_parameter(name + "." + "visualize_hc_graph", rclcpp::ParameterValue(hcp.visualize_hc_graph));
+  nh->declare_parameter(name + "." + "visualize_with_time_as_z_axis_scale", rclcpp::ParameterValue(hcp.visualize_with_time_as_z_axis_scale));
+  nh->declare_parameter(name + "." + "delete_detours_backwards", rclcpp::ParameterValue(hcp.delete_detours_backwards));
+  nh->declare_parameter(name + "." + "detours_orientation_tolerance", rclcpp::ParameterValue(hcp.detours_orientation_tolerance));
+  nh->declare_parameter(name + "." + "length_start_orientation_vector", rclcpp::ParameterValue(hcp.length_start_orientation_vector));
+  nh->declare_parameter(name + "." + "max_ratio_detours_duration_best_duration", rclcpp::ParameterValue(hcp.max_ratio_detours_duration_best_duration));
 
   // Recovery
   
-  nh->declare_parameter("shrink_horizon_backup", rclcpp::ParameterValue(recovery.shrink_horizon_backup));
-  nh->declare_parameter("shrink_horizon_min_duration", rclcpp::ParameterValue(recovery.shrink_horizon_min_duration));
-  nh->declare_parameter("oscillation_recovery", rclcpp::ParameterValue(recovery.oscillation_recovery));
-  nh->declare_parameter("oscillation_v_eps", rclcpp::ParameterValue(recovery.oscillation_v_eps));
-  nh->declare_parameter("oscillation_omega_eps", rclcpp::ParameterValue(recovery.oscillation_omega_eps));
-  nh->declare_parameter("oscillation_recovery_min_duration", rclcpp::ParameterValue(recovery.oscillation_recovery_min_duration));
-  nh->declare_parameter("oscillation_filter_duration", rclcpp::ParameterValue(recovery.oscillation_filter_duration));
+  nh->declare_parameter(name + "." + "shrink_horizon_backup", rclcpp::ParameterValue(recovery.shrink_horizon_backup));
+  nh->declare_parameter(name + "." + "shrink_horizon_min_duration", rclcpp::ParameterValue(recovery.shrink_horizon_min_duration));
+  nh->declare_parameter(name + "." + "oscillation_recovery", rclcpp::ParameterValue(recovery.oscillation_recovery));
+  nh->declare_parameter(name + "." + "oscillation_v_eps", rclcpp::ParameterValue(recovery.oscillation_v_eps));
+  nh->declare_parameter(name + "." + "oscillation_omega_eps", rclcpp::ParameterValue(recovery.oscillation_omega_eps));
+  nh->declare_parameter(name + "." + "oscillation_recovery_min_duration", rclcpp::ParameterValue(recovery.oscillation_recovery_min_duration));
+  nh->declare_parameter(name + "." + "oscillation_filter_duration", rclcpp::ParameterValue(recovery.oscillation_filter_duration));
 }
 
-void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh)
+void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name)
 {
-  nh->get_parameter_or("odom_topic", odom_topic, odom_topic);
-  nh->get_parameter_or("map_frame", map_frame, map_frame);
+  nh->get_parameter_or(name + "." + "odom_topic", odom_topic, odom_topic);
+  nh->get_parameter_or(name + "." + "map_frame", map_frame, map_frame);
   
   // Trajectory
-  nh->get_parameter_or("teb_autosize", trajectory.teb_autosize, trajectory.teb_autosize);
-  nh->get_parameter_or("dt_ref", trajectory.dt_ref, trajectory.dt_ref);
-  nh->get_parameter_or("dt_hysteresis", trajectory.dt_hysteresis, trajectory.dt_hysteresis);
-  nh->get_parameter_or("min_samples", trajectory.min_samples, trajectory.min_samples);
-  nh->get_parameter_or("max_samples", trajectory.max_samples, trajectory.max_samples);
-  nh->get_parameter_or("global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation, trajectory.global_plan_overwrite_orientation);
-  nh->get_parameter_or("allow_init_with_backwards_motion", trajectory.allow_init_with_backwards_motion, trajectory.allow_init_with_backwards_motion);
-  nh->get_parameter_or("global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep, trajectory.global_plan_viapoint_sep);
-  nh->get_parameter_or("via_points_ordered", trajectory.via_points_ordered, trajectory.via_points_ordered);
-  nh->get_parameter_or("max_global_plan_lookahead_dist", trajectory.max_global_plan_lookahead_dist, trajectory.max_global_plan_lookahead_dist);
-  nh->get_parameter_or("global_plan_prune_distance", trajectory.global_plan_prune_distance, trajectory.global_plan_prune_distance);
-  nh->get_parameter_or("exact_arc_length", trajectory.exact_arc_length, trajectory.exact_arc_length);
-  nh->get_parameter_or("force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
-  nh->get_parameter_or("feasibility_check_no_poses", trajectory.feasibility_check_no_poses, trajectory.feasibility_check_no_poses);
-  nh->get_parameter_or("publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
-  nh->get_parameter_or("min_resolution_collision_check_angular", trajectory.min_resolution_collision_check_angular, trajectory.min_resolution_collision_check_angular);
+  nh->get_parameter_or(name + "." + "teb_autosize", trajectory.teb_autosize, trajectory.teb_autosize);
+  nh->get_parameter_or(name + "." + "dt_ref", trajectory.dt_ref, trajectory.dt_ref);
+  nh->get_parameter_or(name + "." + "dt_hysteresis", trajectory.dt_hysteresis, trajectory.dt_hysteresis);
+  nh->get_parameter_or(name + "." + "min_samples", trajectory.min_samples, trajectory.min_samples);
+  nh->get_parameter_or(name + "." + "max_samples", trajectory.max_samples, trajectory.max_samples);
+  nh->get_parameter_or(name + "." + "global_plan_overwrite_orientation", trajectory.global_plan_overwrite_orientation, trajectory.global_plan_overwrite_orientation);
+  nh->get_parameter_or(name + "." + "allow_init_with_backwards_motion", trajectory.allow_init_with_backwards_motion, trajectory.allow_init_with_backwards_motion);
+  nh->get_parameter_or(name + "." + "global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep, trajectory.global_plan_viapoint_sep);
+  nh->get_parameter_or(name + "." + "via_points_ordered", trajectory.via_points_ordered, trajectory.via_points_ordered);
+  nh->get_parameter_or(name + "." + "max_global_plan_lookahead_dist", trajectory.max_global_plan_lookahead_dist, trajectory.max_global_plan_lookahead_dist);
+  nh->get_parameter_or(name + "." + "global_plan_prune_distance", trajectory.global_plan_prune_distance, trajectory.global_plan_prune_distance);
+  nh->get_parameter_or(name + "." + "exact_arc_length", trajectory.exact_arc_length, trajectory.exact_arc_length);
+  nh->get_parameter_or(name + "." + "force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
+  nh->get_parameter_or(name + "." + "feasibility_check_no_poses", trajectory.feasibility_check_no_poses, trajectory.feasibility_check_no_poses);
+  nh->get_parameter_or(name + "." + "publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
+  nh->get_parameter_or(name + "." + "min_resolution_collision_check_angular", trajectory.min_resolution_collision_check_angular, trajectory.min_resolution_collision_check_angular);
   
   // Robot
-  nh->get_parameter_or("max_vel_x", robot.max_vel_x, robot.max_vel_x);
-  nh->get_parameter_or("max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
-  nh->get_parameter_or("max_vel_y", robot.max_vel_y, robot.max_vel_y);
-  nh->get_parameter_or("max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
-  nh->get_parameter_or("acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
-  nh->get_parameter_or("acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
-  nh->get_parameter_or("acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
-  nh->get_parameter_or("min_turning_radius", robot.min_turning_radius, robot.min_turning_radius);
-  nh->get_parameter_or("wheelbase", robot.wheelbase, robot.wheelbase);
-  nh->get_parameter_or("cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
-  nh->get_parameter_or("is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
+  nh->get_parameter_or(name + "." + "max_vel_x", robot.max_vel_x, robot.max_vel_x);
+  nh->get_parameter_or(name + "." + "max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
+  nh->get_parameter_or(name + "." + "max_vel_y", robot.max_vel_y, robot.max_vel_y);
+  nh->get_parameter_or(name + "." + "max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
+  nh->get_parameter_or(name + "." + "acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
+  nh->get_parameter_or(name + "." + "acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
+  nh->get_parameter_or(name + "." + "acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
+  nh->get_parameter_or(name + "." + "min_turning_radius", robot.min_turning_radius, robot.min_turning_radius);
+  nh->get_parameter_or(name + "." + "wheelbase", robot.wheelbase, robot.wheelbase);
+  nh->get_parameter_or(name + "." + "cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
+  nh->get_parameter_or(name + "." + "is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
   
   // GoalTolerance
-  nh->get_parameter_or("xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);
-  nh->get_parameter_or("yaw_goal_tolerance", goal_tolerance.yaw_goal_tolerance, goal_tolerance.yaw_goal_tolerance);
-  nh->get_parameter_or("free_goal_vel", goal_tolerance.free_goal_vel, goal_tolerance.free_goal_vel);
-  nh->get_parameter_or("complete_global_plan", goal_tolerance.complete_global_plan, goal_tolerance.complete_global_plan);
+  nh->get_parameter_or(name + "." + "xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);
+  nh->get_parameter_or(name + "." + "yaw_goal_tolerance", goal_tolerance.yaw_goal_tolerance, goal_tolerance.yaw_goal_tolerance);
+  nh->get_parameter_or(name + "." + "free_goal_vel", goal_tolerance.free_goal_vel, goal_tolerance.free_goal_vel);
+  nh->get_parameter_or(name + "." + "complete_global_plan", goal_tolerance.complete_global_plan, goal_tolerance.complete_global_plan);
 
   // Obstacles
-  nh->get_parameter_or("min_obstacle_dist", obstacles.min_obstacle_dist, obstacles.min_obstacle_dist);
-  nh->get_parameter_or("inflation_dist", obstacles.inflation_dist, obstacles.inflation_dist);
-  nh->get_parameter_or("dynamic_obstacle_inflation_dist", obstacles.dynamic_obstacle_inflation_dist, obstacles.dynamic_obstacle_inflation_dist);
-  nh->get_parameter_or("include_dynamic_obstacles", obstacles.include_dynamic_obstacles, obstacles.include_dynamic_obstacles);
-  nh->get_parameter_or("include_costmap_obstacles", obstacles.include_costmap_obstacles, obstacles.include_costmap_obstacles);
-  nh->get_parameter_or("costmap_obstacles_behind_robot_dist", obstacles.costmap_obstacles_behind_robot_dist, obstacles.costmap_obstacles_behind_robot_dist);
-  nh->get_parameter_or("obstacle_poses_affected", obstacles.obstacle_poses_affected, obstacles.obstacle_poses_affected);
-  nh->get_parameter_or("legacy_obstacle_association", obstacles.legacy_obstacle_association, obstacles.legacy_obstacle_association);
-  nh->get_parameter_or("obstacle_association_force_inclusion_factor", obstacles.obstacle_association_force_inclusion_factor, obstacles.obstacle_association_force_inclusion_factor);
-  nh->get_parameter_or("obstacle_association_cutoff_factor", obstacles.obstacle_association_cutoff_factor, obstacles.obstacle_association_cutoff_factor);
-  nh->get_parameter_or("costmap_converter_plugin", obstacles.costmap_converter_plugin, obstacles.costmap_converter_plugin);
-  nh->get_parameter_or("costmap_converter_spin_thread", obstacles.costmap_converter_spin_thread, obstacles.costmap_converter_spin_thread);
+  nh->get_parameter_or(name + "." + "min_obstacle_dist", obstacles.min_obstacle_dist, obstacles.min_obstacle_dist);
+  nh->get_parameter_or(name + "." + "inflation_dist", obstacles.inflation_dist, obstacles.inflation_dist);
+  nh->get_parameter_or(name + "." + "dynamic_obstacle_inflation_dist", obstacles.dynamic_obstacle_inflation_dist, obstacles.dynamic_obstacle_inflation_dist);
+  nh->get_parameter_or(name + "." + "include_dynamic_obstacles", obstacles.include_dynamic_obstacles, obstacles.include_dynamic_obstacles);
+  nh->get_parameter_or(name + "." + "include_costmap_obstacles", obstacles.include_costmap_obstacles, obstacles.include_costmap_obstacles);
+  nh->get_parameter_or(name + "." + "costmap_obstacles_behind_robot_dist", obstacles.costmap_obstacles_behind_robot_dist, obstacles.costmap_obstacles_behind_robot_dist);
+  nh->get_parameter_or(name + "." + "obstacle_poses_affected", obstacles.obstacle_poses_affected, obstacles.obstacle_poses_affected);
+  nh->get_parameter_or(name + "." + "legacy_obstacle_association", obstacles.legacy_obstacle_association, obstacles.legacy_obstacle_association);
+  nh->get_parameter_or(name + "." + "obstacle_association_force_inclusion_factor", obstacles.obstacle_association_force_inclusion_factor, obstacles.obstacle_association_force_inclusion_factor);
+  nh->get_parameter_or(name + "." + "obstacle_association_cutoff_factor", obstacles.obstacle_association_cutoff_factor, obstacles.obstacle_association_cutoff_factor);
+  nh->get_parameter_or(name + "." + "costmap_converter_plugin", obstacles.costmap_converter_plugin, obstacles.costmap_converter_plugin);
+  nh->get_parameter_or(name + "." + "costmap_converter_spin_thread", obstacles.costmap_converter_spin_thread, obstacles.costmap_converter_spin_thread);
   
   // Optimization
-  nh->get_parameter_or("no_inner_iterations", optim.no_inner_iterations, optim.no_inner_iterations);
-  nh->get_parameter_or("no_outer_iterations", optim.no_outer_iterations, optim.no_outer_iterations);
-  nh->get_parameter_or("optimization_activate", optim.optimization_activate, optim.optimization_activate);
-  nh->get_parameter_or("optimization_verbose", optim.optimization_verbose, optim.optimization_verbose);
-  nh->get_parameter_or("penalty_epsilon", optim.penalty_epsilon, optim.penalty_epsilon);
-  nh->get_parameter_or("weight_max_vel_x", optim.weight_max_vel_x, optim.weight_max_vel_x);
-  nh->get_parameter_or("weight_max_vel_y", optim.weight_max_vel_y, optim.weight_max_vel_y);
-  nh->get_parameter_or("weight_max_vel_theta", optim.weight_max_vel_theta, optim.weight_max_vel_theta);
-  nh->get_parameter_or("weight_acc_lim_x", optim.weight_acc_lim_x, optim.weight_acc_lim_x);
-  nh->get_parameter_or("weight_acc_lim_y", optim.weight_acc_lim_y, optim.weight_acc_lim_y);
-  nh->get_parameter_or("weight_acc_lim_theta", optim.weight_acc_lim_theta, optim.weight_acc_lim_theta);
-  nh->get_parameter_or("weight_kinematics_nh", optim.weight_kinematics_nh, optim.weight_kinematics_nh);
-  nh->get_parameter_or("weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
-  nh->get_parameter_or("weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
-  nh->get_parameter_or("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
-  nh->get_parameter_or("weight_shortest_path", optim.weight_shortest_path, optim.weight_shortest_path);
-  nh->get_parameter_or("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
-  nh->get_parameter_or("weight_inflation", optim.weight_inflation, optim.weight_inflation);
-  nh->get_parameter_or("weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);
-  nh->get_parameter_or("weight_dynamic_obstacle_inflation", optim.weight_dynamic_obstacle_inflation, optim.weight_dynamic_obstacle_inflation);
-  nh->get_parameter_or("weight_viapoint", optim.weight_viapoint, optim.weight_viapoint);
-  nh->get_parameter_or("weight_prefer_rotdir", optim.weight_prefer_rotdir, optim.weight_prefer_rotdir);
-  nh->get_parameter_or("weight_adapt_factor", optim.weight_adapt_factor, optim.weight_adapt_factor);
-  nh->get_parameter_or("obstacle_cost_exponent", optim.obstacle_cost_exponent, optim.obstacle_cost_exponent);
+  nh->get_parameter_or(name + "." + "no_inner_iterations", optim.no_inner_iterations, optim.no_inner_iterations);
+  nh->get_parameter_or(name + "." + "no_outer_iterations", optim.no_outer_iterations, optim.no_outer_iterations);
+  nh->get_parameter_or(name + "." + "optimization_activate", optim.optimization_activate, optim.optimization_activate);
+  nh->get_parameter_or(name + "." + "optimization_verbose", optim.optimization_verbose, optim.optimization_verbose);
+  nh->get_parameter_or(name + "." + "penalty_epsilon", optim.penalty_epsilon, optim.penalty_epsilon);
+  nh->get_parameter_or(name + "." + "weight_max_vel_x", optim.weight_max_vel_x, optim.weight_max_vel_x);
+  nh->get_parameter_or(name + "." + "weight_max_vel_y", optim.weight_max_vel_y, optim.weight_max_vel_y);
+  nh->get_parameter_or(name + "." + "weight_max_vel_theta", optim.weight_max_vel_theta, optim.weight_max_vel_theta);
+  nh->get_parameter_or(name + "." + "weight_acc_lim_x", optim.weight_acc_lim_x, optim.weight_acc_lim_x);
+  nh->get_parameter_or(name + "." + "weight_acc_lim_y", optim.weight_acc_lim_y, optim.weight_acc_lim_y);
+  nh->get_parameter_or(name + "." + "weight_acc_lim_theta", optim.weight_acc_lim_theta, optim.weight_acc_lim_theta);
+  nh->get_parameter_or(name + "." + "weight_kinematics_nh", optim.weight_kinematics_nh, optim.weight_kinematics_nh);
+  nh->get_parameter_or(name + "." + "weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
+  nh->get_parameter_or(name + "." + "weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
+  nh->get_parameter_or(name + "." + "weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
+  nh->get_parameter_or(name + "." + "weight_shortest_path", optim.weight_shortest_path, optim.weight_shortest_path);
+  nh->get_parameter_or(name + "." + "weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
+  nh->get_parameter_or(name + "." + "weight_inflation", optim.weight_inflation, optim.weight_inflation);
+  nh->get_parameter_or(name + "." + "weight_dynamic_obstacle", optim.weight_dynamic_obstacle, optim.weight_dynamic_obstacle);
+  nh->get_parameter_or(name + "." + "weight_dynamic_obstacle_inflation", optim.weight_dynamic_obstacle_inflation, optim.weight_dynamic_obstacle_inflation);
+  nh->get_parameter_or(name + "." + "weight_viapoint", optim.weight_viapoint, optim.weight_viapoint);
+  nh->get_parameter_or(name + "." + "weight_prefer_rotdir", optim.weight_prefer_rotdir, optim.weight_prefer_rotdir);
+  nh->get_parameter_or(name + "." + "weight_adapt_factor", optim.weight_adapt_factor, optim.weight_adapt_factor);
+  nh->get_parameter_or(name + "." + "obstacle_cost_exponent", optim.obstacle_cost_exponent, optim.obstacle_cost_exponent);
   
   // Homotopy Class Planner
-  nh->get_parameter_or("enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning);
-  nh->get_parameter_or("enable_multithreading", hcp.enable_multithreading, hcp.enable_multithreading);
-  nh->get_parameter_or("simple_exploration", hcp.simple_exploration, hcp.simple_exploration);
-  nh->get_parameter_or("max_number_classes", hcp.max_number_classes, hcp.max_number_classes);
-  nh->get_parameter_or("selection_obst_cost_scale", hcp.selection_obst_cost_scale, hcp.selection_obst_cost_scale);
-  nh->get_parameter_or("selection_prefer_initial_plan", hcp.selection_prefer_initial_plan, hcp.selection_prefer_initial_plan);
-  nh->get_parameter_or("selection_viapoint_cost_scale", hcp.selection_viapoint_cost_scale, hcp.selection_viapoint_cost_scale);
-  nh->get_parameter_or("selection_cost_hysteresis", hcp.selection_cost_hysteresis, hcp.selection_cost_hysteresis);
-  nh->get_parameter_or("selection_alternative_time_cost", hcp.selection_alternative_time_cost, hcp.selection_alternative_time_cost);
-  nh->get_parameter_or("switching_blocking_period", hcp.switching_blocking_period, hcp.switching_blocking_period);
-  nh->get_parameter_or("roadmap_graph_samples", hcp.roadmap_graph_no_samples, hcp.roadmap_graph_no_samples);
-  nh->get_parameter_or("roadmap_graph_area_width", hcp.roadmap_graph_area_width, hcp.roadmap_graph_area_width);
-  nh->get_parameter_or("roadmap_graph_area_length_scale", hcp.roadmap_graph_area_length_scale, hcp.roadmap_graph_area_length_scale);
-  nh->get_parameter_or("h_signature_prescaler", hcp.h_signature_prescaler, hcp.h_signature_prescaler);
-  nh->get_parameter_or("h_signature_threshold", hcp.h_signature_threshold, hcp.h_signature_threshold);
-  nh->get_parameter_or("obstacle_keypoint_offset", hcp.obstacle_keypoint_offset, hcp.obstacle_keypoint_offset);
-  nh->get_parameter_or("obstacle_heading_threshold", hcp.obstacle_heading_threshold, hcp.obstacle_heading_threshold);
-  nh->get_parameter_or("viapoints_all_candidates", hcp.viapoints_all_candidates, hcp.viapoints_all_candidates);
-  nh->get_parameter_or("visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph);
-  nh->get_parameter_or("visualize_with_time_as_z_axis_scale", hcp.visualize_with_time_as_z_axis_scale, hcp.visualize_with_time_as_z_axis_scale);
-  nh->get_parameter_or("delete_detours_backwards", hcp.delete_detours_backwards, hcp.delete_detours_backwards);
-  nh->get_parameter_or("detours_orientation_tolerance", hcp.detours_orientation_tolerance, hcp.detours_orientation_tolerance);
-  nh->get_parameter_or("length_start_orientation_vector", hcp.length_start_orientation_vector, hcp.length_start_orientation_vector);
-  nh->get_parameter_or("max_ratio_detours_duration_best_duration", hcp.max_ratio_detours_duration_best_duration, hcp.max_ratio_detours_duration_best_duration);
+  nh->get_parameter_or(name + "." + "enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning);
+  nh->get_parameter_or(name + "." + "enable_multithreading", hcp.enable_multithreading, hcp.enable_multithreading);
+  nh->get_parameter_or(name + "." + "simple_exploration", hcp.simple_exploration, hcp.simple_exploration);
+  nh->get_parameter_or(name + "." + "max_number_classes", hcp.max_number_classes, hcp.max_number_classes);
+  nh->get_parameter_or(name + "." + "selection_obst_cost_scale", hcp.selection_obst_cost_scale, hcp.selection_obst_cost_scale);
+  nh->get_parameter_or(name + "." + "selection_prefer_initial_plan", hcp.selection_prefer_initial_plan, hcp.selection_prefer_initial_plan);
+  nh->get_parameter_or(name + "." + "selection_viapoint_cost_scale", hcp.selection_viapoint_cost_scale, hcp.selection_viapoint_cost_scale);
+  nh->get_parameter_or(name + "." + "selection_cost_hysteresis", hcp.selection_cost_hysteresis, hcp.selection_cost_hysteresis);
+  nh->get_parameter_or(name + "." + "selection_alternative_time_cost", hcp.selection_alternative_time_cost, hcp.selection_alternative_time_cost);
+  nh->get_parameter_or(name + "." + "switching_blocking_period", hcp.switching_blocking_period, hcp.switching_blocking_period);
+  nh->get_parameter_or(name + "." + "roadmap_graph_samples", hcp.roadmap_graph_no_samples, hcp.roadmap_graph_no_samples);
+  nh->get_parameter_or(name + "." + "roadmap_graph_area_width", hcp.roadmap_graph_area_width, hcp.roadmap_graph_area_width);
+  nh->get_parameter_or(name + "." + "roadmap_graph_area_length_scale", hcp.roadmap_graph_area_length_scale, hcp.roadmap_graph_area_length_scale);
+  nh->get_parameter_or(name + "." + "h_signature_prescaler", hcp.h_signature_prescaler, hcp.h_signature_prescaler);
+  nh->get_parameter_or(name + "." + "h_signature_threshold", hcp.h_signature_threshold, hcp.h_signature_threshold);
+  nh->get_parameter_or(name + "." + "obstacle_keypoint_offset", hcp.obstacle_keypoint_offset, hcp.obstacle_keypoint_offset);
+  nh->get_parameter_or(name + "." + "obstacle_heading_threshold", hcp.obstacle_heading_threshold, hcp.obstacle_heading_threshold);
+  nh->get_parameter_or(name + "." + "viapoints_all_candidates", hcp.viapoints_all_candidates, hcp.viapoints_all_candidates);
+  nh->get_parameter_or(name + "." + "visualize_hc_graph", hcp.visualize_hc_graph, hcp.visualize_hc_graph);
+  nh->get_parameter_or(name + "." + "visualize_with_time_as_z_axis_scale", hcp.visualize_with_time_as_z_axis_scale, hcp.visualize_with_time_as_z_axis_scale);
+  nh->get_parameter_or(name + "." + "delete_detours_backwards", hcp.delete_detours_backwards, hcp.delete_detours_backwards);
+  nh->get_parameter_or(name + "." + "detours_orientation_tolerance", hcp.detours_orientation_tolerance, hcp.detours_orientation_tolerance);
+  nh->get_parameter_or(name + "." + "length_start_orientation_vector", hcp.length_start_orientation_vector, hcp.length_start_orientation_vector);
+  nh->get_parameter_or(name + "." + "max_ratio_detours_duration_best_duration", hcp.max_ratio_detours_duration_best_duration, hcp.max_ratio_detours_duration_best_duration);
 
   // Recovery
   
-  nh->get_parameter_or("shrink_horizon_backup", recovery.shrink_horizon_backup, recovery.shrink_horizon_backup);
-  nh->get_parameter_or("shrink_horizon_min_duration", recovery.shrink_horizon_min_duration, recovery.shrink_horizon_min_duration);
-  nh->get_parameter_or("oscillation_recovery", recovery.oscillation_recovery, recovery.oscillation_recovery);
-  nh->get_parameter_or("oscillation_v_eps", recovery.oscillation_v_eps, recovery.oscillation_v_eps);
-  nh->get_parameter_or("oscillation_omega_eps", recovery.oscillation_omega_eps, recovery.oscillation_omega_eps);
-  nh->get_parameter_or("oscillation_recovery_min_duration", recovery.oscillation_recovery_min_duration, recovery.oscillation_recovery_min_duration);
-  nh->get_parameter_or("oscillation_filter_duration", recovery.oscillation_filter_duration, recovery.oscillation_filter_duration);
+  nh->get_parameter_or(name + "." + "shrink_horizon_backup", recovery.shrink_horizon_backup, recovery.shrink_horizon_backup);
+  nh->get_parameter_or(name + "." + "shrink_horizon_min_duration", recovery.shrink_horizon_min_duration, recovery.shrink_horizon_min_duration);
+  nh->get_parameter_or(name + "." + "oscillation_recovery", recovery.oscillation_recovery, recovery.oscillation_recovery);
+  nh->get_parameter_or(name + "." + "oscillation_v_eps", recovery.oscillation_v_eps, recovery.oscillation_v_eps);
+  nh->get_parameter_or(name + "." + "oscillation_omega_eps", recovery.oscillation_omega_eps, recovery.oscillation_omega_eps);
+  nh->get_parameter_or(name + "." + "oscillation_recovery_min_duration", recovery.oscillation_recovery_min_duration, recovery.oscillation_recovery_min_duration);
+  nh->get_parameter_or(name + "." + "oscillation_filter_duration", recovery.oscillation_filter_duration, recovery.oscillation_filter_duration);
 
   checkParameters(nh);
-  checkDeprecated(nh);
+  checkDeprecated(nh, name);
 }
 
 // TODO : Dynamic reconfigure is not supported in ROS2 until now
@@ -438,26 +438,26 @@ void TebConfig::checkParameters(const nav2_util::LifecycleNode::SharedPtr nh) co
       RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter weight_optimaltime shoud be > 0 (even if weight_shortest_path is in use)");
 }    
 
-void TebConfig::checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh) const
+void TebConfig::checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name) const
 {
   rclcpp::Parameter dummy;
 
-  if (nh->get_parameter("line_obstacle_poses_affected", dummy) || nh->get_parameter("polygon_obstacle_poses_affected", dummy))
+  if (nh->get_parameter(name + "." + "line_obstacle_poses_affected", dummy) || nh->get_parameter(name + "." + "polygon_obstacle_poses_affected", dummy))
     RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'line_obstacle_poses_affected' and 'polygon_obstacle_poses_affected' are deprecated. They share now the common parameter 'obstacle_poses_affected'.");
   
-  if (nh->get_parameter("weight_point_obstacle", dummy) || nh->get_parameter("weight_line_obstacle", dummy) || nh->get_parameter("weight_poly_obstacle", dummy))
+  if (nh->get_parameter(name + "." + "weight_point_obstacle", dummy) || nh->get_parameter(name + "." + "weight_line_obstacle", dummy) || nh->get_parameter(name + "." + "weight_poly_obstacle", dummy))
     RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'weight_point_obstacle', 'weight_line_obstacle' and 'weight_poly_obstacle' are deprecated. They are replaced by the single param 'weight_obstacle'.");
   
-  if (nh->get_parameter("costmap_obstacles_front_only", dummy))
+  if (nh->get_parameter(name + "." + "costmap_obstacles_front_only", dummy))
     RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'costmap_obstacles_front_only' is deprecated. It is replaced by 'costmap_obstacles_behind_robot_dist' to define the actual area taken into account.");
   
-  if (nh->get_parameter("costmap_emergency_stop_dist", dummy))
+  if (nh->get_parameter(name + "." + "costmap_emergency_stop_dist", dummy))
     RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'costmap_emergency_stop_dist' is deprecated. You can safely remove it from your parameter config.");
   
-  if (nh->get_parameter("alternative_time_cost", dummy))
+  if (nh->get_parameter(name + "." + "alternative_time_cost", dummy))
     RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'alternative_time_cost' is deprecated. It has been replaced by 'selection_alternative_time_cost'.");
 
-  if (nh->get_parameter("global_plan_via_point_sep", dummy))
+  if (nh->get_parameter(name + "." + "global_plan_via_point_sep", dummy))
     RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'global_plan_via_point_sep' is deprecated. It has been replaced by 'global_plan_viapoint_sep' due to consistency reasons.");
 }
 
