@@ -205,6 +205,7 @@ void TebLocalPlannerROS::initialize()
 
 void TebLocalPlannerROS::configure(
     const rclcpp_lifecycle::LifecycleNode::SharedPtr & node,
+    std::string name,
     const std::shared_ptr<tf2_ros::Buffer> & tf,
     const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) {
   nh_ = node;
@@ -1212,5 +1213,5 @@ void TebLocalPlannerROS::cleanup() {
 
 } // end namespace teb_local_planner
 
-// register this planner as a nav2_core::LocalPlanner plugin
-PLUGINLIB_EXPORT_CLASS(teb_local_planner::TebLocalPlannerROS, nav2_core::LocalPlanner)
+// register this planner as a nav2_core::Controller plugin
+PLUGINLIB_EXPORT_CLASS(teb_local_planner::TebLocalPlannerROS, nav2_core::Controller)
