@@ -20,8 +20,8 @@
   
   <buildtool_depend>ament_cmake</buildtool_depend>
   
-  <depend>costmap_converter</depend>
-  <depend>costmap_converter_msgs</depend>
+  <!--<depend>costmap_converter</depend>
+  <depend>costmap_converter_msgs</depend>-->
 
   <depend>geometry_msgs</depend>
   <depend>libg2o</depend>

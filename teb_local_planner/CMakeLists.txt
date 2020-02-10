@@ -15,7 +15,7 @@ endif()
 
 ## Find catkin macros and libraries
 find_package(ament_cmake REQUIRED)
-find_package(costmap_converter REQUIRED)
+#find_package(costmap_converter REQUIRED)
 find_package(dwb_critics REQUIRED)
 find_package(nav_2d_utils REQUIRED)
 find_package(nav2_core REQUIRED)
@@ -84,7 +84,7 @@ add_library(teb_local_planner SHARED
 )
 
 set(ament_dependencies
-    costmap_converter
+    #costmap_converter
     dwb_critics
     nav_2d_utils
     nav2_core

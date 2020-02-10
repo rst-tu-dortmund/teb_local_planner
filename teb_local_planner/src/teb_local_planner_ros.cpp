@@ -67,7 +67,6 @@ namespace teb_local_planner
 
 TebLocalPlannerROS::TebLocalPlannerROS() 
     : nh_(nullptr), costmap_ros_(nullptr), tf_(nullptr), cfg_(new TebConfig()), costmap_model_(nullptr), intra_proc_node_(nullptr),
-                                           costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
                                            custom_via_points_active_(false), goal_reached_(false), no_infeasible_plans_(0),
                                            last_preferred_rotdir_(RotType::none), initialized_(false)
 {
@@ -132,7 +131,7 @@ void TebLocalPlannerROS::initialize()
     //Initialize a costmap to polygon converter
     if (!cfg_->obstacles.costmap_converter_plugin.empty())
     {
-      try
+      /*try
       {
         costmap_converter_ = costmap_converter_loader_.createSharedInstance(cfg_->obstacles.costmap_converter_plugin);
         std::string converter_name = costmap_converter_loader_.getName(cfg_->obstacles.costmap_converter_plugin);
@@ -152,7 +151,7 @@ void TebLocalPlannerROS::initialize()
         RCLCPP_INFO(nh_->get_logger(),
                     "The specified costmap converter plugin cannot be loaded. All occupied costmap cells are treaten as point obstacles. Error message: %s", ex.what());
         costmap_converter_.reset();
-      }
+      }*/
     }
     else {
       RCLCPP_INFO(nh_->get_logger(), "No costmap conversion plugin specified. All occupied costmap cells are treaten as point obstacles.");
@@ -355,10 +354,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
   obstacles_.clear();
   
   // Update obstacle container with costmap information or polygons provided by a costmap_converter plugin
-  if (costmap_converter_)
-    updateObstacleContainerWithCostmapConverter();
-  else
-    updateObstacleContainerWithCostmap();
+  updateObstacleContainerWithCostmap();
   
   // also consider custom obstacles (must be called after other updates, since the container is not cleared)
   updateObstacleContainerWithCustomObstacles();
@@ -510,9 +506,10 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
 
 void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
 {
-  if (!costmap_converter_)
-    return;
-    
+  //if (!costmap_converter_)
+  //  return;
+  return;  // no costmap
+    /*
   //Get obstacles from costmap converter
   costmap_converter::ObstacleArrayConstPtr obstacles = costmap_converter_->getObstacles();
   if (!obstacles)
@@ -550,7 +547,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
     // Set velocity, if obstacle is moving
     if(!obstacles_.empty())
       obstacles_.back()->setCentroidVelocity(obstacles->obstacles[i].velocities, obstacles->obstacles[i].orientation);
-  }
+  }*/
 }
 
 
@@ -1216,7 +1213,7 @@ void TebLocalPlannerROS::deactivate() {
 }
 void TebLocalPlannerROS::cleanup() {
   visualization_.reset();
-  costmap_converter_->stopWorker();
+  //costmap_converter_->stopWorker();
   
   return;
 }
