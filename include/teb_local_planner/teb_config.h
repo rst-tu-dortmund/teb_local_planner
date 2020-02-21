@@ -294,7 +294,7 @@ public:
     optim.no_outer_iterations = 4;
     optim.optimization_activate = true;
     optim.optimization_verbose = false;
-    optim.penalty_epsilon = 0.1;
+    optim.penalty_epsilon = 0.05;
     optim.weight_max_vel_x = 2; //1
     optim.weight_max_vel_y = 2;
     optim.weight_max_vel_theta = 1;
