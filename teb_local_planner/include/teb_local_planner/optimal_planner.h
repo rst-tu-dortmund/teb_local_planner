@@ -217,9 +217,10 @@ public:
    * @param[out] vx translational velocity [m/s]
    * @param[out] vy strafing velocity which can be nonzero for holonomic robots[m/s] 
    * @param[out] omega rotational velocity [rad/s]
+   * @param[in] look_ahead_poses index of the final pose used to compute the velocity command.
    * @return \c true if command is valid, \c false otherwise
    */
-  virtual bool getVelocityCommand(double& vx, double& vy, double& omega) const;
+  virtual bool getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const;
   
   
   /**
@@ -514,22 +515,6 @@ public:
    */
   virtual bool isTrajectoryFeasible(dwb_critics::ObstacleFootprintCritic* costmap_model, const std::vector<geometry_msgs::msg::Point>& footprint_spec, double inscribed_radius = 0.0,
           double circumscribed_radius=0.0, int look_ahead_idx=-1);
-  
-  
-  /**
-   * @brief Check if the planner suggests a shorter horizon (e.g. to resolve problems)
-   * 
-   * This method is intendend to be called after determining that a trajectory provided by the planner is infeasible.
-   * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
-   * Implemented cases for returning \c true (remaining length must be larger than 2m to trigger any case):
-   * - Goal orientation - start orientation > 90°
-   * - Goal heading - start orientation > 90°
-   * - The planned trajectory is at least 30° shorter than the initial plan (accumulated euclidean distances)
-   * - Distance between consecutive poses > 0.9*min_obstacle_dist
-   * @param initial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
-   * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
-   */
-  virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::msg::PoseStamped>& initial_plan) const;
   
   //@}
   

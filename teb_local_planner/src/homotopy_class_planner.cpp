@@ -129,7 +129,7 @@ bool HomotopyClassPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const
   return true;
 }
 
-bool HomotopyClassPlanner::getVelocityCommand(double& vx, double& vy, double& omega) const
+bool HomotopyClassPlanner::getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const
 {
   TebOptimalPlannerConstPtr best_teb = bestTeb();
   if (!best_teb)
@@ -140,7 +140,7 @@ bool HomotopyClassPlanner::getVelocityCommand(double& vx, double& vy, double& om
     return false;
   }
 
-  return best_teb->getVelocityCommand(vx, vy, omega);
+  return best_teb->getVelocityCommand(vx, vy, omega, look_ahead_poses);
 }
 
 
@@ -385,7 +385,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const std::vector<ge
     return TebOptimalPlannerPtr();
   TebOptimalPlannerPtr candidate = TebOptimalPlannerPtr( new TebOptimalPlanner(node_, *cfg_, obstacles_, robot_model_, visualization_));
 
-  candidate->teb().initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x,
+  candidate->teb().initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x, cfg_->robot.max_vel_theta,
     cfg_->trajectory.global_plan_overwrite_orientation, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
 
   if (start_velocity)
@@ -409,7 +409,9 @@ void HomotopyClassPlanner::updateAllTEBs(const PoseSE2* start, const PoseSE2* go
 {
   // If new goal is too far away, clear all existing trajectories to let them reinitialize later.
   // Since all Tebs are sharing the same fixed goal pose, just take the first candidate:
-  if (!tebs_.empty() && (goal->position() - tebs_.front()->teb().BackPose().position()).norm() >= cfg_->trajectory.force_reinit_new_goal_dist)
+  if (!tebs_.empty()
+      && ((goal->position() - tebs_.front()->teb().BackPose().position()).norm() >= cfg_->trajectory.force_reinit_new_goal_dist
+        || fabs(g2o::normalize_theta(goal->theta() - tebs_.front()->teb().BackPose().theta())) >= cfg_->trajectory.force_reinit_new_goal_angular))
   {
       RCLCPP_DEBUG(rclcpp::get_logger("teb_local_planner"), "New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
       tebs_.clear();
@@ -689,15 +691,6 @@ void HomotopyClassPlanner::setPreferredTurningDir(RotType dir)
   {
     (*it_teb)->setPreferredTurningDir(dir);
   }
-}
-
-bool HomotopyClassPlanner::isHorizonReductionAppropriate(const std::vector<geometry_msgs::msg::PoseStamped>& initial_plan) const
-{
-  TebOptimalPlannerPtr best = bestTeb();
-  if (!best)
-    return false;
-
-  return best->isHorizonReductionAppropriate(initial_plan);
 }
 
 void HomotopyClassPlanner::computeCurrentCost(std::vector<double>& cost, double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)

@@ -41,9 +41,31 @@
 namespace teb_local_planner
 {
 
+namespace
+{
+  /**
+   * estimate the time to move from start to end.
+   * Assumes constant velocity for the motion.
+   */
+  double estimateDeltaT(const PoseSE2& start, const PoseSE2& end,
+                        double max_vel_x, double max_vel_theta)
+  {
+    double dt_constant_motion = 0.1;
+    if (max_vel_x > 0) {
+      double trans_dist = (end.position() - start.position()).norm();
+      dt_constant_motion = trans_dist / max_vel_x;
+    }
+    if (max_vel_theta > 0) {
+      double rot_dist = std::abs(g2o::normalize_theta(end.theta() - start.theta()));
+      dt_constant_motion = std::max(dt_constant_motion, rot_dist / max_vel_theta);
+    }
+    return dt_constant_motion;
+  }
+} // namespace
+
 
 TimedElasticBand::TimedElasticBand()
-{		
+{
 }
 
 TimedElasticBand::~TimedElasticBand()
@@ -76,6 +98,7 @@ void TimedElasticBand::addPose(const Eigen::Ref<const Eigen::Vector2d>& position
 
 void TimedElasticBand::addTimeDiff(double dt, bool fixed)
 {
+  assert(dt > 0.0 && "Adding a timediff requires a positive dt");
   VertexTimeDiff* timediff_vertex = new VertexTimeDiff(dt, fixed);
   timediff_vec_.push_back( timediff_vertex );
   return;
@@ -97,7 +120,7 @@ void TimedElasticBand::addPoseAndTimeDiff(double x, double y, double angle, doub
 }
 
 
- 
+
 void TimedElasticBand::addPoseAndTimeDiff(const PoseSE2& pose, double dt)
 {
   if (sizePoses() != sizeTimeDiffs())
@@ -184,7 +207,7 @@ void TimedElasticBand::clearTimedElasticBand()
   for (PoseSequence::iterator pose_it = pose_vec_.begin(); pose_it != pose_vec_.end(); ++pose_it)
     delete *pose_it;
   pose_vec_.clear();
-  
+
   for (TimeDiffSequence::iterator dt_it = timediff_vec_.begin(); dt_it != timediff_vec_.end(); ++dt_it)
     delete *dt_it;
   timediff_vec_.clear();
@@ -194,7 +217,7 @@ void TimedElasticBand::clearTimedElasticBand()
 void TimedElasticBand::setPoseVertexFixed(int index, bool status)
 {
   assert(index<sizePoses());
-  pose_vec_.at(index)->setFixed(status);   
+  pose_vec_.at(index)->setFixed(status);
 }
 
 void TimedElasticBand::setTimeDiffVertexFixed(int index, bool status)
@@ -205,9 +228,9 @@ void TimedElasticBand::setTimeDiffVertexFixed(int index, bool status)
 
 
 void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples, bool fast_mode)
-{  
+{
+  assert(sizeTimeDiffs() == 0 || sizeTimeDiffs() + 1 == sizePoses());
   /// iterate through all TEB states and add/remove states!
-
   bool modified = true;
 
   for (int rep = 0; rep < 100 && modified; ++rep) // actually it should be while(), but we want to make sure to not get stuck in some oscillation, hence max 100 repitions.
@@ -237,6 +260,12 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
           TimeDiff(i+1) = TimeDiff(i+1) + TimeDiff(i);
           deleteTimeDiff(i);
           deletePose(i+1);
+        }
+        else
+        { // last motion should be adjusted, shift time to the interval before
+          TimeDiff(i-1) += TimeDiff(i);
+          deleteTimeDiff(i);
+          deletePose(i);
         }
 
         modified = true;
@@ -286,12 +315,12 @@ double TimedElasticBand::getAccumulatedDistance() const
 bool TimedElasticBand::initTrajectoryToGoal(const PoseSE2& start, const PoseSE2& goal, double diststep, double max_vel_x, int min_samples, bool guess_backwards_motion)
 {
   if (!isInit())
-  {   
+  {
     addPose(start); // add starting point
     setPoseVertexFixed(0,true); // StartConf is a fixed constraint during optimization
 
     double timestep = 0.1;
-        
+
     if (diststep!=0)
     {
       Eigen::Vector2d point_to_goal = goal.position()-start.position();
@@ -300,25 +329,25 @@ bool TimedElasticBand::initTrajectoryToGoal(const PoseSE2& start, const PoseSE2&
       double dy = diststep*std::sin(dir_to_goal);
       double orient_init = dir_to_goal;
       // check if the goal is behind the start pose (w.r.t. start orientation)
-      if (guess_backwards_motion && point_to_goal.dot(start.orientationUnitVec()) < 0) 
+      if (guess_backwards_motion && point_to_goal.dot(start.orientationUnitVec()) < 0)
         orient_init = g2o::normalize_theta(orient_init+M_PI);
       // TODO: timestep ~ max_vel_x_backwards for backwards motions
-      
+
       double dist_to_goal = point_to_goal.norm();
       double no_steps_d = dist_to_goal/std::abs(diststep); // ignore negative values
       unsigned int no_steps = (unsigned int) std::floor(no_steps_d);
 
       if (max_vel_x > 0) timestep = diststep / max_vel_x;
-      
+
       for (unsigned int i=1; i<=no_steps; i++) // start with 1! starting point had index 0
       {
-        if (i==no_steps && no_steps_d==(float) no_steps) 
+        if (i==no_steps && no_steps_d==(float) no_steps)
             break; // if last conf (depending on stepsize) is equal to goal conf -> leave loop
         addPoseAndTimeDiff(start.x()+i*dx,start.y()+i*dy,orient_init,timestep);
       }
 
     }
-    
+
     // if number of samples is not larger than min_samples, insert manually
     if ( sizePoses() < min_samples-1 )
     {
@@ -332,11 +361,11 @@ bool TimedElasticBand::initTrajectoryToGoal(const PoseSE2& start, const PoseSE2&
         addPoseAndTimeDiff( intermediate_pose, timestep ); // let the optimier correct the timestep (TODO: better initialization
       }
     }
-    
+
     // add goal
     if (max_vel_x > 0) timestep = (goal.position()-BackPose().position()).norm()/max_vel_x;
     addPoseAndTimeDiff(goal,timestep); // add goal point
-    setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization	
+    setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization
   }
   else // size!=0
   {
@@ -350,16 +379,14 @@ bool TimedElasticBand::initTrajectoryToGoal(const PoseSE2& start, const PoseSE2&
 }
 
 
-bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::msg::PoseStamped>& plan, double max_vel_x, bool estimate_orient, int min_samples, bool guess_backwards_motion)
+bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::msg::PoseStamped>& plan, double max_vel_x, double max_vel_theta, bool estimate_orient, int min_samples, bool guess_backwards_motion)
 {
-  
+
   if (!isInit())
   {
     PoseSE2 start(plan.front().pose);
     PoseSE2 goal(plan.back().pose);
 
-    double dt = 0.1;
-    
     addPose(start); // add starting point with given orientation
     setPoseVertexFixed(0,true); // StartConf is a fixed constraint during optimization
 
@@ -367,7 +394,7 @@ bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::msg
     if (guess_backwards_motion && (goal.position()-start.position()).dot(start.orientationUnitVec()) < 0) // check if the goal is behind the start pose (w.r.t. start orientation)
         backwards = true;
     // TODO: dt ~ max_vel_x_backwards for backwards motions
-    
+
     for (int i=1; i<(int)plan.size()-1; ++i)
     {
         double yaw;
@@ -380,15 +407,15 @@ bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::msg
             if (backwards)
                 yaw = g2o::normalize_theta(yaw+M_PI);
         }
-        else 
+        else
         {
             yaw = tf2::getYaw(plan[i].pose.orientation);
         }
         PoseSE2 intermediate_pose(plan[i].pose.position.x, plan[i].pose.position.y, yaw);
-        if (max_vel_x > 0) dt = (intermediate_pose.position()-BackPose().position()).norm()/max_vel_x;
+        double dt = estimateDeltaT(BackPose(), intermediate_pose, max_vel_x, max_vel_theta);
         addPoseAndTimeDiff(intermediate_pose, dt);
     }
-    
+
     // if number of samples is not larger than min_samples, insert manually
     if ( sizePoses() < min_samples-1 )
     {
@@ -398,13 +425,13 @@ bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::msg
       {
         // simple strategy: interpolate between the current pose and the goal
         PoseSE2 intermediate_pose = PoseSE2::average(BackPose(), goal);
-        if (max_vel_x > 0) dt = (intermediate_pose.position()-BackPose().position()).norm()/max_vel_x;
+        double dt = estimateDeltaT(BackPose(), intermediate_pose, max_vel_x, max_vel_theta);
         addPoseAndTimeDiff( intermediate_pose, dt ); // let the optimier correct the timestep (TODO: better initialization
       }
     }
-    
+
     // Now add final state with given orientation
-    if (max_vel_x > 0) dt = (goal.position()-BackPose().position()).norm()/max_vel_x;
+    double dt = estimateDeltaT(BackPose(), goal, max_vel_x, max_vel_theta);
     addPoseAndTimeDiff(goal, dt);
     setPoseVertexFixed(sizePoses()-1,true); // GoalConf is a fixed constraint during optimization
   }
@@ -416,79 +443,56 @@ bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::msg
                  "Number of TEB configurations: %d, Number of TEB timediffs: %d", sizePoses(), sizeTimeDiffs());
     return false;
   }
-  
+
   return true;
 }
 
 
 int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point, double* distance, int begin_idx) const
 {
-  std::vector<double> dist_vec; // TODO: improve! efficiency
-  dist_vec.reserve(sizePoses());
-  
   int n = sizePoses();
-  
-  // calc distances
+  if (begin_idx < 0 || begin_idx >= n)
+    return -1;
+
+  double min_dist_sq = std::numeric_limits<double>::max();
+  int min_idx = -1;
+
   for (int i = begin_idx; i < n; i++)
   {
-    Eigen::Vector2d diff = ref_point - Pose(i).position();
-    dist_vec.push_back(diff.norm());
-  }
-  
-  if (dist_vec.empty())
-    return -1;
-  
-  // find minimum
-  int index_min = 0;
-
-  double last_value = dist_vec.at(0);
-  for (int i=1; i < (int)dist_vec.size(); i++)
-  {
-    if (dist_vec.at(i) < last_value)
+    double dist_sq = (ref_point - Pose(i).position()).squaredNorm();
+    if (dist_sq < min_dist_sq)
     {
-      last_value = dist_vec.at(i);
-      index_min = i;
+      min_dist_sq = dist_sq;
+      min_idx = i;
     }
   }
+
   if (distance)
-    *distance = last_value;
-  return begin_idx+index_min;
+    *distance = std::sqrt(min_dist_sq);
+
+  return min_idx;
 }
 
 
 int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end, double* distance) const
 {
-  std::vector<double> dist_vec; // TODO: improve! efficiency
-  dist_vec.reserve(sizePoses());
+  double min_dist = std::numeric_limits<double>::max();
+  int min_idx = -1;
 
-  int n = sizePoses();
-  
-  // calc distances  
-  for (int i = 0; i < n; i++)
+  for (int i = 0; i < sizePoses(); i++)
   {
     Eigen::Vector2d point = Pose(i).position();
-    double diff = distance_point_to_segment_2d(point, ref_line_start, ref_line_end);
-    dist_vec.push_back(diff);
-  }
-  
-  if (dist_vec.empty())
-    return -1;
-  
-  // find minimum
-  int index_min = 0;
-
-  double last_value = dist_vec.at(0);
-  for (int i=1; i < (int)dist_vec.size(); i++)
-  {
-    if (dist_vec.at(i) < last_value)
+    double dist = distance_point_to_segment_2d(point, ref_line_start, ref_line_end);
+    if (dist < min_dist)
     {
-      last_value = dist_vec.at(i);
-      index_min = i;
+      min_dist = dist;
+      min_idx = i;
     }
   }
+
   if (distance)
-    *distance = last_value;
-  return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
+    *distance = min_dist;
+  return min_idx;
 }
 
 int TimedElasticBand::findClosestTrajectoryPose(const Point2dContainer& vertices, double* distance) const
@@ -499,43 +503,30 @@ int TimedElasticBand::findClosestTrajectoryPose(const Point2dContainer& vertices
     return findClosestTrajectoryPose(vertices.front());
   else if (vertices.size() == 2)
     return findClosestTrajectoryPose(vertices.front(), vertices.back());
-  
-  std::vector<double> dist_vec; // TODO: improve! efficiency
-  dist_vec.reserve(sizePoses());
-  
-  int n = sizePoses();
-  
-  // calc distances  
-  for (int i = 0; i < n; i++)
+
+  double min_dist = std::numeric_limits<double>::max();
+  int min_idx = -1;
+
+  for (int i = 0; i < sizePoses(); i++)
   {
     Eigen::Vector2d point = Pose(i).position();
-    double diff = HUGE_VAL;
+    double dist_to_polygon = std::numeric_limits<double>::max();
     for (int j = 0; j < (int) vertices.size()-1; ++j)
     {
-       diff = std::min(diff, distance_point_to_segment_2d(point, vertices[j], vertices[j+1]));
+      dist_to_polygon = std::min(dist_to_polygon, distance_point_to_segment_2d(point, vertices[j], vertices[j+1]));
     }
-    diff = std::min(diff, distance_point_to_segment_2d(point, vertices.back(), vertices.front()));
-    dist_vec.push_back(diff);
-  }
-
-  if (dist_vec.empty())
-    return -1;
-
-  // find minimum
-  int index_min = 0;
-
-  double last_value = dist_vec.at(0);
-  for (int i=1; i < (int)dist_vec.size(); i++)
-  {
-    if (dist_vec.at(i) < last_value)
+    dist_to_polygon = std::min(dist_to_polygon, distance_point_to_segment_2d(point, vertices.back(), vertices.front()));
+    if (dist_to_polygon < min_dist)
     {
-      last_value = dist_vec.at(i);
-      index_min = i;
+      min_dist = dist_to_polygon;
+      min_idx = i;
     }
   }
+
   if (distance)
-    *distance = last_value;
-  return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
+    *distance = min_dist;
+
+  return min_idx;
 }
 
 
@@ -544,16 +535,16 @@ int TimedElasticBand::findClosestTrajectoryPose(const Obstacle& obstacle, double
   const PointObstacle* pobst = dynamic_cast<const PointObstacle*>(&obstacle);
   if (pobst)
     return findClosestTrajectoryPose(pobst->position(), distance);
-  
+
   const LineObstacle* lobst = dynamic_cast<const LineObstacle*>(&obstacle);
   if (lobst)
     return findClosestTrajectoryPose(lobst->start(), lobst->end(), distance);
-  
+
   const PolygonObstacle* polyobst = dynamic_cast<const PolygonObstacle*>(&obstacle);
   if (polyobst)
     return findClosestTrajectoryPose(polyobst->vertices(), distance);
-  
-  return findClosestTrajectoryPose(obstacle.getCentroid(), distance);  
+
+  return findClosestTrajectoryPose(obstacle.getCentroid(), distance);
 }
 
 
@@ -563,7 +554,7 @@ void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
   // TEST if optimizer can handle this "hard" placement
 
   if (new_start && sizePoses()>0)
-  {    
+  {
     // find nearest state (using l2-norm) in order to prune the trajectory
     // (remove already passed states)
     double dist_cache = (new_start->position()- Pose(0).position()).norm();
@@ -581,7 +572,7 @@ void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
       }
       else break;
     }
-    
+
     // prune trajectory at the beginning (and extrapolate sequences at the end if the horizon is fixed)
     if (nearest_idx>0)
     {
@@ -590,11 +581,11 @@ void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
       deletePoses(1, nearest_idx);  // delete first states such that the closest state is the new first one
       deleteTimeDiffs(1, nearest_idx); // delete corresponding time differences
     }
-    
+
     // update start
     Pose(0) = *new_start;
   }
-  
+
   if (new_goal && sizePoses()>0)
   {
     BackPose() = *new_goal;
@@ -606,29 +597,29 @@ bool TimedElasticBand::isTrajectoryInsideRegion(double radius, double max_dist_b
 {
     if (sizePoses()<=0)
         return true;
-    
+
     double radius_sq = radius*radius;
     double max_dist_behind_robot_sq = max_dist_behind_robot*max_dist_behind_robot;
     Eigen::Vector2d robot_orient = Pose(0).orientationUnitVec();
-    
+
     for (int i=1; i<sizePoses(); i=i+skip_poses+1)
     {
         Eigen::Vector2d dist_vec = Pose(i).position()-Pose(0).position();
         double dist_sq = dist_vec.squaredNorm();
-        
+
         if (dist_sq > radius_sq)
         {
             RCLCPP_INFO(rclcpp::get_logger("teb_local_planner"), "outside robot");
             return false;
         }
-        
+
         // check behind the robot with a different distance, if specified (or >=0)
         if (max_dist_behind_robot >= 0 && dist_vec.dot(robot_orient) < 0 && dist_sq > max_dist_behind_robot_sq)
         {
             RCLCPP_INFO(rclcpp::get_logger("teb_local_planner"), "outside robot behind");
             return false;
         }
-        
+
     }
     return true;
 }

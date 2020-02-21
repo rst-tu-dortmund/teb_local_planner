@@ -419,13 +419,14 @@ public:
    * via the argument \c dt.
    * @param plan vector of geometry_msgs::msg::PoseStamped
    * @param max_vel_x maximum translational velocity used for determining time differences
+   * @param max_vel_theta maximum rotational velocity used for determining time differences
    * @param estimate_orient if \c true, calculate orientation using the straight line distance vector between consecutive poses
    *                        (only copy start and goal orientation; recommended if no orientation data is available).
    * @param min_samples Minimum number of samples that should be initialized at least
    * @param guess_backwards_motion Allow the initialization of backwards oriented trajectories if the goal heading is pointing behind the robot (this parameter is used only if \c estimate_orient is enabled.
    * @return true if everything was fine, false otherwise
    */
-  bool initTrajectoryToGoal(const std::vector<geometry_msgs::msg::PoseStamped>& plan, double max_vel_x, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
+  bool initTrajectoryToGoal(const std::vector<geometry_msgs::msg::PoseStamped>& plan, double max_vel_x, double max_vel_theta, bool estimate_orient=false, int min_samples = 3, bool guess_backwards_motion = false);
   
   //@}
   

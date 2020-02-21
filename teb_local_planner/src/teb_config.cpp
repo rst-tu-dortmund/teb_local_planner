@@ -59,10 +59,12 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "global_plan_prune_distance", rclcpp::ParameterValue(trajectory.global_plan_prune_distance));
   nh->declare_parameter(name + "." + "exact_arc_length", rclcpp::ParameterValue(trajectory.exact_arc_length));
   nh->declare_parameter(name + "." + "force_reinit_new_goal_dist", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_dist));
+  nh->declare_parameter(name + "." + "force_reinit_new_goal_angular", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_angular));
   nh->declare_parameter(name + "." + "feasibility_check_no_poses", rclcpp::ParameterValue(trajectory.feasibility_check_no_poses));
   nh->declare_parameter(name + "." + "publish_feedback", rclcpp::ParameterValue(trajectory.publish_feedback));
   nh->declare_parameter(name + "." + "min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
-  
+  nh->declare_parameter(name + "." + "control_look_ahead_poses", rclcpp::ParameterValue(trajectory.control_look_ahead_poses));
+
   // Robot
   nh->declare_parameter(name + "." + "max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
   nh->declare_parameter(name + "." + "max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
@@ -178,10 +180,13 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "global_plan_prune_distance", trajectory.global_plan_prune_distance, trajectory.global_plan_prune_distance);
   nh->get_parameter_or(name + "." + "exact_arc_length", trajectory.exact_arc_length, trajectory.exact_arc_length);
   nh->get_parameter_or(name + "." + "force_reinit_new_goal_dist", trajectory.force_reinit_new_goal_dist, trajectory.force_reinit_new_goal_dist);
+  nh->get_parameter_or(name + "." + "force_reinit_new_goal_angular", trajectory.force_reinit_new_goal_angular, trajectory.force_reinit_new_goal_angular);
   nh->get_parameter_or(name + "." + "feasibility_check_no_poses", trajectory.feasibility_check_no_poses, trajectory.feasibility_check_no_poses);
   nh->get_parameter_or(name + "." + "publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
   nh->get_parameter_or(name + "." + "min_resolution_collision_check_angular", trajectory.min_resolution_collision_check_angular, trajectory.min_resolution_collision_check_angular);
-  
+  nh->get_parameter_or(name + "." + "control_look_ahead_poses", trajectory.control_look_ahead_poses, trajectory.control_look_ahead_poses);
+
+
   // Robot
   nh->get_parameter_or(name + "." + "max_vel_x", robot.max_vel_x, robot.max_vel_x);
   nh->get_parameter_or(name + "." + "max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
