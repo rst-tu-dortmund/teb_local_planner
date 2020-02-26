@@ -42,6 +42,7 @@
 #include "teb_local_planner/optimal_planner.h"
 
 #include <map>
+#include <memory>
 #include <limits>
 
 namespace teb_local_planner
@@ -241,20 +242,23 @@ bool TebOptimalPlanner::plan(const std::vector<geometry_msgs::msg::PoseStamped>&
   TEB_ASSERT_MSG(initialized_, "Call initialize() first.");
   if (!teb_.isInit())
   {
-    // init trajectory
-    teb_.initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x, cfg_->trajectory.global_plan_overwrite_orientation, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
-  } 
+    teb_.initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x, cfg_->robot.max_vel_theta, cfg_->trajectory.global_plan_overwrite_orientation,
+      cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
+  }
   else // warm start
   {
     PoseSE2 start_(initial_plan.front().pose);
     PoseSE2 goal_(initial_plan.back().pose);
-    if (teb_.sizePoses()>0 && (goal_.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist) // actual warm start!
+    if (teb_.sizePoses()>0
+        && (goal_.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist
+        && fabs(g2o::normalize_theta(goal_.theta() - teb_.BackPose().theta())) < cfg_->trajectory.force_reinit_new_goal_angular) // actual warm start!
       teb_.updateAndPruneTEB(start_, goal_, cfg_->trajectory.min_samples); // update TEB
     else // goal too far away -> reinit
     {
       RCLCPP_DEBUG(node_->get_logger(), "New goal: distance to existing goal is higher than the specified threshold. Reinitalizing trajectories.");
       teb_.clearTimedElasticBand();
-      teb_.initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x, true, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
+      teb_.initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x, cfg_->robot.max_vel_theta, cfg_->trajectory.global_plan_overwrite_orientation,
+        cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
     }
   }
   if (start_vel)
@@ -286,7 +290,9 @@ bool TebOptimalPlanner::plan(const PoseSE2& start, const PoseSE2& goal, const ge
   }
   else // warm start
   {
-    if (teb_.sizePoses()>0 && (goal.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist) // actual warm start!
+    if (teb_.sizePoses() > 0
+        && (goal.position() - teb_.BackPose().position()).norm() < cfg_->trajectory.force_reinit_new_goal_dist
+        && fabs(g2o::normalize_theta(goal.theta() - teb_.BackPose().theta())) < cfg_->trajectory.force_reinit_new_goal_angular) // actual warm start!
       teb_.updateAndPruneTEB(start, goal, cfg_->trajectory.min_samples);
     else // goal too far away -> reinit
     {
@@ -1089,7 +1095,7 @@ void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pos
   omega = orientdiff/dt;
 }
 
-bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega) const
+bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega, int look_ahead_poses) const
 {
   if (teb_.sizePoses()<2)
   {
@@ -1099,8 +1105,17 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
     omega = 0;
     return false;
   }
-  
-  double dt = teb_.TimeDiff(0);
+  look_ahead_poses = std::max(1, std::min(look_ahead_poses, teb_.sizePoses() - 1));
+  double dt = 0.0;
+  for(int counter = 0; counter < look_ahead_poses; ++counter)
+  {
+    dt += teb_.TimeDiff(counter);
+    if(dt >= cfg_->trajectory.dt_ref * look_ahead_poses)  // TODO: change to look-ahead time? Refine trajectory?
+    {
+        look_ahead_poses = counter + 1;
+        break;
+    }
+  }
   if (dt<=0)
   {	
     RCLCPP_ERROR(node_->get_logger(), "TebOptimalPlanner::getVelocityCommand() - timediff<=0 is invalid!");
@@ -1111,7 +1126,7 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
   }
 	  
   // Get velocity from the first two configurations
-  extractVelocity(teb_.Pose(0), teb_.Pose(1), dt, vx, vy, omega);
+  extractVelocity(teb_.Pose(0), teb_.Pose(look_ahead_poses), dt, vx, vy, omega);
   return true;
 }
 
@@ -1246,79 +1261,6 @@ bool TebOptimalPlanner::isTrajectoryFeasible(dwb_critics::ObstacleFootprintCriti
     }
   }
   return true;
-}
-
-
-bool TebOptimalPlanner::isHorizonReductionAppropriate(const std::vector<geometry_msgs::msg::PoseStamped>& initial_plan) const
-{
-  if (teb_.sizePoses() < int( 1.5*double(cfg_->trajectory.min_samples) ) ) // trajectory is short already
-    return false;
-  
-  // check if distance is at least 2m long // hardcoded for now
-  double dist = 0;
-  for (int i=1; i < teb_.sizePoses(); ++i)
-  {
-    dist += ( teb_.Pose(i).position() - teb_.Pose(i-1).position() ).norm();
-    if (dist > 2)
-      break;
-  }
-  if (dist <= 2)
-    return false;
-  
-  // check if goal orientation is differing with more than 90° and the horizon is still long enough to exclude parking maneuvers.
-  // use case: Sometimes the robot accomplish the following navigation task:
-  // 1. wall following 2. 180° curve 3. following along the other side of the wall.
-  // If the trajectory is too long, the trajectory might intersect with the obstace and the optimizer does 
-  // push the trajectory to the correct side.
-  if ( std::abs( g2o::normalize_theta( teb_.Pose(0).theta() - teb_.BackPose().theta() ) ) > M_PI/2)
-  {
-    RCLCPP_DEBUG(node_->get_logger(), "TebOptimalPlanner::isHorizonReductionAppropriate(): Goal orientation - start orientation > 90° ");
-    return true;
-  }
-  
-  // check if goal heading deviates more than 90° w.r.t. start orienation
-  if (teb_.Pose(0).orientationUnitVec().dot(teb_.BackPose().position() - teb_.Pose(0).position()) < 0)
-  {
-    RCLCPP_DEBUG(node_->get_logger(), "TebOptimalPlanner::isHorizonReductionAppropriate(): Goal heading - start orientation > 90° ");
-    return true;
-  }
-    
-  // check ratio: distance along the inital plan and distance of the trajectory (maybe too much is cut off)
-  int idx=0; // first get point close to the robot (should be fast if the global path is already pruned!)
-  for (; idx < (int)initial_plan.size(); ++idx)
-  {
-    if ( std::sqrt(std::pow(initial_plan[idx].pose.position.x-teb_.Pose(0).x(), 2) + std::pow(initial_plan[idx].pose.position.y-teb_.Pose(0).y(), 2)) )
-      break;
-  } 
-  // now calculate length
-  double ref_path_length = 0;
-  for (; idx < int(initial_plan.size())-1; ++idx)
-  {
-    ref_path_length += std::sqrt(std::pow(initial_plan[idx+1].pose.position.x-initial_plan[idx].pose.position.x, 2) 
-                     + std::pow(initial_plan[idx+1].pose.position.y-initial_plan[idx].pose.position.y, 2) );
-  } 
-  
-  // check distances along the teb trajectory (by the way, we also check if the distance between two poses is > obst_dist)
-  double teb_length = 0;
-  for (int i = 1; i < teb_.sizePoses(); ++i )
-  {
-    double dist = (teb_.Pose(i).position() - teb_.Pose(i-1).position()).norm();
-    if (dist > 0.95*cfg_->obstacles.min_obstacle_dist)
-    {
-      RCLCPP_DEBUG(node_->get_logger(), "TebOptimalPlanner::isHorizonReductionAppropriate(): Distance between consecutive poses > 0.9*min_obstacle_dist");
-      return true;
-    }
-    ref_path_length += dist;
-  }
-  if (ref_path_length>0 && teb_length/ref_path_length < 0.7) // now check ratio
-  {
-    RCLCPP_DEBUG(node_->get_logger(), "TebOptimalPlanner::isHorizonReductionAppropriate(): Planned trajectory is at least 30° shorter than the initial plan");
-    return true;
-  }
-  
-  
-  // otherwise we do not suggest shrinking the horizon:
-  return false;
 }
 
 } // namespace teb_local_planner

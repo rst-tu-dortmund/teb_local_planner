@@ -7,8 +7,8 @@ separation from obstacles and compliance with kinodynamic constraints at runtime
 
 Refer to http://wiki.ros.org/teb_local_planner for more information and tutorials.
 
-Build status of the *kinetic-devel* branch:
-- ROS Buildfarm (Kinetic): [![Kinetic Status](http://build.ros.org/buildStatus/icon?job=Kdev__teb_local_planner__ubuntu_xenial_amd64)](http://build.ros.org/job/Kdev__teb_local_planner__ubuntu_xenial_amd64/)
+Build status of the *melodic-devel* branch:
+- ROS Buildfarm (Melodic): [![Melodic Status](http://build.ros.org/buildStatus/icon?job=Mdev__teb_local_planner__ubuntu_bionic_amd64)](http://build.ros.org/job/Mdev__teb_local_planner__ubuntu_bionic_amd64/)
 
 ### Port to ROS2
 This branch is the teb_local_planner package ported to ROS2(Dashing Diademata). Currently, it is currently compatible with [Navigation2(master branch)](https://github.com/ros-planning/navigation2/tree/master)([226f06c](https://github.com/ros-planning/navigation2/commit/226f06ce282c727ca240ce8be0cb4b093e26343b)). You can test teb_local_planner with Navigation2 and TurtleBot3 simulation by launching the following command.

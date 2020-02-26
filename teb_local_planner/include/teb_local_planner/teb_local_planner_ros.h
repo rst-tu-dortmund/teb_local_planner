@@ -170,7 +170,7 @@ public:
    */
   RobotFootprintModelPtr getRobotFootprintFromParamServer();
   
-    /** 
+  /** 
    * @brief Set the footprint from the given XmlRpcValue.
    * @remarks This method is copied from costmap_2d/footprint.h, since it is not declared public in all ros distros
    * @remarks It is modified in order to return a container of Eigen::Vector2d instead of geometry_msgs::msg::Point
