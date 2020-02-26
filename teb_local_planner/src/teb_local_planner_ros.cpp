@@ -122,7 +122,7 @@ void TebLocalPlannerROS::initialize()
     
     costmap_model_ = std::make_shared<dwb_critics::ObstacleFootprintCritic>();
     std::string costmap_model_name("costmap_model");
-    costmap_model_->initialize(nh_, costmap_model_name, name_, costmap_ros_);
+    costmap_model_->initialize(nh_, costmap_model_name, costmap_ros_);
 
     global_frame_ = costmap_ros_->getGlobalFrameID();
     cfg_->map_frame = global_frame_; // TODO
