@@ -678,6 +678,12 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const geometry_msgs::msg::PoseStamped& 
     // iterate plan until a pose close the robot is found
     std::vector<geometry_msgs::msg::PoseStamped>::iterator it = global_plan.begin();
     std::vector<geometry_msgs::msg::PoseStamped>::iterator erase_end = it;
+
+    // Load parameters 'again' at the start of goal plan.
+      //std::time_t start_load = std::time(nullptr);
+      cfg_->loadRosParamFromNodeHandle(nh_, name_);
+      //std::time_t end_load = std::time(nullptr);
+      //RCLCPP_INFO(nh_->get_logger(), "Time elapsed %d", (end_load - start_load));
     while (it != global_plan.end())
     {
       double dx = robot.pose.position.x - it->pose.position.x;
