@@ -326,9 +326,6 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
   else
     AddEdgesObstacles(weight_multiplier);
 
-  if (cfg_->obstacles.include_dynamic_obstacles)
-    AddEdgesDynamicObstacles();
-  
   AddEdgesViaPoints();
   
   AddEdgesVelocity();
@@ -432,7 +429,14 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
   information_inflated(0,0) = cfg_->optim.weight_obstacle * weight_multiplier;
   information_inflated(1,1) = cfg_->optim.weight_inflation;
   information_inflated(0,1) = information_inflated(1,0) = 0;
+
+  Eigen::Matrix<double,2,2> information_dynamic;
+  information_dynamic(0,0) = cfg_->optim.weight_dynamic_obstacle * weight_multiplier;
+  information_dynamic(1,1) = cfg_->optim.weight_dynamic_obstacle_inflation;
+  information_dynamic(0,1) = information_dynamic(1,0) = 0;
     
+  double time = teb_.TimeDiff(0);
+
   // iterate all teb points (skip first and last)
   for (int i=1; i < teb_.sizePoses()-1; ++i)
   {    
@@ -442,108 +446,134 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       Obstacle* right_obstacle = nullptr;
       
       std::vector<Obstacle*> relevant_obstacles;
+      std::vector<Obstacle*> relevant_dyn_obstacles;
       
       const Eigen::Vector2d pose_orient = teb_.Pose(i).orientationUnitVec();
       
       // iterate obstacles
       for (const ObstaclePtr& obst : *obstacles_)
       {
-        // we handle dynamic obstacles differently below
-        if(cfg_->obstacles.include_dynamic_obstacles && obst->isDynamic())
-          continue;
+         // calculate distance to robot model
+         double dist;
+         if (cfg_->obstacles.include_dynamic_obstacles)
+           dist = robot_model_->estimateSpatioTemporalDistance(teb_.Pose(i), obst.get(), time);
+         else
+           dist = robot_model_->calculateDistance(teb_.Pose(i), obst.get());
 
-          // calculate distance to robot model
-          double dist = robot_model_->calculateDistance(teb_.Pose(i), obst.get());
-          
-          // force considering obstacle if really close to the current pose
-        if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
-          {
-              relevant_obstacles.push_back(obst.get());
-              continue;
-          }
-          // cut-off distance
-          if (dist > cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_cutoff_factor)
-            continue;
-          
-          // determine side (left or right) and assign obstacle if closer than the previous one
-          if (cross2d(pose_orient, obst->getCentroid()) > 0) // left
-          {
-              if (dist < left_min_dist)
-              {
-                  left_min_dist = dist;
-                  left_obstacle = obst.get();
-              }
-          }
-          else
-          {
-              if (dist < right_min_dist)
-              {
-                  right_min_dist = dist;
-                  right_obstacle = obst.get();
-              }
-          }
+         // force considering obstacle if really close to the current pose
+         if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
+         {
+             relevant_obstacles.push_back(obst.get());
+             continue;
+         }
+         // cut-off distance
+         if (dist > cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_cutoff_factor)
+             continue;
+
+         // determine side (left or right) and assign obstacle if closer than the previous one
+         if (cross2d(pose_orient, obst->getCentroid()) > 0) // left
+         {
+            if (dist < left_min_dist)
+            {
+               left_min_dist = dist;
+               left_obstacle = obst.get();
+            }
+         }
+         else
+         {
+            if (dist < right_min_dist)
+            {
+                right_min_dist = dist;
+                right_obstacle = obst.get();
+            }
+         }
       }   
       
       // create obstacle edges
       if (left_obstacle)
       {
-            if (inflated)
-            {
-                EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
-                dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
-                dist_bandpt_obst->setInformation(information_inflated);
-                dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), left_obstacle);
-                optimizer_->addEdge(dist_bandpt_obst);
-            }
-            else
-            {
-                EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
-                dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
-                dist_bandpt_obst->setInformation(information);
-                dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), left_obstacle);
-                optimizer_->addEdge(dist_bandpt_obst);
-            }
+          if (cfg_->obstacles.include_dynamic_obstacles && left_obstacle->isDynamic())
+          {
+              EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(time);
+              dynobst_edge->setVertex(0,teb_.PoseVertex(i));
+              dynobst_edge->setInformation(information_dynamic);
+              dynobst_edge->setParameters(*cfg_, robot_model_.get(), left_obstacle);
+              optimizer_->addEdge(dynobst_edge);
+          }
+          else if (inflated)
+          {
+              EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
+              dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
+              dist_bandpt_obst->setInformation(information_inflated);
+              dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), left_obstacle);
+              optimizer_->addEdge(dist_bandpt_obst);
+          }
+          else
+          {
+              EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
+              dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
+              dist_bandpt_obst->setInformation(information);
+              dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), left_obstacle);
+              optimizer_->addEdge(dist_bandpt_obst);
+          }
       }
       
       if (right_obstacle)
       {
-            if (inflated)
-            {
-                EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
-                dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
-                dist_bandpt_obst->setInformation(information_inflated);
-                dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), right_obstacle);
-                optimizer_->addEdge(dist_bandpt_obst);
-            }
-            else
-            {
-                EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
-                dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
-                dist_bandpt_obst->setInformation(information);
-                dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), right_obstacle);
-                optimizer_->addEdge(dist_bandpt_obst);
-            }   
+          if (cfg_->obstacles.include_dynamic_obstacles && right_obstacle->isDynamic())
+          {
+              EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(time);
+              dynobst_edge->setVertex(0,teb_.PoseVertex(i));
+              dynobst_edge->setInformation(information_dynamic);
+              dynobst_edge->setParameters(*cfg_, robot_model_.get(), right_obstacle);
+              optimizer_->addEdge(dynobst_edge);
+          }
+          else if (inflated)
+          {
+              EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
+              dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
+              dist_bandpt_obst->setInformation(information_inflated);
+              dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), right_obstacle);
+              optimizer_->addEdge(dist_bandpt_obst);
+          }
+          else
+          {
+              EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
+              dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
+              dist_bandpt_obst->setInformation(information);
+              dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), right_obstacle);
+              optimizer_->addEdge(dist_bandpt_obst);
+          }
       }
       
       for (const Obstacle* obst : relevant_obstacles)
       {
-            if (inflated)
-            {
-                EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
-                dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
-                dist_bandpt_obst->setInformation(information_inflated);
-                dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst);
-                optimizer_->addEdge(dist_bandpt_obst);
-            }
-            else
-            {
-                EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
-                dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
-                dist_bandpt_obst->setInformation(information);
-                dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst);
-                optimizer_->addEdge(dist_bandpt_obst);
-            }   
+          if (cfg_->obstacles.include_dynamic_obstacles && obst->isDynamic())
+          {
+              EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(time);
+              dynobst_edge->setVertex(0,teb_.PoseVertex(i));
+              dynobst_edge->setInformation(information_dynamic);
+              dynobst_edge->setParameters(*cfg_, robot_model_.get(), obst);
+              optimizer_->addEdge(dynobst_edge);
+          }
+          else if (inflated)
+          {
+              EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
+              dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
+              dist_bandpt_obst->setInformation(information_inflated);
+              dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst);
+              optimizer_->addEdge(dist_bandpt_obst);
+          }
+          else
+          {
+              EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
+              dist_bandpt_obst->setVertex(0,teb_.PoseVertex(i));
+              dist_bandpt_obst->setInformation(information);
+              dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst);
+              optimizer_->addEdge(dist_bandpt_obst);
+          }
       }
+      time += teb_.TimeDiff(i);
   }  
         
 }
@@ -640,36 +670,6 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
       }
     } 
     
-  }
-}
-
-
-void TebOptimalPlanner::AddEdgesDynamicObstacles(double weight_multiplier)
-{
-  if (cfg_->optim.weight_obstacle==0 || weight_multiplier==0 || obstacles_==NULL )
-    return; // if weight equals zero skip adding edges!
-
-  Eigen::Matrix<double,2,2> information;
-  information(0,0) = cfg_->optim.weight_dynamic_obstacle * weight_multiplier;
-  information(1,1) = cfg_->optim.weight_dynamic_obstacle_inflation;
-  information(0,1) = information(1,0) = 0;
-  
-  for (ObstContainer::const_iterator obst = obstacles_->begin(); obst != obstacles_->end(); ++obst)
-  {
-    if (!(*obst)->isDynamic())
-      continue;
-
-    // Skip first and last pose, as they are fixed
-    double time = teb_.TimeDiff(0);
-    for (int i=1; i < teb_.sizePoses() - 1; ++i)
-    {
-      EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(time);
-      dynobst_edge->setVertex(0,teb_.PoseVertex(i));
-      dynobst_edge->setInformation(information);
-      dynobst_edge->setParameters(*cfg_, robot_model_.get(), obst->get());
-      optimizer_->addEdge(dynobst_edge);
-      time += teb_.TimeDiff(i); // we do not need to check the time diff bounds, since we iterate to "< sizePoses()-1".
-    }
   }
 }
 

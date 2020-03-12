@@ -601,7 +601,7 @@ protected:
   void AddEdgesShortestPath();
   
   /**
-   * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles
+   * @brief Add all edges (local cost functions) related to keeping a distance from obstacles
    * @warning do not combine with AddEdgesInflatedObstacles
    * @see EdgeObstacle
    * @see buildGraph
@@ -628,18 +628,6 @@ protected:
    */
   void AddEdgesViaPoints();
   
-  /**
-   * @brief Add all edges (local cost functions) related to keeping a distance from dynamic (moving) obstacles.
-   * @warning experimental 
-   * @todo Should we also add neighbors to decrease jiggling/oscillations
-   * @see EdgeDynamicObstacle
-   * @see buildGraph
-   * @see optimizeGraph
-   * @param weight_multiplier Specify an additional weight multipler (in addition to the the config weight)
-
-   */
-  void AddEdgesDynamicObstacles(double weight_multiplier=1.0);
-
   /**
    * @brief Add all edges (local cost functions) for satisfying kinematic constraints of a differential drive robot
    * @warning do not combine with AddEdgesKinematicsCarlike()
