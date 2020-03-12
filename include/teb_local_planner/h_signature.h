@@ -320,7 +320,7 @@ public:
           Eigen::Vector3d direction_vec = next_pose_with_time - pose_with_time;
           if(direction_vec.norm() == 0)  // Coincident poses
             continue;
-          Eigen::Vector3d dl = 0.1 * direction_vec.normalized(); // Integrate with 10 steps between each pose
+          Eigen::Vector3d dl = 0.1 * direction_vec; // Integrate with 10 steps between each pose
 
           for (Eigen::Vector3d position = pose_with_time; (position-pose_with_time).norm() <= direction_vec.norm(); position += dl)
           {
