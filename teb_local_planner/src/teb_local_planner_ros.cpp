@@ -558,6 +558,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
 
   if (!custom_obstacle_msg_.obstacles.empty())
   {
+      // RCLCPP_INFO(nh_->get_logger(), "Some obstacles are there");
     // We only use the global header to specify the obstacle coordinate system instead of individual ones
     Eigen::Affine3d obstacle_to_map_eig;
     try 
@@ -668,11 +669,11 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const geometry_msgs::msg::PoseStamped& 
     // transform robot pose into the plan frame (we do not wait here, since pruning not crucial, if missed a few times)
     //geometry_msgs::msg::TransformStamped global_to_plan_transform = tf_->lookupTransform(global_plan.front().header.frame_id, global_pose.header.frame_id, tf2::timeFromSec(0));
     geometry_msgs::msg::PoseStamped robot = tf_->transform(
-                global_plan.front(),
-                global_pose.header.frame_id);
+            global_pose,
+            global_plan.front().header.frame_id);
 
     //robot.setData( global_to_plan_transform * global_pose );
-    
+      RCLCPP_INFO(nh_->get_logger(), "Dist Threshold %f", dist_behind_robot);
     double dist_thresh_sq = dist_behind_robot*dist_behind_robot;
     
     // iterate plan until a pose close the robot is found
@@ -688,7 +689,11 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const geometry_msgs::msg::PoseStamped& 
     {
       double dx = robot.pose.position.x - it->pose.position.x;
       double dy = robot.pose.position.y - it->pose.position.y;
+
       double dist_sq = dx * dx + dy * dy;
+      RCLCPP_INFO(nh_->get_logger(), "Dist sqrd %f", dist_sq);
+        RCLCPP_INFO(nh_->get_logger(), "Pose X : %f", robot.pose.position.x);
+
       if (dist_sq < dist_thresh_sq)
       {
          erase_end = it;
@@ -735,7 +740,9 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
     geometry_msgs::msg::TransformStamped plan_to_global_transform = tf_->lookupTransform(
                 global_frame,
                 plan_pose.header.frame_id, tf2::timeFromSec(0),tf2::durationFromSec(0.5));
-
+      RCLCPP_INFO(nh_->get_logger(), "Global frame Id: %s\n", global_frame.c_str() );
+      RCLCPP_INFO(nh_->get_logger(), "Plan pose Id: %s\n", plan_pose.header.frame_id.c_str());
+      RCLCPP_INFO(nh_->get_logger(), "Plan pose Id: %s\n", plan_pose.header.frame_id.c_str());
 //    tf_->waitForTransform(global_frame, ros::Time::now(),
 //    plan_pose.header.frame_id, plan_pose.header.stamp,
 //    plan_pose.header.frame_id, ros::Duration(0.5));
@@ -762,6 +769,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
     {
       double x_diff = robot_pose.pose.position.x - global_plan[j].pose.position.x;
       double y_diff = robot_pose.pose.position.y - global_plan[j].pose.position.y;
+
       double new_sq_dist = x_diff * x_diff + y_diff * y_diff;
       if (new_sq_dist > sq_dist_threshold)
         break;  // force stop if we have reached the costmap border
@@ -776,9 +784,13 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
     geometry_msgs::msg::PoseStamped newer_pose;
     
     double plan_length = 0; // check cumulative Euclidean distance along the plan
-    
-    //now we'll transform until points are outside of our distance threshold
-    while(i < (int)global_plan.size() && sq_dist <= sq_dist_threshold && (max_plan_length<=0 || plan_length <= max_plan_length))
+      RCLCPP_INFO(nh_->get_logger(), "Sq_dist: %f  | Sq_d_thresh: %f", sq_dist, sq_dist_threshold);
+      RCLCPP_INFO(nh_->get_logger(), "Global plan size: %d | i: %d\n", (int)global_plan.size(), i);
+      RCLCPP_INFO(nh_->get_logger(), "Max Plan length: %f | Plan Length: %f", i, plan_length );
+
+      //now we'll transform until points are outside of our distance threshold
+      while(i < (int)global_plan.size() && sq_dist <= sq_dist_threshold && (max_plan_length<=0 || plan_length <= max_plan_length))
+     // while(i < (int)global_plan.size() && (max_plan_length<=0 || plan_length <= max_plan_length))
     {
       //const geometry_msgs::msg::PoseStamped& pose = global_plan[i];
       //tf::poseStampedMsgToTF(pose, tf_pose);
@@ -794,15 +806,17 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
       double x_diff = robot_pose.pose.position.x - global_plan[i].pose.position.x;
       double y_diff = robot_pose.pose.position.y - global_plan[i].pose.position.y;
       sq_dist = x_diff * x_diff + y_diff * y_diff;
-      
+       // RCLCPP_INFO(nh_->get_logger(), "Global plan pose X: %d\n", global_pose.front());
       // caclulate distance to previous pose
       if (i>0 && max_plan_length>0)
         plan_length += distance_points2d(global_plan[i-1].pose.position, global_plan[i].pose.position);
 
       ++i;
     }
-        
-    // if we are really close to the goal (<sq_dist_threshold) and the goal is not yet reached (e.g. orientation error >>0)
+      RCLCPP_INFO(nh_->get_logger(), "Robot pose X: %f\n", robot_pose.pose.position.x );
+      RCLCPP_INFO(nh_->get_logger(), "Global plan pose X: %f\n", global_plan[i].pose.position.x );
+
+      // if we are really close to the goal (<sq_dist_threshold) and the goal is not yet reached (e.g. orientation error >>0)
     // the resulting transformed plan can be empty. In that case we explicitly inject the global goal.
     if (transformed_plan.empty())
     {
