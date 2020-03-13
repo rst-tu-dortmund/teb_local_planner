@@ -104,6 +104,8 @@ public:
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
     bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
     bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
+    double max_vel_x_near_goal;
+    double max_vel_theta_near_goal;
   } robot; //!< Robot related parameters
 
   //! Goal tolerance related parameters
@@ -257,9 +259,11 @@ public:
     // Robot
 
     robot.max_vel_x = 0.4;
+    robot.max_vel_x_near_goal = 0.4;
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
+    robot.max_vel_theta_near_goal = 0.3;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;

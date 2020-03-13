@@ -63,14 +63,16 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "feasibility_check_no_poses", rclcpp::ParameterValue(trajectory.feasibility_check_no_poses));
   nh->declare_parameter(name + "." + "publish_feedback", rclcpp::ParameterValue(trajectory.publish_feedback));
   nh->declare_parameter(name + "." + "min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
-  nh->declare_parameter(name + "." + "control_look_ahead_poses", rclcpp::ParameterValue(trajectory.prevent_look_ahead_poses_near_goal));
+  nh->declare_parameter(name + "." + "control_look_ahead_poses", rclcpp::ParameterValue(trajectory.control_look_ahead_poses));
   nh->declare_parameter(name + "." + "prevent_look_ahead_poses_near_goal", rclcpp::ParameterValue(trajectory.prevent_look_ahead_poses_near_goal));
 
   // Robot
   nh->declare_parameter(name + "." + "max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
+  nh->declare_parameter(name + "." + "max_vel_x_near_goal", rclcpp::ParameterValue(robot.max_vel_x_near_goal));
   nh->declare_parameter(name + "." + "max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
   nh->declare_parameter(name + "." + "max_vel_y", rclcpp::ParameterValue(robot.max_vel_y));
   nh->declare_parameter(name + "." + "max_vel_theta", rclcpp::ParameterValue(robot.max_vel_theta));
+  nh->declare_parameter(name + "." + "max_vel_theta_near_goal", rclcpp::ParameterValue(robot.max_vel_theta_near_goal));
   nh->declare_parameter(name + "." + "acc_lim_x", rclcpp::ParameterValue(robot.acc_lim_x));
   nh->declare_parameter(name + "." + "acc_lim_y", rclcpp::ParameterValue(robot.acc_lim_y));
   nh->declare_parameter(name + "." + "acc_lim_theta", rclcpp::ParameterValue(robot.acc_lim_theta));
@@ -191,9 +193,11 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
 
   // Robot
   nh->get_parameter_or(name + "." + "max_vel_x", robot.max_vel_x, robot.max_vel_x);
+  nh->get_parameter_or(name + "." + "max_vel_x_near_goal", robot.max_vel_x, robot.max_vel_x);
   nh->get_parameter_or(name + "." + "max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
   nh->get_parameter_or(name + "." + "max_vel_y", robot.max_vel_y, robot.max_vel_y);
   nh->get_parameter_or(name + "." + "max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
+  nh->get_parameter_or(name + "." + "max_vel_theta_near_goal", robot.max_vel_theta, robot.max_vel_theta);
   nh->get_parameter_or(name + "." + "acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
   nh->get_parameter_or(name + "." + "acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
   nh->get_parameter_or(name + "." + "acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
