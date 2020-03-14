@@ -225,8 +225,11 @@ void TebLocalPlannerROS::setPlan(const nav_msgs::msg::Path & orig_global_plan)
     RCLCPP_ERROR(nh_->get_logger(), "teb_local_planner has not been initialized, please call initialize() before using this planner");
     return;
   }
+   // reset config
+   cfg_->loadRosParamFromNodeHandle(nh_, name_);
 
-  // store the global plan
+
+    // store the global plan
   global_plan_.clear();
   global_plan_.reserve(orig_global_plan.poses.size());
   for(const auto &in_pose :orig_global_plan.poses) {
@@ -682,7 +685,6 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const geometry_msgs::msg::PoseStamped& 
 
     // Load parameters 'again' at the start of goal plan.
       //std::time_t start_load = std::time(nullptr);
-      cfg_->loadRosParamFromNodeHandle(nh_, name_);
       //std::time_t end_load = std::time(nullptr);
       //RCLCPP_INFO(nh_->get_logger(), "Time elapsed %d", (end_load - start_load));
     while (it != global_plan.end())

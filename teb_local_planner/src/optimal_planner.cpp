@@ -1108,11 +1108,12 @@ bool TebOptimalPlanner::getVelocityCommand(double& vx, double& vy, double& omega
  // TODO: Fix this near goal thingy..
    //look_ahead_poses = std::max(1, std::min(look_ahead_poses, teb_.sizePoses() - 1));
   look_ahead_poses = std::max(1, std::min(look_ahead_poses, teb_.sizePoses() - 1 - cfg_->trajectory.prevent_look_ahead_poses_near_goal));
-  RCLCPP_INFO(node_->get_logger(), "Lookahead poses: %d", look_ahead_poses);
-  if(look_ahead_poses == cfg_->trajectory.prevent_look_ahead_poses_near_goal) {
-      //vx = cfg_->robot.max_vel_x_near_goal;
+  RCLCPP_INFO(node_->get_logger(), "Lookahead poses: %d", teb_.sizePoses());
+  //if(teb_.sizePoses() < 15) {
+  //    RCLCPP_INFO(node_->get_logger(), "really close to the goal poses: %d", look_ahead_poses);
+  //    cfg_->robot.max_vel_x = cfg_->robot.max_vel_x_near_goal;
       //omega = cfg_->robot.max_vel_theta_near_goal;
-  }
+  //}
   double dt = 0.0;
   for(int counter = 0; counter < look_ahead_poses; ++counter)
   {
