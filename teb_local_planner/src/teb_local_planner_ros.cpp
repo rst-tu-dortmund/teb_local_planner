@@ -420,8 +420,11 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
     );
   }
     if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_->robot.slowdown_dist_near_goal){
-        saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_->robot.max_vel_x_near_goal, cfg_->robot.max_vel_y,
-                         cfg_->robot.max_vel_theta_near_goal, cfg_->robot.max_vel_x_backwards_near_goal);
+        saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z,
+                         (cfg_->robot.max_vel_x_near_goal * 0.75 * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_x_near_goal * 0.25),
+                cfg_->robot.max_vel_y,
+                         (cfg_->robot.max_vel_theta_near_goal * 0.75 * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_theta_near_goal * 0.25),
+                         (cfg_->robot.max_vel_x_backwards_near_goal * 0.75 * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_x_backwards_near_goal * 0.25));
     }
     else {
         // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
