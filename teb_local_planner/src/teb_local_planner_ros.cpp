@@ -419,11 +419,16 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
       std::string("TebLocalPlannerROS: velocity command invalid. Resetting planner...")
     );
   }
-  
-  // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
-  saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_->robot.max_vel_x, cfg_->robot.max_vel_y,
-                   cfg_->robot.max_vel_theta, cfg_->robot.max_vel_x_backwards);
-
+    if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_->robot.slowdown_dist_near_goal){
+        saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_->robot.max_vel_x_near_goal, cfg_->robot.max_vel_y,
+                         cfg_->robot.max_vel_theta_near_goal, cfg_->robot.max_vel_x_backwards_near_goal);
+    }
+    else {
+        // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
+        saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_->robot.max_vel_x,
+                         cfg_->robot.max_vel_y,
+                         cfg_->robot.max_vel_theta, cfg_->robot.max_vel_x_backwards);
+    }
   // convert rot-vel to steering angle if desired (carlike robot).
   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
   // and opposed to the other constraints not affected by penalty_epsilon. The user might add a safety margin to the parameter itself.

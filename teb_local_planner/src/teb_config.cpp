@@ -70,6 +70,7 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
   nh->declare_parameter(name + "." + "max_vel_x_near_goal", rclcpp::ParameterValue(robot.max_vel_x_near_goal));
   nh->declare_parameter(name + "." + "max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
+  nh->declare_parameter(name + "." + "max_vel_x_backwards_near_goal", rclcpp::ParameterValue(robot.max_vel_x_backwards_near_goal));
   nh->declare_parameter(name + "." + "max_vel_y", rclcpp::ParameterValue(robot.max_vel_y));
   nh->declare_parameter(name + "." + "max_vel_theta", rclcpp::ParameterValue(robot.max_vel_theta));
   nh->declare_parameter(name + "." + "max_vel_theta_near_goal", rclcpp::ParameterValue(robot.max_vel_theta_near_goal));
@@ -80,6 +81,7 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "wheelbase", rclcpp::ParameterValue(robot.wheelbase));
   nh->declare_parameter(name + "." + "cmd_angle_instead_rotvel", rclcpp::ParameterValue(robot.cmd_angle_instead_rotvel));
   nh->declare_parameter(name + "." + "is_footprint_dynamic", rclcpp::ParameterValue(robot.is_footprint_dynamic));
+    nh->declare_parameter(name + "." + "slowdown_dist_near_goal", rclcpp::ParameterValue(robot.slowdown_dist_near_goal));
   
   // GoalTolerance
   nh->declare_parameter(name + "." + "xy_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.xy_goal_tolerance));
@@ -195,6 +197,7 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "max_vel_x", robot.max_vel_x, robot.max_vel_x);
   nh->get_parameter_or(name + "." + "max_vel_x_near_goal", robot.max_vel_x_near_goal, robot.max_vel_x_near_goal);
   nh->get_parameter_or(name + "." + "max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
+    nh->get_parameter_or(name + "." + "max_vel_x_backwards_near_goal", robot.max_vel_x_backwards_near_goal, robot.max_vel_x_backwards_near_goal);
   nh->get_parameter_or(name + "." + "max_vel_y", robot.max_vel_y, robot.max_vel_y);
   nh->get_parameter_or(name + "." + "max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
   nh->get_parameter_or(name + "." + "max_vel_theta_near_goal", robot.max_vel_theta_near_goal, robot.max_vel_theta_near_goal);
@@ -205,6 +208,7 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "wheelbase", robot.wheelbase, robot.wheelbase);
   nh->get_parameter_or(name + "." + "cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh->get_parameter_or(name + "." + "is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
+    nh->get_parameter_or(name + "." + "slowdown_dist_near_goal", robot.slowdown_dist_near_goal, robot.slowdown_dist_near_goal);
   
   // GoalTolerance
   nh->get_parameter_or(name + "." + "xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);

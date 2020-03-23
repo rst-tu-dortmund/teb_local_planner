@@ -95,6 +95,7 @@ public:
   {
     double max_vel_x; //!< Maximum translational velocity of the robot
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
+    double max_vel_x_backwards_near_goal; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
     double max_vel_theta; //!< Maximum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
@@ -106,6 +107,7 @@ public:
     bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
     double max_vel_x_near_goal;
     double max_vel_theta_near_goal;
+    double slowdown_dist_near_goal;
   } robot; //!< Robot related parameters
 
   //! Goal tolerance related parameters
@@ -261,6 +263,7 @@ public:
     robot.max_vel_x = 0.4;
     robot.max_vel_x_near_goal = 0.4;
     robot.max_vel_x_backwards = 0.2;
+    robot.max_vel_x_backwards_near_goal = 0.2;
     robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
     robot.max_vel_theta_near_goal = 0.3;
@@ -271,6 +274,7 @@ public:
     robot.wheelbase = 1.0;
     robot.cmd_angle_instead_rotvel = false;
     robot.is_footprint_dynamic = false;
+    robot.slowdown_dist_near_goal = 1.5;
 
     // GoalTolerance
 
