@@ -671,8 +671,8 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const geometry_msgs::msg::PoseStamped& 
     // transform robot pose into the plan frame (we do not wait here, since pruning not crucial, if missed a few times)
     //geometry_msgs::msg::TransformStamped global_to_plan_transform = tf_->lookupTransform(global_plan.front().header.frame_id, global_pose.header.frame_id, tf2::timeFromSec(0));
     geometry_msgs::msg::PoseStamped robot = tf_->transform(
-                global_plan.front(),
-                global_pose.header.frame_id);
+                global_pose
+                global_plan.front().header.frame_id);
 
     //robot.setData( global_to_plan_transform * global_pose );
     
