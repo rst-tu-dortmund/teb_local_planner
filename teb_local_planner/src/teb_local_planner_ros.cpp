@@ -421,10 +421,10 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
   }
     if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_->robot.slowdown_dist_near_goal){
         saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z,
-                         (cfg_->robot.max_vel_x_near_goal * 0.75 * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_x_near_goal * 0.25),
-                cfg_->robot.max_vel_y,
-                         (cfg_->robot.max_vel_theta_near_goal * 0.75 * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_theta_near_goal * 0.25),
-                         (cfg_->robot.max_vel_x_backwards_near_goal * 0.75 * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_x_backwards_near_goal * 0.25));
+                         ((cfg_->robot.max_vel_x - cfg_->robot.max_vel_x_near_goal) * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_x_near_goal),
+                          cfg_->robot.max_vel_y,
+                         ((cfg_->robot.max_vel_theta - cfg_->robot.max_vel_theta_near_goal) * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_theta_near_goal),
+                         ((cfg_->robot.max_vel_x_backwards - cfg_->robot.max_vel_x_backwards_near_goal) * fabs(std::sqrt(dx*dx+dy*dy)) / cfg_->robot.slowdown_dist_near_goal) + (cfg_->robot.max_vel_x_backwards_near_goal));
     }
     else {
         // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
@@ -701,8 +701,8 @@ bool TebLocalPlannerROS::pruneGlobalPlan(const geometry_msgs::msg::PoseStamped& 
       double dy = robot.pose.position.y - it->pose.position.y;
 
       double dist_sq = dx * dx + dy * dy;
-      RCLCPP_INFO(nh_->get_logger(), "Dist sqrd %f", dist_sq);
-        RCLCPP_INFO(nh_->get_logger(), "Pose X : %f", robot.pose.position.x);
+      //RCLCPP_INFO(nh_->get_logger(), "Dist sqrd %f", dist_sq);
+      //RCLCPP_INFO(nh_->get_logger(), "Pose X : %f", robot.pose.position.x);
 
       if (dist_sq < dist_thresh_sq)
       {
@@ -750,9 +750,9 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
     geometry_msgs::msg::TransformStamped plan_to_global_transform = tf_->lookupTransform(
                 global_frame,
                 plan_pose.header.frame_id, tf2::timeFromSec(0),tf2::durationFromSec(0.5));
-      RCLCPP_INFO(nh_->get_logger(), "Global frame Id: %s\n", global_frame.c_str() );
-      RCLCPP_INFO(nh_->get_logger(), "Plan pose Id: %s\n", plan_pose.header.frame_id.c_str());
-      RCLCPP_INFO(nh_->get_logger(), "Plan pose Id: %s\n", plan_pose.header.frame_id.c_str());
+      //RCLCPP_INFO(nh_->get_logger(), "Global frame Id: %s\n", global_frame.c_str() );
+      //RCLCPP_INFO(nh_->get_logger(), "Plan pose Id: %s\n", plan_pose.header.frame_id.c_str());
+      //RCLCPP_INFO(nh_->get_logger(), "Plan pose Id: %s\n", plan_pose.header.frame_id.c_str());
 //    tf_->waitForTransform(global_frame, ros::Time::now(),
 //    plan_pose.header.frame_id, plan_pose.header.stamp,
 //    plan_pose.header.frame_id, ros::Duration(0.5));
@@ -794,9 +794,9 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
     geometry_msgs::msg::PoseStamped newer_pose;
     
     double plan_length = 0; // check cumulative Euclidean distance along the plan
-      RCLCPP_INFO(nh_->get_logger(), "Sq_dist: %f  | Sq_d_thresh: %f", sq_dist, sq_dist_threshold);
-      RCLCPP_INFO(nh_->get_logger(), "Global plan size: %d | i: %d\n", (int)global_plan.size(), i);
-      RCLCPP_INFO(nh_->get_logger(), "Max Plan length: %f | Plan Length: %f", i, plan_length );
+      //RCLCPP_INFO(nh_->get_logger(), "Sq_dist: %f  | Sq_d_thresh: %f", sq_dist, sq_dist_threshold);
+      //RCLCPP_INFO(nh_->get_logger(), "Global plan size: %d | i: %d\n", (int)global_plan.size(), i);
+      //(nh_->get_logger(), "Max Plan length: %f | Plan Length: %f", i, plan_length );
 
       //now we'll transform until points are outside of our distance threshold
       while(i < (int)global_plan.size() && sq_dist <= sq_dist_threshold && (max_plan_length<=0 || plan_length <= max_plan_length))
@@ -823,8 +823,8 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
 
       ++i;
     }
-      RCLCPP_INFO(nh_->get_logger(), "Robot pose X: %f\n", robot_pose.pose.position.x );
-      RCLCPP_INFO(nh_->get_logger(), "Global plan pose X: %f\n", global_plan[i].pose.position.x );
+      //RCLCPP_INFO(nh_->get_logger(), "Robot pose X: %f\n", robot_pose.pose.position.x );
+      //RCLCPP_INFO(nh_->get_logger(), "Global plan pose X: %f\n", global_plan[i].pose.position.x );
 
       // if we are really close to the goal (<sq_dist_threshold) and the goal is not yet reached (e.g. orientation error >>0)
     // the resulting transformed plan can be empty. In that case we explicitly inject the global goal.
