@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1)
 project(teb_local_planner)
 
 # Set to Release in order to speed up the program significantly
