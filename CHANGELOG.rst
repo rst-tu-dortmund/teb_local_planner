@@ -2,6 +2,16 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added pill resp. stadium-shaped obstacle
+* Changed minimum CMake version to 3.1
+* Improved efficiency of 3d h-signature computation
+* Changed default value for parameter penalty_epsilon to 0.05
+* Improved efficiency of findClosedTrajectoryPose()
+* Removed obsolete method isHorizonReductionAppropriate()
+* Contributors: Christoph Rösmann, XinyuKhan
+
 0.8.4 (2019-12-02)
 ------------------
 * Fixed TEB autoResize if last TimeDiff is small
