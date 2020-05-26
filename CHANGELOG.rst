@@ -2,8 +2,8 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.9.0 (2020-05-26)
+------------------
 * Added pill resp. stadium-shaped obstacle
 * Changed minimum CMake version to 3.1
 * Improved efficiency of 3d h-signature computation
