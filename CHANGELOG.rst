@@ -2,6 +2,13 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fixed RobotFootprintModel visualization bug (thanks to Anson Wang)
+* Reserve the size of the relevant obstacles vector to avoid excessive memory allocations (thanks to João Monteiro)
+* CMake: Removed system include to avoid compiling issues on some platforms
+* Contributors: Anson Wang, Christoph Rösmann, João Carlos Espiúca Monteiro
+
 0.9.0 (2020-05-26)
 ------------------
 * Added pill resp. stadium-shaped obstacle
