@@ -59,17 +59,6 @@
 #include <g2o/solvers/csparse/linear_solver_csparse.h>
 #include <g2o/solvers/cholmod/linear_solver_cholmod.h>
 
-// g2o custom edges and vertices for the TEB planner
-#include <teb_local_planner/g2o_types/edge_velocity.h>
-#include <teb_local_planner/g2o_types/edge_acceleration.h>
-#include <teb_local_planner/g2o_types/edge_kinematics.h>
-#include <teb_local_planner/g2o_types/edge_time_optimal.h>
-#include <teb_local_planner/g2o_types/edge_shortest_path.h>
-#include <teb_local_planner/g2o_types/edge_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_via_point.h>
-#include <teb_local_planner/g2o_types/edge_prefer_rotdir.h>
-
 // messages
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -612,7 +601,6 @@ protected:
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles (legacy association strategy)
-   * @warning do not combine with AddEdgesInflatedObstacles
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
