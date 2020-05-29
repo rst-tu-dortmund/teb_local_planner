@@ -432,6 +432,9 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
   information_inflated(0,0) = cfg_->optim.weight_obstacle * weight_multiplier;
   information_inflated(1,1) = cfg_->optim.weight_inflation;
   information_inflated(0,1) = information_inflated(1,0) = 0;
+
+  std::vector<Obstacle*> relevant_obstacles;
+  relevant_obstacles.reserve(obstacles_->size());
     
   // iterate all teb points (skip first and last)
   for (int i=1; i < teb_.sizePoses()-1; ++i)
@@ -441,7 +444,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       Obstacle* left_obstacle = nullptr;
       Obstacle* right_obstacle = nullptr;
       
-      std::vector<Obstacle*> relevant_obstacles;
+      relevant_obstacles.clear();
       
       const Eigen::Vector2d pose_orient = teb_.Pose(i).orientationUnitVec();
       
