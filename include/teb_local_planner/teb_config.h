@@ -161,7 +161,7 @@ public:
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles
     double weight_dynamic_obstacle_inflation; //!< Optimization weight for the inflation penalty of dynamic obstacles (should be small)
-    double weight_obstacle_velocity_ratio; //!< Optimization weight for satisfying a maximum allowed velocity with respect to the distance to a static obstacle
+    double weight_velocity_obstacle_ratio; //!< Optimization weight for satisfying a maximum allowed velocity with respect to the distance to a static obstacle
     double weight_viapoint; //!< Optimization weight for minimizing the distance to via-points
     double weight_prefer_rotdir; //!< Optimization weight for preferring a specific turning direction (-> currently only activated if an oscillation is detected, see 'oscillation_recovery'
 
@@ -317,7 +317,7 @@ public:
     optim.weight_inflation = 0.1;
     optim.weight_dynamic_obstacle = 50;
     optim.weight_dynamic_obstacle_inflation = 0.1;
-    optim.weight_obstacle_velocity_ratio = 0;
+    optim.weight_velocity_obstacle_ratio = 0;
     optim.weight_viapoint = 1;
     optim.weight_prefer_rotdir = 50;
 

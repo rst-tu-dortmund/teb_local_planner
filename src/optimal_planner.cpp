@@ -358,7 +358,7 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
 
   AddEdgesPreferRotDir();
 
-  if (cfg_->optim.weight_obstacle_velocity_ratio > 0)
+  if (cfg_->optim.weight_velocity_obstacle_ratio > 0)
     AddEdgesVelocityObstacleRatio();
     
   return true;  
@@ -473,7 +473,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
   };
     
   // iterate all teb points, skipping the last and, if the EdgeVelocityObstacleRatio edges should not be created, the first one too
-  const int first_vertex = cfg_->optim.weight_obstacle_velocity_ratio == 0 ? 1 : 0;
+  const int first_vertex = cfg_->optim.weight_velocity_obstacle_ratio == 0 ? 1 : 0;
   for (int i = first_vertex; i < teb_.sizePoses() - 1; ++i)
   {    
       double left_min_dist = std::numeric_limits<double>::max();
@@ -993,8 +993,8 @@ void TebOptimalPlanner::AddEdgesPreferRotDir()
 void TebOptimalPlanner::AddEdgesVelocityObstacleRatio()
 {
   Eigen::Matrix<double,2,2> information;
-  information(0,0) = cfg_->optim.weight_obstacle_velocity_ratio;
-  information(1,1) = cfg_->optim.weight_obstacle_velocity_ratio;
+  information(0,0) = cfg_->optim.weight_velocity_obstacle_ratio;
+  information(1,1) = cfg_->optim.weight_velocity_obstacle_ratio;
   information(0,1) = information(1,0) = 0;
 
   auto iter_obstacle = obstacles_per_vertex_.begin();
