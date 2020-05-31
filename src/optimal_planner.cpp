@@ -40,6 +40,7 @@
 
 // g2o custom edges and vertices for the TEB planner
 #include <teb_local_planner/g2o_types/edge_velocity.h>
+#include <teb_local_planner/g2o_types/edge_velocity_obstacle_ratio.h>
 #include <teb_local_planner/g2o_types/edge_acceleration.h>
 #include <teb_local_planner/g2o_types/edge_kinematics.h>
 #include <teb_local_planner/g2o_types/edge_time_optimal.h>
@@ -355,8 +356,10 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
   else
     AddEdgesKinematicsCarlike(); // we have a carlike robot since the turning radius is bounded from below.
 
-    
   AddEdgesPreferRotDir();
+
+  if (cfg_->optim.weight_obstacle_velocity_ratio > 0)
+    AddEdgesVelocityObstacleRatio();
     
   return true;  
 }
@@ -415,6 +418,8 @@ void TebOptimalPlanner::AddTEBVertices()
   // add vertices to graph
   ROS_DEBUG_COND(cfg_->optim.optimization_verbose, "Adding TEB vertices ...");
   unsigned int id_counter = 0; // used for vertices ids
+  obstacles_per_vertex_.resize(teb_.sizePoses());
+  auto iter_obstacle = obstacles_per_vertex_.begin();
   for (int i=0; i<teb_.sizePoses(); ++i)
   {
     teb_.PoseVertex(i)->setId(id_counter++);
@@ -424,7 +429,9 @@ void TebOptimalPlanner::AddTEBVertices()
       teb_.TimeDiffVertex(i)->setId(id_counter++);
       optimizer_->addVertex(teb_.TimeDiffVertex(i));
     }
-  } 
+    iter_obstacle->clear();
+    (iter_obstacle++)->reserve(obstacles_->size());
+  }
 }
 
 
@@ -444,8 +451,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
   information_inflated(1,1) = cfg_->optim.weight_inflation;
   information_inflated(0,1) = information_inflated(1,0) = 0;
 
-  std::vector<Obstacle*> relevant_obstacles;
-  relevant_obstacles.reserve(obstacles_->size());
+  auto iter_obstacle = obstacles_per_vertex_.begin();
 
   auto create_edge = [inflated, &information, &information_inflated, this] (int index, const Obstacle* obstacle) {
     if (inflated)
@@ -466,15 +472,14 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
     };
   };
     
-  // iterate all teb points (skip first and last)
-  for (int i=1; i < teb_.sizePoses()-1; ++i)
+  // iterate all teb points, skipping the last and, if the EdgeVelocityObstacleRatio edges should not be created, the first one too
+  const int first_vertex = cfg_->optim.weight_obstacle_velocity_ratio == 0 ? 1 : 0;
+  for (int i = first_vertex; i < teb_.sizePoses() - 1; ++i)
   {    
       double left_min_dist = std::numeric_limits<double>::max();
       double right_min_dist = std::numeric_limits<double>::max();
-      Obstacle* left_obstacle = nullptr;
-      Obstacle* right_obstacle = nullptr;
-      
-      relevant_obstacles.clear();
+      ObstaclePtr left_obstacle;
+      ObstaclePtr right_obstacle;
       
       const Eigen::Vector2d pose_orient = teb_.Pose(i).orientationUnitVec();
       
@@ -491,7 +496,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
           // force considering obstacle if really close to the current pose
         if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
           {
-              relevant_obstacles.push_back(obst.get());
+              iter_obstacle->push_back(obst);
               continue;
           }
           // cut-off distance
@@ -504,7 +509,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
               if (dist < left_min_dist)
               {
                   left_min_dist = dist;
-                  left_obstacle = obst.get();
+                  left_obstacle = obst;
               }
           }
           else
@@ -512,18 +517,27 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
               if (dist < right_min_dist)
               {
                   right_min_dist = dist;
-                  right_obstacle = obst.get();
+                  right_obstacle = obst;
               }
           }
       }   
       
-      // create obstacle edges
       if (left_obstacle)
-        create_edge(i, left_obstacle);
+        iter_obstacle->push_back(left_obstacle);
       if (right_obstacle)
-        create_edge(i, right_obstacle);
+        iter_obstacle->push_back(right_obstacle);
+
+      // continue here to ignore obstacles for the first pose, but use them later to create the EdgeVelocityObstacleRatio edges
+      if (i == 0)
+      {
+        ++iter_obstacle;
+        continue;
+      }
+
+      // create obstacle edges
       for (const ObstaclePtr obst : *iter_obstacle)
         create_edge(i, obst.get());
+      ++iter_obstacle;
   }
 }
 
@@ -973,6 +987,30 @@ void TebOptimalPlanner::AddEdgesPreferRotDir()
         rotdir_edge->preferRight();
     
     optimizer_->addEdge(rotdir_edge);
+  }
+}
+
+void TebOptimalPlanner::AddEdgesVelocityObstacleRatio()
+{
+  Eigen::Matrix<double,2,2> information;
+  information(0,0) = cfg_->optim.weight_obstacle_velocity_ratio;
+  information(1,1) = cfg_->optim.weight_obstacle_velocity_ratio;
+  information(0,1) = information(1,0) = 0;
+
+  auto iter_obstacle = obstacles_per_vertex_.begin();
+
+  for (int index = 0; index < teb_.sizePoses() - 1; ++index)
+  {
+    for (const ObstaclePtr obstacle : (*iter_obstacle++))
+    {
+      EdgeVelocityObstacleRatio* edge = new EdgeVelocityObstacleRatio;
+      edge->setVertex(0,teb_.PoseVertex(index));
+      edge->setVertex(1,teb_.PoseVertex(index + 1));
+      edge->setVertex(2,teb_.TimeDiffVertex(index));
+      edge->setInformation(information);
+      edge->setParameters(*cfg_, robot_model_.get(), obstacle.get());
+      optimizer_->addEdge(edge);
+    }
   }
 }
 
