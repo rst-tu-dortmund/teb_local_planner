@@ -102,6 +102,7 @@ public:
     double wheelbase; //!< The distance between the drive shaft and steering axle (only required for a carlike robot with 'cmd_angle_instead_rotvel' enabled); The value might be negative for back-wheeled robots!
     bool cmd_angle_instead_rotvel; //!< Substitute the rotational velocity in the commanded velocity message by the corresponding steering angle (check 'axles_distance')
     bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
+    bool use_proportional_saturation; //<! If true, reduce all twists components (linear x and y, and angular z) proportionally if any exceed its corresponding bounds, instead of saturating each one individually
   } robot; //!< Robot related parameters
 
   //! Goal tolerance related parameters
@@ -129,6 +130,9 @@ public:
     std::string costmap_converter_plugin; //!< Define a plugin name of the costmap_converter package (costmap cells are converted to points/lines/polygons)
     bool costmap_converter_spin_thread; //!< If \c true, the costmap converter invokes its callback queue in a different thread
     int costmap_converter_rate; //!< The rate that defines how often the costmap_converter plugin processes the current costmap (the value should not be much higher than the costmap update rate)
+    double obstacle_proximity_ratio_max_vel; //!< Ratio of the maximum velocities used as an upper bound when reducing the speed due to the proximity to a static obstacles
+    double obstacle_proximity_lower_bound; //!< Distance to a static obstacle for which the velocity should be lower
+    double obstacle_proximity_upper_bound; //!< Distance to a static obstacle for which the velocity should be higher
   } obstacles; //!< Obstacle related parameters
 
 
@@ -158,6 +162,7 @@ public:
     double weight_inflation; //!< Optimization weight for the inflation penalty (should be small)
     double weight_dynamic_obstacle; //!< Optimization weight for satisfying a minimum separation from dynamic obstacles
     double weight_dynamic_obstacle_inflation; //!< Optimization weight for the inflation penalty of dynamic obstacles (should be small)
+    double weight_velocity_obstacle_ratio; //!< Optimization weight for satisfying a maximum allowed velocity with respect to the distance to a static obstacle
     double weight_viapoint; //!< Optimization weight for minimizing the distance to via-points
     double weight_prefer_rotdir; //!< Optimization weight for preferring a specific turning direction (-> currently only activated if an oscillation is detected, see 'oscillation_recovery'
 
@@ -264,6 +269,7 @@ public:
     robot.wheelbase = 1.0;
     robot.cmd_angle_instead_rotvel = false;
     robot.is_footprint_dynamic = false;
+    robot.use_proportional_saturation = false;
 
     // GoalTolerance
 
@@ -287,6 +293,9 @@ public:
     obstacles.costmap_converter_plugin = "";
     obstacles.costmap_converter_spin_thread = true;
     obstacles.costmap_converter_rate = 5;
+    obstacles.obstacle_proximity_ratio_max_vel = 1;
+    obstacles.obstacle_proximity_lower_bound = 0;
+    obstacles.obstacle_proximity_upper_bound = 0.5;
 
     // Optimization
 
@@ -310,6 +319,7 @@ public:
     optim.weight_inflation = 0.1;
     optim.weight_dynamic_obstacle = 50;
     optim.weight_dynamic_obstacle_inflation = 0.1;
+    optim.weight_velocity_obstacle_ratio = 0;
     optim.weight_viapoint = 1;
     optim.weight_prefer_rotdir = 50;
 
