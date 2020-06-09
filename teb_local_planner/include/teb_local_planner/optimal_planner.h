@@ -330,7 +330,7 @@ public:
    * @param visualization shared pointer to a TebVisualization instance
    * @see visualize
    */
-  void setVisualization(TebVisualizationPtr visualization);
+  void setVisualization(const TebVisualizationPtr & visualization) override;
   
   /**
    * @brief Publish the local plan and pose sequence via ros topics (e.g. subscribe with rviz).

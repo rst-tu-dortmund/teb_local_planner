@@ -81,29 +81,12 @@ class TebOptimalPlanner; //!< Forward Declaration
 class TebVisualization
 {
 public:
-    
-  /**
-   * @brief Default constructor
-   * @remarks do not forget to call initialize()
-   */
-  TebVisualization();
-  
   /**
    * @brief Constructor that initializes the class and registers topics
    * @param nh local rclcpp::Node::SharedPtr
    * @param cfg const reference to the TebConfig class for parameters
    */
-  TebVisualization(nav2_util::LifecycleNode::SharedPtr nh, const TebConfig& cfg);
-  
-  /**
-   * @brief Initializes the class and registers topics.
-   * 
-   * Call this function if only the default constructor has been called before.
-   * @param nh local rclcpp::Node::SharedPtr
-   * @param cfg const reference to the TebConfig class for parameters
-   */
-  void initialize(nav2_util::LifecycleNode::SharedPtr nh, const TebConfig& cfg);
-  
+  TebVisualization(const rclcpp_lifecycle::LifecycleNode::SharedPtr & nh, const TebConfig& cfg);
   
   /** @name Publish to topics */
   //@{
@@ -231,9 +214,10 @@ public:
    */
   void publishFeedbackMessage(const TebOptimalPlanner& teb_planner, const ObstContainer& obstacles);
   
-  nav2_util::CallbackReturn on_activate(const rclcpp_lifecycle::State & state);
-  nav2_util::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & state);
-  nav2_util::CallbackReturn on_cleanup(const rclcpp_lifecycle::State & state);
+  nav2_util::CallbackReturn on_configure();
+  nav2_util::CallbackReturn on_activate();
+  nav2_util::CallbackReturn on_deactivate();
+  nav2_util::CallbackReturn on_cleanup();
   
   //@}
 

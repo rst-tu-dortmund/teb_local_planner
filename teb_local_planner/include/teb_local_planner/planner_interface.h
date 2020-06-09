@@ -59,6 +59,7 @@
 
 // this package
 #include "teb_local_planner/pose_se2.h"
+#include "teb_local_planner/visualization.h"
 
 namespace teb_local_planner
 {
@@ -167,6 +168,8 @@ public:
   virtual void visualize()
   {
   }
+
+  virtual void setVisualization(const TebVisualizationPtr & visualization) = 0;
   
   /**
    * @brief Check whether the planned trajectory is feasible or not.
