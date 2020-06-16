@@ -145,7 +145,7 @@ public:
         while(path_start != path_end)
         {
             cplx z1 = fun_cplx_point(*path_start);
-            cplx z2 = fun_cplx_point(*boost::next(path_start));
+            cplx z2 = fun_cplx_point(*std::next(path_start));
 
             for (std::size_t l=0; l<obstacles->size(); ++l) // iterate all obstacles
             {
@@ -286,29 +286,35 @@ public:
     {
       hsignature3d_.resize(obstacles->size());
 
-      std::advance(path_end, -1); // reduce path_end by 1 (since we check line segments between those path points
+      std::advance(path_end, -1); // reduce path_end by 1 (since we check line segments between those path points)
 
-      double H = 0;
+      constexpr int num_int_steps_per_segment = 10;
 
       for (std::size_t l = 0; l < obstacles->size(); ++l) // iterate all obstacles
       {
-        H = 0;
+        double H = 0;
         double transition_time = 0;
         double next_transition_time = 0;
         BidirIter path_iter;
         TimeDiffSequence::iterator timediff_iter;
 
+        Eigen::Vector3d s1 (obstacles->at(l)->getCentroid()(0), obstacles->at(l)->getCentroid()(1), 0);
+        double t = 120; // some large value for defining the end point of the obstacle/"conductor" model
+        Eigen::Vector3d s2;
+        obstacles->at(l)->predictCentroidConstantVelocity(t, s2.head(2));
+        s2[2] = t;
+        Eigen::Vector3d ds = s2 - s1;
+        double ds_sq_norm = ds.squaredNorm(); // by definition not zero as t > 0 (3rd component)
+
         // iterate path
         for (path_iter = path_start, timediff_iter = timediff_start.get(); path_iter != path_end; ++path_iter, ++timediff_iter)
         {
           std::complex<long double> z1 = fun_cplx_point(*path_iter);
-          std::complex<long double> z2 = fun_cplx_point(*boost::next(path_iter));
-          Eigen::Vector2d pose (z1.real(), z1.imag());
-          Eigen::Vector2d nextpose (z2.real(), z2.imag());
+          std::complex<long double> z2 = fun_cplx_point(*std::next(path_iter));
 
           transition_time = next_transition_time;
           if (timediff_start == boost::none || timediff_end == boost::none) // if no time information is provided yet, approximate transition time
-            next_transition_time += (nextpose-pose).norm() / cfg_->robot.max_vel_x; // Approximate the time, if no time is known
+            next_transition_time += std::abs(z2 - z1) / cfg_->robot.max_vel_x; // Approximate the time, if no time is known
           else // otherwise use the time information from the teb trajectory
           {
             if (std::distance(path_iter, path_end) != std::distance(timediff_iter, timediff_end.get())) {
@@ -317,36 +323,29 @@ public:
             next_transition_time += (*timediff_iter)->dt();
           }
 
-          Eigen::Vector3d pose_with_time (pose(0), pose(1), transition_time);
-          Eigen::Vector3d next_pose_with_time (nextpose(0), nextpose(1), next_transition_time);
+          Eigen::Vector3d direction_vec;
+          direction_vec[0] = z2.real() - z1.real();
+          direction_vec[1] = z2.imag() - z1.imag();
+          direction_vec[2] = next_transition_time - transition_time;
 
-          Eigen::Vector3d direction_vec = next_pose_with_time - pose_with_time;
-          if(direction_vec.norm() == 0)  // Coincident poses
+          if(direction_vec.norm() < 1e-15)  // Coincident poses
             continue;
-          Eigen::Vector3d dl = 0.1 * direction_vec.normalized(); // Integrate with 10 steps between each pose
 
-          for (Eigen::Vector3d position = pose_with_time; (position-pose_with_time).norm() <= direction_vec.norm(); position += dl)
+          Eigen::Vector3d r(z1.real(), z1.imag(), transition_time);
+          Eigen::Vector3d dl = 1.0/static_cast<double>(num_int_steps_per_segment) * direction_vec; // Integrate with multiple steps between each pose
+          Eigen::Vector3d p1, p2, d, phi;
+          for (int i = 0; i < num_int_steps_per_segment; ++i, r += dl)
           {
-            double t = 120;
-            Eigen::Vector3d s1 (obstacles->at(l)->getCentroid()(0), obstacles->at(l)->getCentroid()(1), 0);
-            Eigen::Vector3d s2;
-            obstacles->at(l)->predictCentroidConstantVelocity(t, s2.head(2));
-            s2[2] = t;
-            Eigen::Vector3d r = position;
-            Eigen::Vector3d p1 = s1 - r;
-            Eigen::Vector3d p2 = s2 - r;
-            Eigen::Vector3d d = ((s2 - s1).cross(p1.cross(p2))) / (s2 - s1).squaredNorm();
-            Eigen::Vector3d phi = 1 / d.squaredNorm() * ((d.cross(p2) / p2.norm()) - (d.cross(p1) / p1.norm()));
-
-            if (dl.norm() < (next_pose_with_time - position).norm())
-              H += phi.dot(dl);
-            else
-              H += phi.dot(next_pose_with_time - position);
+            p1 = s1 - r;
+            p2 = s2 - r;
+            d = (ds.cross(p1.cross(p2))) / ds_sq_norm;
+            phi = 1.0 / d.squaredNorm() * ((d.cross(p2) / p2.norm()) - (d.cross(p1) / p1.norm()));
+            H += phi.dot(dl);
           }
         }
 
         // normalize to 1
-        hsignature3d_.at(l) = H/(4*M_PI);
+        hsignature3d_.at(l) = H/(4.0*M_PI);
       }
     }
 
