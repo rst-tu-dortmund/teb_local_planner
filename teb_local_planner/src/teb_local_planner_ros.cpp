@@ -82,6 +82,12 @@ TebLocalPlannerROS::~TebLocalPlannerROS()
 //  cfg_->reconfigure(config);
 //}
 
+
+void TebLocalPlannerROS::updateParameters()
+    {
+        RCLCPP_INFO(nh_->get_logger(), "parameters changed");
+    }
+
 void TebLocalPlannerROS::initialize()
 {
   // check if the plugin is already initialized
@@ -104,6 +110,9 @@ void TebLocalPlannerROS::initialize()
         
     // create robot footprint/contour model for optimization
     RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer();
+
+    // TODO update footprint model after param change
+    //  nh_->set_on_parameters_set_callback(&TebLocalPlannerROS::updateParameters);
     
     // create the planner instance
     if (cfg_->hcp.enable_homotopy_class_planning)

@@ -114,6 +114,8 @@ public:
   void deactivate() override;
   void cleanup() override;
 
+  void updateParameters();
+
   /**
     * @brief Initializes the teb plugin
     */
