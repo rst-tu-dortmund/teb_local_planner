@@ -38,6 +38,7 @@
 
 #include <teb_local_planner/timed_elastic_band.h>
 
+#include <limits>
 
 namespace teb_local_planner
 {
@@ -440,72 +441,49 @@ bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::Pos
 
 int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_point, double* distance, int begin_idx) const
 {
-  std::vector<double> dist_vec; // TODO: improve! efficiency
-  dist_vec.reserve(sizePoses());
-  
   int n = sizePoses();
+  if (begin_idx < 0 || begin_idx >= n)
+    return -1;
+
+  double min_dist_sq = std::numeric_limits<double>::max();
+  int min_idx = -1;
   
-  // calc distances
   for (int i = begin_idx; i < n; i++)
   {
-    Eigen::Vector2d diff = ref_point - Pose(i).position();
-    dist_vec.push_back(diff.norm());
-  }
-  
-  if (dist_vec.empty())
-    return -1;
-  
-  // find minimum
-  int index_min = 0;
-
-  double last_value = dist_vec.at(0);
-  for (int i=1; i < (int)dist_vec.size(); i++)
-  {
-    if (dist_vec.at(i) < last_value)
+    double dist_sq = (ref_point - Pose(i).position()).squaredNorm();
+    if (dist_sq < min_dist_sq)
     {
-      last_value = dist_vec.at(i);
-      index_min = i;
+      min_dist_sq = dist_sq;
+      min_idx = i;
     }
   }
+
   if (distance)
-    *distance = last_value;
-  return begin_idx+index_min;
+    *distance = std::sqrt(min_dist_sq);
+
+  return min_idx;
 }
 
 
 int TimedElasticBand::findClosestTrajectoryPose(const Eigen::Ref<const Eigen::Vector2d>& ref_line_start, const Eigen::Ref<const Eigen::Vector2d>& ref_line_end, double* distance) const
 {
-  std::vector<double> dist_vec; // TODO: improve! efficiency
-  dist_vec.reserve(sizePoses());
+  double min_dist = std::numeric_limits<double>::max();
+  int min_idx = -1;
 
-  int n = sizePoses();
-  
-  // calc distances  
-  for (int i = 0; i < n; i++)
+  for (int i = 0; i < sizePoses(); i++)
   {
     Eigen::Vector2d point = Pose(i).position();
-    double diff = distance_point_to_segment_2d(point, ref_line_start, ref_line_end);
-    dist_vec.push_back(diff);
-  }
-  
-  if (dist_vec.empty())
-    return -1;
-  
-  // find minimum
-  int index_min = 0;
-
-  double last_value = dist_vec.at(0);
-  for (int i=1; i < (int)dist_vec.size(); i++)
-  {
-    if (dist_vec.at(i) < last_value)
+    double dist = distance_point_to_segment_2d(point, ref_line_start, ref_line_end);
+    if (dist < min_dist)
     {
-      last_value = dist_vec.at(i);
-      index_min = i;
+      min_dist = dist;
+      min_idx = i;
     }
   }
+
   if (distance)
-    *distance = last_value;
-  return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
+    *distance = min_dist;
+  return min_idx;
 }
 
 int TimedElasticBand::findClosestTrajectoryPose(const Point2dContainer& vertices, double* distance) const
@@ -517,42 +495,29 @@ int TimedElasticBand::findClosestTrajectoryPose(const Point2dContainer& vertices
   else if (vertices.size() == 2)
     return findClosestTrajectoryPose(vertices.front(), vertices.back());
   
-  std::vector<double> dist_vec; // TODO: improve! efficiency
-  dist_vec.reserve(sizePoses());
-  
-  int n = sizePoses();
-  
-  // calc distances  
-  for (int i = 0; i < n; i++)
+  double min_dist = std::numeric_limits<double>::max();
+  int min_idx = -1;
+
+  for (int i = 0; i < sizePoses(); i++)
   {
     Eigen::Vector2d point = Pose(i).position();
-    double diff = HUGE_VAL;
+    double dist_to_polygon = std::numeric_limits<double>::max();
     for (int j = 0; j < (int) vertices.size()-1; ++j)
     {
-       diff = std::min(diff, distance_point_to_segment_2d(point, vertices[j], vertices[j+1]));
+      dist_to_polygon = std::min(dist_to_polygon, distance_point_to_segment_2d(point, vertices[j], vertices[j+1]));
     }
-    diff = std::min(diff, distance_point_to_segment_2d(point, vertices.back(), vertices.front()));
-    dist_vec.push_back(diff);
-  }
-
-  if (dist_vec.empty())
-    return -1;
-
-  // find minimum
-  int index_min = 0;
-
-  double last_value = dist_vec.at(0);
-  for (int i=1; i < (int)dist_vec.size(); i++)
-  {
-    if (dist_vec.at(i) < last_value)
+    dist_to_polygon = std::min(dist_to_polygon, distance_point_to_segment_2d(point, vertices.back(), vertices.front()));
+    if (dist_to_polygon < min_dist)
     {
-      last_value = dist_vec.at(i);
-      index_min = i;
+      min_dist = dist_to_polygon;
+      min_idx = i;
     }
   }
+
   if (distance)
-    *distance = last_value;
-  return index_min; // return index, because it's equal to the vertex, which represents this bandpoint
+    *distance = min_dist;
+
+  return min_idx;
 }
 
 
@@ -561,7 +526,7 @@ int TimedElasticBand::findClosestTrajectoryPose(const Obstacle& obstacle, double
   const PointObstacle* pobst = dynamic_cast<const PointObstacle*>(&obstacle);
   if (pobst)
     return findClosestTrajectoryPose(pobst->position(), distance);
-  
+
   const LineObstacle* lobst = dynamic_cast<const LineObstacle*>(&obstacle);
   if (lobst)
     return findClosestTrajectoryPose(lobst->start(), lobst->end(), distance);

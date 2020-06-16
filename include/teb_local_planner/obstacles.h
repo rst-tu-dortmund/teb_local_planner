@@ -739,6 +739,156 @@ public:
   
 
 /**
+* @class PillObstacle
+* @brief Implements a 2D pill/stadium/capsular-shaped obstacle (line + distance/radius)
+*/
+
+class PillObstacle : public Obstacle
+{
+public:
+
+  /**
+    * @brief Default constructor of the point obstacle class
+    */
+  PillObstacle() : Obstacle()
+  {
+    start_.setZero();
+    end_.setZero();
+    centroid_.setZero();
+  }
+
+  /**
+   * @brief Construct LineObstacle using 2d position vectors as start and end of the line
+   * @param line_start 2d position that defines the start of the line obstacle
+   * @param line_end 2d position that defines the end of the line obstacle
+   */
+  PillObstacle(const Eigen::Ref< const Eigen::Vector2d>& line_start, const Eigen::Ref< const Eigen::Vector2d>& line_end, double radius)
+                : Obstacle(), start_(line_start), end_(line_end), radius_(radius)
+  {
+    calcCentroid();
+  }
+
+  /**
+   * @brief Construct LineObstacle using start and end coordinates
+   * @param x1 x-coordinate of the start of the line
+   * @param y1 y-coordinate of the start of the line
+   * @param x2 x-coordinate of the end of the line
+   * @param y2 y-coordinate of the end of the line
+   */
+  PillObstacle(double x1, double y1, double x2, double y2, double radius) : Obstacle(), radius_(radius)
+  {
+    start_.x() = x1;
+    start_.y() = y1;
+    end_.x() = x2;
+    end_.y() = y2;
+    calcCentroid();
+  }
+
+  // implements checkCollision() of the base class
+  virtual bool checkCollision(const Eigen::Vector2d& point, double min_dist) const
+  {
+    return getMinimumDistance(point) <= min_dist;
+  }
+
+  // implements checkLineIntersection() of the base class
+  virtual bool checkLineIntersection(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double min_dist=0) const
+  {
+    return check_line_segments_intersection_2d(line_start, line_end, start_, end_);
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& position) const
+  {
+    return distance_point_to_segment_2d(position, start_, end_) - radius_;
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end) const
+  {
+    return distance_segment_to_segment_2d(start_, end_, line_start, line_end) - radius_;
+  }
+
+  // implements getMinimumDistance() of the base class
+  virtual double getMinimumDistance(const Point2dContainer& polygon) const
+  {
+    return distance_segment_to_polygon_2d(start_, end_, polygon) - radius_;
+  }
+
+  // implements getMinimumDistanceVec() of the base class
+  virtual Eigen::Vector2d getClosestPoint(const Eigen::Vector2d& position) const
+  {
+      Eigen::Vector2d closed_point_line = closest_point_on_line_segment_2d(position, start_, end_);
+    return  closed_point_line + radius_*(position-closed_point_line).normalized();
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& position, double t) const
+  {
+    Eigen::Vector2d offset = t*centroid_velocity_;
+    return distance_point_to_segment_2d(position, start_ + offset, end_ + offset) - radius_;
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, double t) const
+  {
+    Eigen::Vector2d offset = t*centroid_velocity_;
+    return distance_segment_to_segment_2d(start_ + offset, end_ + offset, line_start, line_end) - radius_;
+  }
+
+  // implements getMinimumSpatioTemporalDistance() of the base class
+  virtual double getMinimumSpatioTemporalDistance(const Point2dContainer& polygon, double t) const
+  {
+    Eigen::Vector2d offset = t*centroid_velocity_;
+    return distance_segment_to_polygon_2d(start_ + offset, end_ + offset, polygon) - radius_;
+  }
+
+  // implements getCentroid() of the base class
+  virtual const Eigen::Vector2d& getCentroid() const
+  {
+    return centroid_;
+  }
+
+  // implements getCentroidCplx() of the base class
+  virtual std::complex<double> getCentroidCplx() const
+  {
+    return std::complex<double>(centroid_.x(), centroid_.y());
+  }
+
+  // Access or modify line
+  const Eigen::Vector2d& start() const {return start_;}
+  void setStart(const Eigen::Ref<const Eigen::Vector2d>& start) {start_ = start; calcCentroid();}
+  const Eigen::Vector2d& end() const {return end_;}
+  void setEnd(const Eigen::Ref<const Eigen::Vector2d>& end) {end_ = end; calcCentroid();}
+
+  // implements toPolygonMsg() of the base class
+  virtual void toPolygonMsg(geometry_msgs::Polygon& polygon)
+  {
+    // Currently, we only export the line
+    // TODO(roesmann): export whole pill
+    polygon.points.resize(2);
+    polygon.points.front().x = start_.x();
+    polygon.points.front().y = start_.y();
+
+    polygon.points.back().x = end_.x();
+    polygon.points.back().y = end_.y();
+    polygon.points.back().z = polygon.points.front().z = 0;
+  }
+
+protected:
+  void calcCentroid()    {    centroid_ = 0.5*(start_ + end_); }
+
+private:
+    Eigen::Vector2d start_;
+    Eigen::Vector2d end_;
+    double radius_ = 0.0;
+
+  Eigen::Vector2d centroid_;
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+/**
  * @class PolygonObstacle
  * @brief Implements a polygon obstacle with an arbitrary number of vertices
  * @details If the polygon has only 2 vertices, than it is considered as a line,
