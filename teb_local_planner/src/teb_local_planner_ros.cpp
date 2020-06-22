@@ -100,9 +100,6 @@ void TebLocalPlannerROS::initialize()
     // reserve some memory for obstacles
     obstacles_.reserve(500);
         
-    // create visualization instance	
-    visualization_ = TebVisualizationPtr(new TebVisualization(nh_, *cfg_.get()));
-        
     // create robot footprint/contour model for optimization
     RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer();
     
@@ -214,6 +211,9 @@ void TebLocalPlannerROS::configure(
   name_ = name;
 
   initialize();
+  visualization_ = std::make_shared<TebVisualization>(nh_, *cfg_);
+  visualization_->on_configure();
+  planner_->setVisualization(visualization_);
   
   return;
 }
@@ -1203,19 +1203,17 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer()
 }
 
 void TebLocalPlannerROS::activate() {
-  rclcpp_lifecycle::State state;
-  visualization_->on_activate(state);
+  visualization_->on_activate();
 
   return;
 }
 void TebLocalPlannerROS::deactivate() {
-  rclcpp_lifecycle::State state;
-  visualization_->on_deactivate(state);
+  visualization_->on_deactivate();
 
   return;
 }
 void TebLocalPlannerROS::cleanup() {
-  visualization_.reset();
+  visualization_->on_cleanup();
   costmap_converter_->stopWorker();
   
   return;

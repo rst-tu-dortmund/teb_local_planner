@@ -80,7 +80,7 @@ void HomotopyClassPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, 
 }
 
 
-void HomotopyClassPlanner::setVisualization(TebVisualizationPtr visualization)
+void HomotopyClassPlanner::setVisualization(const TebVisualizationPtr& visualization)
 {
   visualization_ = visualization;
 }

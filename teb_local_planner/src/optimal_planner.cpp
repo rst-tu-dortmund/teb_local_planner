@@ -82,8 +82,7 @@ void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, con
   via_points_ = via_points;
   cost_ = HUGE_VAL;
   prefer_rotdir_ = RotType::none;
-  setVisualization(visual);
-  
+
   vel_start_.first = true;
   vel_start_.second.linear.x = 0;
   vel_start_.second.linear.y = 0;
@@ -97,7 +96,7 @@ void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, con
 }
 
 
-void TebOptimalPlanner::setVisualization(TebVisualizationPtr visualization)
+void TebOptimalPlanner::setVisualization(const TebVisualizationPtr& visualization)
 {
   visualization_ = visualization;
 }
