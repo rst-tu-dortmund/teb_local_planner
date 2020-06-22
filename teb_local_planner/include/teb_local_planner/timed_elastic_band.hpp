@@ -35,9 +35,10 @@
  *
  * Author: Christoph Rösmann
  *********************************************************************/
-#include <boost/utility.hpp>
 
 #include "teb_local_planner/timed_elastic_band.h"
+
+#include <iterator>
 
 namespace teb_local_planner
 {
@@ -47,7 +48,7 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
                                      boost::optional<double> start_orientation, boost::optional<double> goal_orientation, int min_samples, bool guess_backwards_motion) 
 {
     Eigen::Vector2d start_position = fun_position( *path_start );
-    Eigen::Vector2d goal_position = fun_position( *boost::prior(path_end) );
+    Eigen::Vector2d goal_position = fun_position( *std::prev(path_end) );
     
     bool backwards = false;
     
@@ -91,7 +92,7 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
             //double dir_to_goal = atan2(point_to_goal[1],point_to_goal[0]); // direction to goal
             // Alternative: Direction from last path
             Eigen::Vector2d curr_point = fun_position(*path_start);
-            Eigen::Vector2d diff_last = curr_point - Pose(idx).position(); // we do not use boost::prior(*path_start) for those cases,
+            Eigen::Vector2d diff_last = curr_point - Pose(idx).position(); // we do not use std::prev(*path_start) for those cases,
                                                                         // where fun_position() does not return a reference or is expensive.
             double diff_norm = diff_last.norm();
             
@@ -116,7 +117,7 @@ bool TimedElasticBand::initTrajectoryToGoal(BidirIter path_start, BidirIter path
             /*
             // TODO: the following code does not seem to hot-start the optimizer. Instead it recudes convergence time.
 
-            Eigen::Vector2d diff_next = fun_position(*boost::next(path_start))-curr_point; // TODO maybe store the boost::next for the following iteration
+            Eigen::Vector2d diff_next = fun_position(*std::next(path_start))-curr_point; // TODO maybe store the std::next for the following iteration
             double ang_diff = std::abs( g2o::normalize_theta( atan2(diff_next[1],diff_next[0])
                                                             -atan2(diff_last[1],diff_last[0]) ) );
             

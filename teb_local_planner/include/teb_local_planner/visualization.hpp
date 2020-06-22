@@ -36,9 +36,10 @@
  * Author: Christoph Rösmann
  *********************************************************************/
 
-#include <boost/utility.hpp>
-
 #include "teb_local_planner/visualization.h"
+
+#include <boost/utility.hpp>
+#include <iterator>
 
 namespace teb_local_planner
 {
@@ -197,7 +198,7 @@ void TebVisualization::publishPathContainer(BidirIter first, BidirIter last, con
   {	  
     // iterate single path points
     typename PathType::const_iterator it_point, end_point;
-    for (it_point = first->begin(), end_point = boost::prior(first->end()); it_point != end_point; ++it_point) 
+    for (it_point = first->begin(), end_point = std::prev(first->end()); it_point != end_point; ++it_point)
     {
       geometry_msgs::msg::Point point_start;
       point_start.x = get_const_reference(*it_point).x();
@@ -206,8 +207,8 @@ void TebVisualization::publishPathContainer(BidirIter first, BidirIter last, con
       marker.points.push_back(point_start);
 
       geometry_msgs::msg::Point point_end;
-      point_end.x = get_const_reference(*boost::next(it_point)).x();
-      point_end.y = get_const_reference(*boost::next(it_point)).y();
+      point_end.x = get_const_reference(*std::next(it_point)).x();
+      point_end.y = get_const_reference(*std::next(it_point)).y();
       point_end.z = 0;
       marker.points.push_back(point_end);
     }
