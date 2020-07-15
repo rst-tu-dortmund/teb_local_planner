@@ -17,6 +17,7 @@ import roslib;
 import rospy
 import svgwrite
 import math
+import sys
 import time
 import random
 from svgwrite import cm, mm
