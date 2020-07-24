@@ -132,7 +132,9 @@ install(DIRECTORY include/
 install(FILES
   teb_local_planner_plugin.xml
   DESTINATION share
-)
+  )
+
+install(PROGRAMS scripts/cmd_vel_to_ackermann_drive.py DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 

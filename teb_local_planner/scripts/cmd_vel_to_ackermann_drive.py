@@ -2,7 +2,7 @@
 
 # Author: christoph.roesmann@tu-dortmund.de
 
-import rospy, math
+import rclpy, math
 from geometry_msgs.msg import Twist
 from ackermann_msgs.msg import AckermannDriveStamped
 
@@ -31,10 +31,10 @@ def cmd_callback(data):
     steering = convert_trans_rot_vel_to_steering_angle(v, data.angular.z, wheelbase)
   
   msg = AckermannDriveStamped()
-  msg.header.stamp = rospy.Time.now()
+  msg.header.stamp = node.get_clock().now().to_msg()
   msg.header.frame_id = frame_id
-  msg.drive.steering_angle = steering
-  msg.drive.speed = v
+  msg.drive.steering_angle = float(steering)
+  msg.drive.speed = float(v)
   
   pub.publish(msg)
   
@@ -43,23 +43,18 @@ def cmd_callback(data):
 
 
 if __name__ == '__main__': 
-  try:
-    
-    rospy.init_node('cmd_vel_to_ackermann_drive')
-        
-    twist_cmd_topic = rospy.get_param('~twist_cmd_topic', '/cmd_vel') 
-    ackermann_cmd_topic = rospy.get_param('~ackermann_cmd_topic', '/ackermann_cmd')
-    wheelbase = rospy.get_param('~wheelbase', 1.0)
-    frame_id = rospy.get_param('~frame_id', 'odom')
-    cmd_angle_instead_rotvel = rospy.get_param('/move_base/TebLocalPlannerROS/cmd_angle_instead_rotvel', False)
-    
-    rospy.Subscriber(twist_cmd_topic, Twist, cmd_callback, queue_size=1)
-    pub = rospy.Publisher(ackermann_cmd_topic, AckermannDriveStamped, queue_size=1)
-    
-    rospy.loginfo("Node 'cmd_vel_to_ackermann_drive' started.\nListening to %s, publishing to %s. Frame id: %s, wheelbase: %f", "/cmd_vel", ackermann_cmd_topic, frame_id, wheelbase)
-    
-    rospy.spin()
-    
-  except rospy.ROSInterruptException:
-    pass
+  rclpy.init()
+  global node
+  node = rclpy.create_node('cmd_vel_to_ackermann_drive')
+  
+  twist_cmd_topic = node.declare_parameter("twist_cmd_topic", "/cmd_vel").value
+  ackermann_cmd_topic = node.declare_parameter("ackermann_cmd_topic", "/ackermann_cmd").value
+  wheelbase = node.declare_parameter("wheelbase", 1.0).value
+  frame_id = node.declare_parameter('frame_id', 'odom').value
+  cmd_angle_instead_rotvel = node.declare_parameter('cmd_angle_instead_rotvel', False).value
+
+  node.create_subscription(Twist, twist_cmd_topic, cmd_callback, 1)
+  pub = node.create_publisher(AckermannDriveStamped, ackermann_cmd_topic, 1)
+  
+  rclpy.spin(node)
 
