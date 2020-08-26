@@ -138,7 +138,7 @@ public:
 
   bool isGoalReached(
     const geometry_msgs::msg::PoseStamped & pose,
-    const geometry_msgs::msg::Twist & velocity) override;
+    const geometry_msgs::msg::Twist & velocity);
 
   /**
     * @brief  Check if the goal pose has been achieved
