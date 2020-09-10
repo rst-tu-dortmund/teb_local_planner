@@ -42,6 +42,7 @@
 
 #include <teb_local_planner/pose_se2.h>
 #include <teb_local_planner/obstacles.h>
+#include <teb_local_planner/misc.h>
 #include <visualization_msgs/Marker.h>
 
 namespace teb_local_planner
@@ -516,8 +517,8 @@ private:
     */
   void transformToWorld(const PoseSE2& current_pose, Eigen::Vector2d& line_start_world, Eigen::Vector2d& line_end_world) const
   {
-    double cos_th = std::cos(current_pose.theta());
-    double sin_th = std::sin(current_pose.theta());
+    double sin_th, cos_th;
+    teb_local_planner::sincos_approx(current_pose.theta(), sin_th, cos_th);
     line_start_world.x() = current_pose.x() + cos_th * line_start_.x() - sin_th * line_start_.y();
     line_start_world.y() = current_pose.y() + sin_th * line_start_.x() + cos_th * line_start_.y();
     line_end_world.x() = current_pose.x() + cos_th * line_end_.x() - sin_th * line_end_.y();

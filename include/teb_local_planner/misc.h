@@ -147,6 +147,107 @@ inline const T& get_const_reference(const T* ptr) {return *ptr;}
 template<typename T>
 inline const T& get_const_reference(const T& val, typename boost::disable_if<boost::is_pointer<T> >::type* dummy = 0) {return val;}
 
+template <typename T>
+inline void sincos_approx(T angle, T &sin, T &cos)
+{
+  // Least squares for sin(x) = a0 + a1 * x + a2 * x^2 in [0, pi/4]
+  const static T a0 = -0.00377382f;
+  const static T a1 = 1.0583384f;
+  const static T a2 =  -0.18924264f;
+  // Least squares for cos(x) = b0 + b1 * x + b2 * x^2 in [0, pi/4]
+  const static T b0 = 1.00132026f;
+  const static T b1 = -0.01798667f;
+  const static T b2 = -0.45687215f;
+  // Find the quadrant
+  bool quad_3_or_4 = false;
+  if (angle < 0)
+    angle = angle + 2 * static_cast<T>(M_PI);
+  if (angle > static_cast<T>(M_PI))
+  {
+    angle = angle - static_cast<T>(M_PI);
+    quad_3_or_4 = true;
+  }
+  if (angle > 3 * static_cast<T>(M_PI_4))
+  {
+    angle = static_cast<T>(M_PI) - angle;
+    T angle2 = angle * angle;
+    sin =   a0 + a1 * angle + a2 * angle2;
+    cos = -(b0 + b1 * angle + b2 * angle2);
+  }
+  else if (angle > static_cast<T>(M_PI_2))
+  {
+    angle = angle - static_cast<T>(M_PI_2);
+    T angle2 = angle * angle;
+    cos = -(a0 + a1 * angle + a2 * angle2);
+    sin =   b0 + b1 * angle + b2 * angle2;
+  }
+  else if (angle > static_cast<T>(M_PI_4))
+  {
+    angle = static_cast<T>(M_PI_2) - angle;
+    T angle2 = angle * angle;
+    cos = a0 + a1 * angle + a2 * angle2;
+    sin = b0 + b1 * angle + b2 * angle2;
+  }
+  else
+  {
+    T angle2 = angle * angle;
+    sin = a0 + a1 * angle + a2 * angle2;
+    cos = b0 + b1 * angle + b2 * angle2;
+  }
+  if (quad_3_or_4)
+  {
+    sin = -sin;
+    cos = -cos;
+  }
+};
+
+template <typename T>
+inline void sin_approx(T angle, T &sin)
+{
+  // Least squares for sin(x) = a0 + a1 * x + a2 * x^2 in [0, pi/4]
+  const static T a0 = -0.00377382f;
+  const static T a1 = 1.0583384f;
+  const static T a2 =  -0.18924264f;
+  // Least squares for cos(x) = b0 + b1 * x + b2 * x^2 in [0, pi/4]
+  const static T b0 = 1.00132026f;
+  const static T b1 = -0.01798667f;
+  const static T b2 = -0.45687215f;
+  // Find the quadrant
+  bool quad_3_or_4 = false;
+  if (angle < 0)
+    angle = angle + 2 * static_cast<T>(M_PI);
+  if (angle > static_cast<T>(M_PI))
+  {
+    angle = angle - static_cast<T>(M_PI);
+    quad_3_or_4 = true;
+  }
+  if (angle > 3 * static_cast<T>(M_PI_4))
+  {
+    angle = static_cast<T>(M_PI) - angle;
+    T angle2 = angle * angle;
+    sin =   a0 + a1 * angle + a2 * angle2;
+  }
+  else if (angle > static_cast<T>(M_PI_2))
+  {
+    angle = angle - static_cast<T>(M_PI_2);
+    T angle2 = angle * angle;
+    sin =   b0 + b1 * angle + b2 * angle2;
+  }
+  else if (angle > static_cast<T>(M_PI_4))
+  {
+    angle = static_cast<T>(M_PI_2) - angle;
+    T angle2 = angle * angle;
+    sin = b0 + b1 * angle + b2 * angle2;
+  }
+  else
+  {
+    T angle2 = angle * angle;
+    sin = a0 + a1 * angle + a2 * angle2;
+  }
+  if (quad_3_or_4)
+    sin = -sin;
+};
+
 } // namespace teb_local_planner
 
 #endif /* MISC_H */
