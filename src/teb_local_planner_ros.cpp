@@ -533,7 +533,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
     {
       geometry_msgs::TransformStamped obstacle_to_map =  tf_->lookupTransform(global_frame_, ros::Time(0),
                                                                               custom_obstacle_msg_.header.frame_id, ros::Time(0),
-                                                                              custom_obstacle_msg_.header.frame_id, ros::Duration(0.5));
+                                                                              custom_obstacle_msg_.header.frame_id, ros::Duration(cfg_.robot.transform_tolerance));
       obstacle_to_map_eig = tf2::transformToEigen(obstacle_to_map);
     }
     catch (tf::TransformException ex)
@@ -690,7 +690,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf2_ros::Buffer& tf, const st
 
     // get plan_to_global_transform from plan frame to global_frame
     geometry_msgs::TransformStamped plan_to_global_transform = tf.lookupTransform(global_frame, ros::Time(), plan_pose.header.frame_id, plan_pose.header.stamp,
-                                                                                  plan_pose.header.frame_id, ros::Duration(0.5));
+                                                                                  plan_pose.header.frame_id, ros::Duration(cfg_.robot.transform_tolerance));
 
     //let's get the pose of the robot in the frame of the plan
     geometry_msgs::PoseStamped robot_pose;
