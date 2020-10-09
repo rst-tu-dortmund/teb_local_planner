@@ -106,7 +106,7 @@ public:
    * @param costmap_ros Cost map representing occupied and free space
    */
   void configure(
-    const rclcpp_lifecycle::LifecycleNode::SharedPtr & node,
+    const rclcpp_lifecycle::LifecycleNode::WeakPtr & node,
     std::string name,
     const std::shared_ptr<tf2_ros::Buffer> & tf,
     const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) override;
@@ -117,7 +117,7 @@ public:
   /**
     * @brief Initializes the teb plugin
     */
-  void initialize();
+  void initialize(nav2_util::LifecycleNode::SharedPtr node);
 
   /**
     * @brief Set the plan that the teb local planner is following
@@ -168,7 +168,7 @@ public:
    * @param nh const reference to the local rclcpp::Node::SharedPtr
    * @return Robot footprint model used for optimization
    */
-  RobotFootprintModelPtr getRobotFootprintFromParamServer();
+  RobotFootprintModelPtr getRobotFootprintFromParamServer(nav2_util::LifecycleNode::SharedPtr node);
   
   /** 
    * @brief Set the footprint from the given XmlRpcValue.
@@ -364,8 +364,9 @@ protected:
   
 private:
   // Definition of member variables
-
-  nav2_util::LifecycleNode::SharedPtr nh_;
+  nav2_util::LifecycleNode::WeakPtr nh_;
+  rclcpp::Logger logger_;
+  rclcpp::Clock::SharedPtr clock_;
   rclcpp::Node::SharedPtr intra_proc_node_;
   // external objects (store weak pointers)
   CostmapROSPtr costmap_ros_; //!< Pointer to the costmap ros wrapper, received from the navigation stack
