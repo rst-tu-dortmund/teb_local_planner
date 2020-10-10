@@ -87,6 +87,7 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacle
   cfg_ = &cfg;
   obstacles_ = obstacles;
   robot_model_ = robot_model;
+  robot_model_->setTEBConfiguration(cfg_);
   via_points_ = via_points;
   cost_ = HUGE_VAL;
   prefer_rotdir_ = RotType::none;

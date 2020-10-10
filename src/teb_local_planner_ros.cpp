@@ -102,6 +102,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf2_ros::Buffer* tf, costm
         
     // create robot footprint/contour model for optimization
     RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
+    robot_model->setTEBConfiguration(cfg_);
     
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)

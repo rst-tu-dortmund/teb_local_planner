@@ -45,6 +45,7 @@
 #include <Eigen/StdVector>
 
 #include <teb_local_planner/TebLocalPlannerReconfigureConfig.h>
+#include <teb_local_planner/misc.h>
 
 
 // Definitions
@@ -215,6 +216,12 @@ public:
     double oscillation_filter_duration; //!< Filter length/duration [sec] for the detection of oscillations
   } recovery; //!< Parameters related to recovery and backup strategies
 
+  //! Performance enhancement related parameters
+  struct Performance
+  {
+    bool use_sin_cos_approximation; //!< Use sin and cos approximations to improve performance. The maximum absolute error for these approximations is 1e-3.
+  } performance;
+
 
   /**
   * @brief Construct the TebConfig using default values.
@@ -366,6 +373,9 @@ public:
     recovery.oscillation_recovery_min_duration = 10;
     recovery.oscillation_filter_duration = 10;
 
+    // Recovery
+
+    performance.use_sin_cos_approximation = false;
 
   }
 
@@ -398,6 +408,27 @@ public:
    * @param nh const reference to the local ros::NodeHandle
    */
   void checkDeprecated(const ros::NodeHandle& nh) const;
+
+  template <typename T>
+  inline void sincos(T angle, T& sin, T& cos) const
+  {
+    if (performance.use_sin_cos_approximation)
+      teb_local_planner::sincos_approx(angle, sin, cos);
+    else
+    {
+      sin = std::sin(angle);
+      cos = std::cos(angle);
+    }
+  }
+
+  template <typename T>
+  inline void sin(T angle, T& sin) const
+  {
+    if (performance.use_sin_cos_approximation)
+      teb_local_planner::sin_approx(angle, sin);
+    else
+      sin = std::sin(angle);
+  }
 
   /**
    * @brief Return the internal config mutex
