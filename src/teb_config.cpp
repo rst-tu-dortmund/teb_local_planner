@@ -83,7 +83,8 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh.param("is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
   nh.param("use_proportional_saturation", robot.use_proportional_saturation, robot.use_proportional_saturation);
-  
+  nh.param("transform_tolerance", robot.transform_tolerance, robot.transform_tolerance);
+
   // GoalTolerance
   nh.param("xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);
   nh.param("yaw_goal_tolerance", goal_tolerance.yaw_goal_tolerance, goal_tolerance.yaw_goal_tolerance);
@@ -139,11 +140,13 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("enable_multithreading", hcp.enable_multithreading, hcp.enable_multithreading); 
   nh.param("simple_exploration", hcp.simple_exploration, hcp.simple_exploration); 
   nh.param("max_number_classes", hcp.max_number_classes, hcp.max_number_classes);
+  nh.param("max_number_plans_in_current_class", hcp.max_number_plans_in_current_class, hcp.max_number_plans_in_current_class);
   nh.param("selection_obst_cost_scale", hcp.selection_obst_cost_scale, hcp.selection_obst_cost_scale);
   nh.param("selection_prefer_initial_plan", hcp.selection_prefer_initial_plan, hcp.selection_prefer_initial_plan);
   nh.param("selection_viapoint_cost_scale", hcp.selection_viapoint_cost_scale, hcp.selection_viapoint_cost_scale);
   nh.param("selection_cost_hysteresis", hcp.selection_cost_hysteresis, hcp.selection_cost_hysteresis); 
   nh.param("selection_alternative_time_cost", hcp.selection_alternative_time_cost, hcp.selection_alternative_time_cost); 
+  nh.param("selection_dropping_probability", hcp.selection_dropping_probability, hcp.selection_dropping_probability); 
   nh.param("switching_blocking_period", hcp.switching_blocking_period, hcp.switching_blocking_period);
   nh.param("roadmap_graph_samples", hcp.roadmap_graph_no_samples, hcp.roadmap_graph_no_samples); 
   nh.param("roadmap_graph_area_width", hcp.roadmap_graph_area_width, hcp.roadmap_graph_area_width); 
@@ -255,11 +258,13 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   // Homotopy Class Planner
   hcp.enable_multithreading = cfg.enable_multithreading;
   hcp.max_number_classes = cfg.max_number_classes; 
+  hcp.max_number_plans_in_current_class = cfg.max_number_plans_in_current_class;
   hcp.selection_cost_hysteresis = cfg.selection_cost_hysteresis;
   hcp.selection_prefer_initial_plan = cfg.selection_prefer_initial_plan;
   hcp.selection_obst_cost_scale = cfg.selection_obst_cost_scale;
   hcp.selection_viapoint_cost_scale = cfg.selection_viapoint_cost_scale;
   hcp.selection_alternative_time_cost = cfg.selection_alternative_time_cost;
+  hcp.selection_dropping_probability = cfg.selection_dropping_probability;
   hcp.switching_blocking_period = cfg.switching_blocking_period;
   
   hcp.obstacle_heading_threshold = cfg.obstacle_heading_threshold;
