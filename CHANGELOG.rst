@@ -2,6 +2,23 @@
 Changelog for package teb_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.9.1 (2020-05-29)
+------------------
+* Fixed RobotFootprintModel visualization bug (thanks to Anson Wang)
+* Reserve the size of the relevant obstacles vector to avoid excessive memory allocations (thanks to João Monteiro)
+* CMake: Removed system include to avoid compiling issues on some platforms
+* Contributors: Anson Wang, Christoph Rösmann, João Carlos Espiúca Monteiro
+
+0.9.0 (2020-05-26)
+------------------
+* Added pill resp. stadium-shaped obstacle
+* Changed minimum CMake version to 3.1
+* Improved efficiency of 3d h-signature computation
+* Changed default value for parameter penalty_epsilon to 0.05
+* Improved efficiency of findClosedTrajectoryPose()
+* Removed obsolete method isHorizonReductionAppropriate()
+* Contributors: Christoph Rösmann, XinyuKhan
+
 0.8.4 (2019-12-02)
 ------------------
 * Fixed TEB autoResize if last TimeDiff is small
