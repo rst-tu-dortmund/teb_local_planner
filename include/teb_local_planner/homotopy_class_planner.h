@@ -370,17 +370,6 @@ public:
   virtual void setPreferredTurningDir(RotType dir);
 
   /**
-   * @brief Check if the planner suggests a shorter horizon (e.g. to resolve problems)
-   *
-   * This method is intendend to be called after determining that a trajectory provided by the planner is infeasible.
-   * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
-   * Implemented cases: see TebOptimalPlanner
-   * @param initial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
-   * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
-   */
-  virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;
-
-  /**
    * @brief Calculate the equivalence class of a path
    *
    * Currently, only the H-signature (refer to HSignature) is implemented.

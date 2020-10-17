@@ -51,24 +51,13 @@
 #include <teb_local_planner/robot_footprint_model.h>
 
 // g2o lib stuff
-#include "g2o/core/sparse_optimizer.h"
-#include "g2o/core/block_solver.h"
-#include "g2o/core/factory.h"
-#include "g2o/core/optimization_algorithm_gauss_newton.h"
-#include "g2o/core/optimization_algorithm_levenberg.h"
-#include "g2o/solvers/csparse/linear_solver_csparse.h"
-#include "g2o/solvers/cholmod/linear_solver_cholmod.h"
-
-// g2o custom edges and vertices for the TEB planner
-#include <teb_local_planner/g2o_types/edge_velocity.h>
-#include <teb_local_planner/g2o_types/edge_acceleration.h>
-#include <teb_local_planner/g2o_types/edge_kinematics.h>
-#include <teb_local_planner/g2o_types/edge_time_optimal.h>
-#include <teb_local_planner/g2o_types/edge_shortest_path.h>
-#include <teb_local_planner/g2o_types/edge_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_dynamic_obstacle.h>
-#include <teb_local_planner/g2o_types/edge_via_point.h>
-#include <teb_local_planner/g2o_types/edge_prefer_rotdir.h>
+#include <g2o/core/sparse_optimizer.h>
+#include <g2o/core/block_solver.h>
+#include <g2o/core/factory.h>
+#include <g2o/core/optimization_algorithm_gauss_newton.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+#include <g2o/solvers/csparse/linear_solver_csparse.h>
+#include <g2o/solvers/cholmod/linear_solver_cholmod.h>
 
 // messages
 #include <nav_msgs/Path.h>
@@ -510,22 +499,6 @@ public:
   virtual bool isTrajectoryFeasible(base_local_planner::CostmapModel* costmap_model, const std::vector<geometry_msgs::Point>& footprint_spec, double inscribed_radius = 0.0,
           double circumscribed_radius=0.0, int look_ahead_idx=-1);
   
-  
-  /**
-   * @brief Check if the planner suggests a shorter horizon (e.g. to resolve problems)
-   * 
-   * This method is intendend to be called after determining that a trajectory provided by the planner is infeasible.
-   * In some cases a reduction of the horizon length might resolve problems. E.g. if a planned trajectory cut corners.
-   * Implemented cases for returning \c true (remaining length must be larger than 2m to trigger any case):
-   * - Goal orientation - start orientation > 90°
-   * - Goal heading - start orientation > 90°
-   * - The planned trajectory is at least 30° shorter than the initial plan (accumulated euclidean distances)
-   * - Distance between consecutive poses > 0.9*min_obstacle_dist
-   * @param initial_plan The intial and transformed plan (part of the local map and pruned up to the robot position)
-   * @return \c true, if the planner suggests a shorter horizon, \c false otherwise.
-   */
-  virtual bool isHorizonReductionAppropriate(const std::vector<geometry_msgs::PoseStamped>& initial_plan) const;
-  
   //@}
   
 protected:
@@ -628,7 +601,6 @@ protected:
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles (legacy association strategy)
-   * @warning do not combine with AddEdgesInflatedObstacles
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
@@ -680,6 +652,13 @@ protected:
    * @see optimizeGraph
    */
   void AddEdgesPreferRotDir(); 
+
+  /**
+   * @brief Add all edges (local cost function) for reducing the velocity of a vertex due to its associated obstacles
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesVelocityObstacleRatio();
   
   //@}
   
@@ -695,6 +674,7 @@ protected:
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
   const ViaPointContainer* via_points_; //!< Store via points for planning
+  std::vector<ObstContainer> obstacles_per_vertex_; //!< Store the obstacles associated with the n-1 initial vertices
   
   double cost_; //!< Store cost value of the current hyper-graph
   RotType prefer_rotdir_; //!< Store whether to prefer a specific initial rotation in optimization (might be activated in case the robot oscillates)

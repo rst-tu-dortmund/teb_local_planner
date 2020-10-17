@@ -16,11 +16,15 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   nav_core
   nav_msgs
+  mbf_costmap_core
+  mbf_msgs
   roscpp
   std_msgs
   pluginlib
-  tf
-  tf_conversions
+  tf2
+  tf2_eigen
+  tf2_geometry_msgs
+  tf2_ros
   visualization_msgs
 )
 message(STATUS "System: ${CMAKE_SYSTEM}")
@@ -156,8 +160,8 @@ catkin_package(
 	pluginlib
 	roscpp
 	std_msgs
-	tf
-	tf_conversions
+        tf2
+        tf2_ros
 	visualization_msgs
   DEPENDS SUITESPARSE G2O
 )
@@ -262,6 +266,13 @@ install(DIRECTORY
 #############
 ## Testing ##
 #############
+
+if (CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(test_teb_basics test/teb_basics.cpp)
+  if(TARGET test_teb_basics)
+     target_link_libraries(test_teb_basics teb_local_planner)
+  endif()
+endif()
 
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_teb_local_planner.cpp)
