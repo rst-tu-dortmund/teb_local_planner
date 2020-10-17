@@ -44,6 +44,7 @@
 #include <functional>
 #include <vector>
 #include <iterator>
+#include <random>
 
 #include <boost/shared_ptr.hpp>
 
@@ -480,6 +481,24 @@ public:
    */
   const EquivalenceClassContainer& getEquivalenceClassRef() const  {return equivalence_classes_;}
 
+  bool isInBestTebClass(const EquivalenceClassPtr& eq_class) const;
+
+  int numTebsInClass(const EquivalenceClassPtr& eq_class) const;
+
+  int numTebsInBestTebClass() const;
+
+  /**
+   * @brief Randomly drop non-optimal TEBs to so we can explore other alternatives
+   *
+   * The HCP has a tendency to become "fixated" once its tebs_ list becomes
+   * fully populated, repeatedly refining and evaluating paths from the same
+   * few homotopy classes until the robot moves far enough for a teb to become
+   * invalid. As a result, it can fail to discover a more optimal path. This
+   * function alleviates this problem by randomly dropping TEBs other than the
+   * current "best" one with a probability controlled by
+   * selection_dropping_probability parameter.
+   */
+  void randomlyDropTebs();
 
 protected:
 
@@ -526,6 +545,7 @@ protected:
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   TebOptimalPlannerPtr best_teb_; //!< Store the current best teb.
+  EquivalenceClassPtr best_teb_eq_class_; //!< Store the equivalence class of the current best teb
   RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
 
   const std::vector<geometry_msgs::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
@@ -541,6 +561,7 @@ protected:
 
   ros::Time last_eq_class_switching_time_; //!< Store the time at which the equivalence class changed recently
 
+  std::default_random_engine random_;
   bool initialized_; //!< Keeps track about the correct initialization of this class
 
   TebOptimalPlannerPtr last_best_teb_;  //!< Points to the plan used in the previous control cycle

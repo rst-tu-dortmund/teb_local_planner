@@ -2,6 +2,7 @@
 <package format="2">
   <name>teb_local_planner</name>
   <version>0.8.4</version>
+
   <description>
     The teb_local_planner package implements a plugin
     to the base_local_planner of the 2D navigation stack.
