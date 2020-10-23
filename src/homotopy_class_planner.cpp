@@ -75,6 +75,10 @@ void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obsta
   setVisualization(visual);
 }
 
+void HomotopyClassPlanner::updateRobotModel(RobotFootprintModelPtr robot_model )
+{
+  robot_model_ = robot_model;
+}
 
 void HomotopyClassPlanner::setVisualization(TebVisualizationPtr visualization)
 {
