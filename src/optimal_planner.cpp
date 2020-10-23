@@ -79,6 +79,11 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
+void TebOptimalPlanner::updateRobotModel(RobotFootprintModelPtr robot_model)
+{
+  robot_model_ = robot_model;
+}
+
 void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
   // init optimizer (set solver and block ordering settings)
