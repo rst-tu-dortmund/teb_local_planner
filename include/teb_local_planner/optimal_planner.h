@@ -133,8 +133,11 @@ public:
   void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
                   TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
   
+  /**
+    * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
+    */
+  void updateRobotModel(RobotFootprintModelPtr robot_model );
   
-
   /** @name Plan a trajectory  */
   //@{
   
