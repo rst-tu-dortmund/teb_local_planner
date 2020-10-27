@@ -69,6 +69,7 @@ public:
   struct Trajectory
   {
     double teb_autosize; //!< Enable automatic resizing of the trajectory w.r.t to the temporal resolution (recommended)
+    double dt_force_equal; //!< Force the planner to have equal timediffs between poses (dt_ref +/- dt_hyteresis). This is only in effect if teb_autosize is set.
     double dt_ref; //!< Desired temporal resolution of the trajectory (should be in the magniture of the underlying control rate)
     double dt_hysteresis; //!< Hysteresis for automatic resizing depending on the current temporal resolution (dt): usually 10% of dt_ref
     int min_samples; //!< Minimum number of samples (should be always greater than 2)
@@ -241,6 +242,7 @@ public:
     // Trajectory
 
     trajectory.teb_autosize = true;
+    trajectory.dt_force_equal = false;
     trajectory.dt_ref = 0.3;
     trajectory.dt_hysteresis = 0.1;
     trajectory.min_samples = 3;

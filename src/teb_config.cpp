@@ -49,6 +49,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   
   // Trajectory
   nh.param("teb_autosize", trajectory.teb_autosize, trajectory.teb_autosize);
+  nh.param("dt_force_equal", trajectory.dt_force_equal, trajectory.dt_force_equal);
   nh.param("dt_ref", trajectory.dt_ref, trajectory.dt_ref);
   nh.param("dt_hysteresis", trajectory.dt_hysteresis, trajectory.dt_hysteresis);
   nh.param("min_samples", trajectory.min_samples, trajectory.min_samples);
@@ -181,6 +182,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   
   // Trajectory
   trajectory.teb_autosize = cfg.teb_autosize;
+  trajectory.dt_force_equal = cfg.dt_force_equal;
   trajectory.dt_ref = cfg.dt_ref;
   trajectory.dt_hysteresis = cfg.dt_hysteresis;
   trajectory.global_plan_overwrite_orientation = cfg.global_plan_overwrite_orientation;
