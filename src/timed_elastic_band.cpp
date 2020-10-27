@@ -224,7 +224,7 @@ void TimedElasticBand::setTimeDiffVertexFixed(int index, bool status)
 }
 
 
-void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples, bool fast_mode)
+void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_samples, int max_samples, bool fast_mode, bool dt_force_equal)
 {  
   ROS_ASSERT(sizeTimeDiffs() == 0 || sizeTimeDiffs() + 1 == sizePoses());
   /// iterate through all TEB states and add/remove states!
@@ -238,15 +238,38 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
     {
       if(TimeDiff(i) > dt_ref + dt_hysteresis && sizeTimeDiffs()<max_samples)
       {
-        //ROS_DEBUG("teb_local_planner: autoResize() inserting new bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
+        if (!dt_force_equal)
+        {
+          // default behaviour
+          //ROS_DEBUG("teb_local_planner: autoResize() inserting new bandpoint i=%u, #TimeDiffs=%lu",i,sizeTimeDiffs());
 
-        double newtime = 0.5*TimeDiff(i);
+          double newtime = 0.5*TimeDiff(i);
 
-        TimeDiff(i) = newtime;
-        insertPose(i+1, PoseSE2::average(Pose(i),Pose(i+1)) );
-        insertTimeDiff(i+1,newtime);
+          TimeDiff(i) = newtime;
+          insertPose(i+1, PoseSE2::average(Pose(i),Pose(i+1)) );
+          insertTimeDiff(i+1,newtime);
 
-        modified = true;
+          modified = true;
+        }
+        else
+        {
+          // Force the planner to have equal timediffs between poses (dt_ref +/- dt_hyteresis).
+          // (new behaviour)
+          if (TimeDiff(i) > 2*dt_ref) {
+              double newtime = 0.5*TimeDiff(i);
+
+              TimeDiff(i) = newtime;
+              insertPose(i+1, PoseSE2::average(Pose(i),Pose(i+1)) );
+              insertTimeDiff(i+1,newtime);
+
+              modified = true;
+          } else {
+              if (i < sizeTimeDiffs() - 1) {
+                  timediffs().at(i+1)->dt()+= timediffs().at(i)->dt() - dt_ref;
+              }
+              timediffs().at(i)->dt() = dt_ref;
+          }
+        }
       }
       else if(TimeDiff(i) < dt_ref - dt_hysteresis && sizeTimeDiffs()>min_samples) // only remove samples if size is larger than min_samples.
       {
