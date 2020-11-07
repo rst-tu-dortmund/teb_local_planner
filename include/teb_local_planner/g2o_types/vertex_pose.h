@@ -112,25 +112,20 @@ public:
     _estimate.theta() = theta;
     setFixed(fixed);
   }
-  
-  /**
-    * @brief Destructs the VertexPose
-    */ 
-  ~VertexPose() {}
-  
+
   /**
     * @brief Access the pose
     * @see estimate
     * @return reference to the PoseSE2 estimate
     */ 
-  PoseSE2& pose() {return _estimate;}
+  inline PoseSE2& pose() {return _estimate;}
   
   /**
     * @brief Access the pose (read-only)
     * @see estimate
     * @return const reference to the PoseSE2 estimate
     */ 
-  const PoseSE2& pose() const {return _estimate;}
+  inline const PoseSE2& pose() const {return _estimate;}
 	  
   
   /**
@@ -138,55 +133,55 @@ public:
     * @see estimate
     * @return reference to the 2D position part
     */ 
-  Eigen::Vector2d& position() {return _estimate.position();}
+  inline Eigen::Vector2d& position() {return _estimate.position();}
 
   /**
     * @brief Access the 2D position part (read-only)
     * @see estimate
     * @return const reference to the 2D position part
     */ 
-  const Eigen::Vector2d& position() const {return _estimate.position();}
+  inline const Eigen::Vector2d& position() const {return _estimate.position();}
   
   /**
     * @brief Access the x-coordinate the pose
     * @return reference to the x-coordinate
     */ 
-  double& x() {return _estimate.x();}
+  inline double& x() {return _estimate.x();}
   
   /**
     * @brief Access the x-coordinate the pose (read-only)
     * @return const reference to the x-coordinate
     */ 
-  const double& x() const {return _estimate.x();}
+  inline const double& x() const {return _estimate.x();}
   
   /**
     * @brief Access the y-coordinate the pose
     * @return reference to the y-coordinate
     */ 
-  double& y() {return _estimate.y();}
+  inline double& y() {return _estimate.y();}
   
   /**
     * @brief Access the y-coordinate the pose (read-only)
     * @return const reference to the y-coordinate
     */ 
-  const double& y() const {return _estimate.y();}
+  inline const double& y() const {return _estimate.y();}
   
   /**
     * @brief Access the orientation part (yaw angle) of the pose
     * @return reference to the yaw angle
     */ 
-  double& theta() {return _estimate.theta();}
+  inline double& theta() {return _estimate.theta();}
   
   /**
     * @brief Access the orientation part (yaw angle) of the pose (read-only)
     * @return const reference to the yaw angle
     */ 
-  const double& theta() const {return _estimate.theta();}
+  inline const double& theta() const {return _estimate.theta();}
   
   /**
     * @brief Set the underlying estimate (2D vector) to zero.
     */ 
-  virtual void setToOriginImpl()
+  virtual void setToOriginImpl() override
   {
     _estimate.setZero();
   }
@@ -197,7 +192,7 @@ public:
     * The angle is first added to the previous estimated angle and afterwards normalized to the interval \f$ [-\pi \pi] \f$
     * @param update increment that should be added to the previous esimate
     */ 
-  virtual void oplusImpl(const double* update)
+  virtual void oplusImpl(const double* update) override
   {
     _estimate.plus(update);
   }
@@ -208,7 +203,7 @@ public:
     * @param is input stream
     * @return always \c true
     */ 
-  virtual bool read(std::istream& is)
+  virtual bool read(std::istream& is) override
   {
     is >> _estimate.x() >> _estimate.y() >> _estimate.theta();
     return true;
@@ -220,9 +215,9 @@ public:
     * @param os output stream
     * @return \c true if the export was successful, otherwise \c false
     */ 
-  virtual bool write(std::ostream& os) const
+  virtual bool write(std::ostream& os) const override
   {
-    os << _estimate.x() << " " << _estimate.y() << _estimate.theta();
+    os << _estimate.x() << " " << _estimate.y() << " " << _estimate.theta();
     return os.good();
   }
 
