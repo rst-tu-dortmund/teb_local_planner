@@ -410,8 +410,13 @@ void TebOptimalPlanner::clearGraph()
   // clear optimizer states
   if (optimizer_)
   {
-    //optimizer.edges().clear(); // optimizer.clear deletes edges!!! Therefore do not run optimizer.edges().clear()
-    optimizer_->vertices().clear();  // neccessary, because optimizer->clear deletes pointer-targets (therefore it deletes TEB states!)
+    // we will delete all edges but keep the vertices.
+    // before doing so, we will delete the link from the vertices to the edges.
+    auto& vertices = optimizer_->vertices();
+    for(auto& v : vertices)
+      v.second->edges().clear();
+
+    optimizer_->vertices().clear();  // necessary, because optimizer->clear deletes pointer-targets (therefore it deletes TEB states!)
     optimizer_->clear();
   }
 }
