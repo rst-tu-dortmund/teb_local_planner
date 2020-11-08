@@ -75,26 +75,6 @@ public:
   using g2o::BaseUnaryEdge<D, E, VertexXi>::computeError;
     
   /**
-   * @brief Construct edge.
-   */  
-  BaseTebUnaryEdge()
-  {
-      _vertices[0] = NULL;
-  }
-  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~BaseTebUnaryEdge()
-  {
-      if(_vertices[0])
-        _vertices[0]->edges().erase(this);
-  }
-
-  /**
   * @brief Compute and return error / cost value.
   * 
   * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
@@ -161,28 +141,6 @@ public:
     
   using typename g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::ErrorVector;
   using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::computeError;
-  
-  /**
-   * @brief Construct edge.
-   */  
-  BaseTebBinaryEdge()
-  {
-      _vertices[0] = _vertices[1] = NULL;
-  }
-  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~BaseTebBinaryEdge()
-  {
-    if(_vertices[0])
-        _vertices[0]->edges().erase(this);
-    if(_vertices[1])
-        _vertices[1]->edges().erase(this);
-  }
 
   /**
   * @brief Compute and return error / cost value.
@@ -253,30 +211,6 @@ public:
   using typename g2o::BaseMultiEdge<D, E>::ErrorVector;
   using g2o::BaseMultiEdge<D, E>::computeError;
     
-  /**
-   * @brief Construct edge.
-   */  
-  BaseTebMultiEdge()
-  {
-//     for(std::size_t i=0; i<_vertices.size(); ++i)
-//         _vertices[i] = NULL;
-  }
-  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~BaseTebMultiEdge()
-  {
-    for(std::size_t i=0; i<_vertices.size(); ++i)
-    {
-        if(_vertices[i])
-            _vertices[i]->edges().erase(this);
-    }
-  }
-  
   // Overwrites resize() from the parent class
   virtual void resize(size_t size)
   {
