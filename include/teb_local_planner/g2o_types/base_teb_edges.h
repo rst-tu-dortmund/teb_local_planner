@@ -54,8 +54,28 @@
 
 namespace teb_local_planner
 {
-    
-    
+
+/**
+ * @brief Common interface for setting/getting the TebConfig.
+ *
+ * Class offers a setter/getter interface used by the edges of this library.
+ */
+struct ConfigInterface{
+
+  inline const TebConfig* getTebConfig() const noexcept
+  {
+    return cfg_;
+  }
+
+  inline void setTebConfig(const TebConfig& _cfg) noexcept
+  {
+    cfg_ = &_cfg;
+  }
+
+protected:
+  const TebConfig* cfg_;
+};
+
 /**
  * @class BaseTebUnaryEdge
  * @brief Base edge connecting a single vertex in the TEB optimization problem
@@ -67,7 +87,8 @@ namespace teb_local_planner
  * @see BaseTebMultiEdge, BaseTebBinaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */   
 template <int D, typename E, typename VertexXi>
-class BaseTebUnaryEdge : public g2o::BaseUnaryEdge<D, E, VertexXi>
+class BaseTebUnaryEdge : public g2o::BaseUnaryEdge<D, E, VertexXi>,
+                         public ConfigInterface
 {
 public:
 
@@ -89,23 +110,6 @@ public:
     return os.good();
   }
 
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */ 
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-    
-protected:
-    
-  using g2o::BaseUnaryEdge<D, E, VertexXi>::_error;
-  using g2o::BaseUnaryEdge<D, E, VertexXi>::_vertices;
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
-  
-public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
 };
 
@@ -120,7 +124,8 @@ public:
  * @see BaseTebMultiEdge, BaseTebUnaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */    
 template <int D, typename E, typename VertexXi, typename VertexXj>
-class BaseTebBinaryEdge : public g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>
+class BaseTebBinaryEdge : public g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>,
+                          public ConfigInterface
 {
 public:
   
@@ -142,23 +147,6 @@ public:
     return os.good();
   }
 
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */ 
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-  
-protected:
-  
-  using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::_error;
-  using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::_vertices;
-    
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
-  
-public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
 };
 
@@ -174,7 +162,8 @@ public:
  * @see BaseTebBinaryEdge, BaseTebUnaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */    
 template <int D, typename E>
-class BaseTebMultiEdge : public g2o::BaseMultiEdge<D, E>
+class BaseTebMultiEdge : public g2o::BaseMultiEdge<D, E>,
+                         public ConfigInterface
 {
 public:
 
@@ -196,23 +185,6 @@ public:
     return os.good();
   }
 
-  /**
-   * @brief Assign the TebConfig class for parameters.
-   * @param cfg TebConfig class
-   */ 
-  void setTebConfig(const TebConfig& cfg)
-  {
-    cfg_ = &cfg;
-  }
-  
-protected:
-    
-  using g2o::BaseMultiEdge<D, E>::_error;
-  using g2o::BaseMultiEdge<D, E>::_vertices;
-  
-  const TebConfig* cfg_; //!< Store TebConfig class for parameters
-  
-public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW   
 };
 
