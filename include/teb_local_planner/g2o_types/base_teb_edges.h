@@ -70,22 +70,7 @@ template <int D, typename E, typename VertexXi>
 class BaseTebUnaryEdge : public g2o::BaseUnaryEdge<D, E, VertexXi>
 {
 public:
-            
-  using typename g2o::BaseUnaryEdge<D, E, VertexXi>::ErrorVector;
-  using g2o::BaseUnaryEdge<D, E, VertexXi>::computeError;
-    
-  /**
-  * @brief Compute and return error / cost value.
-  * 
-  * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-  * @return 2D Cost / error vector [nh cost, backward drive dir cost]^T
-  */     
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-  
+
   /**
    * @brief Read values from input stream
    */  	
@@ -138,21 +123,6 @@ template <int D, typename E, typename VertexXi, typename VertexXj>
 class BaseTebBinaryEdge : public g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>
 {
 public:
-    
-  using typename g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::ErrorVector;
-  using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::computeError;
-
-  /**
-  * @brief Compute and return error / cost value.
-  * 
-  * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-  * @return 2D Cost / error vector [nh cost, backward drive dir cost]^T
-  */     
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
   
   /**
    * @brief Read values from input stream
@@ -207,31 +177,7 @@ template <int D, typename E>
 class BaseTebMultiEdge : public g2o::BaseMultiEdge<D, E>
 {
 public:
-  
-  using typename g2o::BaseMultiEdge<D, E>::ErrorVector;
-  using g2o::BaseMultiEdge<D, E>::computeError;
-    
-  // Overwrites resize() from the parent class
-  virtual void resize(size_t size)
-  {
-      g2o::BaseMultiEdge<D, E>::resize(size);
-      
-      for(std::size_t i=0; i<_vertices.size(); ++i)
-        _vertices[i] = NULL;
-  }
 
-  /**
-  * @brief Compute and return error / cost value.
-  * 
-  * This method is called by TebOptimalPlanner::computeCurrentCost to obtain the current cost.
-  * @return 2D Cost / error vector [nh cost, backward drive dir cost]^T
-  */     
-  ErrorVector& getError()
-  {
-    computeError();
-    return _error;
-  }
-  
   /**
    * @brief Read values from input stream
    */  	
