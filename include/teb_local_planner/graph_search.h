@@ -136,6 +136,7 @@ protected:
    * @param start_orientation Orientation of the first trajectory pose, required to initialize the trajectory/TEB
    * @param goal_orientation Orientation of the goal trajectory pose, required to initialize the trajectory/TEB
    * @param start_velocity start velocity (optional)
+   * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed, otherwise the final velocity will be zero (default: false)
    */
   void DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
 

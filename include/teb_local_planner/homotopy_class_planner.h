@@ -295,6 +295,7 @@ public:
    * @param start_orientation Orientation of the first pose of the trajectory (optional, otherwise use goal heading)
    * @param goal_orientation Orientation of the last pose of the trajectory (optional, otherwise use goal heading)
    * @param start_velocity start velocity (optional)
+   * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed, otherwise the final velocity will be zero (default: false)
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun unyary function that transforms the dereferenced iterator into an Eigen::Vector2d
    * @return Shared pointer to the newly created teb optimal planner
