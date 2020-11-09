@@ -50,8 +50,6 @@
 #include <g2o/core/base_unary_edge.h>
 #include <g2o/core/base_multi_edge.h>
 
-#include <cmath>
-
 namespace teb_local_planner
 {
     
@@ -63,7 +61,7 @@ namespace teb_local_planner
  * This edge defines a base edge type for the TEB optimization problem.
  * It is derived from the corresponding g2o base classes augmented with additional information for the dedicated TEB problem (e.g. config).
  * The destructor erases the edge in all attached vertices in order to allow keeping the vertices valid in subsequent g2o optimization calls.
- * Memory of edges should be freed by calling the clearEdge method of the g2o optimzier class.
+ * Memory of edges should be freed by calling the clearEdge method of the g2o optimizer class.
  * @see BaseTebMultiEdge, BaseTebBinaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */   
 template <int D, typename E, typename VertexXi>
@@ -131,7 +129,7 @@ public:
  * This edge defines a base edge type for the TEB optimization problem.
  * It is derived from the corresponding g2o base classes augmented with additional information for the dedicated TEB problem (e.g. config).
  * The destructor erases the edge in all attached vertices in order to allow keeping the vertices valid in subsequent g2o optimization calls.
- * Memory of edges should be freed by calling the clearEdge method of the g2o optimzier class.
+ * Memory of edges should be freed by calling the clearEdge method of the g2o optimizer class.
  * @see BaseTebMultiEdge, BaseTebUnaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */    
 template <int D, typename E, typename VertexXi, typename VertexXj>
@@ -195,12 +193,12 @@ public:
 
 /**
  * @class BaseTebMultiEdge
- * @brief Base edge connecting two vertices in the TEB optimization problem
+ * @brief Base edge connecting multiple vertices in the TEB optimization problem
  * 
  * This edge defines a base edge type for the TEB optimization problem.
  * It is derived from the corresponding g2o base classes augmented with additional information for the dedicated TEB problem (e.g. config).
  * The destructor erases the edge in all attached vertices in order to allow keeping the vertices valid in subsequent g2o optimization calls.
- * Memory of edges should be freed by calling the clearEdge method of the g2o optimzier class.
+ * Memory of edges should be freed by calling the clearEdge method of the g2o optimizer class.
  * @see BaseTebBinaryEdge, BaseTebUnaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */    
 template <int D, typename E>
