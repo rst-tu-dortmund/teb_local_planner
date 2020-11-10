@@ -269,6 +269,11 @@ void CB_customObstacle(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst
                                                             obst_msg->obstacles.at(i).radius )));
       }
     }
+    else if (obst_msg->obstacles.at(i).polygon.points.empty())
+    {
+      ROS_WARN("Invalid custom obstacle received. List of polygon vertices is empty. Skipping...");
+      continue;
+    }
     else
     {
       PolygonObstacle* polyobst = new PolygonObstacle;
