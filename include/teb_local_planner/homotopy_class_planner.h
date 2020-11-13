@@ -281,8 +281,9 @@ public:
    * @param goal Goal pose (e.g. robot's goal)
    * @param dist_to_obst Allowed distance to obstacles: if not satisfying, the path will be rejected (note, this is not the distance used for optimization).
    * @param @param start_velocity start velocity (optional)
+   * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed, otherwise the final velocity will be zero (default: false)
    */
-  void exploreEquivalenceClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel);
+  void exploreEquivalenceClassesAndInitTebs(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, const geometry_msgs::Twist* start_vel, bool free_goal_vel = false);
 
   /**
    * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it using a generic 2D reference path
@@ -294,29 +295,32 @@ public:
    * @param start_orientation Orientation of the first pose of the trajectory (optional, otherwise use goal heading)
    * @param goal_orientation Orientation of the last pose of the trajectory (optional, otherwise use goal heading)
    * @param start_velocity start velocity (optional)
+   * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed, otherwise the final velocity will be zero (default: false)
    * @tparam BidirIter Bidirectional iterator type
    * @tparam Fun unyary function that transforms the dereferenced iterator into an Eigen::Vector2d
    * @return Shared pointer to the newly created teb optimal planner
    */
   template<typename BidirIter, typename Fun>
-  TebOptimalPlannerPtr addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity);
+  TebOptimalPlannerPtr addAndInitNewTeb(BidirIter path_start, BidirIter path_end, Fun fun_position, double start_orientation, double goal_orientation, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
 
   /**
    * @brief Add a new Teb to the internal trajectory container, if this teb constitutes a new equivalence class. Initialize it with a simple straight line between a given start and goal
    * @param start start pose
    * @param goal goal pose
    * @param start_velocity start velocity (optional)
+   * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed, otherwise the final velocity will be zero (default: false)
    * @return Shared pointer to the newly created teb optimal planner
    */
-  TebOptimalPlannerPtr addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity);
+  TebOptimalPlannerPtr addAndInitNewTeb(const PoseSE2& start, const PoseSE2& goal, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
 
   /**
    * @brief Add a new Teb to the internal trajectory container , if this teb constitutes a new equivalence class. Initialize it using a PoseStamped container
    * @param initial_plan container of poses (start and goal orientation should be valid!)
    * @param start_velocity start velocity (optional)
+   * @param free_goal_vel if \c true, a nonzero final velocity at the goal pose is allowed, otherwise the final velocity will be zero (default: false)
    * @return Shared pointer to the newly created teb optimal planner
    */
-  TebOptimalPlannerPtr addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity);
+  TebOptimalPlannerPtr addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity, bool free_goal_vel = false);
 
   /**
    * @brief Update TEBs with new pose, goal and current velocity.
