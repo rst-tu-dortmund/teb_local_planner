@@ -419,7 +419,7 @@ int HomotopyClassPlanner::numTebsInBestTebClass() const
   return count;
 }
 
-TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity)
+TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const std::vector<geometry_msgs::PoseStamped>& initial_plan, const geometry_msgs::Twist* start_velocity, bool free_goal_vel)
 {
   if(tebs_.size() >= cfg_->hcp.max_number_classes)
     return TebOptimalPlannerPtr();
