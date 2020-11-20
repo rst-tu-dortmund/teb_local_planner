@@ -201,11 +201,11 @@ void TebLocalPlannerROS::initialize()
 }
 
 void TebLocalPlannerROS::configure(
-    const rclcpp_lifecycle::LifecycleNode::SharedPtr & node,
+    const rclcpp_lifecycle::LifecycleNode::WeakPtr & node,
     std::string name,
     const std::shared_ptr<tf2_ros::Buffer> & tf,
     const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) {
-  nh_ = node;
+  nh_ = node.lock();
   costmap_ros_ = costmap_ros;
   tf_ = tf;
   name_ = name;

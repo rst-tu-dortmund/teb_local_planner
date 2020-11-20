@@ -106,7 +106,7 @@ public:
    * @param costmap_ros Cost map representing occupied and free space
    */
   void configure(
-    const rclcpp_lifecycle::LifecycleNode::SharedPtr & node,
+    const rclcpp_lifecycle::LifecycleNode::WeakPtr & node,
     std::string name,
     const std::shared_ptr<tf2_ros::Buffer> & tf,
     const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) override;
@@ -138,7 +138,7 @@ public:
 
   bool isGoalReached(
     const geometry_msgs::msg::PoseStamped & pose,
-    const geometry_msgs::msg::Twist & velocity) override;
+    const geometry_msgs::msg::Twist & velocity);
 
   /**
     * @brief  Check if the goal pose has been achieved
