@@ -82,6 +82,9 @@ void TebLocalPlannerROS::reconfigureCB(TebLocalPlannerReconfigureConfig& config,
 {
   cfg_.reconfigure(config);
   ros::NodeHandle nh("~/" + name_);
+  // lock the config mutex externally
+  boost::mutex::scoped_lock lock(cfg_.configMutex());
+
   // create robot footprint/contour model for optimization
   cfg_.robot_model = getRobotFootprintFromParamServer(nh, cfg_);
   planner_->updateRobotModel(cfg_.robot_model);
