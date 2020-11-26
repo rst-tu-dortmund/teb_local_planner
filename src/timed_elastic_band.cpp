@@ -262,6 +262,7 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
               insertPose(i+1, PoseSE2::average(Pose(i),Pose(i+1)) );
               insertTimeDiff(i+1,newtime);
 
+              i--; // check the updated pose diff again
               modified = true;
           } else {
               if (i < sizeTimeDiffs() - 1) {
@@ -280,6 +281,10 @@ void TimedElasticBand::autoResize(double dt_ref, double dt_hysteresis, int min_s
           TimeDiff(i+1) = TimeDiff(i+1) + TimeDiff(i);
           deleteTimeDiff(i);
           deletePose(i+1);
+          
+          if (dt_force_equal) { // (new behaviour)
+            i--; // check the updated pose diff again
+          }
         }
         else
         { // last motion should be adjusted, shift time to the interval before
