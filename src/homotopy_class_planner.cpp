@@ -64,6 +64,7 @@ void HomotopyClassPlanner::initialize(const TebConfig& cfg, ObstContainer* obsta
   obstacles_ = obstacles;
   via_points_ = via_points;
   robot_model_ = robot_model;
+  robot_model_->setTEBConfiguration(cfg_);
 
   if (cfg_->hcp.simple_exploration)
     graph_search_ = boost::shared_ptr<GraphSearchInterface>(new lrKeyPointGraph(*cfg_, this));

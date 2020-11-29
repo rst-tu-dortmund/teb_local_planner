@@ -171,6 +171,9 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("oscillation_recovery_min_duration", recovery.oscillation_recovery_min_duration, recovery.oscillation_recovery_min_duration);
   nh.param("oscillation_filter_duration", recovery.oscillation_filter_duration, recovery.oscillation_filter_duration);
 
+  // Performance
+  nh.param("use_sin_cos_approximation", performance.use_sin_cos_approximation, performance.use_sin_cos_approximation);
+
   checkParameters();
   checkDeprecated(nh);
 }
@@ -279,6 +282,10 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   
   recovery.shrink_horizon_backup = cfg.shrink_horizon_backup;
   recovery.oscillation_recovery = cfg.oscillation_recovery;
+
+  // Performance
+
+  performance.use_sin_cos_approximation = cfg.use_sin_cos_approximation;
   
   checkParameters();
 }

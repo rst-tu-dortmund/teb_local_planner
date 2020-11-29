@@ -147,6 +147,35 @@ inline const T& get_const_reference(const T* ptr) {return *ptr;}
 template<typename T>
 inline const T& get_const_reference(const T& val, typename boost::disable_if<boost::is_pointer<T> >::type* dummy = 0) {return val;}
 
+inline float sin_fast(float angle)
+{
+  // Code borrowed from https://github.com/kennyalive/fast-sine-cosine
+  constexpr float PI = 3.14159265358f;
+  constexpr float PI2 = 2 * PI;
+  constexpr float B = 4.0f / PI;
+  constexpr float C = -4.0f / (PI * PI);
+  constexpr float P = 0.225f;
+
+  angle = std::fmod(angle, PI2);
+  if (angle > PI)
+    angle -= PI2;
+
+  angle = B * angle + C * angle * (angle < 0 ? -angle : angle);
+  return P * (angle * (angle < 0 ? -angle : angle) - angle) + angle;
+}
+
+inline float cos_fast(float angle)
+{
+  // Code borrowed from https://github.com/kennyalive/fast-sine-cosine
+  constexpr float PI = 3.14159265358f;
+  constexpr float PI2 = 2 * PI;
+
+  angle = (angle > 0) ? -angle : angle;
+  angle += PI/2;
+
+  return sin_fast(angle);
+}
+
 } // namespace teb_local_planner
 
 #endif /* MISC_H */
