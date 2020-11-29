@@ -410,24 +410,15 @@ public:
   void checkDeprecated(const ros::NodeHandle& nh) const;
 
   template <typename T>
-  inline void sincos(T angle, T& sin, T& cos) const
+  T cos(T angle) const
   {
-    if (performance.use_sin_cos_approximation)
-      teb_local_planner::sincos_approx(angle, sin, cos);
-    else
-    {
-      sin = std::sin(angle);
-      cos = std::cos(angle);
-    }
+    return performance.use_sin_cos_approximation ? teb_local_planner::cos_fast(angle) : std::cos(angle);
   }
 
   template <typename T>
-  inline void sin(T angle, T& sin) const
+  T sin(T angle) const
   {
-    if (performance.use_sin_cos_approximation)
-      teb_local_planner::sin_approx(angle, sin);
-    else
-      sin = std::sin(angle);
+    return performance.use_sin_cos_approximation ? teb_local_planner::sin_fast(angle) : std::sin(angle);
   }
 
   /**
