@@ -310,16 +310,16 @@ void TebConfig::checkParameters() const
 
   // minimum speed bigger than maximum speed
   if (robot.min_vel_x > robot.max_vel_x)
-    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x is smaller than min_vel_x , please adjust fo that max_vel_x is bigger!");
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x is smaller than min_vel_x , please adjustso that max_vel_x is bigger!");
 
   if (robot.min_vel_y > robot.max_vel_y)
-    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_y is smaller than min_vel_y , please adjust fo that max_vel_y is bigger!");
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_y is smaller than min_vel_y , please adjust so that max_vel_y is bigger!");
 
   if (robot.min_vel_theta > robot.max_vel_theta)
-    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_theta is smaller than min_vel_theta , please adjust fo that max_vel_theta is bigger!");
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_theta is smaller than min_vel_theta , please adjust so that max_vel_theta is bigger!");
 
   if (robot.min_vel_x_backwards > robot.max_vel_x_backwards)
-    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x_backwards is smaller than min_vel_x_backwards , please adjust fo that max_vel_x_backwards is bigger!");
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x_backwards is smaller than min_vel_x_backwards , please adjust so that max_vel_x_backwards is bigger!");
 
   if (robot.acc_lim_x <= optim.penalty_epsilon)
     ROS_WARN("TebLocalPlannerROS() Param Warning: acc_lim_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
