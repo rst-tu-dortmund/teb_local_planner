@@ -860,12 +860,12 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
   // limit strafing velocity
   if (vy > max_vel_y || vy < -max_vel_y)
     ratio_y = std::abs(vy / max_vel_y);
-  else if (std::abs(vy) < min_vel_y && vy != 0.0)
+  else if (std::abs(vy) < min_vel_y && std::abs(vy) > 0.0)
     ratio_y = std::abs( min_vel_y / vy);
   // Limit angular velocity
   if (omega > max_vel_theta || omega < -max_vel_theta)
     ratio_omega = std::abs(max_vel_theta / omega);
-  else if (std::abs(omega) < min_vel_theta && omega != 0.0)
+  else if (std::abs(omega) < min_vel_theta && std::abs(omega) > 0.0)
     ratio_omega = std::abs( min_vel_theta / omega);
 
 
