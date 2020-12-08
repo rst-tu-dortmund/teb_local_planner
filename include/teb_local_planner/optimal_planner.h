@@ -391,6 +391,11 @@ public:
    *         otherwise \c false (also if no optimization has been called before).
    */
   bool isOptimized() const {return optimized_;};
+
+  /**
+   * @brief Returns true if the planner has diverged.
+   */
+  bool hasDiverged() const override;
 	
   /**
    * @brief Compute the cost vector of a given optimization problen (hyper-graph must exist).
