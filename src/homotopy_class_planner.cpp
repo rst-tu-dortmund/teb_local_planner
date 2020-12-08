@@ -748,6 +748,15 @@ void HomotopyClassPlanner::setPreferredTurningDir(RotType dir)
   }
 }
 
+bool HomotopyClassPlanner::hasDiverged() const
+{
+  // Early return if there is no best trajectory initialized
+  if (!best_teb_)
+    return false;
+
+  return best_teb_->hasDiverged();
+}
+
 void HomotopyClassPlanner::computeCurrentCost(std::vector<double>& cost, double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)
 {
   for (TebOptPlannerContainer::iterator it_teb = tebs_.begin(); it_teb != tebs_.end(); ++it_teb)
