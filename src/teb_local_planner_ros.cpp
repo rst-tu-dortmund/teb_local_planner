@@ -362,6 +362,21 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     message = "teb_local_planner was not able to obtain a local plan";
     return mbf_msgs::ExePathResult::NO_VALID_CMD;
   }
+
+  // Check for divergence
+  if (planner_->hasDiverged())
+  {
+    cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
+
+    // Reset everything to start again with the initialization of new trajectories.
+    planner_->clearPlanner();
+    ROS_WARN_THROTTLE(1.0, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
+
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = ros::Time::now();
+    last_cmd_ = cmd_vel.twist;
+    return mbf_msgs::ExePathResult::NO_VALID_CMD;
+  }
          
   // Check feasibility (but within the first few states only)
   if(cfg_.robot.is_footprint_dynamic)
@@ -980,7 +995,6 @@ void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::PoseSta
     }
 
 }
-     
      
 void TebLocalPlannerROS::customObstacleCB(const costmap_converter::ObstacleArrayMsg::ConstPtr& obst_msg)
 {

@@ -190,7 +190,12 @@ public:
    */
   virtual void computeCurrentCost(std::vector<double>& cost, double obst_cost_scale=1.0, bool alternative_time_cost=false)
   {
-  }      
+  }
+
+  /**
+   * @brief Returns true if the planner has diverged.
+   */
+  virtual bool hasDiverged() const = 0;
                 
 };
 
