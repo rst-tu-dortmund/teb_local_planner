@@ -310,7 +310,7 @@ void TebConfig::checkParameters() const
 
   // minimum speed bigger than maximum speed
   if (robot.min_vel_x > robot.max_vel_x)
-    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x is smaller than min_vel_x , please adjustso that max_vel_x is bigger!");
+    ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_x is smaller than min_vel_x , please adjust so that max_vel_x is bigger!");
 
   if (robot.min_vel_y > robot.max_vel_y)
     ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_y is smaller than min_vel_y , please adjust so that max_vel_y is bigger!");
