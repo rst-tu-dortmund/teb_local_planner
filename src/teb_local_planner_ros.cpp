@@ -876,7 +876,7 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
   }
   else if (vx < -max_vel_x_backwards)
     ratio_x = - max_vel_x_backwards / vx;
-  else if (vx > -min_vel_x_backwards && vx < 0 && min_vel_x_backwards != 0)
+  else if (vx > -min_vel_x_backwards && vx < 0 && std::abs(min_vel_x_backwards) > 0.0)
     ratio_x = - min_vel_x_backwards / vx;
 
   if (cfg_.robot.use_proportional_saturation)
