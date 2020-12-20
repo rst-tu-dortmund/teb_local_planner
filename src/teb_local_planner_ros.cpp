@@ -714,6 +714,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf2_ros::Buffer& tf, const st
     double sq_dist = 1e10;
     
     //we need to loop to a point on the plan that is within a certain distance of the robot
+    bool robot_reached = false;
     for(int j=0; j < (int)global_plan.size(); ++j)
     {
       double x_diff = robot_pose.pose.position.x - global_plan[j].pose.position.x;
@@ -722,10 +723,15 @@ bool TebLocalPlannerROS::transformGlobalPlan(const tf2_ros::Buffer& tf, const st
       if (new_sq_dist > sq_dist_threshold)
         break;  // force stop if we have reached the costmap border
 
+      if (robot_reached && new_sq_dist > sq_dist)
+        break;
+
       if (new_sq_dist < sq_dist) // find closest distance
       {
         sq_dist = new_sq_dist;
         i = j;
+        if (sq_dist < 0.05)      // 2.5 cm to the robot; take the immediate local minima; if it's not the global
+          robot_reached = true;  // minima, probably means that there's a loop in the path, and so we prefer this
       }
     }
     
