@@ -106,12 +106,15 @@ public:
    * @param costmap_ros Cost map representing occupied and free space
    */
   void configure(
-    const rclcpp_lifecycle::LifecycleNode::WeakPtr & node,
+    const rclcpp_lifecycle::LifecycleNode::SharedPtr& node,
     std::string name,
     const std::shared_ptr<tf2_ros::Buffer> & tf,
     const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) override;
+
   void activate() override;
+
   void deactivate() override;
+
   void cleanup() override;
 
   /**
@@ -350,7 +353,7 @@ protected:
   
 private:
   // Definition of member variables
-  nav2_util::LifecycleNode::WeakPtr nh_;
+  nav2_util::LifecycleNode::SharedPtr nh_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Node::SharedPtr intra_proc_node_;
