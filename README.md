@@ -11,7 +11,7 @@ Build status of the *melodic-devel* branch:
 - ROS Buildfarm (Melodic): [![Melodic Status](http://build.ros.org/buildStatus/icon?job=Mdev__teb_local_planner__ubuntu_bionic_amd64)](http://build.ros.org/job/Mdev__teb_local_planner__ubuntu_bionic_amd64/)
 
 ### Port to ROS2
-This branch is the teb_local_planner package ported to ROS2(Dashing Diademata). Currently, it is currently compatible with [Navigation2(master branch)](https://github.com/ros-planning/navigation2/tree/master)([226f06c](https://github.com/ros-planning/navigation2/commit/226f06ce282c727ca240ce8be0cb4b093e26343b)). You can test teb_local_planner with Navigation2 and TurtleBot3 simulation by launching the following command.
+This branch is the teb_local_planner package ported to ROS2 Foxy distribution. It is meant to be compatible with the *foxy-devel* branch of the [Navigation2 project](https://github.com/ros-planning/navigation2/tree/foxy-devel). You can test teb_local_planner with Navigation2 and TurtleBot3 simulation by launching the following command.
 ```
 ros2 launch teb_local_planner teb_tb3_simulation_launch.py
 ```
