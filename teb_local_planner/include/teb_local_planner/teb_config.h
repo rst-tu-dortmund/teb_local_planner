@@ -285,7 +285,7 @@ public:
     obstacles.legacy_obstacle_association = false;
     obstacles.obstacle_association_force_inclusion_factor = 1.5;
     obstacles.obstacle_association_cutoff_factor = 5;
-    obstacles.costmap_converter_plugin = "";
+    obstacles.costmap_converter_plugin = "costmap_converter::CostmapToPolygonsDBSMCCH";
     obstacles.costmap_converter_spin_thread = true;
     obstacles.costmap_converter_rate = 5;
 
@@ -313,12 +313,10 @@ public:
     optim.weight_dynamic_obstacle_inflation = 0.1;
     optim.weight_viapoint = 1;
     optim.weight_prefer_rotdir = 50;
-
     optim.weight_adapt_factor = 2.0;
     optim.obstacle_cost_exponent = 1.0;
 
     // Homotopy Class Planner
-
     hcp.enable_homotopy_class_planning = true;
     hcp.enable_multithreading = true;
     hcp.simple_exploration = false;
@@ -328,7 +326,6 @@ public:
     hcp.selection_obst_cost_scale = 100.0;
     hcp.selection_viapoint_cost_scale = 1.0;
     hcp.selection_alternative_time_cost = false;
-
     hcp.obstacle_keypoint_offset = 0.1;
     hcp.obstacle_heading_threshold = 0.45;
     hcp.roadmap_graph_no_samples = 15;
@@ -337,9 +334,7 @@ public:
     hcp.h_signature_prescaler = 1;
     hcp.h_signature_threshold = 0.1;
     hcp.switching_blocking_period = 0.0;
-
     hcp.viapoints_all_candidates = true;
-
     hcp.visualize_hc_graph = false;
     hcp.visualize_with_time_as_z_axis_scale = 0.0;
     hcp.delete_detours_backwards = true;

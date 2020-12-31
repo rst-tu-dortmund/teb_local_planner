@@ -77,6 +77,7 @@ bt_navigator:
     - nav2_transform_available_condition_bt_node
     - nav2_time_expired_condition_bt_node
     - nav2_distance_traveled_condition_bt_node
+
 bt_navigator_rclcpp_node:
   ros__parameters:
     use_sim_time: True
@@ -104,30 +105,27 @@ controller_server:
       yaw_goal_tolerance: 0.25
       stateful: True
     # TEB parameters
-    # controller_plugin_types: ["teb_local_planner::TebLocalPlannerROS"]
-    # controller_plugin_ids: ["DynamicFollowPath"]
     FollowPath:
       plugin: "teb_local_planner::TebLocalPlannerROS"
-    FollowPath.footprint_model.type: circular
-    FollowPath.footprint_model.radius: 0.17
-    FollowPath.min_obstacle_dist: 0.1
-    FollowPath.inflation_dist: 0.1
-    FollowPath.costmap_converter_plugin: costmap_converter::CostmapToPolygonsDBSMCCH
-    FollowPath.costmap_converter_spin_thread: True
-    FollowPath.costmap_converter_rate: 15
-    FollowPath.enable_homotopy_class_planning: True
-    FollowPath.enable_multithreading: True
-    # FollowPath.weight_obstacle: 100.0
-    FollowPath.optimization_verbose: False
-    FollowPath.teb_autoresize: True
-    FollowPath.min_samples: 3
-    FollowPath.max_samples: 20
-    FollowPath.max_global_plan_lookahead_dist: 1.0
-    FollowPath.visualize_hc_graph: True
-    FollowPath.max_vel_x: 0.26
-    FollowPath.max_vel_theta: 1.0
-    FollowPath.acc_lim_x: 2.5
-    FollowPath.acc_lim_theta: 3.2
+      footprint_model.type: circular
+      footprint_model.radius: 0.17
+      min_obstacle_dist: 0.1
+      inflation_dist: 0.1
+      costmap_converter_plugin: "costmap_converter::CostmapToPolygonsDBSMCCH"
+      costmap_converter_spin_thread: True
+      costmap_converter_rate: 15
+      enable_homotopy_class_planning: True
+      enable_multithreading: True
+      optimization_verbose: False
+      teb_autoresize: True
+      min_samples: 3
+      max_samples: 20
+      max_global_plan_lookahead_dist: 1.0
+      visualize_hc_graph: True
+      max_vel_x: 0.26
+      max_vel_theta: 1.0
+      acc_lim_x: 2.5
+      acc_lim_theta: 3.2
 
 costmap_converter:
   ros__parameters:
@@ -150,9 +148,7 @@ local_costmap:
       height: 3
       resolution: 0.05
       robot_radius: 0.22
-      # plugin_names: ["obstacle_layer", "voxel_layer", "inflation_layer"]
       plugins: ["obstacle_layer", "voxel_layer", "inflation_layer"]
-      # plugin_types: ["nav2_costmap_2d::ObstacleLayer", "nav2_costmap_2d::VoxelLayer", "nav2_costmap_2d::InflationLayer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
@@ -204,8 +200,6 @@ global_costmap:
       robot_radius: 0.22
       resolution: 0.05
       track_unknown_space: true
-      # plugin_names: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
-      # plugin_types: ["nav2_costmap_2d::StaticLayer", "nav2_costmap_2d::ObstacleLayer", "nav2_costmap_2d::VoxelLayer", "nav2_costmap_2d::InflationLayer"]
       plugins: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
       robot_radius: 0.22
       obstacle_layer:
