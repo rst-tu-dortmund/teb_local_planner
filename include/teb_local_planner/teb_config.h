@@ -95,6 +95,10 @@ public:
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
     double max_vel_theta; //!< Maximum angular velocity of the robot
+    double min_vel_x; //!< Minimum translational velocity of the robot
+    double min_vel_x_backwards; //!< Minimum translational velocity of the robot for driving backwards
+    double min_vel_y; //!< Minimum strafing velocity of the robot (should be zero for non-holonomic robots!)
+    double min_vel_theta; //!< Minimum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_y; //!< Maximum strafing acceleration of the robot
     double acc_lim_theta; //!< Maximum angular acceleration of the robot
@@ -258,13 +262,17 @@ public:
     trajectory.publish_feedback = false;
     trajectory.min_resolution_collision_check_angular = M_PI;
     trajectory.control_look_ahead_poses = 1;
-    
+
     // Robot
 
     robot.max_vel_x = 0.4;
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
+    robot.min_vel_x = 0.0;
+    robot.min_vel_x_backwards = 0.0;
+    robot.min_vel_y = 0.0;
+    robot.min_vel_theta = 0.0;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
