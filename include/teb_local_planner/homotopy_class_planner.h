@@ -394,6 +394,8 @@ public:
    */
   const TebOptPlannerContainer& getTrajectoryContainer() const {return tebs_;}
 
+  bool hasDiverged() const override;
+
   /**
    * Compute and return the cost of the current optimization graph (supports multiple trajectories)
    * @param[out] cost current cost value for each trajectory
