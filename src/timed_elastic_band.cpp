@@ -538,6 +538,27 @@ int TimedElasticBand::findClosestTrajectoryPose(const Obstacle& obstacle, double
   return findClosestTrajectoryPose(obstacle.getCentroid(), distance);  
 }
 
+int TimedElasticBand::findNearestStartState(const PoseSE2& new_start, int min_samples, std::function<double(const PoseSE2&, const PoseSE2&)> distance)
+{
+  if (sizePoses() == 0) {
+    return -1;
+  }
+  double dist_cache = distance(new_start, Pose(0));
+  const int lookahead = sizePoses() - min_samples;
+
+  int nearest_idx = 0;
+  for (int i = 1; i <= lookahead; ++i)
+  {
+    double dist = distance(new_start, Pose(i));;
+    if (dist<dist_cache)
+    {
+      dist_cache = dist;
+      nearest_idx = i;
+    }
+    else break;
+  }
+  return nearest_idx;
+}
 
 void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_start, boost::optional<const PoseSE2&> new_goal, int min_samples)
 {
@@ -548,20 +569,16 @@ void TimedElasticBand::updateAndPruneTEB(boost::optional<const PoseSE2&> new_sta
   {    
     // find nearest state (using l2-norm) in order to prune the trajectory
     // (remove already passed states)
-    double dist_cache = (new_start->position()- Pose(0).position()).norm();
-    double dist;
-    int lookahead = std::min<int>( sizePoses()-min_samples, 10); // satisfy min_samples, otherwise max 10 samples
-
-    int nearest_idx = 0;
-    for (int i = 1; i<=lookahead; ++i)
+    int nearest_idx = findNearestStartState(new_start.get(), min_samples, [](const PoseSE2& a, const PoseSE2& b)
     {
-      dist = (new_start->position()- Pose(i).position()).norm();
-      if (dist<dist_cache)
+      return (a.position() - b.position()).norm();
+    });
+    if (nearest_idx == 0)
+    { // Check if we're rotating in place
+      nearest_idx = findNearestStartState(new_start.get(), min_samples, [](const PoseSE2& a, const PoseSE2& b)
       {
-        dist_cache = dist;
-        nearest_idx = i;
-      }
-      else break;
+        return std::abs(g2o::normalize_theta(a.theta() - b.theta()));
+      });
     }
     
     // prune trajectory at the beginning (and extrapolate sequences at the end if the horizon is fixed)
