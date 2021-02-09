@@ -348,10 +348,19 @@ protected:
   
   void configureBackupModes(std::vector<geometry_msgs::msg::PoseStamped>& transformed_plan,  int& goal_idx);
   
+  /**
+   * @brief Limits the maximum linear speed of the robot.
+   * @param speed_limit expressed in percentage from maximum robot speed.
+   */
+  void setSpeedLimit(const double & speed_limit) override
+  {
+    //TODO: Implement Speed Limit in teb
+  }
+
 private:
   // Definition of member variables
   rclcpp_lifecycle::LifecycleNode::WeakPtr nh_;
-  rclcpp::Logger logger_;
+  rclcpp::Logger logger_{rclcpp::get_logger("TEBLocalPlanner")};
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Node::SharedPtr intra_proc_node_;
   // external objects (store weak pointers)
