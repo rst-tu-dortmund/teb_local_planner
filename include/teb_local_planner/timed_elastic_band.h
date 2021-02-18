@@ -505,7 +505,7 @@ public:
    *                  is repeatedly iterated until no poses are added or removed anymore
    * @param force_equal if true, the trajectory is forced to use the correct time diffs
    */    
-  void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3, int max_samples=1000, bool fast_mode=false, bool dt_force_equal=false);
+  void autoResize(double dt_ref, double dt_hysteresis, int min_samples = 3, int max_samples=1000, bool fast_mode=false);
 
   /**
    * @brief Set a pose vertex at pos \c index of the pose sequence to be fixed or unfixed during optimization.
