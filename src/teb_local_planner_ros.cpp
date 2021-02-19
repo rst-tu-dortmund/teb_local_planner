@@ -293,7 +293,8 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
     && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
     && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
-     && (!cfg_.goal_tolerance.free_goal_vel && base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel) || cfg_.goal_tolerance.free_goal_vel))
+    && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
+        || cfg_.goal_tolerance.free_goal_vel))
   {
     goal_reached_ = true;
     return mbf_msgs::ExePathResult::SUCCESS;
