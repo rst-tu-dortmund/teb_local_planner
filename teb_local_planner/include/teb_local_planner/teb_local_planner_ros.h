@@ -350,9 +350,12 @@ protected:
   
   /**
    * @brief Limits the maximum linear speed of the robot.
-   * @param speed_limit expressed in percentage from maximum robot speed.
+   * @param speed_limit expressed in absolute value (in m/s)
+   * or in percentage from maximum robot speed.
+   * @param percentage Setting speed limit in percentage if true
+   * or in absolute values in false case.
    */
-  void setSpeedLimit(const double & speed_limit) override
+  void setSpeedLimit(const double & speed_limit,  const bool & percentage) override
   {
     //TODO: Implement Speed Limit in teb
   }
