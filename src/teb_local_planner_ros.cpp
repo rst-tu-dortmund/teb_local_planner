@@ -281,6 +281,9 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   if (!custom_via_points_active_)
     updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
 
+  nav_msgs::Odometry base_odom;
+  odom_helper_.getOdom(base_odom);
+
   // check if global goal is reached
   geometry_msgs::PoseStamped global_goal;
   tf2::doTransform(global_plan_.back(), global_goal, tf_plan_to_global);
@@ -289,13 +292,14 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   double delta_orient = g2o::normalize_theta( tf2::getYaw(global_goal.pose.orientation) - robot_pose_.theta() );
   if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
     && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
-    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0))
+    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
+    && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
+        || cfg_.goal_tolerance.free_goal_vel))
   {
     goal_reached_ = true;
     return mbf_msgs::ExePathResult::SUCCESS;
   }
-  
-  
+
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);
   
