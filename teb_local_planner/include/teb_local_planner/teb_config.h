@@ -92,6 +92,10 @@ public:
   //! Robot related parameters
   struct Robot
   {
+    double base_max_vel_x; //!< Maximum translational velocity of the robot before speed limit is applied
+    double base_max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards before speed limit is applied
+    double base_max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!) before speed limit is applied
+    double base_max_vel_theta; //!< Maximum angular velocity of the robot before speed limit is applied
     double max_vel_x; //!< Maximum translational velocity of the robot
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
@@ -258,6 +262,10 @@ public:
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
+    robot.base_max_vel_x = robot.max_vel_x;
+    robot.base_max_vel_x_backwards = robot.base_max_vel_x_backwards;
+    robot.base_max_vel_y = robot.base_max_vel_y;
+    robot.base_max_vel_theta = robot.base_max_vel_theta;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
