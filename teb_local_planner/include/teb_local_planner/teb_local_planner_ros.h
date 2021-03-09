@@ -66,6 +66,7 @@
 
 // costmap
 #include <costmap_converter/costmap_converter_interface.h>
+#include "nav2_costmap_2d/costmap_filters/filter_values.hpp"
 
 #include <nav2_util/lifecycle_node.hpp>
 #include <nav2_costmap_2d/costmap_2d_ros.hpp>
@@ -355,10 +356,7 @@ protected:
    * @param percentage Setting speed limit in percentage if true
    * or in absolute values in false case.
    */
-  void setSpeedLimit(const double & speed_limit,  const bool & percentage) override
-  {
-    //TODO: Implement Speed Limit in teb
-  }
+  void setSpeedLimit(const double & speed_limit,  const bool & percentage);
 
 private:
   // Definition of member variables
