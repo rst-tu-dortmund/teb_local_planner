@@ -37,6 +37,7 @@ amcl:
     z_max: 0.05
     z_rand: 0.5
     z_short: 0.05
+    scan_topic: scan
 
 amcl_map_client:
   ros__parameters:
@@ -48,7 +49,14 @@ amcl_rclcpp_node:
 
 bt_navigator:
   ros__parameters:
-    bt_xml_filename: "navigate_w_replanning.xml"
+    use_sim_time: True
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: /odom
+    enable_groot_monitoring: True
+    groot_zmq_publisher_port: 1666
+    groot_zmq_server_port: 1667
+    default_bt_xml_filename: "navigate_w_replanning_and_recovery.xml"
     plugin_lib_names:
     - nav2_compute_path_to_pose_action_bt_node
     - nav2_follow_path_action_bt_node
@@ -58,12 +66,20 @@ bt_navigator:
     - nav2_clear_costmap_service_bt_node
     - nav2_is_stuck_condition_bt_node
     - nav2_goal_reached_condition_bt_node
+    - nav2_goal_updated_condition_bt_node
     - nav2_initial_pose_received_condition_bt_node
     - nav2_reinitialize_global_localization_service_bt_node
     - nav2_rate_controller_bt_node
+    - nav2_distance_controller_bt_node
+    - nav2_speed_controller_bt_node
+    - nav2_truncate_path_action_bt_node
+    - nav2_goal_updater_node_bt_node
     - nav2_recovery_node_bt_node
     - nav2_pipeline_sequence_bt_node
     - nav2_round_robin_node_bt_node
+    - nav2_transform_available_condition_bt_node
+    - nav2_time_expired_condition_bt_node
+    - nav2_distance_traveled_condition_bt_node
 
 bt_navigator_rclcpp_node:
   ros__parameters:
@@ -71,34 +87,116 @@ bt_navigator_rclcpp_node:
 
 controller_server:
   ros__parameters:
+    odom_topic: /odom
     use_sim_time: True
-    controller_frequency: 20
+    controller_frequency: 5.0
     controller_plugin_types: ["teb_local_planner::TebLocalPlannerROS"]
-    controller_plugin_ids: ["DynamicFollowPath"]
-    DynamicFollowPath.footprint_model.type: circular
-    DynamicFollowPath.footprint_model.radius: 0.17
-    DynamicFollowPath.min_obstacle_dist: 0.1
-    DynamicFollowPath.inflation_dist: 0.1
-    DynamicFollowPath.costmap_converter_plugin: costmap_converter::CostmapToPolygonsDBSMCCH
-    DynamicFollowPath.costmap_converter_spin_thread: True
-    DynamicFollowPath.costmap_converter_rate: 15
-    DynamicFollowPath.enable_homotopy_class_planning: True
-    DynamicFollowPath.enable_multithreading: True
-    #DynamicFollowPath.weight_obstacle: 100.0
-    DynamicFollowPath.optimization_verbose: False
-    DynamicFollowPath.teb_autoresize: True
-    DynamicFollowPath.min_samples: 3
-    DynamicFollowPath.max_samples: 20
-    DynamicFollowPath.max_global_plan_lookahead_dist: 1.0
-    DynamicFollowPath.visualize_hc_graph: True
-    DynamicFollowPath.max_vel_x: 0.26
-    DynamicFollowPath.max_vel_theta: 1.0
-    DynamicFollowPath.acc_lim_x: 2.5
-    DynamicFollowPath.acc_lim_theta: 3.2
+    controller_plugins: ["FollowPath"]
+    FollowPath:
+      plugin: teb_local_planner::TebLocalPlannerROS
 
-costmap_converter:
-  ros__parameters:
-    use_sim_time: True
+      teb_autosize: 1.0
+      dt_ref: 0.3
+      dt_hysteresis: 0.1
+      max_samples: 500
+      global_plan_overwrite_orientation: False
+      allow_init_with_backwards_motion: False
+      max_global_plan_lookahead_dist: 3.0
+      global_plan_viapoint_sep: 0.3
+      global_plan_prune_distance: 1.0
+      exact_arc_length: False
+      feasibility_check_no_poses: 2
+      publish_feedback: False
+          
+      # Robot
+              
+      max_vel_x: 0.26
+      max_vel_theta: 1.0 # the angular velocity is also bounded by min_turning_radius in case of a carlike robot (r = v / omega)
+      acc_lim_x: 2.5
+      acc_lim_theta: 3.2
+
+      footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
+        type: "circular"
+        radius: 0.17 # for type "circular"
+
+      # GoalTolerance
+              
+      xy_goal_tolerance: 0.2
+      yaw_goal_tolerance: 0.1
+      free_goal_vel: False
+      complete_global_plan: True
+          
+      # Obstacles
+          
+      min_obstacle_dist: 0.27 # This value must also include our robot's expansion, since footprint_model is set to "line".
+      inflation_dist: 0.6
+      include_costmap_obstacles: True
+      costmap_obstacles_behind_robot_dist: 1.0
+      obstacle_poses_affected: 15
+
+      dynamic_obstacle_inflation_dist: 0.6
+      include_dynamic_obstacles: True 
+
+      costmap_converter_plugin: "costmap_converter::CostmapToPolygonsDBSMCCH"
+      costmap_converter_spin_thread: True
+      costmap_converter_rate: 5
+
+      # Optimization
+          
+      no_inner_iterations: 5
+      no_outer_iterations: 4
+      optimization_activate: True
+      optimization_verbose: False
+      penalty_epsilon: 0.1
+      obstacle_cost_exponent: 4.0
+      weight_max_vel_x: 0.5
+      weight_max_vel_theta: 0.5
+      weight_acc_lim_x: 0.5
+      weight_acc_lim_theta: 10.5
+      weight_kinematics_nh: 1000.0
+      weight_kinematics_forward_drive: 3.0
+      weight_kinematics_turning_radius: 1.0
+      weight_optimaltime: 1.0 # must be > 0
+      weight_shortest_path: 0.0
+      weight_obstacle: 100.0
+      weight_inflation: 0.2
+      weight_dynamic_obstacle: 10.0 # not in use yet
+      weight_dynamic_obstacle_inflation: 0.2
+      weight_viapoint: 50.0
+      weight_adapt_factor: 2.0
+
+      # Homotopy Class Planner
+
+      enable_homotopy_class_planning: True
+      enable_multithreading: True
+      max_number_classes: 4
+      selection_cost_hysteresis: 5.0
+      selection_prefer_initial_plan: 1.0
+      selection_obst_cost_scale: 1.0
+      selection_alternative_time_cost: True
+
+      roadmap_graph_no_samples: 15
+      roadmap_graph_area_width: 5.0
+      roadmap_graph_area_length_scale: 1.0
+      h_signature_prescaler: 0.5
+      h_signature_threshold: 0.1
+      obstacle_heading_threshold: 0.45
+      switching_blocking_period: 0.0
+      viapoints_all_candidates: True
+      delete_detours_backwards: True
+      max_ratio_detours_duration_best_duration: 3.0
+      visualize_hc_graph: False
+      visualize_with_time_as_z_axis_scale: 0.0
+
+      # Recovery
+      
+      shrink_horizon_backup: True
+      shrink_horizon_min_duration: 10.0
+      oscillation_recovery: True
+      oscillation_v_eps: 0.1
+      oscillation_omega_eps: 0.1
+      oscillation_recovery_min_duration: 10.0
+      oscillation_filter_duration: 10.0
 
 controller_server_rclcpp_node:
   ros__parameters:
@@ -107,19 +205,30 @@ controller_server_rclcpp_node:
 local_costmap:
   local_costmap:
     ros__parameters:
-      use_sim_time: True
+      update_frequency: 5.0
+      publish_frequency: 2.0
       global_frame: odom
-      plugin_names: ["obstacle_layer", "voxel_layer", "inflation_layer"]
-      plugin_types: ["nav2_costmap_2d::ObstacleLayer", "nav2_costmap_2d::VoxelLayer", "nav2_costmap_2d::InflationLayer"]
+      robot_base_frame: base_link
+      use_sim_time: True
       rolling_window: true
       width: 3
       height: 3
       resolution: 0.05
       robot_radius: 0.22
+      plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-      obstacle_layer:
+        inflation_radius: 0.55
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
+        publish_voxel_map: True
+        origin_z: 0.0
+        z_resolution: 0.05
+        z_voxels: 16
+        max_obstacle_height: 2.0
+        mark_threshold: 0
         observation_sources: scan
         scan:
           topic: /scan
@@ -127,21 +236,10 @@ local_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-      voxel_layer:
-        enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.2
-        z_voxels: 10
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: pointcloud
-        pointcloud:
-          topic: /intel_realsense_r200_depth/points
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
       static_layer:
         map_subscribe_transient_local: True
       always_send_full_costmap: True
@@ -155,11 +253,17 @@ local_costmap:
 global_costmap:
   global_costmap:
     ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_link
       use_sim_time: True
-      plugin_names: ["static_layer", "obstacle_layer", "voxel_layer", "inflation_layer"]
-      plugin_types: ["nav2_costmap_2d::StaticLayer", "nav2_costmap_2d::ObstacleLayer", "nav2_costmap_2d::VoxelLayer", "nav2_costmap_2d::InflationLayer"]
       robot_radius: 0.22
+      resolution: 0.05
+      track_unknown_space: true
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         observation_sources: scan
         scan:
@@ -168,23 +272,17 @@ global_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-      voxel_layer:
-        enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.2
-        z_voxels: 10
-        max_obstacle_height: 2.0
-        mark_threshold: 0
-        observation_sources: pointcloud
-        pointcloud:
-          topic: /intel_realsense_r200_depth/points
-          max_obstacle_height: 2.0
-          clearing: True
-          marking: True
-          data_type: "PointCloud2"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
       static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55
       always_send_full_costmap: True
   global_costmap_client:
     ros__parameters:
@@ -198,16 +296,60 @@ map_server:
     use_sim_time: True
     yaml_filename: "turtlebot3_world.yaml"
 
-planner_server:
+map_saver:
   ros__parameters:
     use_sim_time: True
-    tolerance: 0.0
-    use_astar: false
+    save_map_timeout: 5.0
+    free_thresh_default: 0.25
+    occupied_thresh_default: 0.65
+    map_subscribe_transient_local: True
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: True
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner/NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
 
 planner_server_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
+recoveries_server:
+  ros__parameters:
+    costmap_topic: local_costmap/costmap_raw
+    footprint_topic: local_costmap/published_footprint
+    cycle_frequency: 10.0
+    recovery_plugins: ["spin", "backup", "wait"]
+    spin:
+      plugin: "nav2_recoveries/Spin"
+    backup:
+      plugin: "nav2_recoveries/BackUp"
+    wait:
+      plugin: "nav2_recoveries/Wait"
+    global_frame: odom
+    robot_base_frame: base_link
+    transform_timeout: 0.1
+    use_sim_time: true
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 1.0
+    min_rotational_vel: 0.4
+    rotational_acc_lim: 3.2
+
 robot_state_publisher:
   ros__parameters:
     use_sim_time: True
+
+waypoint_follower:
+  ros__parameters:
+    loop_rate: 20
+    stop_on_failure: false
+    waypoint_task_executor_plugin: "wait_at_waypoint"   
+    wait_at_waypoint:
+      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
+      enabled: True
+      waypoint_pause_duration: 200

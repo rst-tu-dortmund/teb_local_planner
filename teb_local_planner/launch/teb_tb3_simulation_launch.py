@@ -31,13 +31,12 @@ def generate_launch_description():
         get_package_share_directory('nav2_bringup'), 'launch')
     
     params_file = os.path.join(teb_launch_dir, 'teb_params.yaml')
-    rviz_config_file = os.path.join(teb_launch_dir, 'teb_view.rviz')
-    
+
     bringup_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav2_bringup_launch_dir, 'nav2_tb3_simulation_launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav2_bringup_launch_dir, 'tb3_simulation_launch.py')),
         launch_arguments={
-            'params_file': params_file,
-            'rviz_config_file': rviz_config_file}.items())
+            'params_file': params_file}.items())
+
 
     ld = LaunchDescription()
     ld.add_action(bringup_cmd)

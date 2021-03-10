@@ -39,7 +39,7 @@ def generate_launch_description():
     params_file = os.path.join(teb_launch_dir, 'teb_params.yaml')
 
     bringup_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav2_bringup_launch_dir, 'nav2_bringup_launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav2_bringup_launch_dir, 'bringup_launch.py')),
         launch_arguments={
             'params_file': params_file,
             'autostart': "true",
