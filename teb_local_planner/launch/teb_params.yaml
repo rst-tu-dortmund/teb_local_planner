@@ -111,7 +111,7 @@ controller_server:
       # Robot
               
       max_vel_x: 0.26
-      max_vel_theta: 1.0 # the angular velocity is also bounded by min_turning_radius in case of a carlike robot (r = v / omega)
+      max_vel_theta: 1.0 
       acc_lim_x: 2.5
       acc_lim_theta: 3.2
 
@@ -128,7 +128,7 @@ controller_server:
           
       # Obstacles
           
-      min_obstacle_dist: 0.27 # This value must also include our robot's expansion, since footprint_model is set to "line".
+      min_obstacle_dist: 0.27
       inflation_dist: 0.6
       include_costmap_obstacles: True
       costmap_obstacles_behind_robot_dist: 1.0
