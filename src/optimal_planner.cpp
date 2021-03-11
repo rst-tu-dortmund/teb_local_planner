@@ -1232,9 +1232,6 @@ bool TebOptimalPlanner::isTrajectoryFeasible(dwb_critics::ObstacleFootprintCriti
   if (look_ahead_idx < 0 || look_ahead_idx >= teb().sizePoses())
     look_ahead_idx = teb().sizePoses() - 1;
 
-  geometry_msgs::msg::Pose2D pose2d;
-
-
   if (feasibility_check_lookahead_distance > 0){
     for (int i=1; i < teb().sizePoses(); ++i){
       double pose_distance=std::hypot(teb().Pose(i).x()-teb().Pose(0).x(), teb().Pose(i).y()-teb().Pose(0).y());
@@ -1245,6 +1242,7 @@ bool TebOptimalPlanner::isTrajectoryFeasible(dwb_critics::ObstacleFootprintCriti
     }
   }
 
+  geometry_msgs::msg::Pose2D pose2d;
   for (int i=0; i <= look_ahead_idx; ++i)
   {
     teb().Pose(i).toPoseMsg(pose2d);
