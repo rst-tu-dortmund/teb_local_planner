@@ -204,6 +204,40 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
     teb_marker_pub_->publish( marker );
   }
   
+  // Visualize circular obstacles
+  {
+    std::size_t idx = 0;
+    for (ObstContainer::const_iterator obst = obstacles.begin(); obst != obstacles.end(); ++obst)
+    {
+      std::shared_ptr<CircularObstacle> pobst = std::dynamic_pointer_cast<CircularObstacle>(*obst);
+      if (!pobst)
+        continue;
+
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = cfg_->map_frame;
+      marker.header.stamp = nh_->now();
+      marker.ns = "CircularObstacles";
+      marker.id = idx++;
+      marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.lifetime = rclcpp::Duration(2, 0);
+      geometry_msgs::msg::Point point;
+      point.x = pobst->x();
+      point.y = pobst->y();
+      point.z = 0;
+      marker.points.push_back(point);
+
+      marker.scale.x = pobst->radius();
+      marker.scale.y = pobst->radius();
+      marker.color.a = 1.0;
+      marker.color.r = 0.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+
+      teb_marker_pub_->publish( marker );
+    }
+  }
+
   // Visualize line obstacles
   {
     std::size_t idx = 0;

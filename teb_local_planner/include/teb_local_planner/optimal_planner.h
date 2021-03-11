@@ -514,7 +514,7 @@ public:
    *         any obstacle in the costmap, \c false otherwise.
    */
   virtual bool isTrajectoryFeasible(dwb_critics::ObstacleFootprintCritic* costmap_model, const std::vector<geometry_msgs::msg::Point>& footprint_spec, double inscribed_radius = 0.0,
-          double circumscribed_radius=0.0, int look_ahead_idx=-1);
+          double circumscribed_radius=0.0, int look_ahead_idx=-1, double feasibility_check_lookahead_distance=-1);
   
   //@}
   
@@ -618,7 +618,6 @@ protected:
   
   /**
    * @brief Add all edges (local cost functions) related to keeping a distance from static obstacles (legacy association strategy)
-   * @warning do not combine with AddEdgesInflatedObstacles
    * @see EdgeObstacle
    * @see buildGraph
    * @see optimizeGraph
@@ -670,6 +669,13 @@ protected:
    * @see optimizeGraph
    */
   void AddEdgesPreferRotDir(); 
+
+  /**
+   * @brief Add all edges (local cost function) for reducing the velocity of a vertex due to its associated obstacles
+   * @see buildGraph
+   * @see optimizeGraph
+   */
+  void AddEdgesVelocityObstacleRatio();
   
   //@}
   
@@ -685,6 +691,7 @@ protected:
   const TebConfig* cfg_; //!< Config class that stores and manages all related parameters
   ObstContainer* obstacles_; //!< Store obstacles that are relevant for planning
   const ViaPointContainer* via_points_; //!< Store via points for planning
+  std::vector<ObstContainer> obstacles_per_vertex_; //!< Store the obstacles associated with the n-1 initial vertices
   
   double cost_; //!< Store cost value of the current hyper-graph
   RotType prefer_rotdir_; //!< Store whether to prefer a specific initial rotation in optimization (might be activated in case the robot oscillates)

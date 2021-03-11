@@ -46,6 +46,8 @@
 #include <iterator>
 #include <memory>
 #include <vector>
+#include <iterator>
+#include <random>
 
 #include <visualization_msgs/msg/marker.hpp>
 #include <geometry_msgs/msg/point.hpp>
@@ -224,7 +226,7 @@ public:
    *         any obstacle in the costmap, \c false otherwise.
    */
   virtual bool isTrajectoryFeasible(dwb_critics::ObstacleFootprintCritic* costmap_model, const std::vector<geometry_msgs::msg::Point>& footprint_spec,
-                                    double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1);
+                                    double inscribed_radius = 0.0, double circumscribed_radius=0.0, int look_ahead_idx=-1, double feasibility_check_lookahead_distance=-1.0);
 
   /**
    * @brief In case of empty best teb, scores again the available plans to find the best one.
@@ -482,6 +484,24 @@ public:
    */
   const EquivalenceClassContainer& getEquivalenceClassRef() const  {return equivalence_classes_;}
 
+  bool isInBestTebClass(const EquivalenceClassPtr& eq_class) const;
+
+  int numTebsInClass(const EquivalenceClassPtr& eq_class) const;
+
+  int numTebsInBestTebClass() const;
+
+  /**
+   * @brief Randomly drop non-optimal TEBs to so we can explore other alternatives
+   *
+   * The HCP has a tendency to become "fixated" once its tebs_ list becomes
+   * fully populated, repeatedly refining and evaluating paths from the same
+   * few homotopy classes until the robot moves far enough for a teb to become
+   * invalid. As a result, it can fail to discover a more optimal path. This
+   * function alleviates this problem by randomly dropping TEBs other than the
+   * current "best" one with a probability controlled by
+   * selection_dropping_probability parameter.
+   */
+  void randomlyDropTebs();
 
 protected:
 
@@ -527,6 +547,7 @@ protected:
   // internal objects (memory management owned)
   TebVisualizationPtr visualization_; //!< Instance of the visualization class (local/global plan, obstacles, ...)
   TebOptimalPlannerPtr best_teb_; //!< Store the current best teb.
+  EquivalenceClassPtr best_teb_eq_class_; //!< Store the equivalence class of the current best teb
   RobotFootprintModelPtr robot_model_; //!< Robot model shared instance
 
   const std::vector<geometry_msgs::msg::PoseStamped>* initial_plan_; //!< Store the initial plan if available for a better trajectory initialization
@@ -542,6 +563,7 @@ protected:
 
   rclcpp::Time last_eq_class_switching_time_; //!< Store the time at which the equivalence class changed recently
 
+  std::default_random_engine random_;
   bool initialized_; //!< Keeps track about the correct initialization of this class
 
   TebOptimalPlannerPtr last_best_teb_;  //!< Points to the plan used in the previous control cycle
