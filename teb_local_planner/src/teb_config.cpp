@@ -98,9 +98,9 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "obstacle_association_cutoff_factor", rclcpp::ParameterValue(obstacles.obstacle_association_cutoff_factor));
   nh->declare_parameter(name + "." + "costmap_converter_plugin", rclcpp::ParameterValue(obstacles.costmap_converter_plugin));
   nh->declare_parameter(name + "." + "costmap_converter_spin_thread", rclcpp::ParameterValue(obstacles.costmap_converter_spin_thread));
-  nh->declare_parameter(name + "." + "obstacle_proximity_ratio_max_vel",  rclcpp::ParameterValue(obstacles.obstacle_proximity_ratio_max_vel);
-  nh->declare_parameter(name + "." + "obstacle_proximity_lower_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_lower_bound);
-  nh->declare_parameter(name + "." + "obstacle_proximity_upper_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_upper_bound);
+  nh->declare_parameter(name + "." + "obstacle_proximity_ratio_max_vel",  rclcpp::ParameterValue(obstacles.obstacle_proximity_ratio_max_vel));
+  nh->declare_parameter(name + "." + "obstacle_proximity_lower_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_lower_bound));
+  nh->declare_parameter(name + "." + "obstacle_proximity_upper_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_upper_bound));
   
   // Optimization
   nh->declare_parameter(name + "." + "no_inner_iterations", rclcpp::ParameterValue(optim.no_inner_iterations));
@@ -204,18 +204,6 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "wheelbase", robot.wheelbase, robot.wheelbase);
   nh->get_parameter_or(name + "." + "cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh->get_parameter_or(name + "." + "is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
-  
-  // Robot     
-  robot.max_vel_x = cfg.max_vel_x;
-  robot.max_vel_x_backwards = cfg.max_vel_x_backwards;
-  robot.max_vel_y = cfg.max_vel_y;
-  robot.max_vel_theta = cfg.max_vel_theta;
-  robot.acc_lim_x = cfg.acc_lim_x;
-  robot.acc_lim_y = cfg.acc_lim_y;
-  robot.acc_lim_theta = cfg.acc_lim_theta;
-  robot.min_turning_radius = cfg.min_turning_radius;
-  robot.wheelbase = cfg.wheelbase;
-  robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   
   // GoalTolerance
   nh->get_parameter_or(name + "." + "xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);

@@ -39,7 +39,7 @@ public:
    */
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeVelocityObstacleRatio()");
+    TEB_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeVelocityObstacleRatio()");
     const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
@@ -76,7 +76,7 @@ public:
     _error[0] = penaltyBoundToInterval(vel, max_vel_fwd, 0);
     _error[1] = penaltyBoundToInterval(omega, max_omega, 0);
 
-    ROS_ASSERT_MSG(std::isfinite(_error[0]) || std::isfinite(_error[1]), "EdgeVelocityObstacleRatio::computeError() _error[0]=%f , _error[1]=%f\n",_error[0],_error[1]);
+    TEB_ASSERT_MSG(std::isfinite(_error[0]) || std::isfinite(_error[1]), "EdgeVelocityObstacleRatio::computeError() _error[0]=%f , _error[1]=%f\n",_error[0],_error[1]);
   }
 
   /**
