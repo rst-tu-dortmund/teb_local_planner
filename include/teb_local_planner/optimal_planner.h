@@ -514,7 +514,7 @@ public:
    *         any obstacle in the costmap, \c false otherwise.
    */
   virtual bool isTrajectoryFeasible(dwb_critics::ObstacleFootprintCritic* costmap_model, const std::vector<geometry_msgs::msg::Point>& footprint_spec, double inscribed_radius = 0.0,
-          double circumscribed_radius=0.0, int look_ahead_idx=-1);
+          double circumscribed_radius=0.0, int look_ahead_idx=-1, double feasibility_check_lookahead_distance);
   
   //@}
   
