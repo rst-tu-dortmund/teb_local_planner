@@ -65,6 +65,10 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
   nh->declare_parameter(name + "." + "control_look_ahead_poses", rclcpp::ParameterValue(trajectory.control_look_ahead_poses));
 
+  nh.param("feasibility_check_lookahead_distance", trajectory.feasibility_check_lookahead_distance, trajectory.feasibility_check_lookahead_distance);
+  if (!nh.param("global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep, trajectory.global_plan_viapoint_sep))
+    nh.setParam("global_plan_viapoint_sep", trajectory.global_plan_viapoint_sep); // write deprecated value to param server
+  nh.getParam("global_plan_via_point_sep", trajectory.global_plan_viapoint_sep); // deprecated, see checkDeprecated()
   // Robot
   nh->declare_parameter(name + "." + "max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
   nh->declare_parameter(name + "." + "max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
@@ -97,6 +101,7 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "obstacle_association_cutoff_factor", rclcpp::ParameterValue(obstacles.obstacle_association_cutoff_factor));
   nh->declare_parameter(name + "." + "costmap_converter_plugin", rclcpp::ParameterValue(obstacles.costmap_converter_plugin));
   nh->declare_parameter(name + "." + "costmap_converter_spin_thread", rclcpp::ParameterValue(obstacles.costmap_converter_spin_thread));
+ 
   
   // Optimization
   nh->declare_parameter(name + "." + "no_inner_iterations", rclcpp::ParameterValue(optim.no_inner_iterations));
@@ -123,6 +128,7 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "weight_prefer_rotdir", rclcpp::ParameterValue(optim.weight_prefer_rotdir));
   nh->declare_parameter(name + "." + "weight_adapt_factor", rclcpp::ParameterValue(optim.weight_adapt_factor));
   nh->declare_parameter(name + "." + "obstacle_cost_exponent", rclcpp::ParameterValue(optim.obstacle_cost_exponent));
+  nh.param("weight_velocity_obstacle_ratio", optim.weight_velocity_obstacle_ratio, optim.weight_velocity_obstacle_ratio);
   
   // Homotopy Class Planner
   nh->declare_parameter(name + "." + "enable_homotopy_class_planning", rclcpp::ParameterValue(hcp.enable_homotopy_class_planning));
@@ -151,6 +157,8 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "max_ratio_detours_duration_best_duration", rclcpp::ParameterValue(hcp.max_ratio_detours_duration_best_duration));
 
   // Recovery
+  nh.param("selection_obst_cost_scale", hcp.selection_obst_cost_scale, hcp.selection_obst_cost_scale);
+  nh.param("selection_dropping_probability", hcp.selection_dropping_probability, hcp.selection_dropping_probability); 
   
   nh->declare_parameter(name + "." + "shrink_horizon_backup", rclcpp::ParameterValue(recovery.shrink_horizon_backup));
   nh->declare_parameter(name + "." + "shrink_horizon_min_duration", rclcpp::ParameterValue(recovery.shrink_horizon_min_duration));
@@ -199,6 +207,18 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "wheelbase", robot.wheelbase, robot.wheelbase);
   nh->get_parameter_or(name + "." + "cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh->get_parameter_or(name + "." + "is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
+  
+  // Robot     
+  robot.max_vel_x = cfg.max_vel_x;
+  robot.max_vel_x_backwards = cfg.max_vel_x_backwards;
+  robot.max_vel_y = cfg.max_vel_y;
+  robot.max_vel_theta = cfg.max_vel_theta;
+  robot.acc_lim_x = cfg.acc_lim_x;
+  robot.acc_lim_y = cfg.acc_lim_y;
+  robot.acc_lim_theta = cfg.acc_lim_theta;
+  robot.min_turning_radius = cfg.min_turning_radius;
+  robot.wheelbase = cfg.wheelbase;
+  robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   
   // GoalTolerance
   nh->get_parameter_or(name + "." + "xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);

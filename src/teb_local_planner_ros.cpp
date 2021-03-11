@@ -381,7 +381,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
     nav2_costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
   }
 
-  bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_->trajectory.feasibility_check_no_poses);
+  bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_.trajectory.feasibility_check_no_poses, cfg_.trajectory.feasibility_check_lookahead_distance);
   if (!feasible)
   {
     cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
@@ -875,21 +875,18 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
       
 void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_theta, double max_vel_x_backwards) const
 {
+  double ratio_x = 1, ratio_omega = 1, ratio_y = 1;
   // Limit translational velocity for forward driving
   if (vx > max_vel_x)
-    vx = max_vel_x;
+    ratio_x = max_vel_x / vx;
   
   // limit strafing velocity
-  if (vy > max_vel_y)
-    vy = max_vel_y;
-  else if (vy < -max_vel_y)
-    vy = -max_vel_y;
+  if (vy > max_vel_y || vy < -max_vel_y)
+    ratio_y = std::abs(vy / max_vel_y);
   
   // Limit angular velocity
-  if (omega > max_vel_theta)
-    omega = max_vel_theta;
-  else if (omega < -max_vel_theta)
-    omega = -max_vel_theta;
+  if (omega > max_vel_theta || omega < -max_vel_theta)
+    ratio_omega = std::abs(max_vel_theta / omega);
   
   // Limit backwards velocity
   if (max_vel_x_backwards<=0)
@@ -899,7 +896,21 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
                 "TebLocalPlannerROS(): Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
   }
   else if (vx < -max_vel_x_backwards)
-    vx = -max_vel_x_backwards;
+    ratio_x = - max_vel_x_backwards / vx;
+
+  if (cfg_.robot.use_proportional_saturation)
+  {
+    double ratio = std::min(std::min(ratio_x, ratio_y), ratio_omega);
+    vx *= ratio;
+    vy *= ratio;
+    omega *= ratio;
+  }
+  else
+  {
+    vx *= ratio_x;
+    vy *= ratio_y;
+    omega *= ratio_omega;
+  }
 }
      
      
