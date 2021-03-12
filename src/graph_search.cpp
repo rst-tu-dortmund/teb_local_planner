@@ -43,8 +43,7 @@ namespace teb_local_planner
 {
 
 void GraphSearchInterface::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation,
-                                      double goal_orientation, const geometry_msgs::Twist* start_velocity, bool free_goal_vel)
-                                      double goal_orientation, const geometry_msgs::msg::Twist* start_velocity)
+                                      double goal_orientation, const geometry_msgs::msg::Twist* start_velocity, bool free_goal_vel)
 {
   // see http://www.technical-recipes.com/2011/a-recursive-algorithm-to-find-all-paths-between-two-given-nodes/ for details on finding all simple paths
 
@@ -220,9 +219,7 @@ void lrKeyPointGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, dou
 }
 
 
-
-void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::Twist* start_velocity, bool free_goal_vel)
-void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::msg::Twist* start_velocity)
+void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::msg::Twist* start_velocity, bool free_goal_vel)
 {
   // Clear existing graph and paths
   clearGraph();

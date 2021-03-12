@@ -80,16 +80,12 @@ TebLocalPlannerROS::~TebLocalPlannerROS()
 
 //void TebLocalPlannerROS::reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level)
 //{
-//  cfg_->reconfigure(config);
+//cfg_.reconfigure(config);
+//ros::NodeHandle nh("~/" + name_);
+//// create robot footprint/contour model for optimization
+//RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
+//planner_->updateRobotModel(robot_model);
 //}
-void TebLocalPlannerROS::reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level)
-{
-  cfg_.reconfigure(config);
-  ros::NodeHandle nh("~/" + name_);
-  // create robot footprint/contour model for optimization
-  RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
-  planner_->updateRobotModel(robot_model);
-}
 
 void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
 {
@@ -314,20 +310,21 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
   //tf::poseStampedMsgToTF(global_plan_.back(), global_goal);
   //global_goal.setData( tf_plan_to_global * global_goal );
   
-  geometry_msgs::PoseStamped global_goal;
-  tf2::doTransform(global_plan_.back(), global_goal, tf_plan_to_global);
-  double dx = global_goal.pose.position.x - robot_pose_.x();
-  double dy = global_goal.pose.position.y - robot_pose_.y();
-  double delta_orient = g2o::normalize_theta( tf2::getYaw(global_goal.pose.orientation) - robot_pose_.theta() );
-  if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
-    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
-    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
-    && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
-        || cfg_.goal_tolerance.free_goal_vel))
-  {
-    goal_reached_ = true;
-    return mbf_msgs::ExePathResult::SUCCESS;
-  }
+//  TODO: port goal check from ROS1 ?
+//  geometry_msgs::PoseStamped global_goal;
+//  tf2::doTransform(global_plan_.back(), global_goal, tf_plan_to_global);
+//  double dx = global_goal.pose.position.x - robot_pose_.x();
+//  double dy = global_goal.pose.position.y - robot_pose_.y();
+//  double delta_orient = g2o::normalize_theta( tf2::getYaw(global_goal.pose.orientation) - robot_pose_.theta() );
+//  if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
+//    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
+//    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
+//    && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
+//        || cfg_.goal_tolerance.free_goal_vel))
+//  {
+//    goal_reached_ = true;
+//    return mbf_msgs::ExePathResult::SUCCESS;
+//  }
 
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);

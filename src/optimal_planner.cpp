@@ -83,12 +83,6 @@ TebOptimalPlanner::~TebOptimalPlanner()
 }
 
 void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
-void TebOptimalPlanner::updateRobotModel(RobotFootprintModelPtr robot_model)
-{
-  robot_model_ = robot_model;
-}
-
-void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
   node_ = node;
   // init optimizer (set solver and block ordering settings)
@@ -111,6 +105,11 @@ void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacle
   vel_goal_.second.linear.y = 0;
   vel_goal_.second.angular.z = 0;
   initialized_ = true;
+}
+
+void TebOptimalPlanner::updateRobotModel(RobotFootprintModelPtr robot_model)
+{
+  robot_model_ = robot_model;
 }
 
 
