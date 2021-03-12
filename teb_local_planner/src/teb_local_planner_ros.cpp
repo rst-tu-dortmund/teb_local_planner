@@ -300,9 +300,6 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
   if (!custom_via_points_active_)
     updateViaPointsContainer(transformed_plan, cfg_->trajectory.global_plan_viapoint_sep);
 
-  nav_msgs::Odometry base_odom;
-  odom_helper_.getOdom(base_odom);
-
   // check if global goal is reached
   geometry_msgs::msg::PoseStamped global_goal;
   rclcpp::Duration transform_tolerance(0, 500 * 1000 * 1000); // 500ms
@@ -403,12 +400,14 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
 
     // Reset everything to start again with the initialization of new trajectories.
     planner_->clearPlanner();
-    ROS_WARN_THROTTLE(1.0, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
+    //RCLCPP_WARN_THROTTLE(logger_, clock_.get(), 1.0, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
 
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
-    time_last_infeasible_plan_ = ros::Time::now();
+    time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
-    return mbf_msgs::ExePathResult::NO_VALID_CMD;
+    throw nav2_core::PlannerException(
+      std::string("TebLocalPlannerROS: velocity command invalid (hasDiverged). Resetting planner...")
+    );
   }
          
   // Check feasibility (but within the first few states only)

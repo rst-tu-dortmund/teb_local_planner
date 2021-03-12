@@ -386,8 +386,8 @@ public:
     recovery.oscillation_omega_eps = 0.1;
     recovery.oscillation_recovery_min_duration = 10;
     recovery.oscillation_filter_duration = 10;
-
-
+    recovery.divergence_detection_enable = false;
+    recovery.divergence_detection_max_chi_squared = 10;
   }
   
   void declareParameters(const nav2_util::LifecycleNode::SharedPtr, const std::string name);
