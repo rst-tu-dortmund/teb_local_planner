@@ -400,7 +400,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
 
     // Reset everything to start again with the initialization of new trajectories.
     planner_->clearPlanner();
-    //RCLCPP_WARN_THROTTLE(logger_, clock_.get(), 1.0, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
+    RCLCPP_WARN_THROTTLE(logger_, *(clock_), 1, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
 
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = clock_->now();
