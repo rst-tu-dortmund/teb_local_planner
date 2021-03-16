@@ -115,10 +115,8 @@ public:
   //! Goal tolerance related parameters
   struct GoalTolerance
   {
-    double yaw_goal_tolerance; //!< Allowed final orientation error
     double xy_goal_tolerance; //!< Allowed final euclidean distance to the goal position
     bool free_goal_vel; //!< Allow the robot's velocity to be nonzero (usally max_vel) for planning purposes
-    bool complete_global_plan; // true prevents the robot from ending the path early when it cross the end goal
   } goal_tolerance; //!< Goal tolerance related parameters
 
   //! Obstacle related parameters
@@ -222,6 +220,8 @@ public:
     double oscillation_omega_eps; //!< Threshold for the average normalized angular velocity: if oscillation_v_eps and oscillation_omega_eps are not exceeded both, a possible oscillation is detected
     double oscillation_recovery_min_duration; //!< Minumum duration [sec] for which the recovery mode is activated after an oscillation is detected.
     double oscillation_filter_duration; //!< Filter length/duration [sec] for the detection of oscillations
+    bool divergence_detection_enable; //!< True to enable divergence detection.
+    int divergence_detection_max_chi_squared; //!< Maximum acceptable Mahalanobis distance above which it is assumed that the optimization diverged.
   } recovery; //!< Parameters related to recovery and backup strategies
 
 
@@ -288,9 +288,7 @@ public:
     // GoalTolerance
 
     goal_tolerance.xy_goal_tolerance = 0.2;
-    goal_tolerance.yaw_goal_tolerance = 0.2;
     goal_tolerance.free_goal_vel = false;
-    goal_tolerance.complete_global_plan = true;
 
     // Obstacles
 
@@ -380,8 +378,8 @@ public:
     recovery.oscillation_omega_eps = 0.1;
     recovery.oscillation_recovery_min_duration = 10;
     recovery.oscillation_filter_duration = 10;
-
-
+    recovery.divergence_detection_enable = false;
+    recovery.divergence_detection_max_chi_squared = 10;
   }
   
   void declareParameters(const nav2_util::LifecycleNode::SharedPtr, const std::string name);

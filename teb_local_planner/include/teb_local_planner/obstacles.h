@@ -857,7 +857,7 @@ public:
   void setEnd(const Eigen::Ref<const Eigen::Vector2d>& end) {end_ = end; calcCentroid();}
 
   // implements toPolygonMsg() of the base class
-  virtual void toPolygonMsg(geometry_msgs::msg::Polygon&& polygon)
+  virtual void toPolygonMsg(geometry_msgs::msg::Polygon& polygon)
   {
     // Currently, we only export the line
     // TODO(roesmann): export whole pill

@@ -80,7 +80,11 @@ TebLocalPlannerROS::~TebLocalPlannerROS()
 
 //void TebLocalPlannerROS::reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level)
 //{
-//  cfg_->reconfigure(config);
+//cfg_.reconfigure(config);
+//ros::NodeHandle nh("~/" + name_);
+//// create robot footprint/contour model for optimization
+//RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
+//planner_->updateRobotModel(robot_model);
 //}
 
 void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
@@ -296,16 +300,8 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
   if (!custom_via_points_active_)
     updateViaPointsContainer(transformed_plan, cfg_->trajectory.global_plan_viapoint_sep);
 
-  // check if global goal is reached
-  geometry_msgs::msg::PoseStamped global_goal;
-  rclcpp::Duration transform_tolerance(0, 500 * 1000 * 1000); // 500ms
-  nav_2d_utils::transformPose(tf_, robot_pose.header.frame_id, global_plan_.back(), global_goal, transform_tolerance);
-  //tf::poseStampedMsgToTF(global_plan_.back(), global_goal);
-  //global_goal.setData( tf_plan_to_global * global_goal );
-  
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);
-  
     
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty())
@@ -370,6 +366,23 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
     
     throw nav2_core::PlannerException(
       std::string("teb_local_planner was not able to obtain a local plan for the current setting.")
+    );
+  }
+
+  // Check for divergence
+  if (planner_->hasDiverged())
+  {
+    cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
+
+    // Reset everything to start again with the initialization of new trajectories.
+    planner_->clearPlanner();
+    RCLCPP_WARN_THROTTLE(logger_, *(clock_), 1, "TebLocalPlannerROS: the trajectory has diverged. Resetting planner...");
+
+    ++no_infeasible_plans_; // increase number of infeasible solutions in a row
+    time_last_infeasible_plan_ = clock_->now();
+    last_cmd_ = cmd_vel.twist;
+    throw nav2_core::PlannerException(
+      std::string("TebLocalPlannerROS: velocity command invalid (hasDiverged). Resetting planner...")
     );
   }
          
@@ -728,6 +741,7 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
     double sq_dist = 1e10;
     
     //we need to loop to a point on the plan that is within a certain distance of the robot
+    bool robot_reached = false;
     for(int j=0; j < (int)global_plan.size(); ++j)
     {
       double x_diff = robot_pose.pose.position.x - global_plan[j].pose.position.x;
@@ -736,10 +750,15 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
       if (new_sq_dist > sq_dist_threshold)
         break;  // force stop if we have reached the costmap border
 
+      if (robot_reached && new_sq_dist > sq_dist)
+        break;
+
       if (new_sq_dist < sq_dist) // find closest distance
       {
         sq_dist = new_sq_dist;
         i = j;
+        if (sq_dist < 0.05)      // 2.5 cm to the robot; take the immediate local minima; if it's not the global
+          robot_reached = true;  // minima, probably means that there's a loop in the path, and so we prefer this
       }
     }
 

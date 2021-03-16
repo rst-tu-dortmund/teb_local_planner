@@ -43,7 +43,7 @@ namespace teb_local_planner
 {
 
 void GraphSearchInterface::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>& visited, const HcGraphVertexType& goal, double start_orientation,
-                                      double goal_orientation, const geometry_msgs::msg::Twist* start_velocity)
+                                      double goal_orientation, const geometry_msgs::msg::Twist* start_velocity, bool free_goal_vel)
 {
   // see http://www.technical-recipes.com/2011/a-recursive-algorithm-to-find-all-paths-between-two-given-nodes/ for details on finding all simple paths
 
@@ -64,7 +64,7 @@ void GraphSearchInterface::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
       visited.push_back(*it);
 
       // Add new TEB, if this path belongs to a new homotopy class
-      hcp_->addAndInitNewTeb(visited.begin(), visited.end(), std::bind(getVector2dFromHcGraph, std::placeholders::_1, std::cref(graph_)),
+      hcp_->addAndInitNewTeb(visited.begin(), visited.end(), std::bind(getVector2dFromHcGraph, std::placeholders::_1, boost::cref(graph_)),
                              start_orientation, goal_orientation, start_velocity);
 
       visited.pop_back();
@@ -82,7 +82,7 @@ void GraphSearchInterface::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
     visited.push_back(*it);
 
     // recursion step
-    DepthFirst(g, visited, goal, start_orientation, goal_orientation, start_velocity);
+    DepthFirst(g, visited, goal, start_orientation, goal_orientation, start_velocity, free_goal_vel);
 
     visited.pop_back();
   }
@@ -90,7 +90,7 @@ void GraphSearchInterface::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
 
 
 
-void lrKeyPointGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::msg::Twist* start_velocity)
+void lrKeyPointGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::msg::Twist* start_velocity, bool free_goal_vel)
 {
   // Clear existing graph and paths
   clearGraph();
@@ -107,7 +107,7 @@ void lrKeyPointGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, dou
     {
       RCLCPP_INFO(rclcpp::get_logger("teb_local_planner"),
                   "HomotopyClassPlanner::createProbRoadmapGraph(): Initializing a small straight line to just correct orientation errors.");
-      hcp_->addAndInitNewTeb(start, goal, start_velocity);
+      hcp_->addAndInitNewTeb(start, goal, start_velocity, free_goal_vel);
     }
     return;
   }
@@ -215,12 +215,11 @@ void lrKeyPointGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, dou
   // Find all paths between start and goal!
   std::vector<HcGraphVertexType> visited;
   visited.push_back(start_vtx);
-  DepthFirst(graph_,visited,goal_vtx, start.theta(), goal.theta(), start_velocity);
+  DepthFirst(graph_,visited,goal_vtx, start.theta(), goal.theta(), start_velocity, free_goal_vel);
 }
 
 
-
-void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::msg::Twist* start_velocity)
+void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, double dist_to_obst, double obstacle_heading_threshold, const geometry_msgs::msg::Twist* start_velocity, bool free_goal_vel)
 {
   // Clear existing graph and paths
   clearGraph();
@@ -238,7 +237,7 @@ void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, do
     {
       RCLCPP_INFO(rclcpp::get_logger("teb_local_planner"),
                    "HomotopyClassPlanner::createProbRoadmapGraph(): Initializing a small straight line to just correct orientation errors.");
-      hcp_->addAndInitNewTeb(start, goal, start_velocity);
+      hcp_->addAndInitNewTeb(start, goal, start_velocity, free_goal_vel);
     }
     return;
   }
@@ -341,7 +340,7 @@ void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, do
   /// Find all paths between start and goal!
   std::vector<HcGraphVertexType> visited;
   visited.push_back(start_vtx);
-  DepthFirst(graph_,visited,goal_vtx, start.theta(), goal.theta(), start_velocity);
+  DepthFirst(graph_,visited,goal_vtx, start.theta(), goal.theta(), start_velocity, free_goal_vel);
 }
 
 } // end namespace
