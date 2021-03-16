@@ -81,11 +81,7 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   
   // GoalTolerance
   nh->declare_parameter(name + "." + "xy_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.xy_goal_tolerance));
-  nh->declare_parameter(name + "." + "yaw_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.yaw_goal_tolerance));
   nh->declare_parameter(name + "." + "free_goal_vel", rclcpp::ParameterValue(goal_tolerance.free_goal_vel));
-  nh->declare_parameter(name + "." + "complete_global_plan", rclcpp::ParameterValue(goal_tolerance.complete_global_plan));
-  nh->declare_parameter(name + "." + "trans_stopped_vel", rclcpp::ParameterValue(goal_tolerance.trans_stopped_vel));
-  nh->declare_parameter(name + "." + "theta_stopped_vel", rclcpp::ParameterValue(goal_tolerance.theta_stopped_vel));
 
   // Obstacles
   nh->declare_parameter(name + "." + "min_obstacle_dist", rclcpp::ParameterValue(obstacles.min_obstacle_dist));
@@ -211,11 +207,7 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   
   // GoalTolerance
   nh->get_parameter_or(name + "." + "xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);
-  nh->get_parameter_or(name + "." + "yaw_goal_tolerance", goal_tolerance.yaw_goal_tolerance, goal_tolerance.yaw_goal_tolerance);
   nh->get_parameter_or(name + "." + "free_goal_vel", goal_tolerance.free_goal_vel, goal_tolerance.free_goal_vel);
-  nh->get_parameter_or(name + "." + "complete_global_plan", goal_tolerance.complete_global_plan, goal_tolerance.complete_global_plan);
-  nh->get_parameter_or(name + "." + "trans_stopped_vel", goal_tolerance.trans_stopped_vel, goal_tolerance.trans_stopped_vel);
-  nh->get_parameter_or(name + "." + "theta_stopped_vel", goal_tolerance.theta_stopped_vel, goal_tolerance.theta_stopped_vel);
 
   // Obstacles
   nh->get_parameter_or(name + "." + "min_obstacle_dist", obstacles.min_obstacle_dist, obstacles.min_obstacle_dist);
@@ -336,7 +328,6 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   
 //  // GoalTolerance
 //  goal_tolerance.xy_goal_tolerance = cfg.xy_goal_tolerance;
-//  goal_tolerance.yaw_goal_tolerance = cfg.yaw_goal_tolerance;
 //  goal_tolerance.free_goal_vel = cfg.free_goal_vel;
   
 //  // Obstacles

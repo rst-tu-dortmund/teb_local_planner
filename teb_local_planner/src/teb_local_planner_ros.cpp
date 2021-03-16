@@ -300,32 +300,8 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
   if (!custom_via_points_active_)
     updateViaPointsContainer(transformed_plan, cfg_->trajectory.global_plan_viapoint_sep);
 
-  // check if global goal is reached
-  geometry_msgs::msg::PoseStamped global_goal;
-  rclcpp::Duration transform_tolerance(0, 500 * 1000 * 1000); // 500ms
-  nav_2d_utils::transformPose(tf_, robot_pose.header.frame_id, global_plan_.back(), global_goal, transform_tolerance);
-  //tf::poseStampedMsgToTF(global_plan_.back(), global_goal);
-  //global_goal.setData( tf_plan_to_global * global_goal );
-  
-//  TODO: port goal check from ROS1 ?
-//  geometry_msgs::PoseStamped global_goal;
-//  tf2::doTransform(global_plan_.back(), global_goal, tf_plan_to_global);
-//  double dx = global_goal.pose.position.x - robot_pose_.x();
-//  double dy = global_goal.pose.position.y - robot_pose_.y();
-//  double delta_orient = g2o::normalize_theta( tf2::getYaw(global_goal.pose.orientation) - robot_pose_.theta() );
-//  if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
-//    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
-//    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
-//    && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
-//        || cfg_.goal_tolerance.free_goal_vel))
-//  {
-//    goal_reached_ = true;
-//    return mbf_msgs::ExePathResult::SUCCESS;
-//  }
-
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);
-  
     
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty())
