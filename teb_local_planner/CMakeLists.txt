@@ -35,6 +35,7 @@ find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 
 message(STATUS "System: ${CMAKE_SYSTEM}")
 ## System dependencies are found with CMake's conventions
@@ -103,6 +104,7 @@ set(ament_dependencies
     tf2_geometry_msgs
     tf2_ros
     visualization_msgs
+    builtin_interfaces
 )
 ament_target_dependencies(teb_local_planner
    ${ament_dependencies}

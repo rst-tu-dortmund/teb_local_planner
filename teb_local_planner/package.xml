@@ -40,6 +40,7 @@
   <depend>teb_msgs</depend>
   <depend>tf2</depend>
   <depend>visualization_msgs</depend>
+  <depend>builtin_interfaces</depend>
   <exec_depend>nav2_bringup</exec_depend>
   
   <test_depend>ament_cmake_gtest</test_depend>

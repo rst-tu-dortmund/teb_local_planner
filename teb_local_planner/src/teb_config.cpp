@@ -42,6 +42,8 @@ namespace teb_local_planner
 {
 
 void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name) {
+  node_name = name;
+
   nh->declare_parameter(name + "." + "odom_topic", rclcpp::ParameterValue(odom_topic));
   nh->declare_parameter(name + "." + "map_frame", rclcpp::ParameterValue(map_frame));
   
@@ -289,163 +291,337 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "divergence_detection_enable", recovery.divergence_detection_enable, recovery.divergence_detection_enable);
   nh->get_parameter_or(name + "." + "divergence_detection_max_chi_squared", recovery.divergence_detection_max_chi_squared, recovery.divergence_detection_max_chi_squared);
 
-  checkParameters(nh);
+  checkParameters();
   checkDeprecated(nh, name);
 }
 
-// TODO : Dynamic reconfigure is not supported in ROS2 until now
-//void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
-//{
-//  std::lock_guard<std::mutex> l(config_mutex_);
-  
-//  // Trajectory
-//  trajectory.teb_autosize = cfg.teb_autosize;
-//  trajectory.dt_ref = cfg.dt_ref;
-//  trajectory.dt_hysteresis = cfg.dt_hysteresis;
-//  trajectory.global_plan_overwrite_orientation = cfg.global_plan_overwrite_orientation;
-//  trajectory.allow_init_with_backwards_motion = cfg.allow_init_with_backwards_motion;
-//  trajectory.global_plan_viapoint_sep = cfg.global_plan_viapoint_sep;
-//  trajectory.via_points_ordered = cfg.via_points_ordered;
-//  trajectory.max_global_plan_lookahead_dist = cfg.max_global_plan_lookahead_dist;
-//  trajectory.exact_arc_length = cfg.exact_arc_length;
-//  trajectory.force_reinit_new_goal_dist = cfg.force_reinit_new_goal_dist;
-//  trajectory.feasibility_check_no_poses = cfg.feasibility_check_no_poses;
-//  trajectory.publish_feedback = cfg.publish_feedback;
-  
-//  // Robot
-//  robot.max_vel_x = cfg.max_vel_x;
-//  robot.max_vel_x_backwards = cfg.max_vel_x_backwards;
-//  robot.max_vel_y = cfg.max_vel_y;
-//  robot.max_vel_theta = cfg.max_vel_theta;
-//  robot.acc_lim_x = cfg.acc_lim_x;
-//  robot.acc_lim_y = cfg.acc_lim_y;
-//  robot.acc_lim_theta = cfg.acc_lim_theta;
-//  robot.min_turning_radius = cfg.min_turning_radius;
-//  robot.wheelbase = cfg.wheelbase;
-//  robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
-  
-//  // GoalTolerance
-//  goal_tolerance.free_goal_vel = cfg.free_goal_vel;
-  
-//  // Obstacles
-//  obstacles.min_obstacle_dist = cfg.min_obstacle_dist;
-//  obstacles.inflation_dist = cfg.inflation_dist;
-//  obstacles.dynamic_obstacle_inflation_dist = cfg.dynamic_obstacle_inflation_dist;
-//  obstacles.include_dynamic_obstacles = cfg.include_dynamic_obstacles;
-//  obstacles.include_costmap_obstacles = cfg.include_costmap_obstacles;
-//  obstacles.legacy_obstacle_association = cfg.legacy_obstacle_association;
-//  obstacles.obstacle_association_force_inclusion_factor = cfg.obstacle_association_force_inclusion_factor;
-//  obstacles.obstacle_association_cutoff_factor = cfg.obstacle_association_cutoff_factor;
-//  obstacles.costmap_obstacles_behind_robot_dist = cfg.costmap_obstacles_behind_robot_dist;
-//  obstacles.obstacle_poses_affected = cfg.obstacle_poses_affected;
-
-  
-//  // Optimization
-//  optim.no_inner_iterations = cfg.no_inner_iterations;
-//  optim.no_outer_iterations = cfg.no_outer_iterations;
-//  optim.optimization_activate = cfg.optimization_activate;
-//  optim.optimization_verbose = cfg.optimization_verbose;
-//  optim.penalty_epsilon = cfg.penalty_epsilon;
-//  optim.weight_max_vel_x = cfg.weight_max_vel_x;
-//  optim.weight_max_vel_y = cfg.weight_max_vel_y;
-//  optim.weight_max_vel_theta = cfg.weight_max_vel_theta;
-//  optim.weight_acc_lim_x = cfg.weight_acc_lim_x;
-//  optim.weight_acc_lim_y = cfg.weight_acc_lim_y;
-//  optim.weight_acc_lim_theta = cfg.weight_acc_lim_theta;
-//  optim.weight_kinematics_nh = cfg.weight_kinematics_nh;
-//  optim.weight_kinematics_forward_drive = cfg.weight_kinematics_forward_drive;
-//  optim.weight_kinematics_turning_radius = cfg.weight_kinematics_turning_radius;
-//  optim.weight_optimaltime = cfg.weight_optimaltime;
-//  optim.weight_obstacle = cfg.weight_obstacle;
-//  optim.weight_inflation = cfg.weight_inflation;
-//  optim.weight_dynamic_obstacle = cfg.weight_dynamic_obstacle;
-//  optim.weight_dynamic_obstacle_inflation = cfg.weight_dynamic_obstacle_inflation;
-//  optim.weight_viapoint = cfg.weight_viapoint;
-//  optim.weight_adapt_factor = cfg.weight_adapt_factor;
-  
-//  // Homotopy Class Planner
-//  hcp.enable_multithreading = cfg.enable_multithreading;
-//  hcp.max_number_classes = cfg.max_number_classes;
-//  hcp.selection_cost_hysteresis = cfg.selection_cost_hysteresis;
-//  hcp.selection_prefer_initial_plan = cfg.selection_prefer_initial_plan;
-//  hcp.selection_obst_cost_scale = cfg.selection_obst_cost_scale;
-//  hcp.selection_viapoint_cost_scale = cfg.selection_viapoint_cost_scale;
-//  hcp.selection_alternative_time_cost = cfg.selection_alternative_time_cost;
-//  hcp.switching_blocking_period = cfg.switching_blocking_period;
-  
-//  hcp.obstacle_heading_threshold = cfg.obstacle_heading_threshold;
-//  hcp.roadmap_graph_no_samples = cfg.roadmap_graph_no_samples;
-//  hcp.roadmap_graph_area_width = cfg.roadmap_graph_area_width;
-//  hcp.roadmap_graph_area_length_scale = cfg.roadmap_graph_area_length_scale;
-//  hcp.h_signature_prescaler = cfg.h_signature_prescaler;
-//  hcp.h_signature_threshold = cfg.h_signature_threshold;
-//  hcp.viapoints_all_candidates = cfg.viapoints_all_candidates;
-//  hcp.visualize_hc_graph = cfg.visualize_hc_graph;
-//  hcp.visualize_with_time_as_z_axis_scale = cfg.visualize_with_time_as_z_axis_scale;
-  
-//  // Recovery
-  
-//  recovery.shrink_horizon_backup = cfg.shrink_horizon_backup;
-//  recovery.oscillation_recovery = cfg.oscillation_recovery;
-  
-//  checkParameters();
-//}
-    
-    
-void TebConfig::checkParameters(const nav2_util::LifecycleNode::SharedPtr nh) const
+void TebConfig::on_parameter_event_callback(
+    const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
 {
+  std::lock_guard<std::mutex> l(config_mutex_);
+  
+  for (auto & changed_parameter : event->changed_parameters) {
+    const auto & type = changed_parameter.value.type;
+    const auto & name = changed_parameter.name;
+    const auto & value = changed_parameter.value;
+
+    if (type == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE) {
+      // Trajectory
+      if (name == node_name + ".teb_autosize") {
+        trajectory.teb_autosize = value.double_value;
+      } else if (name == node_name + ".dt_ref") {
+        trajectory.dt_ref = value.double_value;
+      } else if (name == node_name + ".dt_hysteresis") {
+        trajectory.dt_hysteresis = value.double_value;
+      } else if (name == node_name + ".global_plan_viapoint_sep") {
+        trajectory.global_plan_viapoint_sep = value.double_value;
+      } else if (name == node_name + ".max_global_plan_lookahead_dist") {
+        trajectory.max_global_plan_lookahead_dist = value.double_value;
+      } else if (name == node_name + ".global_plan_prune_distance") {
+        trajectory.global_plan_prune_distance = value.double_value;
+      } else if (name == node_name + ".force_reinit_new_goal_dist") {
+        trajectory.force_reinit_new_goal_dist = value.double_value;
+      } else if (name == node_name + ".force_reinit_new_goal_angular") {
+        trajectory.force_reinit_new_goal_angular = value.double_value;
+      } else if (name == node_name + ".min_resolution_collision_check_angular") {
+        trajectory.min_resolution_collision_check_angular = value.double_value;
+      }
+      // Robot
+      else if (name == node_name + ".max_vel_x") {
+        robot.max_vel_x = value.double_value;
+        robot.base_max_vel_x = value.double_value;
+      } else if (name == node_name + ".max_vel_x_backwards") {
+        robot.max_vel_x_backwards = value.double_value;
+        robot.base_max_vel_x_backwards = value.double_value;
+      } else if (name == node_name + ".max_vel_y") {
+        robot.max_vel_y = value.double_value;
+        robot.base_max_vel_y = value.double_value;
+      } else if (name == node_name + ".max_vel_theta") {
+        robot.max_vel_theta = value.double_value;
+        robot.base_max_vel_theta = value.double_value;
+      } else if (name == node_name + ".acc_lim_x") {
+        robot.acc_lim_x = value.double_value;
+      } else if (name == node_name + ".acc_lim_y") {
+        robot.acc_lim_y = value.double_value;
+      } else if (name == node_name + ".acc_lim_theta") {
+        robot.acc_lim_theta = value.double_value;
+      } else if (name == node_name + ".min_turning_radius") {
+        robot.min_turning_radius = value.double_value;
+      } else if (name == node_name + ".wheelbase") {
+        robot.wheelbase = value.double_value;
+      }
+      // GoalTolerance
+      // Obstacles
+      else if (name == node_name + ".min_obstacle_dist") {
+        obstacles.min_obstacle_dist = value.double_value;
+      } else if (name == node_name + ".inflation_dist") {
+        obstacles.inflation_dist = value.double_value;
+      } else if (name == node_name + ".dynamic_obstacle_inflation_dist") {
+        obstacles.dynamic_obstacle_inflation_dist = value.double_value;
+      } else if (name == node_name + ".costmap_obstacles_behind_robot_dist") {
+        obstacles.costmap_obstacles_behind_robot_dist = value.double_value;
+      } else if (name == node_name + ".obstacle_association_force_inclusion_factor") {
+        obstacles.obstacle_association_force_inclusion_factor = value.double_value;
+      } else if (name == node_name + ".obstacle_association_cutoff_factor") {
+        obstacles.obstacle_association_cutoff_factor = value.double_value;
+      }
+      // Optimization
+      else if (name == node_name + ".penalty_epsilon") {
+        optim.penalty_epsilon = value.double_value;
+      } else if (name == node_name + ".weight_max_vel_x") {
+        optim.weight_max_vel_x = value.double_value;
+      } else if (name == node_name + ".weight_max_vel_y") {
+        optim.weight_max_vel_y = value.double_value;
+      } else if (name == node_name + ".weight_max_vel_theta") {
+        optim.weight_max_vel_theta = value.double_value;
+      } else if (name == node_name + ".weight_acc_lim_x") {
+        optim.weight_acc_lim_x = value.double_value;
+      } else if (name == node_name + ".weight_acc_lim_y") {
+        optim.weight_acc_lim_y = value.double_value;
+      } else if (name == node_name + ".weight_acc_lim_theta") {
+        optim.weight_acc_lim_theta = value.double_value;
+      } else if (name == node_name + ".weight_kinematics_nh") {
+        optim.weight_kinematics_nh = value.double_value;
+      } else if (name == node_name + ".weight_kinematics_forward_drive") {
+        optim.weight_kinematics_forward_drive = value.double_value;
+      } else if (name == node_name + ".weight_kinematics_turning_radius") {
+        optim.weight_kinematics_turning_radius = value.double_value;
+      } else if (name == node_name + ".weight_optimaltime") {
+        optim.weight_optimaltime = value.double_value;
+      } else if (name == node_name + ".weight_shortest_path") {
+        optim.weight_shortest_path = value.double_value;
+      } else if (name == node_name + ".weight_obstacle") {
+        optim.weight_obstacle = value.double_value;
+      } else if (name == node_name + ".weight_inflation") {
+        optim.weight_inflation = value.double_value;
+      } else if (name == node_name + ".weight_dynamic_obstacle") {
+        optim.weight_dynamic_obstacle = value.double_value;
+      } else if (name == node_name + ".weight_dynamic_obstacle_inflation") {
+        optim.weight_dynamic_obstacle_inflation = value.double_value;
+      } else if (name == node_name + ".weight_viapoint") {
+        optim.weight_viapoint = value.double_value;
+      } else if (name == node_name + ".weight_prefer_rotdir") {
+        optim.weight_prefer_rotdir = value.double_value;
+      } else if (name == node_name + ".weight_adapt_factor") {
+        optim.weight_adapt_factor = value.double_value;
+      } else if (name == node_name + ".obstacle_cost_exponent") {
+        optim.obstacle_cost_exponent = value.double_value;
+      }
+      // Homotopy Class Planner
+      else if (name == node_name + ".selection_cost_hysteresis") {
+        hcp.selection_cost_hysteresis = value.double_value;
+      } else if (name == node_name + ".selection_prefer_initial_plan") {
+        hcp.selection_prefer_initial_plan = value.double_value;
+      } else if (name == node_name + ".selection_obst_cost_scale") {
+        hcp.selection_obst_cost_scale = value.double_value;
+      } else if (name == node_name + ".selection_viapoint_cost_scale") {
+        hcp.selection_viapoint_cost_scale = value.double_value;
+      } else if (name == node_name + ".switching_blocking_period") {
+        hcp.switching_blocking_period = value.double_value;
+      } else if (name == node_name + ".roadmap_graph_area_width") {
+        hcp.roadmap_graph_area_width = value.double_value;
+      } else if (name == node_name + ".roadmap_graph_area_length_scale") {
+        hcp.roadmap_graph_area_length_scale = value.double_value;
+      } else if (name == node_name + ".h_signature_prescaler") {
+        hcp.h_signature_prescaler = value.double_value;
+      } else if (name == node_name + ".h_signature_threshold") {
+        hcp.h_signature_threshold = value.double_value;
+      } else if (name == node_name + ".obstacle_keypoint_offset") {
+        hcp.obstacle_keypoint_offset = value.double_value;
+      } else if (name == node_name + ".obstacle_heading_threshold") {
+        hcp.obstacle_heading_threshold = value.double_value;
+      } else if (name == node_name + ".visualize_with_time_as_z_axis_scale") {
+        hcp.visualize_with_time_as_z_axis_scale = value.double_value;
+      } else if (name == node_name + ".detours_orientation_tolerance") {
+        hcp.detours_orientation_tolerance = value.double_value;
+      } else if (name == node_name + ".length_start_orientation_vector") {
+        hcp.length_start_orientation_vector = value.double_value;
+      } else if (name == node_name + ".max_ratio_detours_duration_best_duration") {
+        hcp.max_ratio_detours_duration_best_duration = value.double_value;
+      }
+      // Recovery
+      else if (name == node_name + ".shrink_horizon_min_duration") {
+        recovery.shrink_horizon_min_duration = value.double_value;
+      } else if (name == node_name + ".oscillation_v_eps") {
+        recovery.oscillation_v_eps = value.double_value;
+      } else if (name == node_name + ".oscillation_omega_eps") {
+        recovery.oscillation_omega_eps = value.double_value;
+      } else if (name == node_name + ".oscillation_recovery_min_duration") {
+        recovery.oscillation_recovery_min_duration = value.double_value;
+      } else if (name == node_name + ".oscillation_filter_duration") {
+        recovery.oscillation_filter_duration = value.double_value;
+      }
+    }
+
+    else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER) {
+      // Trajectory
+      if (name == node_name + ".min_samples") {
+        trajectory.min_samples = value.integer_value;
+      } else if (name == node_name + ".max_samples") {
+        trajectory.max_samples = value.integer_value;
+      } else if (name == node_name + ".feasibility_check_no_poses") {
+        trajectory.feasibility_check_no_poses = value.integer_value;
+      } else if (name == node_name + ".control_look_ahead_poses") {
+        trajectory.control_look_ahead_poses = value.integer_value;
+      }
+      // Robot
+      // GoalTolerance
+      // Obstacles
+      else if (name == node_name + ".obstacle_poses_affected") {
+        obstacles.obstacle_poses_affected = value.integer_value;
+      } else if (name == node_name + ".costmap_converter_rate") {
+        obstacles.costmap_converter_rate = value.integer_value;
+      }
+      // Optimization
+      else if (name == node_name + ".no_inner_iterations") {
+        optim.no_inner_iterations = value.integer_value;
+      } else if (name == node_name + ".no_outer_iterations") {
+        optim.no_outer_iterations = value.integer_value;
+      }
+      // Homotopy Class Planner
+      else if (name == node_name + ".max_number_classes") {
+        hcp.max_number_classes = value.integer_value;
+      } else if (name == node_name + ".roadmap_graph_no_samples") {
+        hcp.roadmap_graph_no_samples = value.integer_value;
+      }
+      // Recovery
+    }
+
+    else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_BOOL) {
+      // Trajectory
+      if (name == node_name + ".global_plan_overwrite_orientation") {
+        trajectory.global_plan_overwrite_orientation = value.bool_value;
+      } else if (name == node_name + ".allow_init_with_backwards_motion") {
+        trajectory.allow_init_with_backwards_motion = value.bool_value;
+      } else if (name == node_name + ".via_points_ordered") {
+        trajectory.via_points_ordered = value.bool_value;
+      } else if (name == node_name + ".exact_arc_length") {
+        trajectory.exact_arc_length = value.bool_value;
+      } else if (name == node_name + ".publish_feedback") {
+        trajectory.publish_feedback = value.bool_value;
+      }
+      // Robot
+      else if (name == node_name + ".cmd_angle_instead_rotvel") {
+        robot.cmd_angle_instead_rotvel = value.bool_value;
+      } else if (name == node_name + ".is_footprint_dynamic") {
+        robot.is_footprint_dynamic = value.bool_value;
+      }
+      // GoalTolerance
+      else if (name == node_name + ".free_goal_vel") {
+        goal_tolerance.free_goal_vel = value.bool_value;
+      }
+      // Obstacles
+      else if (name == node_name + ".include_dynamic_obstacles") {
+        obstacles.include_dynamic_obstacles = value.bool_value;
+      } else if (name == node_name + ".include_costmap_obstacles") {
+        obstacles.include_costmap_obstacles = value.bool_value;
+      } else if (name == node_name + ".legacy_obstacle_association") {
+        obstacles.legacy_obstacle_association = value.bool_value;
+      } else if (name == node_name + ".costmap_converter_spin_thread") {
+        obstacles.costmap_converter_spin_thread = value.bool_value;
+      }
+      // Optimization
+      else if (name == node_name + ".optimization_activate") {
+        optim.optimization_activate = value.bool_value;
+      } else if (name == node_name + ".optimization_verbose") {
+        optim.optimization_verbose = value.bool_value;
+      }
+      // Homotopy Class Planner
+      else if (name == node_name + ".enable_homotopy_class_planning") {
+        hcp.enable_homotopy_class_planning = value.bool_value;
+      } else if (name == node_name + ".enable_multithreading") {
+        hcp.enable_multithreading = value.bool_value;
+      } else if (name == node_name + ".simple_exploration") {
+        hcp.simple_exploration = value.bool_value;
+      } else if (name == node_name + ".selection_alternative_time_cost") {
+        hcp.selection_alternative_time_cost = value.bool_value;
+      } else if (name == node_name + ".viapoints_all_candidates") {
+        hcp.viapoints_all_candidates = value.bool_value;
+      } else if (name == node_name + ".visualize_hc_graph") {
+        hcp.visualize_hc_graph = value.bool_value;
+      } else if (name == node_name + ".delete_detours_backwards") {
+        hcp.delete_detours_backwards = value.bool_value;
+      }
+      // Recovery
+      else if (name == node_name + ".shrink_horizon_backup") {
+        recovery.shrink_horizon_backup = value.bool_value;
+      } else if (name == node_name + ".oscillation_recovery") {
+        recovery.oscillation_recovery = value.bool_value;
+      }
+    }
+
+    else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_STRING) {
+      // Trajectory
+      // Robot
+      // GoalTolerance
+      // Obstacles
+      if (name == node_name + ".costmap_converter_plugin") {
+        obstacles.costmap_converter_plugin = value.string_value;
+      }
+      // Optimization
+      // Homotopy Class Planner
+      // Recovery
+    }
+  }
+  checkParameters();
+}
+    
+    
+void TebConfig::checkParameters() const
+{
+  //rclcpp::Logger logger_{rclcpp::get_logger("TEBLocalPlanner")};
   // positive backward velocity?
   if (robot.max_vel_x_backwards <= 0)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
   
   // bounds smaller than penalty epsilon
   if (robot.max_vel_x <= optim.penalty_epsilon)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: max_vel_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: max_vel_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
   if (robot.max_vel_x_backwards <= optim.penalty_epsilon)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: max_vel_x_backwards <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: max_vel_x_backwards <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
   if (robot.max_vel_theta <= optim.penalty_epsilon)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: max_vel_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: max_vel_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
   if (robot.acc_lim_x <= optim.penalty_epsilon)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: acc_lim_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: acc_lim_x <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
   
   if (robot.acc_lim_theta <= optim.penalty_epsilon)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: acc_lim_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: acc_lim_theta <= penalty_epsilon. The resulting bound is negative. Undefined behavior... Change at least one of them!");
       
   // dt_ref and dt_hyst
   if (trajectory.dt_ref <= trajectory.dt_hysteresis)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: dt_ref <= dt_hysteresis. The hysteresis is not allowed to be greater or equal!. Undefined behavior... Change at least one of them!");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: dt_ref <= dt_hysteresis. The hysteresis is not allowed to be greater or equal!. Undefined behavior... Change at least one of them!");
     
   // min number of samples
   if (trajectory.min_samples <3)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter min_samples is smaller than 3! Sorry, I haven't enough degrees of freedom to plan a trajectory for you. Please increase ...");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter min_samples is smaller than 3! Sorry, I haven't enough degrees of freedom to plan a trajectory for you. Please increase ...");
   
   // costmap obstacle behind robot
   if (obstacles.costmap_obstacles_behind_robot_dist < 0)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter 'costmap_obstacles_behind_robot_dist' should be positive or zero.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter 'costmap_obstacles_behind_robot_dist' should be positive or zero.");
     
   // hcp: obstacle heading threshold
   if (hcp.obstacle_keypoint_offset>=1 || hcp.obstacle_keypoint_offset<=0)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter obstacle_heading_threshold must be in the interval ]0,1[. 0=0deg opening angle, 1=90deg opening angle.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter obstacle_heading_threshold must be in the interval ]0,1[. 0=0deg opening angle, 1=90deg opening angle.");
   
   // carlike
   if (robot.cmd_angle_instead_rotvel && robot.wheelbase==0)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter cmd_angle_instead_rotvel is non-zero but wheelbase is set to zero: undesired behavior.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter cmd_angle_instead_rotvel is non-zero but wheelbase is set to zero: undesired behavior.");
   
   if (robot.cmd_angle_instead_rotvel && robot.min_turning_radius==0)
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter cmd_angle_instead_rotvel is non-zero but min_turning_radius is set to zero: undesired behavior. You are mixing a carlike and a diffdrive robot");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter cmd_angle_instead_rotvel is non-zero but min_turning_radius is set to zero: undesired behavior. You are mixing a carlike and a diffdrive robot");
   
   // positive weight_adapt_factor
   if (optim.weight_adapt_factor < 1.0)
-      RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter weight_adapt_factor shoud be >= 1.0");
+      RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter weight_adapt_factor shoud be >= 1.0");
   
   if (recovery.oscillation_filter_duration < 0)
-      RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter oscillation_filter_duration must be >= 0");
+      RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter oscillation_filter_duration must be >= 0");
   
   if (optim.weight_optimaltime <= 0)
-      RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: parameter weight_optimaltime shoud be > 0 (even if weight_shortest_path is in use)");
+      RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: parameter weight_optimaltime shoud be > 0 (even if weight_shortest_path is in use)");
 }    
 
 void TebConfig::checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name) const
@@ -453,22 +629,22 @@ void TebConfig::checkDeprecated(const nav2_util::LifecycleNode::SharedPtr nh, co
   rclcpp::Parameter dummy;
 
   if (nh->get_parameter(name + "." + "line_obstacle_poses_affected", dummy) || nh->get_parameter(name + "." + "polygon_obstacle_poses_affected", dummy))
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'line_obstacle_poses_affected' and 'polygon_obstacle_poses_affected' are deprecated. They share now the common parameter 'obstacle_poses_affected'.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: 'line_obstacle_poses_affected' and 'polygon_obstacle_poses_affected' are deprecated. They share now the common parameter 'obstacle_poses_affected'.");
   
   if (nh->get_parameter(name + "." + "weight_point_obstacle", dummy) || nh->get_parameter(name + "." + "weight_line_obstacle", dummy) || nh->get_parameter(name + "." + "weight_poly_obstacle", dummy))
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'weight_point_obstacle', 'weight_line_obstacle' and 'weight_poly_obstacle' are deprecated. They are replaced by the single param 'weight_obstacle'.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: 'weight_point_obstacle', 'weight_line_obstacle' and 'weight_poly_obstacle' are deprecated. They are replaced by the single param 'weight_obstacle'.");
   
   if (nh->get_parameter(name + "." + "costmap_obstacles_front_only", dummy))
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'costmap_obstacles_front_only' is deprecated. It is replaced by 'costmap_obstacles_behind_robot_dist' to define the actual area taken into account.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: 'costmap_obstacles_front_only' is deprecated. It is replaced by 'costmap_obstacles_behind_robot_dist' to define the actual area taken into account.");
   
   if (nh->get_parameter(name + "." + "costmap_emergency_stop_dist", dummy))
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'costmap_emergency_stop_dist' is deprecated. You can safely remove it from your parameter config.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: 'costmap_emergency_stop_dist' is deprecated. You can safely remove it from your parameter config.");
   
   if (nh->get_parameter(name + "." + "alternative_time_cost", dummy))
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'alternative_time_cost' is deprecated. It has been replaced by 'selection_alternative_time_cost'.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: 'alternative_time_cost' is deprecated. It has been replaced by 'selection_alternative_time_cost'.");
 
   if (nh->get_parameter(name + "." + "global_plan_via_point_sep", dummy))
-    RCLCPP_WARN(nh->get_logger(), "TebLocalPlannerROS() Param Warning: 'global_plan_via_point_sep' is deprecated. It has been replaced by 'global_plan_viapoint_sep' due to consistency reasons.");
+    RCLCPP_WARN(logger_, "TebLocalPlannerROS() Param Warning: 'global_plan_via_point_sep' is deprecated. It has been replaced by 'global_plan_viapoint_sep' due to consistency reasons.");
 }
 
     

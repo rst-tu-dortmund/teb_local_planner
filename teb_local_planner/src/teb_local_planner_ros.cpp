@@ -78,15 +78,6 @@ TebLocalPlannerROS::~TebLocalPlannerROS()
 {
 }
 
-//void TebLocalPlannerROS::reconfigureCB(TebLocalPlannerReconfigureConfig& config, uint32_t level)
-//{
-//cfg_.reconfigure(config);
-//ros::NodeHandle nh("~/" + name_);
-//// create robot footprint/contour model for optimization
-//RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh);
-//planner_->updateRobotModel(robot_model);
-//}
-
 void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
 {
   // check if the plugin is already initialized
@@ -164,10 +155,15 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
     footprint_spec_ = costmap_ros_->getRobotFootprint();
     nav2_costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);    
 
-    // setup dynamic reconfigure
-//    dynamic_recfg_ = std::make_shared< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> >(nh_);
-//    dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(&TebLocalPlannerROS::reconfigureCB, this, _1, _2);
-//    dynamic_recfg_->setCallback(cb);
+    // Setup callback for changes to parameters.
+    parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(
+      node->get_node_base_interface(),
+      node->get_node_topics_interface(),
+      node->get_node_graph_interface(),
+      node->get_node_services_interface());
+
+    parameter_event_sub_ = parameters_client_->on_parameter_event(
+      std::bind(&TebConfig::on_parameter_event_callback, std::ref(cfg_), std::placeholders::_1));
     
     // validate optimization footprint and costmap footprint
     validateFootprints(robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_->obstacles.min_obstacle_dist);
