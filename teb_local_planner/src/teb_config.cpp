@@ -80,7 +80,6 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   nh->declare_parameter(name + "." + "is_footprint_dynamic", rclcpp::ParameterValue(robot.is_footprint_dynamic));
   
   // GoalTolerance
-  nh->declare_parameter(name + "." + "xy_goal_tolerance", rclcpp::ParameterValue(goal_tolerance.xy_goal_tolerance));
   nh->declare_parameter(name + "." + "free_goal_vel", rclcpp::ParameterValue(goal_tolerance.free_goal_vel));
 
   // Obstacles
@@ -206,7 +205,6 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
   
   // GoalTolerance
-  nh->get_parameter_or(name + "." + "xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);
   nh->get_parameter_or(name + "." + "free_goal_vel", goal_tolerance.free_goal_vel, goal_tolerance.free_goal_vel);
 
   // Obstacles
@@ -327,7 +325,6 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
 //  robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   
 //  // GoalTolerance
-//  goal_tolerance.xy_goal_tolerance = cfg.xy_goal_tolerance;
 //  goal_tolerance.free_goal_vel = cfg.free_goal_vel;
   
 //  // Obstacles
