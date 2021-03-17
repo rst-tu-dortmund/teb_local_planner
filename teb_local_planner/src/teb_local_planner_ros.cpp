@@ -253,9 +253,8 @@ void TebLocalPlannerROS::setPlan(const nav_msgs::msg::Path & orig_global_plan)
 }
 
 
-geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
-  const geometry_msgs::msg::PoseStamped &pose,
-  const geometry_msgs::msg::Twist &velocity)
+geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::msg::PoseStamped &pose,
+  const geometry_msgs::msg::Twist &velocity, nav2_core::GoalChecker *goal_checker)
 {
   // check if plugin initialized
   if(!initialized_)
@@ -271,6 +270,15 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(
   cmd_vel.twist.linear.x = 0;
   cmd_vel.twist.linear.y = 0;
   cmd_vel.twist.angular.z = 0;
+
+  // Update for the current goal checker's state
+  geometry_msgs::msg::Pose pose_tolerance;
+  geometry_msgs::msg::Twist vel_tolerance;
+  if (!goal_checker->getTolerances(pose_tolerance, vel_tolerance)) {
+    RCLCPP_WARN(logger_, "Unable to retrieve goal checker's tolerances!");
+  } else {
+    cfg_->goal_tolerance.xy_goal_tolerance = pose_tolerance.position.x;
+  }
   
   // Get robot pose
   robot_pose_ = PoseSE2(pose.pose);

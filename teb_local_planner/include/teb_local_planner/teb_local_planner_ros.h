@@ -135,7 +135,8 @@ public:
     */
   geometry_msgs::msg::TwistStamped computeVelocityCommands(
     const geometry_msgs::msg::PoseStamped &pose,
-    const geometry_msgs::msg::Twist &velocity);
+    const geometry_msgs::msg::Twist &velocity,
+      nav2_core::GoalChecker * goal_checker);
   
     
   /** @name Public utility functions/methods */

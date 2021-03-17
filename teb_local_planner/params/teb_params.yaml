@@ -34,7 +34,6 @@ controller_server:
 
       # GoalTolerance
               
-      xy_goal_tolerance: 0.2
       free_goal_vel: False
           
       # Obstacles
