@@ -524,6 +524,17 @@ public:
   virtual bool isTrajectoryFeasible(dwb_critics::ObstacleFootprintCritic* costmap_model, const std::vector<geometry_msgs::msg::Point>& footprint_spec, double inscribed_radius = 0.0,
           double circumscribed_radius=0.0, int look_ahead_idx=-1, double feasibility_check_lookahead_distance=-1);
   
+  /**
+   * @brief Check whether the footprint of the robot at the pose touches an obstacle or not.
+   *
+   * @param pose2d Pose to check
+   * @param costmap_model Pointer to the costmap model
+   * @param footprint_spec The specification of the footprint of the robot in world coordinates
+   * @return \c true, if the robot pose is valid, \c false otherwise.
+   */
+  virtual bool isPoseValid(geometry_msgs::msg::Pose2D pose2d, dwb_critics::ObstacleFootprintCritic* costmap_model,
+                           const std::vector<geometry_msgs::msg::Point>& footprint_spec);
+
   //@}
   
 protected:
