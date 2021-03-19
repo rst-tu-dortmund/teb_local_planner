@@ -325,6 +325,8 @@ void TebConfig::on_parameter_event_callback(
         trajectory.force_reinit_new_goal_angular = value.double_value;
       } else if (name == node_name + ".min_resolution_collision_check_angular") {
         trajectory.min_resolution_collision_check_angular = value.double_value;
+      } else if (name == node_name + ".feasibility_check_lookahead_distance") {
+        trajectory.feasibility_check_lookahead_distance = value.double_value;
       }
       // Robot
       else if (name == node_name + ".max_vel_x") {
@@ -364,6 +366,12 @@ void TebConfig::on_parameter_event_callback(
         obstacles.obstacle_association_force_inclusion_factor = value.double_value;
       } else if (name == node_name + ".obstacle_association_cutoff_factor") {
         obstacles.obstacle_association_cutoff_factor = value.double_value;
+      } else if (name == node_name + ".obstacle_proximity_ratio_max_vel") {
+        obstacles.obstacle_proximity_ratio_max_vel = value.double_value;
+      } else if (name == node_name + ".obstacle_proximity_lower_bound") {
+        obstacles.obstacle_proximity_lower_bound = value.double_value;
+      } else if (name == node_name + ".obstacle_proximity_upper_bound") {
+        obstacles.obstacle_proximity_upper_bound = value.double_value;
       }
       // Optimization
       else if (name == node_name + ".penalty_epsilon") {
@@ -438,6 +446,8 @@ void TebConfig::on_parameter_event_callback(
         hcp.length_start_orientation_vector = value.double_value;
       } else if (name == node_name + ".max_ratio_detours_duration_best_duration") {
         hcp.max_ratio_detours_duration_best_duration = value.double_value;
+      } else if (name == node_name + ".selection_dropping_probability") {
+        hcp.selection_dropping_probability = value.double_value;
       }
       // Recovery
       else if (name == node_name + ".shrink_horizon_min_duration") {
@@ -450,6 +460,8 @@ void TebConfig::on_parameter_event_callback(
         recovery.oscillation_recovery_min_duration = value.double_value;
       } else if (name == node_name + ".oscillation_filter_duration") {
         recovery.oscillation_filter_duration = value.double_value;
+      } else if (name == node_name + ".divergence_detection_max_chi_squared") {
+        recovery.divergence_detection_max_chi_squared = value.double_value;
       }
     }
 
@@ -547,6 +559,8 @@ void TebConfig::on_parameter_event_callback(
         recovery.shrink_horizon_backup = value.bool_value;
       } else if (name == node_name + ".oscillation_recovery") {
         recovery.oscillation_recovery = value.bool_value;
+      } else if (name == node_name + ".divergence_detection_enable") {
+        recovery.divergence_detection_enable = value.bool_value;
       }
     }
 
