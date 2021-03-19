@@ -426,7 +426,6 @@ private:
   PoseSE2 robot_pose_; //!< Store current robot pose
   PoseSE2 robot_goal_; //!< Store current robot goal
   geometry_msgs::Twist robot_vel_; //!< Store current robot translational and angular velocity (vx, vy, omega)
-  // bool goal_reached_; //!< store whether the goal is reached or not
   ros::Time time_last_infeasible_plan_; //!< Store at which time stamp the last infeasible plan was detected
   int no_infeasible_plans_; //!< Store how many times in a row the planner failed to find a feasible plan.
   ros::Time time_last_oscillation_; //!< Store at which time stamp the last oscillation was detected
@@ -443,8 +442,6 @@ private:
     
   // flags
   bool initialized_; //!< Keeps track about the correct initialization of this class
-
-  geometry_msgs::PoseStamped global_goal;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
