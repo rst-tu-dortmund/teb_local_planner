@@ -278,11 +278,6 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   if (!custom_via_points_active_)
     updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
 
-  // check if global goal is reached
-  if(isGoalReached()) {
-    return mbf_msgs::ExePathResult::SUCCESS;
-  }
-
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);
   
@@ -443,7 +438,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
 
 bool TebLocalPlannerROS::isGoalReached()
 {
-  if(!initialized_ || global_plan_.empty()) /* check if the planner was initialized and it there is a global plan */
+  if(!initialized_ || ! global_plan_.size() > 0) /* check if the planner was initialized and it there is a global plan */
   {
     return false;
   }
@@ -474,6 +469,7 @@ bool TebLocalPlannerROS::isGoalReached()
       && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
           || cfg_.goal_tolerance.free_goal_vel))
     {
+      planner_->clearPlanner();
       return true;
     }
   }
