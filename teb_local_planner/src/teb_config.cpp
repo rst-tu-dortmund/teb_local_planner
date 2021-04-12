@@ -38,136 +38,135 @@
 
 #include "teb_local_planner/teb_config.h"
 
+using nav2_util::declare_parameter_if_not_declared;
+
 namespace teb_local_planner
 {
 
 void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name) {
   node_name = name;
 
-  // Avoid re-declaration (and error in that case)
-  if (!nh->has_parameter(name + "." + "odom_topic")) {
-    nh->declare_parameter(name + "." + "odom_topic", rclcpp::ParameterValue(odom_topic));
-    nh->declare_parameter(name + "." + "map_frame", rclcpp::ParameterValue(map_frame));
+  declare_parameter_if_not_declared(nh, name + "." + "odom_topic", rclcpp::ParameterValue(odom_topic));
+  declare_parameter_if_not_declared(nh, name + "." + "map_frame", rclcpp::ParameterValue(map_frame));
 
-    // Trajectory
-    nh->declare_parameter(name + "." + "teb_autosize", rclcpp::ParameterValue(trajectory.teb_autosize));
-    nh->declare_parameter(name + "." + "dt_ref", rclcpp::ParameterValue(trajectory.dt_ref));
-    nh->declare_parameter(name + "." + "dt_hysteresis", rclcpp::ParameterValue(trajectory.dt_hysteresis));
-    nh->declare_parameter(name + "." + "min_samples", rclcpp::ParameterValue(trajectory.min_samples));
-    nh->declare_parameter(name + "." + "max_samples", rclcpp::ParameterValue(trajectory.max_samples));
-    nh->declare_parameter(name + "." + "global_plan_overwrite_orientation", rclcpp::ParameterValue(trajectory.global_plan_overwrite_orientation));
-    nh->declare_parameter(name + "." + "allow_init_with_backwards_motion", rclcpp::ParameterValue(trajectory.allow_init_with_backwards_motion));
-    nh->declare_parameter(name + "." + "global_plan_viapoint_sep", rclcpp::ParameterValue(trajectory.global_plan_viapoint_sep));
-    nh->declare_parameter(name + "." + "via_points_ordered", rclcpp::ParameterValue(trajectory.via_points_ordered));
-    nh->declare_parameter(name + "." + "max_global_plan_lookahead_dist", rclcpp::ParameterValue(trajectory.max_global_plan_lookahead_dist));
-    nh->declare_parameter(name + "." + "global_plan_prune_distance", rclcpp::ParameterValue(trajectory.global_plan_prune_distance));
-    nh->declare_parameter(name + "." + "exact_arc_length", rclcpp::ParameterValue(trajectory.exact_arc_length));
-    nh->declare_parameter(name + "." + "force_reinit_new_goal_dist", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_dist));
-    nh->declare_parameter(name + "." + "force_reinit_new_goal_angular", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_angular));
-    nh->declare_parameter(name + "." + "feasibility_check_no_poses", rclcpp::ParameterValue(trajectory.feasibility_check_no_poses));
-    nh->declare_parameter(name + "." + "publish_feedback", rclcpp::ParameterValue(trajectory.publish_feedback));
-    nh->declare_parameter(name + "." + "min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
-    nh->declare_parameter(name + "." + "control_look_ahead_poses", rclcpp::ParameterValue(trajectory.control_look_ahead_poses));
-    nh->declare_parameter(name + "." + "feasibility_check_lookahead_distance", rclcpp::ParameterValue(trajectory.feasibility_check_lookahead_distance));
+  // Trajectory
+  declare_parameter_if_not_declared(nh, name + "." + "teb_autosize", rclcpp::ParameterValue(trajectory.teb_autosize));
+  declare_parameter_if_not_declared(nh, name + "." + "dt_ref", rclcpp::ParameterValue(trajectory.dt_ref));
+  declare_parameter_if_not_declared(nh, name + "." + "dt_hysteresis", rclcpp::ParameterValue(trajectory.dt_hysteresis));
+  declare_parameter_if_not_declared(nh, name + "." + "min_samples", rclcpp::ParameterValue(trajectory.min_samples));
+  declare_parameter_if_not_declared(nh, name + "." + "max_samples", rclcpp::ParameterValue(trajectory.max_samples));
+  declare_parameter_if_not_declared(nh, name + "." + "global_plan_overwrite_orientation", rclcpp::ParameterValue(trajectory.global_plan_overwrite_orientation));
+  declare_parameter_if_not_declared(nh, name + "." + "allow_init_with_backwards_motion", rclcpp::ParameterValue(trajectory.allow_init_with_backwards_motion));
+  declare_parameter_if_not_declared(nh, name + "." + "global_plan_viapoint_sep", rclcpp::ParameterValue(trajectory.global_plan_viapoint_sep));
+  declare_parameter_if_not_declared(nh, name + "." + "via_points_ordered", rclcpp::ParameterValue(trajectory.via_points_ordered));
+  declare_parameter_if_not_declared(nh, name + "." + "max_global_plan_lookahead_dist", rclcpp::ParameterValue(trajectory.max_global_plan_lookahead_dist));
+  declare_parameter_if_not_declared(nh, name + "." + "global_plan_prune_distance", rclcpp::ParameterValue(trajectory.global_plan_prune_distance));
+  declare_parameter_if_not_declared(nh, name + "." + "exact_arc_length", rclcpp::ParameterValue(trajectory.exact_arc_length));
+  declare_parameter_if_not_declared(nh, name + "." + "force_reinit_new_goal_dist", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_dist));
+  declare_parameter_if_not_declared(nh, name + "." + "force_reinit_new_goal_angular", rclcpp::ParameterValue(trajectory.force_reinit_new_goal_angular));
+  declare_parameter_if_not_declared(nh, name + "." + "feasibility_check_no_poses", rclcpp::ParameterValue(trajectory.feasibility_check_no_poses));
+  declare_parameter_if_not_declared(nh, name + "." + "publish_feedback", rclcpp::ParameterValue(trajectory.publish_feedback));
+  declare_parameter_if_not_declared(nh, name + "." + "min_resolution_collision_check_angular", rclcpp::ParameterValue(trajectory.min_resolution_collision_check_angular));
+  declare_parameter_if_not_declared(nh, name + "." + "control_look_ahead_poses", rclcpp::ParameterValue(trajectory.control_look_ahead_poses));
+  declare_parameter_if_not_declared(nh, name + "." + "feasibility_check_lookahead_distance", rclcpp::ParameterValue(trajectory.feasibility_check_lookahead_distance));
 
-    // Robot
-    nh->declare_parameter(name + "." + "max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
-    nh->declare_parameter(name + "." + "max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
-    nh->declare_parameter(name + "." + "max_vel_y", rclcpp::ParameterValue(robot.max_vel_y));
-    nh->declare_parameter(name + "." + "max_vel_theta", rclcpp::ParameterValue(robot.max_vel_theta));
-    nh->declare_parameter(name + "." + "acc_lim_x", rclcpp::ParameterValue(robot.acc_lim_x));
-    nh->declare_parameter(name + "." + "acc_lim_y", rclcpp::ParameterValue(robot.acc_lim_y));
-    nh->declare_parameter(name + "." + "acc_lim_theta", rclcpp::ParameterValue(robot.acc_lim_theta));
-    nh->declare_parameter(name + "." + "min_turning_radius", rclcpp::ParameterValue(robot.min_turning_radius));
-    nh->declare_parameter(name + "." + "wheelbase", rclcpp::ParameterValue(robot.wheelbase));
-    nh->declare_parameter(name + "." + "cmd_angle_instead_rotvel", rclcpp::ParameterValue(robot.cmd_angle_instead_rotvel));
-    nh->declare_parameter(name + "." + "is_footprint_dynamic", rclcpp::ParameterValue(robot.is_footprint_dynamic));
+  // Robot
+  declare_parameter_if_not_declared(nh, name + "." + "max_vel_x", rclcpp::ParameterValue(robot.max_vel_x));
+  declare_parameter_if_not_declared(nh, name + "." + "max_vel_x_backwards", rclcpp::ParameterValue(robot.max_vel_x_backwards));
+  declare_parameter_if_not_declared(nh, name + "." + "max_vel_y", rclcpp::ParameterValue(robot.max_vel_y));
+  declare_parameter_if_not_declared(nh, name + "." + "max_vel_theta", rclcpp::ParameterValue(robot.max_vel_theta));
+  declare_parameter_if_not_declared(nh, name + "." + "acc_lim_x", rclcpp::ParameterValue(robot.acc_lim_x));
+  declare_parameter_if_not_declared(nh, name + "." + "acc_lim_y", rclcpp::ParameterValue(robot.acc_lim_y));
+  declare_parameter_if_not_declared(nh, name + "." + "acc_lim_theta", rclcpp::ParameterValue(robot.acc_lim_theta));
+  declare_parameter_if_not_declared(nh, name + "." + "min_turning_radius", rclcpp::ParameterValue(robot.min_turning_radius));
+  declare_parameter_if_not_declared(nh, name + "." + "wheelbase", rclcpp::ParameterValue(robot.wheelbase));
+  declare_parameter_if_not_declared(nh, name + "." + "cmd_angle_instead_rotvel", rclcpp::ParameterValue(robot.cmd_angle_instead_rotvel));
+  declare_parameter_if_not_declared(nh, name + "." + "is_footprint_dynamic", rclcpp::ParameterValue(robot.is_footprint_dynamic));
 
-    // GoalTolerance
-    nh->declare_parameter(name + "." + "free_goal_vel", rclcpp::ParameterValue(goal_tolerance.free_goal_vel));
+  // GoalTolerance
+  declare_parameter_if_not_declared(nh, name + "." + "free_goal_vel", rclcpp::ParameterValue(goal_tolerance.free_goal_vel));
 
-    // Obstacles
-    nh->declare_parameter(name + "." + "min_obstacle_dist", rclcpp::ParameterValue(obstacles.min_obstacle_dist));
-    nh->declare_parameter(name + "." + "inflation_dist", rclcpp::ParameterValue(obstacles.inflation_dist));
-    nh->declare_parameter(name + "." + "dynamic_obstacle_inflation_dist", rclcpp::ParameterValue(obstacles.dynamic_obstacle_inflation_dist));
-    nh->declare_parameter(name + "." + "include_dynamic_obstacles", rclcpp::ParameterValue(obstacles.include_dynamic_obstacles));
-    nh->declare_parameter(name + "." + "include_costmap_obstacles", rclcpp::ParameterValue(obstacles.include_costmap_obstacles));
-    nh->declare_parameter(name + "." + "costmap_obstacles_behind_robot_dist", rclcpp::ParameterValue(obstacles.costmap_obstacles_behind_robot_dist));
-    nh->declare_parameter(name + "." + "obstacle_poses_affected", rclcpp::ParameterValue(obstacles.obstacle_poses_affected));
-    nh->declare_parameter(name + "." + "legacy_obstacle_association", rclcpp::ParameterValue(obstacles.legacy_obstacle_association));
-    nh->declare_parameter(name + "." + "obstacle_association_force_inclusion_factor", rclcpp::ParameterValue(obstacles.obstacle_association_force_inclusion_factor));
-    nh->declare_parameter(name + "." + "obstacle_association_cutoff_factor", rclcpp::ParameterValue(obstacles.obstacle_association_cutoff_factor));
-    nh->declare_parameter(name + "." + "costmap_converter_plugin", rclcpp::ParameterValue(obstacles.costmap_converter_plugin));
-    nh->declare_parameter(name + "." + "costmap_converter_spin_thread", rclcpp::ParameterValue(obstacles.costmap_converter_spin_thread));
-    nh->declare_parameter(name + "." + "obstacle_proximity_ratio_max_vel",  rclcpp::ParameterValue(obstacles.obstacle_proximity_ratio_max_vel));
-    nh->declare_parameter(name + "." + "obstacle_proximity_lower_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_lower_bound));
-    nh->declare_parameter(name + "." + "obstacle_proximity_upper_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_upper_bound));
+  // Obstacles
+  declare_parameter_if_not_declared(nh, name + "." + "min_obstacle_dist", rclcpp::ParameterValue(obstacles.min_obstacle_dist));
+  declare_parameter_if_not_declared(nh, name + "." + "inflation_dist", rclcpp::ParameterValue(obstacles.inflation_dist));
+  declare_parameter_if_not_declared(nh, name + "." + "dynamic_obstacle_inflation_dist", rclcpp::ParameterValue(obstacles.dynamic_obstacle_inflation_dist));
+  declare_parameter_if_not_declared(nh, name + "." + "include_dynamic_obstacles", rclcpp::ParameterValue(obstacles.include_dynamic_obstacles));
+  declare_parameter_if_not_declared(nh, name + "." + "include_costmap_obstacles", rclcpp::ParameterValue(obstacles.include_costmap_obstacles));
+  declare_parameter_if_not_declared(nh, name + "." + "costmap_obstacles_behind_robot_dist", rclcpp::ParameterValue(obstacles.costmap_obstacles_behind_robot_dist));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_poses_affected", rclcpp::ParameterValue(obstacles.obstacle_poses_affected));
+  declare_parameter_if_not_declared(nh, name + "." + "legacy_obstacle_association", rclcpp::ParameterValue(obstacles.legacy_obstacle_association));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_association_force_inclusion_factor", rclcpp::ParameterValue(obstacles.obstacle_association_force_inclusion_factor));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_association_cutoff_factor", rclcpp::ParameterValue(obstacles.obstacle_association_cutoff_factor));
+  declare_parameter_if_not_declared(nh, name + "." + "costmap_converter_plugin", rclcpp::ParameterValue(obstacles.costmap_converter_plugin));
+  declare_parameter_if_not_declared(nh, name + "." + "costmap_converter_spin_thread", rclcpp::ParameterValue(obstacles.costmap_converter_spin_thread));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_proximity_ratio_max_vel",  rclcpp::ParameterValue(obstacles.obstacle_proximity_ratio_max_vel));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_proximity_lower_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_lower_bound));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_proximity_upper_bound", rclcpp::ParameterValue(obstacles.obstacle_proximity_upper_bound));
 
-    // Optimization
-    nh->declare_parameter(name + "." + "no_inner_iterations", rclcpp::ParameterValue(optim.no_inner_iterations));
-    nh->declare_parameter(name + "." + "no_outer_iterations", rclcpp::ParameterValue(optim.no_outer_iterations));
-    nh->declare_parameter(name + "." + "optimization_activate", rclcpp::ParameterValue(optim.optimization_activate));
-    nh->declare_parameter(name + "." + "optimization_verbose", rclcpp::ParameterValue(optim.optimization_verbose));
-    nh->declare_parameter(name + "." + "penalty_epsilon", rclcpp::ParameterValue(optim.penalty_epsilon));
-    nh->declare_parameter(name + "." + "weight_max_vel_x", rclcpp::ParameterValue(optim.weight_max_vel_x));
-    nh->declare_parameter(name + "." + "weight_max_vel_y", rclcpp::ParameterValue(optim.weight_max_vel_y));
-    nh->declare_parameter(name + "." + "weight_max_vel_theta", rclcpp::ParameterValue(optim.weight_max_vel_theta));
-    nh->declare_parameter(name + "." + "weight_acc_lim_x", rclcpp::ParameterValue(optim.weight_acc_lim_x));
-    nh->declare_parameter(name + "." + "weight_acc_lim_y", rclcpp::ParameterValue(optim.weight_acc_lim_y));
-    nh->declare_parameter(name + "." + "weight_acc_lim_theta", rclcpp::ParameterValue(optim.weight_acc_lim_theta));
-    nh->declare_parameter(name + "." + "weight_kinematics_nh", rclcpp::ParameterValue(optim.weight_kinematics_nh));
-    nh->declare_parameter(name + "." + "weight_kinematics_forward_drive", rclcpp::ParameterValue(optim.weight_kinematics_forward_drive));
-    nh->declare_parameter(name + "." + "weight_kinematics_turning_radius", rclcpp::ParameterValue(optim.weight_kinematics_turning_radius));
-    nh->declare_parameter(name + "." + "weight_optimaltime", rclcpp::ParameterValue(optim.weight_optimaltime));
-    nh->declare_parameter(name + "." + "weight_shortest_path", rclcpp::ParameterValue(optim.weight_shortest_path));
-    nh->declare_parameter(name + "." + "weight_obstacle", rclcpp::ParameterValue(optim.weight_obstacle));
-    nh->declare_parameter(name + "." + "weight_inflation", rclcpp::ParameterValue(optim.weight_inflation));
-    nh->declare_parameter(name + "." + "weight_dynamic_obstacle", rclcpp::ParameterValue(optim.weight_dynamic_obstacle));
-    nh->declare_parameter(name + "." + "weight_dynamic_obstacle_inflation", rclcpp::ParameterValue(optim.weight_dynamic_obstacle_inflation));
-    nh->declare_parameter(name + "." + "weight_viapoint", rclcpp::ParameterValue(optim.weight_viapoint));
-    nh->declare_parameter(name + "." + "weight_prefer_rotdir", rclcpp::ParameterValue(optim.weight_prefer_rotdir));
-    nh->declare_parameter(name + "." + "weight_adapt_factor", rclcpp::ParameterValue(optim.weight_adapt_factor));
-    nh->declare_parameter(name + "." + "obstacle_cost_exponent", rclcpp::ParameterValue(optim.obstacle_cost_exponent));
-    nh->declare_parameter(name + "." + "weight_velocity_obstacle_ratio", rclcpp::ParameterValue(optim.weight_velocity_obstacle_ratio));
+  // Optimization
+  declare_parameter_if_not_declared(nh, name + "." + "no_inner_iterations", rclcpp::ParameterValue(optim.no_inner_iterations));
+  declare_parameter_if_not_declared(nh, name + "." + "no_outer_iterations", rclcpp::ParameterValue(optim.no_outer_iterations));
+  declare_parameter_if_not_declared(nh, name + "." + "optimization_activate", rclcpp::ParameterValue(optim.optimization_activate));
+  declare_parameter_if_not_declared(nh, name + "." + "optimization_verbose", rclcpp::ParameterValue(optim.optimization_verbose));
+  declare_parameter_if_not_declared(nh, name + "." + "penalty_epsilon", rclcpp::ParameterValue(optim.penalty_epsilon));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_max_vel_x", rclcpp::ParameterValue(optim.weight_max_vel_x));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_max_vel_y", rclcpp::ParameterValue(optim.weight_max_vel_y));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_max_vel_theta", rclcpp::ParameterValue(optim.weight_max_vel_theta));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_acc_lim_x", rclcpp::ParameterValue(optim.weight_acc_lim_x));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_acc_lim_y", rclcpp::ParameterValue(optim.weight_acc_lim_y));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_acc_lim_theta", rclcpp::ParameterValue(optim.weight_acc_lim_theta));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_kinematics_nh", rclcpp::ParameterValue(optim.weight_kinematics_nh));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_kinematics_forward_drive", rclcpp::ParameterValue(optim.weight_kinematics_forward_drive));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_kinematics_turning_radius", rclcpp::ParameterValue(optim.weight_kinematics_turning_radius));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_optimaltime", rclcpp::ParameterValue(optim.weight_optimaltime));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_shortest_path", rclcpp::ParameterValue(optim.weight_shortest_path));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_obstacle", rclcpp::ParameterValue(optim.weight_obstacle));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_inflation", rclcpp::ParameterValue(optim.weight_inflation));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_dynamic_obstacle", rclcpp::ParameterValue(optim.weight_dynamic_obstacle));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_dynamic_obstacle_inflation", rclcpp::ParameterValue(optim.weight_dynamic_obstacle_inflation));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_viapoint", rclcpp::ParameterValue(optim.weight_viapoint));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_prefer_rotdir", rclcpp::ParameterValue(optim.weight_prefer_rotdir));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_adapt_factor", rclcpp::ParameterValue(optim.weight_adapt_factor));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_cost_exponent", rclcpp::ParameterValue(optim.obstacle_cost_exponent));
+  declare_parameter_if_not_declared(nh, name + "." + "weight_velocity_obstacle_ratio", rclcpp::ParameterValue(optim.weight_velocity_obstacle_ratio));
 
-    // Homotopy Class Planner
-    nh->declare_parameter(name + "." + "enable_homotopy_class_planning", rclcpp::ParameterValue(hcp.enable_homotopy_class_planning));
-    nh->declare_parameter(name + "." + "enable_multithreading", rclcpp::ParameterValue(hcp.enable_multithreading));
-    nh->declare_parameter(name + "." + "simple_exploration", rclcpp::ParameterValue(hcp.simple_exploration));
-    nh->declare_parameter(name + "." + "max_number_classes", rclcpp::ParameterValue(hcp.max_number_classes));
-    nh->declare_parameter(name + "." + "selection_obst_cost_scale", rclcpp::ParameterValue(hcp.selection_obst_cost_scale));
-    nh->declare_parameter(name + "." + "selection_prefer_initial_plan", rclcpp::ParameterValue(hcp.selection_prefer_initial_plan));
-    nh->declare_parameter(name + "." + "selection_viapoint_cost_scale", rclcpp::ParameterValue(hcp.selection_viapoint_cost_scale));
-    nh->declare_parameter(name + "." + "selection_cost_hysteresis", rclcpp::ParameterValue(hcp.selection_cost_hysteresis));
-    nh->declare_parameter(name + "." + "selection_alternative_time_cost", rclcpp::ParameterValue(hcp.selection_alternative_time_cost));
-    nh->declare_parameter(name + "." + "switching_blocking_period", rclcpp::ParameterValue(hcp.switching_blocking_period));
-    nh->declare_parameter(name + "." + "roadmap_graph_samples", rclcpp::ParameterValue(hcp.roadmap_graph_no_samples));
-    nh->declare_parameter(name + "." + "roadmap_graph_area_width", rclcpp::ParameterValue(hcp.roadmap_graph_area_width));
-    nh->declare_parameter(name + "." + "roadmap_graph_area_length_scale", rclcpp::ParameterValue(hcp.roadmap_graph_area_length_scale));
-    nh->declare_parameter(name + "." + "h_signature_prescaler", rclcpp::ParameterValue(hcp.h_signature_prescaler));
-    nh->declare_parameter(name + "." + "h_signature_threshold", rclcpp::ParameterValue(hcp.h_signature_threshold));
-    nh->declare_parameter(name + "." + "obstacle_keypoint_offset", rclcpp::ParameterValue(hcp.obstacle_keypoint_offset));
-    nh->declare_parameter(name + "." + "obstacle_heading_threshold", rclcpp::ParameterValue(hcp.obstacle_heading_threshold));
-    nh->declare_parameter(name + "." + "viapoints_all_candidates", rclcpp::ParameterValue(hcp.viapoints_all_candidates));
-    nh->declare_parameter(name + "." + "visualize_hc_graph", rclcpp::ParameterValue(hcp.visualize_hc_graph));
-    nh->declare_parameter(name + "." + "visualize_with_time_as_z_axis_scale", rclcpp::ParameterValue(hcp.visualize_with_time_as_z_axis_scale));
-    nh->declare_parameter(name + "." + "delete_detours_backwards", rclcpp::ParameterValue(hcp.delete_detours_backwards));
-    nh->declare_parameter(name + "." + "detours_orientation_tolerance", rclcpp::ParameterValue(hcp.detours_orientation_tolerance));
-    nh->declare_parameter(name + "." + "length_start_orientation_vector", rclcpp::ParameterValue(hcp.length_start_orientation_vector));
-    nh->declare_parameter(name + "." + "max_ratio_detours_duration_best_duration", rclcpp::ParameterValue(hcp.max_ratio_detours_duration_best_duration));
-    nh->declare_parameter(name + "." + "selection_dropping_probability", rclcpp::ParameterValue(hcp.selection_dropping_probability));
+  // Homotopy Class Planner
+  declare_parameter_if_not_declared(nh, name + "." + "enable_homotopy_class_planning", rclcpp::ParameterValue(hcp.enable_homotopy_class_planning));
+  declare_parameter_if_not_declared(nh, name + "." + "enable_multithreading", rclcpp::ParameterValue(hcp.enable_multithreading));
+  declare_parameter_if_not_declared(nh, name + "." + "simple_exploration", rclcpp::ParameterValue(hcp.simple_exploration));
+  declare_parameter_if_not_declared(nh, name + "." + "max_number_classes", rclcpp::ParameterValue(hcp.max_number_classes));
+  declare_parameter_if_not_declared(nh, name + "." + "selection_obst_cost_scale", rclcpp::ParameterValue(hcp.selection_obst_cost_scale));
+  declare_parameter_if_not_declared(nh, name + "." + "selection_prefer_initial_plan", rclcpp::ParameterValue(hcp.selection_prefer_initial_plan));
+  declare_parameter_if_not_declared(nh, name + "." + "selection_viapoint_cost_scale", rclcpp::ParameterValue(hcp.selection_viapoint_cost_scale));
+  declare_parameter_if_not_declared(nh, name + "." + "selection_cost_hysteresis", rclcpp::ParameterValue(hcp.selection_cost_hysteresis));
+  declare_parameter_if_not_declared(nh, name + "." + "selection_alternative_time_cost", rclcpp::ParameterValue(hcp.selection_alternative_time_cost));
+  declare_parameter_if_not_declared(nh, name + "." + "switching_blocking_period", rclcpp::ParameterValue(hcp.switching_blocking_period));
+  declare_parameter_if_not_declared(nh, name + "." + "roadmap_graph_samples", rclcpp::ParameterValue(hcp.roadmap_graph_no_samples));
+  declare_parameter_if_not_declared(nh, name + "." + "roadmap_graph_area_width", rclcpp::ParameterValue(hcp.roadmap_graph_area_width));
+  declare_parameter_if_not_declared(nh, name + "." + "roadmap_graph_area_length_scale", rclcpp::ParameterValue(hcp.roadmap_graph_area_length_scale));
+  declare_parameter_if_not_declared(nh, name + "." + "h_signature_prescaler", rclcpp::ParameterValue(hcp.h_signature_prescaler));
+  declare_parameter_if_not_declared(nh, name + "." + "h_signature_threshold", rclcpp::ParameterValue(hcp.h_signature_threshold));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_keypoint_offset", rclcpp::ParameterValue(hcp.obstacle_keypoint_offset));
+  declare_parameter_if_not_declared(nh, name + "." + "obstacle_heading_threshold", rclcpp::ParameterValue(hcp.obstacle_heading_threshold));
+  declare_parameter_if_not_declared(nh, name + "." + "viapoints_all_candidates", rclcpp::ParameterValue(hcp.viapoints_all_candidates));
+  declare_parameter_if_not_declared(nh, name + "." + "visualize_hc_graph", rclcpp::ParameterValue(hcp.visualize_hc_graph));
+  declare_parameter_if_not_declared(nh, name + "." + "visualize_with_time_as_z_axis_scale", rclcpp::ParameterValue(hcp.visualize_with_time_as_z_axis_scale));
+  declare_parameter_if_not_declared(nh, name + "." + "delete_detours_backwards", rclcpp::ParameterValue(hcp.delete_detours_backwards));
+  declare_parameter_if_not_declared(nh, name + "." + "detours_orientation_tolerance", rclcpp::ParameterValue(hcp.detours_orientation_tolerance));
+  declare_parameter_if_not_declared(nh, name + "." + "length_start_orientation_vector", rclcpp::ParameterValue(hcp.length_start_orientation_vector));
+  declare_parameter_if_not_declared(nh, name + "." + "max_ratio_detours_duration_best_duration", rclcpp::ParameterValue(hcp.max_ratio_detours_duration_best_duration));
+  declare_parameter_if_not_declared(nh, name + "." + "selection_dropping_probability", rclcpp::ParameterValue(hcp.selection_dropping_probability));
 
-    // Recovery
-    nh->declare_parameter(name + "." + "shrink_horizon_backup", rclcpp::ParameterValue(recovery.shrink_horizon_backup));
-    nh->declare_parameter(name + "." + "shrink_horizon_min_duration", rclcpp::ParameterValue(recovery.shrink_horizon_min_duration));
-    nh->declare_parameter(name + "." + "oscillation_recovery", rclcpp::ParameterValue(recovery.oscillation_recovery));
-    nh->declare_parameter(name + "." + "oscillation_v_eps", rclcpp::ParameterValue(recovery.oscillation_v_eps));
-    nh->declare_parameter(name + "." + "oscillation_omega_eps", rclcpp::ParameterValue(recovery.oscillation_omega_eps));
-    nh->declare_parameter(name + "." + "oscillation_recovery_min_duration", rclcpp::ParameterValue(recovery.oscillation_recovery_min_duration));
-    nh->declare_parameter(name + "." + "oscillation_filter_duration", rclcpp::ParameterValue(recovery.oscillation_filter_duration));
-    nh->declare_parameter(name + "." + "divergence_detection_enable", rclcpp::ParameterValue(recovery.divergence_detection_enable));
-    nh->declare_parameter(name + "." + "divergence_detection_max_chi_squared", rclcpp::ParameterValue(recovery.divergence_detection_max_chi_squared));
-  }
+  // Recovery
+  declare_parameter_if_not_declared(nh, name + "." + "shrink_horizon_backup", rclcpp::ParameterValue(recovery.shrink_horizon_backup));
+  declare_parameter_if_not_declared(nh, name + "." + "shrink_horizon_min_duration", rclcpp::ParameterValue(recovery.shrink_horizon_min_duration));
+  declare_parameter_if_not_declared(nh, name + "." + "oscillation_recovery", rclcpp::ParameterValue(recovery.oscillation_recovery));
+  declare_parameter_if_not_declared(nh, name + "." + "oscillation_v_eps", rclcpp::ParameterValue(recovery.oscillation_v_eps));
+  declare_parameter_if_not_declared(nh, name + "." + "oscillation_omega_eps", rclcpp::ParameterValue(recovery.oscillation_omega_eps));
+  declare_parameter_if_not_declared(nh, name + "." + "oscillation_recovery_min_duration", rclcpp::ParameterValue(recovery.oscillation_recovery_min_duration));
+  declare_parameter_if_not_declared(nh, name + "." + "oscillation_filter_duration", rclcpp::ParameterValue(recovery.oscillation_filter_duration));
+  declare_parameter_if_not_declared(nh, name + "." + "divergence_detection_enable", rclcpp::ParameterValue(recovery.divergence_detection_enable));
+  declare_parameter_if_not_declared(nh, name + "." + "divergence_detection_max_chi_squared", rclcpp::ParameterValue(recovery.divergence_detection_max_chi_squared));
 }
 
 void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name)
