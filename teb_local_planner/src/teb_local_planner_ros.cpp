@@ -1107,15 +1107,18 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::msg::Path::ConstShare
      
 RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(nav2_util::LifecycleNode::SharedPtr node)
 {
-  node->declare_parameter(name_ + "." + "footprint_model.type");
-  node->declare_parameter(name_ + "." + "footprint_model.radius");
-  node->declare_parameter(name_ + "." + "footprint_model.line_start");
-  node->declare_parameter(name_ + "." + "footprint_model.line_end");
-  node->declare_parameter(name_ + "." + "footprint_model.front_offset");
-  node->declare_parameter(name_ + "." + "footprint_model.front_radius");
-  node->declare_parameter(name_ + "." + "footprint_model.rear_offset");
-  node->declare_parameter(name_ + "." + "footprint_model.rear_radius");
-  node->declare_parameter(name_ + "." + "footprint_model.vertices");
+  // Avoid re-declaration
+  if (!node->has_parameter(name_ + "." + "footprint_model.type")) {
+    node->declare_parameter(name_ + "." + "footprint_model.type");
+    node->declare_parameter(name_ + "." + "footprint_model.radius");
+    node->declare_parameter(name_ + "." + "footprint_model.line_start");
+    node->declare_parameter(name_ + "." + "footprint_model.line_end");
+    node->declare_parameter(name_ + "." + "footprint_model.front_offset");
+    node->declare_parameter(name_ + "." + "footprint_model.front_radius");
+    node->declare_parameter(name_ + "." + "footprint_model.rear_offset");
+    node->declare_parameter(name_ + "." + "footprint_model.rear_radius");
+    node->declare_parameter(name_ + "." + "footprint_model.vertices");
+  }
 
   std::string model_name; 
   if (!node->get_parameter(name_ + "." + "footprint_model.type", model_name))
