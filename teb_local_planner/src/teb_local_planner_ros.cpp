@@ -61,6 +61,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_eigen/tf2_eigen.h>
 
+using nav2_util::declare_parameter_if_not_declared;
+
 namespace teb_local_planner
 {
   
@@ -1107,17 +1109,9 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::msg::Path::ConstShare
      
 RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(nav2_util::LifecycleNode::SharedPtr node)
 {
-  node->declare_parameter(name_ + "." + "footprint_model.type");
-  node->declare_parameter(name_ + "." + "footprint_model.radius");
-  node->declare_parameter(name_ + "." + "footprint_model.line_start");
-  node->declare_parameter(name_ + "." + "footprint_model.line_end");
-  node->declare_parameter(name_ + "." + "footprint_model.front_offset");
-  node->declare_parameter(name_ + "." + "footprint_model.front_radius");
-  node->declare_parameter(name_ + "." + "footprint_model.rear_offset");
-  node->declare_parameter(name_ + "." + "footprint_model.rear_radius");
-  node->declare_parameter(name_ + "." + "footprint_model.vertices");
+  declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.type", rclcpp::ParameterType::PARAMETER_STRING);
 
-  std::string model_name; 
+  std::string model_name;
   if (!node->get_parameter(name_ + "." + "footprint_model.type", model_name))
   {
     RCLCPP_INFO(logger_, "No robot footprint model specified for trajectory optimization. Using point-shaped model.");
@@ -1134,6 +1128,7 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(nav2
   // circular
   if (model_name.compare("circular") == 0)
   {
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
     // get radius
     double radius;
     if (!node->get_parameter(name_ + "." + "footprint_model.radius", radius))
@@ -1152,18 +1147,17 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(nav2
   // line
   if (model_name.compare("line") == 0)
   {
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.line_start", rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY);
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.line_end", rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY);
+    std::vector<double> line_start, line_end;
     // check parameters
-    if (!node->get_parameter(name_ + "." + "footprint_model.line_start", dummy) || !node->get_parameter(name_ + "." + "footprint_model.line_end", dummy))
+    if (!node->get_parameter(name_ + "." + "footprint_model.line_start", line_start) || !node->get_parameter(name_ + "." + "footprint_model.line_end", line_end))
     {
       RCLCPP_ERROR(logger_,
                    "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not exist. Using point-model instead.",
                    node->get_namespace());
       return std::make_shared<PointRobotFootprint>();
     }
-    // get line coordinates
-    std::vector<double> line_start, line_end;
-    node->get_parameter(name_ + "." + "footprint_model.line_start", line_start);
-    node->get_parameter(name_ + "." + "footprint_model.line_end", line_end);
     if (line_start.size() != 2 || line_end.size() != 2)
     {
       RCLCPP_ERROR(logger_, "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not contain x and y coordinates (2D). Using point-model instead.",
@@ -1181,6 +1175,10 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(nav2
   // two circles
   if (model_name.compare("two_circles") == 0)
   {
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.front_offset", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.front_radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.rear_offset", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.rear_radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
     // check parameters
     if (!node->get_parameter(name_ + "." + "footprint_model.front_offset", dummy) || !node->get_parameter(name_ + "." + "footprint_model.front_radius", dummy)
         || !node->get_parameter(name_ + "." + "footprint_model.rear_offset", dummy) || !node->get_parameter(name_ + "." + "footprint_model.rear_radius", dummy))
@@ -1205,10 +1203,9 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(nav2
   // polygon
   if (model_name.compare("polygon") == 0)
   {
-
+    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.vertices", rclcpp::ParameterType::PARAMETER_STRING);
     // check parameters
     std::string footprint_string;
-
     if (!node->get_parameter(name_ + "." + "footprint_model.vertices", footprint_string) )
     {
       RCLCPP_ERROR(logger_,

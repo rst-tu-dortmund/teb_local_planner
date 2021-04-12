@@ -44,13 +44,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
-
-//#include "teb_local_planner/TebLocalPlannerReconfigureConfig.h"
-
+#include <nav_2d_utils/parameters.hpp>
 
 // Definitions
 #define USE_ANALYTIC_JACOBI // if available for a specific edge, use analytic jacobi
-
 
 namespace teb_local_planner
 {
