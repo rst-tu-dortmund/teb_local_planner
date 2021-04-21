@@ -129,6 +129,12 @@ public:
     int costmap_converter_rate; //!< The rate that defines how often the costmap_converter plugin processes the current costmap (the value should not be much higher than the costmap update rate)
   } obstacles; //!< Obstacle related parameters
 
+  //! StaticObject related parameters
+  struct StaticObject
+  {
+    double distance_from_static_left; //!< The distance that the left probe is from a static obstacle
+    double distance_from_static_right; //!< The distance that the right probe is from a static obstacle
+  } staticObjects; //!< Obstacle related parameters
 
   //! Optimization related parameters
   struct Optimization
