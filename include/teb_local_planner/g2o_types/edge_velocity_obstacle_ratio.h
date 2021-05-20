@@ -70,8 +70,7 @@ public:
   /**
    * @brief Construct edge.
    */
-  EdgeVelocityObstacleRatio() :
-    robot_model_(nullptr)
+  EdgeVelocityObstacleRatio()
   {
     // The three vertices are two poses and one time difference
     this->resize(3); // Since we derive from a g2o::BaseMultiEdge, set the desired number of vertices
@@ -82,7 +81,7 @@ public:
    */
   void computeError()
   {
-    ROS_ASSERT_MSG(cfg_ && _measurement && robot_model_, "You must call setTebConfig(), setObstacle() and setRobotModel() on EdgeVelocityObstacleRatio()");
+    ROS_ASSERT_MSG(cfg_ && _measurement, "You must call setTebConfig() and setObstacle() on EdgeVelocityObstacleRatio()");
     const VertexPose* conf1 = static_cast<const VertexPose*>(_vertices[0]);
     const VertexPose* conf2 = static_cast<const VertexPose*>(_vertices[1]);
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
@@ -102,7 +101,7 @@ public:
 
     const double omega = angle_diff / deltaT->estimate();
 
-    double dist_to_obstacle = robot_model_->calculateDistance(conf1->pose(), _measurement);
+    double dist_to_obstacle = cfg_->robot_model->calculateDistance(conf1->pose(), _measurement);
 
     double ratio;
     if (dist_to_obstacle < cfg_->obstacles.obstacle_proximity_lower_bound)
@@ -132,35 +131,18 @@ public:
   }
 
   /**
-   * @brief Set pointer to the robot model
-   * @param robot_model Robot model required for distance calculation
-   */
-  void setRobotModel(const BaseRobotFootprintModel* robot_model)
-  {
-    robot_model_ = robot_model;
-  }
-
-  /**
    * @brief Set all parameters at once
    * @param cfg TebConfig class
-   * @param robot_model Robot model required for distance calculation
    * @param obstacle 2D position vector containing the position of the obstacle
    */
-  void setParameters(const TebConfig& cfg, const BaseRobotFootprintModel* robot_model, const Obstacle* obstacle)
+  void setParameters(const TebConfig& cfg, const Obstacle* obstacle)
   {
     cfg_ = &cfg;
-    robot_model_ = robot_model;
     _measurement = obstacle;
   }
 
-protected:
-
-  const BaseRobotFootprintModel* robot_model_; //!< Store pointer to robot_model
-
-public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 };
-
 
 } // end namespace
