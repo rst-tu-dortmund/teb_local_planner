@@ -62,7 +62,7 @@ def velocity_plotter():
   rospy.loginfo("Make sure to enable rosparam 'publish_feedback' in the teb_local_planner.")
 
   # four subplots sharing the same t axis
-  fig, (ax_v, ax_omega, ax_steering) = plotter.subplots(3, sharex=True)
+  fig, (ax_v, ax_omega, ax_steering, ax_rate) = plotter.subplots(4, sharex=True)
   plotter.ion()
   plotter.show()
 
