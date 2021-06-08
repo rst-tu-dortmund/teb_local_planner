@@ -20,7 +20,7 @@ def feedback_callback(data):
   trajectory = data.trajectories[data.selected_trajectory_idx].trajectory
 
 
-def plot_velocity_profile(fig, ax_v, ax_omega, ax_steering, t, v, omega, steering):
+def plot_velocity_profile(fig, ax_v, ax_omega, ax_steering, ax_rate, t, v, s, omega, steering, total_steering, av_steerrate, sum_steerrate):
   ax_v.cla()
   ax_v.grid()
   ax_v.set_ylabel('Trans. velocity [m/s]')
@@ -28,14 +28,22 @@ def plot_velocity_profile(fig, ax_v, ax_omega, ax_steering, t, v, omega, steerin
   ax_omega.cla()
   ax_omega.grid()
   ax_omega.set_ylabel('Rot. velocity [rad/s]')
-  ax_omega.set_xlabel('Time [s]')
+  #ax_omega.set_xlabel('Time [s]')
   ax_omega.plot(t, omega, '-bx')
   ax_steering.cla()
   ax_steering.grid()
   ax_steering.set_ylabel('Steering angle [rad]')
-  ax_steering.set_xlabel('Time [s]')
   ax_steering.plot(t, steering, '-bx')
+  ax_steering.set_title('Total steering: {}'.format(total_steering))
+  ax_rate.cla() #Plot steering rate against time
+  ax_rate.grid()
+  ax_rate.set_ylabel("Steering rate")
+  ax_rate.plot(t,s, '-bx')
+  ax_rate.set_xlabel('Time [s]')
+  ax_rate.set_title("Average steering rate: {}, sum of steering rate: {}".format(av_steerrate, sum_steerrate))
   fig.canvas.draw()
+
+
 
 
 
@@ -53,8 +61,8 @@ def velocity_plotter():
   rospy.loginfo("Visualizing velocity profile published on '%s'.",topic_name) 
   rospy.loginfo("Make sure to enable rosparam 'publish_feedback' in the teb_local_planner.")
 
-  # two subplots sharing the same t axis
-  fig, (ax_v, ax_omega, ax_steering) = plotter.subplots(3, sharex=True)
+  # four subplots sharing the same t axis
+  fig, (ax_v, ax_omega, ax_steering, ax_rate) = plotter.subplots(4, sharex=True)
   plotter.ion()
   plotter.show()
 
@@ -75,8 +83,21 @@ def velocity_plotter():
         steering.append( 0.0 )
       else:
         steering.append( math.atan( wheelbase / point.velocity.linear.x * point.velocity.angular.z )  )
+    
+    #Steering rate
+    s =[]
+    for i in range(np.size(np.asarray(steering))-1):
+      s.append((steering[i+1]-steering[i])/(t[i+1]-t[i]))
+    s.append(0)
 
-    plot_velocity_profile(fig, ax_v, ax_omega, ax_steering, np.asarray(t), np.asarray(v), np.asarray(omega), np.asarray(steering))
+    sum_steerrate=np.sum(np.absolute(np.asarray(s))) 
+    av_steerrate=sum_steerrate/np.size(np.asarray(s)) #Average steering rate
+
+    total_steering=np.sum(np.absolute(np.asarray(steering))) #Sum of steering angles
+
+    plot_velocity_profile(fig, ax_v, ax_omega, ax_steering, ax_rate, np.asarray(t), np.asarray(v), np.asarray(s), np.asarray(omega), np.asarray(steering), total_steering, av_steerrate, sum_steerrate)
+     
+    
 
     r.sleep()
 
