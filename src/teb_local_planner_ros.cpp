@@ -207,8 +207,16 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
   }
 
   // store the global plan
-  global_plan_.clear();
-  global_plan_ = orig_global_plan;
+  if (global_plan_.empty()) { /* If there is no plan, check if it's a valid plan */
+    global_plan_ = orig_global_plan;  
+    if (isGoalReached()) {
+      global_plan_.clear();
+    }
+  }
+  else { /* If there is a plan, update it */
+    global_plan_.clear();
+    global_plan_ = orig_global_plan;
+  }
 
   // we do not clear the local planner here, since setPlan is called frequently whenever the global planner updates the plan.
   // the local planner checks whether it is required to reinitialize the trajectory or not within each velocity computation step.  
@@ -457,7 +465,7 @@ bool TebLocalPlannerROS::isGoalReached()
     const geometry_msgs::PoseStamped& plan_pose = global_plan_.back();
     geometry_msgs::TransformStamped tf_plan_to_global = tf_->lookupTransform(global_frame_, ros::Time(), plan_pose.header.frame_id, plan_pose.header.stamp,
                                                                                     plan_pose.header.frame_id, ros::Duration(cfg_.robot.transform_tolerance));
-    tf2::doTransform(global_plan_.back(), global_goal, tf_plan_to_global);
+    tf2::doTransform(plan_pose, global_goal, tf_plan_to_global);
 
     /* Check if the goal is reached */
     double dx = global_goal.pose.position.x - robot_pose.pose.position.x;
@@ -469,6 +477,7 @@ bool TebLocalPlannerROS::isGoalReached()
       && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
           || cfg_.goal_tolerance.free_goal_vel))
     {
+      global_plan_.clear();
       planner_->clearPlanner();
       return true;
     }
