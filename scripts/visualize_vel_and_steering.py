@@ -89,6 +89,14 @@ def velocity_plotter():
     for i in range(np.size(np.asarray(steering))-1):
       s.append((steering[i+1]-steering[i])/(t[i+1]-t[i]))
     s.append(0)
+    
+    #Steering rate approximated by central differences
+    #s =[]
+    #s.append(0)
+    #for i in range(np.size(np.asarray(steering))-2):
+    #  s.append((steering[i+2]-steering[i])/(2*(-t[i]+t[i+2])))
+    0s.append(0)
+
 
     sum_steerrate=np.sum(np.absolute(np.asarray(s))) 
     av_steerrate=sum_steerrate/np.size(np.asarray(s)) #Average steering rate
