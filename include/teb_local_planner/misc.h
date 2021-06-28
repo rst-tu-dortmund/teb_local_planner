@@ -94,7 +94,7 @@ inline bool smaller_than_abs(double i, double j) {return std::fabs(i)<std::fabs(
 */
 inline double fast_sigmoid(double x)
 {
-  return x / (1 + fabs(x));
+  return x / (1.0 + fabs(x));
 }
 
 /**

@@ -78,6 +78,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
   nh.param("acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
   nh.param("min_turning_radius", robot.min_turning_radius, robot.min_turning_radius);
+  nh.param("max_steering_rate", robot.max_steering_rate, robot.max_steering_rate);
   nh.param("wheelbase", robot.wheelbase, robot.wheelbase);
   nh.param("cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh.param("is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
@@ -124,6 +125,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_kinematics_nh", optim.weight_kinematics_nh, optim.weight_kinematics_nh);
   nh.param("weight_kinematics_forward_drive", optim.weight_kinematics_forward_drive, optim.weight_kinematics_forward_drive);
   nh.param("weight_kinematics_turning_radius", optim.weight_kinematics_turning_radius, optim.weight_kinematics_turning_radius);
+  nh.param("weight_max_steering_rate", optim.weight_max_steering_rate, optim.weight_max_steering_rate);
   nh.param("weight_optimaltime", optim.weight_optimaltime, optim.weight_optimaltime);
   nh.param("weight_shortest_path", optim.weight_shortest_path, optim.weight_shortest_path);
   nh.param("weight_obstacle", optim.weight_obstacle, optim.weight_obstacle);
@@ -207,6 +209,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.acc_lim_y = cfg.acc_lim_y;
   robot.acc_lim_theta = cfg.acc_lim_theta;
   robot.min_turning_radius = cfg.min_turning_radius;
+  robot.max_steering_rate = cfg.max_steering_rate;
   robot.wheelbase = cfg.wheelbase;
   robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   robot.use_proportional_saturation = cfg.use_proportional_saturation;
@@ -248,6 +251,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_kinematics_nh = cfg.weight_kinematics_nh;
   optim.weight_kinematics_forward_drive = cfg.weight_kinematics_forward_drive;
   optim.weight_kinematics_turning_radius = cfg.weight_kinematics_turning_radius;
+  optim.weight_max_steering_rate = cfg.weight_max_steering_rate;
   optim.weight_optimaltime = cfg.weight_optimaltime;
   optim.weight_shortest_path = cfg.weight_shortest_path;
   optim.weight_obstacle = cfg.weight_obstacle;
