@@ -167,6 +167,9 @@ void TebConfig::declareParameters(const nav2_util::LifecycleNode::SharedPtr nh, 
   declare_parameter_if_not_declared(nh, name + "." + "oscillation_filter_duration", rclcpp::ParameterValue(recovery.oscillation_filter_duration));
   declare_parameter_if_not_declared(nh, name + "." + "divergence_detection_enable", rclcpp::ParameterValue(recovery.divergence_detection_enable));
   declare_parameter_if_not_declared(nh, name + "." + "divergence_detection_max_chi_squared", rclcpp::ParameterValue(recovery.divergence_detection_max_chi_squared));
+
+  // footprint model
+  declare_parameter_if_not_declared(nh, name + "." + "footprint_model.type", rclcpp::ParameterType::PARAMETER_STRING);
 }
 
 void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name)
@@ -293,6 +296,140 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "divergence_detection_enable", recovery.divergence_detection_enable, recovery.divergence_detection_enable);
   nh->get_parameter_or(name + "." + "divergence_detection_max_chi_squared", recovery.divergence_detection_max_chi_squared, recovery.divergence_detection_max_chi_squared);
 
+  // footprint model
+  if (!nh->get_parameter(name + "." + "footprint_model.type", model_name))
+  {
+    RCLCPP_INFO(logger_, "No robot footprint model specified for trajectory optimization. Using point-shaped model.");
+    robot_model = std::make_shared<PointRobotFootprint>();
+  }
+
+  // point
+  else if (model_name.compare("point") == 0)
+  {
+    RCLCPP_INFO(logger_, "Footprint model 'point' loaded for trajectory optimization.");
+    robot_model = std::make_shared<PointRobotFootprint>();
+  }
+
+  // circular
+  else if (model_name.compare("circular") == 0)
+  {
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    // get radius
+    double radius;
+    if (!nh->get_parameter(name + "." + "footprint_model.radius", radius))
+    {
+      RCLCPP_ERROR(logger_,
+                   "Footprint model 'circular' cannot be loaded for trajectory optimization, since param '%s.footprint_model.radius' does not exist. Using point-model instead.",
+                   nh->get_namespace());
+
+      robot_model = std::make_shared<PointRobotFootprint>();
+    }
+    RCLCPP_INFO(logger_, "Footprint model 'circular' (radius: %fm) loaded for trajectory optimization.", radius);
+    robot_model = std::make_shared<CircularRobotFootprint>(radius);
+  }
+
+
+  // line
+  else if (model_name.compare("line") == 0)
+  {
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.line_start", rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY);
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.line_end", rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY);
+    std::vector<double> line_start, line_end;
+    // check parameters
+    if (!nh->get_parameter(name + "." + "footprint_model.line_start", line_start) || !nh->get_parameter(name + "." + "footprint_model.line_end", line_end))
+    {
+      RCLCPP_ERROR(logger_,
+                   "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not exist. Using point-model instead.",
+                   nh->get_namespace());
+      robot_model = std::make_shared<PointRobotFootprint>();
+    }
+    if (line_start.size() != 2 || line_end.size() != 2)
+    {
+      RCLCPP_ERROR(logger_, "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not contain x and y coordinates (2D). Using point-model instead.",
+                   nh->get_namespace());
+      robot_model = std::make_shared<PointRobotFootprint>();
+    }
+
+    RCLCPP_INFO(logger_,
+                "Footprint model 'line' (line_start: [%f,%f]m, line_end: [%f,%f]m) loaded for trajectory optimization.",
+                line_start[0], line_start[1], line_end[0], line_end[1]);
+
+    robot_model = std::make_shared<LineRobotFootprint>(Eigen::Map<const Eigen::Vector2d>(line_start.data()), Eigen::Map<const Eigen::Vector2d>(line_end.data()));
+  }
+
+  // two circles
+  else if (model_name.compare("two_circles") == 0)
+  {
+    rclcpp::Parameter dummy;
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.front_offset", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.front_radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.rear_offset", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.rear_radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
+    // check parameters
+    if (!nh->get_parameter(name + "." + "footprint_model.front_offset", dummy) || !nh->get_parameter(name + "." + "footprint_model.front_radius", dummy)
+        || !nh->get_parameter(name + "." + "footprint_model.rear_offset", dummy) || !nh->get_parameter(name + "." + "footprint_model.rear_radius", dummy))
+    {
+      RCLCPP_ERROR(logger_,
+                   "Footprint model 'two_circles' cannot be loaded for trajectory optimization, since params '%s.footprint_model.front_offset', '.../front_radius', '.../rear_offset' and '.../rear_radius' do not exist. Using point-model instead.",
+                   nh->get_namespace());
+      robot_model = std::make_shared<PointRobotFootprint>();
+    }
+    double front_offset, front_radius, rear_offset, rear_radius;
+    nh->get_parameter(name + "." + "footprint_model.front_offset", front_offset);
+    nh->get_parameter(name + "." + "footprint_model.front_radius", front_radius);
+    nh->get_parameter(name + "." + "footprint_model.rear_offset", rear_offset);
+    nh->get_parameter(name + "." + "footprint_model.rear_radius", rear_radius);
+    RCLCPP_INFO(logger_,
+                "Footprint model 'two_circles' (front_offset: %fm, front_radius: %fm, rear_offset: %fm, rear_radius: %fm) loaded for trajectory optimization.",
+                front_offset, front_radius, rear_offset, rear_radius);
+
+    robot_model = std::make_shared<TwoCirclesRobotFootprint>(front_offset, front_radius, rear_offset, rear_radius);
+  }
+
+  // polygon
+  else if (model_name.compare("polygon") == 0)
+  {
+    declare_parameter_if_not_declared(nh, name + "." + "footprint_model.vertices", rclcpp::ParameterType::PARAMETER_STRING);
+    // check parameters
+    std::string footprint_string;
+    if (!nh->get_parameter(name + "." + "footprint_model.vertices", footprint_string) )
+    {
+      RCLCPP_ERROR(logger_,
+                   "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s.footprint_model.vertices' does not exist. Using point-model instead.",
+                   nh->get_namespace());
+
+      robot_model = std::make_shared<PointRobotFootprint>();
+    }
+
+    std::vector<geometry_msgs::msg::Point> footprint;
+    // get vertices
+    if (nav2_costmap_2d::makeFootprintFromString(footprint_string, footprint))
+    {
+      Point2dContainer polygon;
+      for(const auto &pt : footprint) {
+          polygon.push_back(Eigen::Vector2d(pt.x, pt.y));
+      }
+      RCLCPP_INFO(logger_, "Footprint model 'polygon' loaded for trajectory optimization.");
+      robot_model = std::make_shared<PolygonRobotFootprint>(polygon);
+    }
+    else
+    {
+      RCLCPP_ERROR(logger_,
+                "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s.footprint_model.vertices' does not define an array of coordinates. Using point-model instead.",
+                nh->get_namespace());
+      robot_model = std::make_shared<PointRobotFootprint>();
+    }
+
+  }
+  // otherwise
+  else
+  {
+    RCLCPP_WARN(logger_, "Unknown robot footprint model specified with parameter '%s.footprint_model.type'. Using point model instead.",
+                    nh->get_namespace());
+    robot_model = std::make_shared<PointRobotFootprint>();
+  }
+
+
   checkParameters();
   checkDeprecated(nh, name);
 }
@@ -301,6 +438,8 @@ void TebConfig::on_parameter_event_callback(
     const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
 {
   std::lock_guard<std::mutex> l(config_mutex_);
+
+  bool reload_footprint = false;
   
   for (auto & changed_parameter : event->changed_parameters) {
     const auto & type = changed_parameter.value.type;
@@ -465,6 +604,33 @@ void TebConfig::on_parameter_event_callback(
       } else if (name == node_name + ".divergence_detection_max_chi_squared") {
         recovery.divergence_detection_max_chi_squared = value.double_value;
       }
+      // Footprint model
+      else if (name == node_name + ".footprint_model.radius") {
+        reload_footprint = true;
+        radius = value.double_value;
+      } else if (name == node_name + ".footprint_model.front_offset") {
+        reload_footprint = true;
+        front_offset = value.double_value;
+      } else if (name == node_name + ".footprint_model.front_radius") {
+        reload_footprint = true;
+        front_radius = value.double_value;
+      } else if (name == node_name + ".footprint_model.rear_offset") {
+        reload_footprint = true;
+        rear_offset = value.double_value;
+      } else if (name == node_name + ".footprint_model.rear_radius") {
+        reload_footprint = true;
+        rear_radius = value.double_value;
+      }
+    }
+
+    else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE_ARRAY) {
+      if (name == node_name + ".footprint_model.line_start") {
+        reload_footprint = true;
+        line_start = value.double_array_value;
+      } else if (name == node_name + ".footprint_model.line_end") {
+        reload_footprint = true;
+        line_end = value.double_array_value;
+      }
     }
 
     else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER) {
@@ -577,9 +743,62 @@ void TebConfig::on_parameter_event_callback(
       // Optimization
       // Homotopy Class Planner
       // Recovery
+      // Footprint model
+      else if (name == node_name + ".footprint_model.type") {
+        RCLCPP_WARN(logger_, "Changing footprint model type is not allowed at runtime");
+      } else if (name == node_name + ".footprint_model.vertices") {
+        reload_footprint = true;
+        footprint_string = value.string_value;
+      }
     }
   }
   checkParameters();
+
+  if (reload_footprint) {
+    if (model_name.compare("circular") == 0)
+    {
+      RCLCPP_INFO(logger_, "Footprint model 'circular' (radius: %fm) reloaded for trajectory optimization.", radius);
+      robot_model = std::make_shared<CircularRobotFootprint>(radius);
+    }
+    else if (model_name.compare("line") == 0) {
+      if (line_start.size() != 2 || line_end.size() != 2)
+      {
+        RCLCPP_ERROR(logger_, "Footprint model 'line' cannot be reloaded for trajectory optimization");
+      } else {
+        RCLCPP_INFO(logger_,
+                    "Footprint model 'line' (line_start: [%f,%f]m, line_end: [%f,%f]m) reloaded for trajectory optimization.",
+                    line_start[0], line_start[1], line_end[0], line_end[1]);
+
+        robot_model = std::make_shared<LineRobotFootprint>(Eigen::Map<const Eigen::Vector2d>(line_start.data()), Eigen::Map<const Eigen::Vector2d>(line_end.data()));
+      }
+    }
+    else if (model_name.compare("two_circles") == 0) {
+      RCLCPP_INFO(logger_,
+                  "Footprint model 'two_circles' (front_offset: %fm, front_radius: %fm, rear_offset: %fm, rear_radius: %fm) loaded for trajectory optimization.",
+                  front_offset, front_radius, rear_offset, rear_radius);
+
+      robot_model = std::make_shared<TwoCirclesRobotFootprint>(front_offset, front_radius, rear_offset, rear_radius);
+    }
+    else if (model_name.compare("polygon") == 0)
+    {
+      std::vector<geometry_msgs::msg::Point> footprint;
+      // get vertices
+      if (nav2_costmap_2d::makeFootprintFromString(footprint_string, footprint))
+      {
+        Point2dContainer polygon;
+        for(const auto &pt : footprint) {
+            polygon.push_back(Eigen::Vector2d(pt.x, pt.y));
+        }
+        RCLCPP_INFO(logger_, "Footprint model 'polygon' reloaded for trajectory optimization.");
+        robot_model = std::make_shared<PolygonRobotFootprint>(polygon);
+      }
+      else
+      {
+        RCLCPP_ERROR(logger_,
+                  "Footprint model 'polygon' cannot be reloaded for trajectory optimization, since param 'footprint_model.vertices' does not define an array of coordinates.");
+      }
+    }
+  }
 }
     
     

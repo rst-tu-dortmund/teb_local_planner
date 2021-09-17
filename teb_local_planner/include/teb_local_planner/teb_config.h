@@ -45,6 +45,8 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 #include <nav_2d_utils/parameters.hpp>
+#include "teb_local_planner/robot_footprint_model.h"
+#include <nav2_costmap_2d/footprint.hpp>
 
 // Definitions
 #define USE_ANALYTIC_JACOBI // if available for a specific edge, use analytic jacobi
@@ -63,6 +65,13 @@ public:
   std::string odom_topic; //!< Topic name of the odometry message, provided by the robot driver or simulator
   std::string map_frame; //!< Global planning frame
   std::string node_name; //!< node name used for parameter event callback
+
+  RobotFootprintModelPtr robot_model;
+  std::string model_name;
+  double radius;
+  std::vector<double> line_start, line_end;
+  double front_offset, front_radius, rear_offset, rear_radius;
+  std::string footprint_string;
 
   //! Trajectory related parameters
   struct Trajectory

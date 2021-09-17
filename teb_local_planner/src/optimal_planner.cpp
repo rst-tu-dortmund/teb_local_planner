@@ -62,14 +62,14 @@ namespace teb_local_planner
 
 // ============== Implementation ===================
 
-TebOptimalPlanner::TebOptimalPlanner() : cfg_(NULL), obstacles_(NULL), via_points_(NULL), cost_(HUGE_VAL), prefer_rotdir_(RotType::none),
-                                         robot_model_(new PointRobotFootprint()), initialized_(false), optimized_(false)
+TebOptimalPlanner::TebOptimalPlanner() : cfg_(nullptr), obstacles_(NULL), via_points_(NULL), cost_(HUGE_VAL), prefer_rotdir_(RotType::none),
+                                         initialized_(false), optimized_(false)
 {    
 }
   
-TebOptimalPlanner::TebOptimalPlanner(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
+TebOptimalPlanner::TebOptimalPlanner(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
-  initialize(node, cfg, obstacles, robot_model, visual, via_points);
+  initialize(node, cfg, obstacles, visual, via_points);
 }
 
 TebOptimalPlanner::~TebOptimalPlanner()
@@ -82,7 +82,7 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
-void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
+void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
   node_ = node;
   // init optimizer (set solver and block ordering settings)
@@ -90,7 +90,6 @@ void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, con
   
   cfg_ = &cfg;
   obstacles_ = obstacles;
-  robot_model_ = robot_model;
   via_points_ = via_points;
   cost_ = HUGE_VAL;
   prefer_rotdir_ = RotType::none;
@@ -109,12 +108,6 @@ void TebOptimalPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, con
   setVisualization(visual);
 }
 
-void TebOptimalPlanner::updateRobotModel(RobotFootprintModelPtr robot_model)
-{
-  robot_model_ = robot_model;
-}
-
-
 void TebOptimalPlanner::setVisualization(const TebVisualizationPtr& visualization)
 {
   visualization_ = visualization;
@@ -128,7 +121,7 @@ void TebOptimalPlanner::visualize()
   visualization_->publishLocalPlanAndPoses(teb_);
   
   if (teb_.sizePoses() > 0)
-    visualization_->publishRobotFootprintModel(teb_.Pose(0), *robot_model_);
+    visualization_->publishRobotFootprintModel(teb_.Pose(0), *cfg_->robot_model);
   
   if (cfg_->trajectory.publish_feedback)
     visualization_->publishFeedbackMessage(*this, *obstacles_);
@@ -476,7 +469,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       EdgeInflatedObstacle* dist_bandpt_obst = new EdgeInflatedObstacle;
       dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
       dist_bandpt_obst->setInformation(information_inflated);
-      dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obstacle);
+      dist_bandpt_obst->setParameters(*cfg_, cfg_->robot_model.get(), obstacle);
       optimizer_->addEdge(dist_bandpt_obst);
     }
     else
@@ -484,7 +477,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
       EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
       dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
       dist_bandpt_obst->setInformation(information);
-      dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obstacle);
+      dist_bandpt_obst->setParameters(*cfg_, cfg_->robot_model.get(), obstacle);
       optimizer_->addEdge(dist_bandpt_obst);
     };
   };
@@ -508,7 +501,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
           continue;
 
           // calculate distance to robot model
-          double dist = robot_model_->calculateDistance(teb_.Pose(i), obst.get());
+          double dist = cfg_->robot_model->calculateDistance(teb_.Pose(i), obst.get());
           
           // force considering obstacle if really close to the current pose
         if (dist < cfg_->obstacles.min_obstacle_dist*cfg_->obstacles.obstacle_association_force_inclusion_factor)
@@ -604,7 +597,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
         EdgeObstacle* dist_bandpt_obst = new EdgeObstacle;
         dist_bandpt_obst->setVertex(0,teb_.PoseVertex(index));
         dist_bandpt_obst->setInformation(information);
-        dist_bandpt_obst->setParameters(*cfg_, robot_model_.get(), obst->get());
+        dist_bandpt_obst->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
         optimizer_->addEdge(dist_bandpt_obst);
     }
 
@@ -617,7 +610,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
                 EdgeInflatedObstacle* dist_bandpt_obst_n_r = new EdgeInflatedObstacle;
                 dist_bandpt_obst_n_r->setVertex(0,teb_.PoseVertex(index+neighbourIdx));
                 dist_bandpt_obst_n_r->setInformation(information_inflated);
-                dist_bandpt_obst_n_r->setParameters(*cfg_, robot_model_.get(), obst->get());
+                dist_bandpt_obst_n_r->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
                 optimizer_->addEdge(dist_bandpt_obst_n_r);
             }
             else
@@ -636,7 +629,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
                 EdgeInflatedObstacle* dist_bandpt_obst_n_l = new EdgeInflatedObstacle;
                 dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
                 dist_bandpt_obst_n_l->setInformation(information_inflated);
-                dist_bandpt_obst_n_l->setParameters(*cfg_, robot_model_.get(), obst->get());
+                dist_bandpt_obst_n_l->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
                 optimizer_->addEdge(dist_bandpt_obst_n_l);
             }
             else
@@ -644,7 +637,7 @@ void TebOptimalPlanner::AddEdgesObstaclesLegacy(double weight_multiplier)
                 EdgeObstacle* dist_bandpt_obst_n_l = new EdgeObstacle;
                 dist_bandpt_obst_n_l->setVertex(0,teb_.PoseVertex(index-neighbourIdx));
                 dist_bandpt_obst_n_l->setInformation(information);
-                dist_bandpt_obst_n_l->setParameters(*cfg_, robot_model_.get(), obst->get());
+                dist_bandpt_obst_n_l->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
                 optimizer_->addEdge(dist_bandpt_obst_n_l);
             }
       }
@@ -676,7 +669,7 @@ void TebOptimalPlanner::AddEdgesDynamicObstacles(double weight_multiplier)
       EdgeDynamicObstacle* dynobst_edge = new EdgeDynamicObstacle(time);
       dynobst_edge->setVertex(0,teb_.PoseVertex(i));
       dynobst_edge->setInformation(information);
-      dynobst_edge->setParameters(*cfg_, robot_model_.get(), obst->get());
+      dynobst_edge->setParameters(*cfg_, cfg_->robot_model.get(), obst->get());
       optimizer_->addEdge(dynobst_edge);
       time += teb_.TimeDiff(i); // we do not need to check the time diff bounds, since we iterate to "< sizePoses()-1".
     }
@@ -1025,7 +1018,7 @@ void TebOptimalPlanner::AddEdgesVelocityObstacleRatio()
       edge->setVertex(1,teb_.PoseVertex(index + 1));
       edge->setVertex(2,teb_.TimeDiffVertex(index));
       edge->setInformation(information);
-      edge->setParameters(*cfg_, robot_model_.get(), obstacle.get());
+      edge->setParameters(*cfg_, cfg_->robot_model.get(), obstacle.get());
       optimizer_->addEdge(edge);
     }
   }
@@ -1281,7 +1274,7 @@ bool TebOptimalPlanner::isTrajectoryFeasible(dwb_critics::ObstacleFootprintCriti
     if (!isPoseValid(pose2d, costmap_model, footprint_spec)){
       if (visualization_)
       {
-        visualization_->publishInfeasibleRobotPose(teb().Pose(i), *robot_model_);
+        visualization_->publishInfeasibleRobotPose(teb().Pose(i), *cfg_->robot_model);
       }
       return false;
     }
@@ -1308,7 +1301,7 @@ bool TebOptimalPlanner::isTrajectoryFeasible(dwb_critics::ObstacleFootprintCriti
           if (!isPoseValid(pose2d, costmap_model, footprint_spec)){
             if (visualization_)
             {
-              visualization_->publishInfeasibleRobotPose(intermediate_pose, *robot_model_);
+              visualization_->publishInfeasibleRobotPose(intermediate_pose, *cfg_->robot_model);
             }
             return false;
           }
