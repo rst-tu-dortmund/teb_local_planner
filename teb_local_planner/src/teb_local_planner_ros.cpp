@@ -154,16 +154,10 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
     footprint_spec_ = costmap_ros_->getRobotFootprint();
     nav2_costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
 
-    // Setup callback for changes to parameters.
-    parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(
-      node->get_node_base_interface(),
-      node->get_node_topics_interface(),
-      node->get_node_graph_interface(),
-      node->get_node_services_interface());
+    // Add callback for dynamic parameters
+    dyn_params_handler = node->add_on_set_parameters_callback(
+      std::bind(&TebConfig::dynamicParametersCallback, std::ref(cfg_), std::placeholders::_1));
 
-    parameter_event_sub_ = parameters_client_->on_parameter_event(
-      std::bind(&TebConfig::on_parameter_event_callback, std::ref(cfg_), std::placeholders::_1));
-    
     // validate optimization footprint and costmap footprint
     validateFootprints(cfg_->robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_->obstacles.min_obstacle_dist);
         

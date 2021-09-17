@@ -398,11 +398,11 @@ public:
   void loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name);
   
   /**
-   * @brief Paremeter event callback
-   * @param event The ParameterEvent
+   * @brief Callback executed when a paramter change is detected
+   * @param parameters list of changed parameters
    */
-  void on_parameter_event_callback(
-      const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+  rcl_interfaces::msg::SetParametersResult
+    dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
   
   /**
    * @brief Check parameters and print warnings in case of discrepancies

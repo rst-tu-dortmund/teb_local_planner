@@ -434,235 +434,235 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   checkDeprecated(nh, name);
 }
 
-void TebConfig::on_parameter_event_callback(
-    const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
+rcl_interfaces::msg::SetParametersResult
+  TebConfig::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
 {
+  auto result = rcl_interfaces::msg::SetParametersResult();
   std::lock_guard<std::mutex> l(config_mutex_);
 
   bool reload_footprint = false;
   
-  for (auto & changed_parameter : event->changed_parameters) {
-    const auto & type = changed_parameter.value.type;
-    const auto & name = changed_parameter.name;
-    const auto & value = changed_parameter.value;
+  for (auto parameter : parameters) {
+    const auto & type = parameter.get_type();
+    const auto & name = parameter.get_name();
 
     if (type == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE) {
       // Trajectory
       if (name == node_name + ".teb_autosize") {
-        trajectory.teb_autosize = value.double_value;
+        trajectory.teb_autosize = parameter.as_double();
       } else if (name == node_name + ".dt_ref") {
-        trajectory.dt_ref = value.double_value;
+        trajectory.dt_ref = parameter.as_double();
       } else if (name == node_name + ".dt_hysteresis") {
-        trajectory.dt_hysteresis = value.double_value;
+        trajectory.dt_hysteresis = parameter.as_double();
       } else if (name == node_name + ".global_plan_viapoint_sep") {
-        trajectory.global_plan_viapoint_sep = value.double_value;
+        trajectory.global_plan_viapoint_sep = parameter.as_double();
       } else if (name == node_name + ".max_global_plan_lookahead_dist") {
-        trajectory.max_global_plan_lookahead_dist = value.double_value;
+        trajectory.max_global_plan_lookahead_dist = parameter.as_double();
       } else if (name == node_name + ".global_plan_prune_distance") {
-        trajectory.global_plan_prune_distance = value.double_value;
+        trajectory.global_plan_prune_distance = parameter.as_double();
       } else if (name == node_name + ".force_reinit_new_goal_dist") {
-        trajectory.force_reinit_new_goal_dist = value.double_value;
+        trajectory.force_reinit_new_goal_dist = parameter.as_double();
       } else if (name == node_name + ".force_reinit_new_goal_angular") {
-        trajectory.force_reinit_new_goal_angular = value.double_value;
+        trajectory.force_reinit_new_goal_angular = parameter.as_double();
       } else if (name == node_name + ".min_resolution_collision_check_angular") {
-        trajectory.min_resolution_collision_check_angular = value.double_value;
+        trajectory.min_resolution_collision_check_angular = parameter.as_double();
       } else if (name == node_name + ".feasibility_check_lookahead_distance") {
-        trajectory.feasibility_check_lookahead_distance = value.double_value;
+        trajectory.feasibility_check_lookahead_distance = parameter.as_double();
       }
       // Robot
       else if (name == node_name + ".max_vel_x") {
-        robot.max_vel_x = value.double_value;
-        robot.base_max_vel_x = value.double_value;
+        robot.max_vel_x = parameter.as_double();
+        robot.base_max_vel_x = parameter.as_double();
       } else if (name == node_name + ".max_vel_x_backwards") {
-        robot.max_vel_x_backwards = value.double_value;
-        robot.base_max_vel_x_backwards = value.double_value;
+        robot.max_vel_x_backwards = parameter.as_double();
+        robot.base_max_vel_x_backwards = parameter.as_double();
       } else if (name == node_name + ".max_vel_y") {
-        robot.max_vel_y = value.double_value;
-        robot.base_max_vel_y = value.double_value;
+        robot.max_vel_y = parameter.as_double();
+        robot.base_max_vel_y = parameter.as_double();
       } else if (name == node_name + ".max_vel_theta") {
-        robot.max_vel_theta = value.double_value;
-        robot.base_max_vel_theta = value.double_value;
+        robot.max_vel_theta = parameter.as_double();
+        robot.base_max_vel_theta = parameter.as_double();
       } else if (name == node_name + ".acc_lim_x") {
-        robot.acc_lim_x = value.double_value;
+        robot.acc_lim_x = parameter.as_double();
       } else if (name == node_name + ".acc_lim_y") {
-        robot.acc_lim_y = value.double_value;
+        robot.acc_lim_y = parameter.as_double();
       } else if (name == node_name + ".acc_lim_theta") {
-        robot.acc_lim_theta = value.double_value;
+        robot.acc_lim_theta = parameter.as_double();
       } else if (name == node_name + ".min_turning_radius") {
-        robot.min_turning_radius = value.double_value;
+        robot.min_turning_radius = parameter.as_double();
       } else if (name == node_name + ".wheelbase") {
-        robot.wheelbase = value.double_value;
+        robot.wheelbase = parameter.as_double();
       }
       // GoalTolerance
       // Obstacles
       else if (name == node_name + ".min_obstacle_dist") {
-        obstacles.min_obstacle_dist = value.double_value;
+        obstacles.min_obstacle_dist = parameter.as_double();
       } else if (name == node_name + ".inflation_dist") {
-        obstacles.inflation_dist = value.double_value;
+        obstacles.inflation_dist = parameter.as_double();
       } else if (name == node_name + ".dynamic_obstacle_inflation_dist") {
-        obstacles.dynamic_obstacle_inflation_dist = value.double_value;
+        obstacles.dynamic_obstacle_inflation_dist = parameter.as_double();
       } else if (name == node_name + ".costmap_obstacles_behind_robot_dist") {
-        obstacles.costmap_obstacles_behind_robot_dist = value.double_value;
+        obstacles.costmap_obstacles_behind_robot_dist = parameter.as_double();
       } else if (name == node_name + ".obstacle_association_force_inclusion_factor") {
-        obstacles.obstacle_association_force_inclusion_factor = value.double_value;
+        obstacles.obstacle_association_force_inclusion_factor = parameter.as_double();
       } else if (name == node_name + ".obstacle_association_cutoff_factor") {
-        obstacles.obstacle_association_cutoff_factor = value.double_value;
+        obstacles.obstacle_association_cutoff_factor = parameter.as_double();
       } else if (name == node_name + ".obstacle_proximity_ratio_max_vel") {
-        obstacles.obstacle_proximity_ratio_max_vel = value.double_value;
+        obstacles.obstacle_proximity_ratio_max_vel = parameter.as_double();
       } else if (name == node_name + ".obstacle_proximity_lower_bound") {
-        obstacles.obstacle_proximity_lower_bound = value.double_value;
+        obstacles.obstacle_proximity_lower_bound = parameter.as_double();
       } else if (name == node_name + ".obstacle_proximity_upper_bound") {
-        obstacles.obstacle_proximity_upper_bound = value.double_value;
+        obstacles.obstacle_proximity_upper_bound = parameter.as_double();
       }
       // Optimization
       else if (name == node_name + ".penalty_epsilon") {
-        optim.penalty_epsilon = value.double_value;
+        optim.penalty_epsilon = parameter.as_double();
       } else if (name == node_name + ".weight_max_vel_x") {
-        optim.weight_max_vel_x = value.double_value;
+        optim.weight_max_vel_x = parameter.as_double();
       } else if (name == node_name + ".weight_max_vel_y") {
-        optim.weight_max_vel_y = value.double_value;
+        optim.weight_max_vel_y = parameter.as_double();
       } else if (name == node_name + ".weight_max_vel_theta") {
-        optim.weight_max_vel_theta = value.double_value;
+        optim.weight_max_vel_theta = parameter.as_double();
       } else if (name == node_name + ".weight_acc_lim_x") {
-        optim.weight_acc_lim_x = value.double_value;
+        optim.weight_acc_lim_x = parameter.as_double();
       } else if (name == node_name + ".weight_acc_lim_y") {
-        optim.weight_acc_lim_y = value.double_value;
+        optim.weight_acc_lim_y = parameter.as_double();
       } else if (name == node_name + ".weight_acc_lim_theta") {
-        optim.weight_acc_lim_theta = value.double_value;
+        optim.weight_acc_lim_theta = parameter.as_double();
       } else if (name == node_name + ".weight_kinematics_nh") {
-        optim.weight_kinematics_nh = value.double_value;
+        optim.weight_kinematics_nh = parameter.as_double();
       } else if (name == node_name + ".weight_kinematics_forward_drive") {
-        optim.weight_kinematics_forward_drive = value.double_value;
+        optim.weight_kinematics_forward_drive = parameter.as_double();
       } else if (name == node_name + ".weight_kinematics_turning_radius") {
-        optim.weight_kinematics_turning_radius = value.double_value;
+        optim.weight_kinematics_turning_radius = parameter.as_double();
       } else if (name == node_name + ".weight_optimaltime") {
-        optim.weight_optimaltime = value.double_value;
+        optim.weight_optimaltime = parameter.as_double();
       } else if (name == node_name + ".weight_shortest_path") {
-        optim.weight_shortest_path = value.double_value;
+        optim.weight_shortest_path = parameter.as_double();
       } else if (name == node_name + ".weight_obstacle") {
-        optim.weight_obstacle = value.double_value;
+        optim.weight_obstacle = parameter.as_double();
       } else if (name == node_name + ".weight_inflation") {
-        optim.weight_inflation = value.double_value;
+        optim.weight_inflation = parameter.as_double();
       } else if (name == node_name + ".weight_dynamic_obstacle") {
-        optim.weight_dynamic_obstacle = value.double_value;
+        optim.weight_dynamic_obstacle = parameter.as_double();
       } else if (name == node_name + ".weight_dynamic_obstacle_inflation") {
-        optim.weight_dynamic_obstacle_inflation = value.double_value;
+        optim.weight_dynamic_obstacle_inflation = parameter.as_double();
       } else if (name == node_name + ".weight_viapoint") {
-        optim.weight_viapoint = value.double_value;
+        optim.weight_viapoint = parameter.as_double();
       } else if (name == node_name + ".weight_prefer_rotdir") {
-        optim.weight_prefer_rotdir = value.double_value;
+        optim.weight_prefer_rotdir = parameter.as_double();
       } else if (name == node_name + ".weight_adapt_factor") {
-        optim.weight_adapt_factor = value.double_value;
+        optim.weight_adapt_factor = parameter.as_double();
       } else if (name == node_name + ".obstacle_cost_exponent") {
-        optim.obstacle_cost_exponent = value.double_value;
+        optim.obstacle_cost_exponent = parameter.as_double();
       }
       // Homotopy Class Planner
       else if (name == node_name + ".selection_cost_hysteresis") {
-        hcp.selection_cost_hysteresis = value.double_value;
+        hcp.selection_cost_hysteresis = parameter.as_double();
       } else if (name == node_name + ".selection_prefer_initial_plan") {
-        hcp.selection_prefer_initial_plan = value.double_value;
+        hcp.selection_prefer_initial_plan = parameter.as_double();
       } else if (name == node_name + ".selection_obst_cost_scale") {
-        hcp.selection_obst_cost_scale = value.double_value;
+        hcp.selection_obst_cost_scale = parameter.as_double();
       } else if (name == node_name + ".selection_viapoint_cost_scale") {
-        hcp.selection_viapoint_cost_scale = value.double_value;
+        hcp.selection_viapoint_cost_scale = parameter.as_double();
       } else if (name == node_name + ".switching_blocking_period") {
-        hcp.switching_blocking_period = value.double_value;
+        hcp.switching_blocking_period = parameter.as_double();
       } else if (name == node_name + ".roadmap_graph_area_width") {
-        hcp.roadmap_graph_area_width = value.double_value;
+        hcp.roadmap_graph_area_width = parameter.as_double();
       } else if (name == node_name + ".roadmap_graph_area_length_scale") {
-        hcp.roadmap_graph_area_length_scale = value.double_value;
+        hcp.roadmap_graph_area_length_scale = parameter.as_double();
       } else if (name == node_name + ".h_signature_prescaler") {
-        hcp.h_signature_prescaler = value.double_value;
+        hcp.h_signature_prescaler = parameter.as_double();
       } else if (name == node_name + ".h_signature_threshold") {
-        hcp.h_signature_threshold = value.double_value;
+        hcp.h_signature_threshold = parameter.as_double();
       } else if (name == node_name + ".obstacle_keypoint_offset") {
-        hcp.obstacle_keypoint_offset = value.double_value;
+        hcp.obstacle_keypoint_offset = parameter.as_double();
       } else if (name == node_name + ".obstacle_heading_threshold") {
-        hcp.obstacle_heading_threshold = value.double_value;
+        hcp.obstacle_heading_threshold = parameter.as_double();
       } else if (name == node_name + ".visualize_with_time_as_z_axis_scale") {
-        hcp.visualize_with_time_as_z_axis_scale = value.double_value;
+        hcp.visualize_with_time_as_z_axis_scale = parameter.as_double();
       } else if (name == node_name + ".detours_orientation_tolerance") {
-        hcp.detours_orientation_tolerance = value.double_value;
+        hcp.detours_orientation_tolerance = parameter.as_double();
       } else if (name == node_name + ".length_start_orientation_vector") {
-        hcp.length_start_orientation_vector = value.double_value;
+        hcp.length_start_orientation_vector = parameter.as_double();
       } else if (name == node_name + ".max_ratio_detours_duration_best_duration") {
-        hcp.max_ratio_detours_duration_best_duration = value.double_value;
+        hcp.max_ratio_detours_duration_best_duration = parameter.as_double();
       } else if (name == node_name + ".selection_dropping_probability") {
-        hcp.selection_dropping_probability = value.double_value;
+        hcp.selection_dropping_probability = parameter.as_double();
       }
       // Recovery
       else if (name == node_name + ".shrink_horizon_min_duration") {
-        recovery.shrink_horizon_min_duration = value.double_value;
+        recovery.shrink_horizon_min_duration = parameter.as_double();
       } else if (name == node_name + ".oscillation_v_eps") {
-        recovery.oscillation_v_eps = value.double_value;
+        recovery.oscillation_v_eps = parameter.as_double();
       } else if (name == node_name + ".oscillation_omega_eps") {
-        recovery.oscillation_omega_eps = value.double_value;
+        recovery.oscillation_omega_eps = parameter.as_double();
       } else if (name == node_name + ".oscillation_recovery_min_duration") {
-        recovery.oscillation_recovery_min_duration = value.double_value;
+        recovery.oscillation_recovery_min_duration = parameter.as_double();
       } else if (name == node_name + ".oscillation_filter_duration") {
-        recovery.oscillation_filter_duration = value.double_value;
+        recovery.oscillation_filter_duration = parameter.as_double();
       } else if (name == node_name + ".divergence_detection_max_chi_squared") {
-        recovery.divergence_detection_max_chi_squared = value.double_value;
+        recovery.divergence_detection_max_chi_squared = parameter.as_double();
       }
       // Footprint model
       else if (name == node_name + ".footprint_model.radius") {
         reload_footprint = true;
-        radius = value.double_value;
+        radius = parameter.as_double();
       } else if (name == node_name + ".footprint_model.front_offset") {
         reload_footprint = true;
-        front_offset = value.double_value;
+        front_offset = parameter.as_double();
       } else if (name == node_name + ".footprint_model.front_radius") {
         reload_footprint = true;
-        front_radius = value.double_value;
+        front_radius = parameter.as_double();
       } else if (name == node_name + ".footprint_model.rear_offset") {
         reload_footprint = true;
-        rear_offset = value.double_value;
+        rear_offset = parameter.as_double();
       } else if (name == node_name + ".footprint_model.rear_radius") {
         reload_footprint = true;
-        rear_radius = value.double_value;
+        rear_radius = parameter.as_double();
       }
     }
 
     else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE_ARRAY) {
       if (name == node_name + ".footprint_model.line_start") {
         reload_footprint = true;
-        line_start = value.double_array_value;
+        line_start = parameter.as_double_array();
       } else if (name == node_name + ".footprint_model.line_end") {
         reload_footprint = true;
-        line_end = value.double_array_value;
+        line_end = parameter.as_double_array();
       }
     }
 
     else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER) {
       // Trajectory
       if (name == node_name + ".min_samples") {
-        trajectory.min_samples = value.integer_value;
+        trajectory.min_samples = parameter.as_int();
       } else if (name == node_name + ".max_samples") {
-        trajectory.max_samples = value.integer_value;
+        trajectory.max_samples = parameter.as_int();
       } else if (name == node_name + ".feasibility_check_no_poses") {
-        trajectory.feasibility_check_no_poses = value.integer_value;
+        trajectory.feasibility_check_no_poses = parameter.as_int();
       } else if (name == node_name + ".control_look_ahead_poses") {
-        trajectory.control_look_ahead_poses = value.integer_value;
+        trajectory.control_look_ahead_poses = parameter.as_int();
       }
       // Robot
       // GoalTolerance
       // Obstacles
       else if (name == node_name + ".obstacle_poses_affected") {
-        obstacles.obstacle_poses_affected = value.integer_value;
+        obstacles.obstacle_poses_affected = parameter.as_int();
       } else if (name == node_name + ".costmap_converter_rate") {
-        obstacles.costmap_converter_rate = value.integer_value;
+        obstacles.costmap_converter_rate = parameter.as_int();
       }
       // Optimization
       else if (name == node_name + ".no_inner_iterations") {
-        optim.no_inner_iterations = value.integer_value;
+        optim.no_inner_iterations = parameter.as_int();
       } else if (name == node_name + ".no_outer_iterations") {
-        optim.no_outer_iterations = value.integer_value;
+        optim.no_outer_iterations = parameter.as_int();
       }
       // Homotopy Class Planner
       else if (name == node_name + ".max_number_classes") {
-        hcp.max_number_classes = value.integer_value;
+        hcp.max_number_classes = parameter.as_int();
       } else if (name == node_name + ".roadmap_graph_no_samples") {
-        hcp.roadmap_graph_no_samples = value.integer_value;
+        hcp.roadmap_graph_no_samples = parameter.as_int();
       }
       // Recovery
     }
@@ -670,65 +670,65 @@ void TebConfig::on_parameter_event_callback(
     else if (type == rcl_interfaces::msg::ParameterType::PARAMETER_BOOL) {
       // Trajectory
       if (name == node_name + ".global_plan_overwrite_orientation") {
-        trajectory.global_plan_overwrite_orientation = value.bool_value;
+        trajectory.global_plan_overwrite_orientation = parameter.as_bool();
       } else if (name == node_name + ".allow_init_with_backwards_motion") {
-        trajectory.allow_init_with_backwards_motion = value.bool_value;
+        trajectory.allow_init_with_backwards_motion = parameter.as_bool();
       } else if (name == node_name + ".via_points_ordered") {
-        trajectory.via_points_ordered = value.bool_value;
+        trajectory.via_points_ordered = parameter.as_bool();
       } else if (name == node_name + ".exact_arc_length") {
-        trajectory.exact_arc_length = value.bool_value;
+        trajectory.exact_arc_length = parameter.as_bool();
       } else if (name == node_name + ".publish_feedback") {
-        trajectory.publish_feedback = value.bool_value;
+        trajectory.publish_feedback = parameter.as_bool();
       }
       // Robot
       else if (name == node_name + ".cmd_angle_instead_rotvel") {
-        robot.cmd_angle_instead_rotvel = value.bool_value;
+        robot.cmd_angle_instead_rotvel = parameter.as_bool();
       } else if (name == node_name + ".is_footprint_dynamic") {
-        robot.is_footprint_dynamic = value.bool_value;
+        robot.is_footprint_dynamic = parameter.as_bool();
       }
       // GoalTolerance
       else if (name == node_name + ".free_goal_vel") {
-        goal_tolerance.free_goal_vel = value.bool_value;
+        goal_tolerance.free_goal_vel = parameter.as_bool();
       }
       // Obstacles
       else if (name == node_name + ".include_dynamic_obstacles") {
-        obstacles.include_dynamic_obstacles = value.bool_value;
+        obstacles.include_dynamic_obstacles = parameter.as_bool();
       } else if (name == node_name + ".include_costmap_obstacles") {
-        obstacles.include_costmap_obstacles = value.bool_value;
+        obstacles.include_costmap_obstacles = parameter.as_bool();
       } else if (name == node_name + ".legacy_obstacle_association") {
-        obstacles.legacy_obstacle_association = value.bool_value;
+        obstacles.legacy_obstacle_association = parameter.as_bool();
       } else if (name == node_name + ".costmap_converter_spin_thread") {
-        obstacles.costmap_converter_spin_thread = value.bool_value;
+        obstacles.costmap_converter_spin_thread = parameter.as_bool();
       }
       // Optimization
       else if (name == node_name + ".optimization_activate") {
-        optim.optimization_activate = value.bool_value;
+        optim.optimization_activate = parameter.as_bool();
       } else if (name == node_name + ".optimization_verbose") {
-        optim.optimization_verbose = value.bool_value;
+        optim.optimization_verbose = parameter.as_bool();
       }
       // Homotopy Class Planner
       else if (name == node_name + ".enable_homotopy_class_planning") {
-        hcp.enable_homotopy_class_planning = value.bool_value;
+        hcp.enable_homotopy_class_planning = parameter.as_bool();
       } else if (name == node_name + ".enable_multithreading") {
-        hcp.enable_multithreading = value.bool_value;
+        hcp.enable_multithreading = parameter.as_bool();
       } else if (name == node_name + ".simple_exploration") {
-        hcp.simple_exploration = value.bool_value;
+        hcp.simple_exploration = parameter.as_bool();
       } else if (name == node_name + ".selection_alternative_time_cost") {
-        hcp.selection_alternative_time_cost = value.bool_value;
+        hcp.selection_alternative_time_cost = parameter.as_bool();
       } else if (name == node_name + ".viapoints_all_candidates") {
-        hcp.viapoints_all_candidates = value.bool_value;
+        hcp.viapoints_all_candidates = parameter.as_bool();
       } else if (name == node_name + ".visualize_hc_graph") {
-        hcp.visualize_hc_graph = value.bool_value;
+        hcp.visualize_hc_graph = parameter.as_bool();
       } else if (name == node_name + ".delete_detours_backwards") {
-        hcp.delete_detours_backwards = value.bool_value;
+        hcp.delete_detours_backwards = parameter.as_bool();
       }
       // Recovery
       else if (name == node_name + ".shrink_horizon_backup") {
-        recovery.shrink_horizon_backup = value.bool_value;
+        recovery.shrink_horizon_backup = parameter.as_bool();
       } else if (name == node_name + ".oscillation_recovery") {
-        recovery.oscillation_recovery = value.bool_value;
+        recovery.oscillation_recovery = parameter.as_bool();
       } else if (name == node_name + ".divergence_detection_enable") {
-        recovery.divergence_detection_enable = value.bool_value;
+        recovery.divergence_detection_enable = parameter.as_bool();
       }
     }
 
@@ -738,7 +738,7 @@ void TebConfig::on_parameter_event_callback(
       // GoalTolerance
       // Obstacles
       if (name == node_name + ".costmap_converter_plugin") {
-        obstacles.costmap_converter_plugin = value.string_value;
+        obstacles.costmap_converter_plugin = parameter.as_string();
       }
       // Optimization
       // Homotopy Class Planner
@@ -748,7 +748,7 @@ void TebConfig::on_parameter_event_callback(
         RCLCPP_WARN(logger_, "Changing footprint model type is not allowed at runtime");
       } else if (name == node_name + ".footprint_model.vertices") {
         reload_footprint = true;
-        footprint_string = value.string_value;
+        footprint_string = parameter.as_string();
       }
     }
   }
@@ -799,6 +799,8 @@ void TebConfig::on_parameter_event_callback(
       }
     }
   }
+  result.successful = true;
+  return result;
 }
     
     

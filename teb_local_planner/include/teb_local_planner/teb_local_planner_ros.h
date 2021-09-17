@@ -71,6 +71,7 @@
 #include <nav2_util/lifecycle_node.hpp>
 #include <nav2_costmap_2d/costmap_2d_ros.hpp>
 #include <nav_2d_utils/parameters.hpp>
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
 // dynamic reconfigure
 //#include "teb_local_planner/TebLocalPlannerReconfigureConfig.h>
 //#include <dynamic_reconfigure/server.h>
@@ -414,10 +415,9 @@ private:
   bool initialized_; //!< Keeps track about the correct initialization of this class
   std::string name_; //!< Name of plugin ID
 
-  // Subscription for parameter change
-  rclcpp::AsyncParametersClient::SharedPtr parameters_client_;
-  rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent>::SharedPtr parameter_event_sub_;
-
+protected:
+  // Dynamic parameters handler
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
