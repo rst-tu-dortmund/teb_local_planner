@@ -193,9 +193,10 @@ public:
   /**
    * @brief Get the current robot footprint/contour model
    * @param nh const reference to the local ros::NodeHandle
+   * @param config const reference to the current configuration
    * @return Robot footprint model used for optimization
    */
-  static RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh);
+  static RobotFootprintModelPtr getRobotFootprintFromParamServer(const ros::NodeHandle& nh, const TebConfig& config);
   
   /** 
    * @brief Set the footprint from the given XmlRpcValue.
