@@ -147,7 +147,7 @@ int main( int argc, char** argv )
   visual = TebVisualizationPtr(new TebVisualization(n, config));
   
   // Setup robot shape model
-  RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n);
+  RobotFootprintModelPtr robot_model = TebLocalPlannerROS::getRobotFootprintFromParamServer(n, config);
   
   // Setup planner (homotopy class planning or just the local teb planner)
   if (config.hcp.enable_homotopy_class_planning)
