@@ -355,7 +355,7 @@ protected:
    * @param max_vel_x_backwards Maximum translational velocity for backwards driving
    */
   void saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y,
-                        double max_vel_theta, double max_vel_x_backwards) const;
+                        double max_vel_theta, double max_vel_x_backwards, double min_vel_x) const;
 
   
   /**

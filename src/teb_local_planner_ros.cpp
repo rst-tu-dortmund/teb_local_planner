@@ -421,7 +421,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
   saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z,
-                   cfg_.robot.max_vel_x, cfg_.robot.max_vel_y, cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards);
+                   cfg_.robot.max_vel_x, cfg_.robot.max_vel_y, cfg_.robot.max_vel_theta, cfg_.robot.max_vel_x_backwards, cfg_.robot.min_vel_x );
 
   // convert rot-vel to steering angle if desired (carlike robot).
   // The min_turning_radius is allowed to be slighly smaller since it is a soft-constraint
@@ -869,13 +869,34 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
 }
       
       
-void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_theta, double max_vel_x_backwards) const
+void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_theta, double max_vel_x_backwards, double min_vel_x) const
 {
-  double ratio_x = 1, ratio_omega = 1, ratio_y = 1;
-  // Limit translational velocity for forward driving
-  if (vx > max_vel_x)
-    ratio_x = max_vel_x / vx;
-  
+  double ratio_x = 1, ratio_omega = 1, ratio_y = 1, ratio_x_min = 1;
+  bool direction = true;
+ 
+  // backward driving
+  if(vx < 0)
+  {
+    direction = false ;
+    
+    if (vx < -max_vel_x_backwards)
+      ratio_x = - max_vel_x_backwards / vx;
+    else if (vx > -min_vel_x)
+      ratio_x = - min_vel_x / vx;
+
+  }
+  else // forward driving
+  {
+    direction = true;
+    
+    if (vx > max_vel_x)
+      ratio_x = max_vel_x / vx;
+    else if (vx < min_vel_x)
+    {
+      ratio_x =   min_vel_x / vx;
+    }
+  }
+
   // limit strafing velocity
   if (vy > max_vel_y || vy < -max_vel_y)
     ratio_y = std::abs(vy / max_vel_y);
@@ -901,9 +922,11 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
   }
   else
   {
-    vx *= ratio_x;
+    
+    vx *= ratio_x; 
     vy *= ratio_y;
     omega *= ratio_omega;
+
   }
 }
      

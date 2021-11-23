@@ -83,6 +83,8 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
   nh.param("use_proportional_saturation", robot.use_proportional_saturation, robot.use_proportional_saturation);
   nh.param("transform_tolerance", robot.transform_tolerance, robot.transform_tolerance);
+  nh.param("min_vel_x", robot.min_vel_x, robot.min_vel_x);
+
 
   // GoalTolerance
   nh.param("xy_goal_tolerance", goal_tolerance.xy_goal_tolerance, goal_tolerance.xy_goal_tolerance);
@@ -200,6 +202,8 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   
   // Robot     
   robot.max_vel_x = cfg.max_vel_x;
+  robot.min_vel_x = cfg.min_vel_x;
+  
   robot.max_vel_x_backwards = cfg.max_vel_x_backwards;
   robot.max_vel_y = cfg.max_vel_y;
   robot.max_vel_theta = cfg.max_vel_theta;
