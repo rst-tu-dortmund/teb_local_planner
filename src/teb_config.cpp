@@ -197,6 +197,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   trajectory.force_reinit_new_goal_angular = cfg.force_reinit_new_goal_angular;
   trajectory.feasibility_check_no_poses = cfg.feasibility_check_no_poses;
   trajectory.publish_feedback = cfg.publish_feedback;
+  trajectory.control_look_ahead_poses = cfg.control_look_ahead_poses;
   
   // Robot     
   robot.max_vel_x = cfg.max_vel_x;
