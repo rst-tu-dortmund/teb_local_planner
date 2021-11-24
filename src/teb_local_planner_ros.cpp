@@ -1045,7 +1045,7 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(cons
   if (model_name.compare("point") == 0)
   {
     ROS_INFO("Footprint model 'point' loaded for trajectory optimization.");
-    return boost::make_shared<PointRobotFootprint>();
+    return boost::make_shared<PointRobotFootprint>(config.obstacles.min_obstacle_dist);
   }
   
   // circular
