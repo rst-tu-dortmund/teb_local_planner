@@ -199,6 +199,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   trajectory.feasibility_check_no_poses = cfg.feasibility_check_no_poses;
   trajectory.feasibility_check_lookahead_distance = cfg.feasibility_check_lookahead_distance;
   trajectory.publish_feedback = cfg.publish_feedback;
+  trajectory.control_look_ahead_poses = cfg.control_look_ahead_poses;
   
   // Robot     
   robot.max_vel_x = cfg.max_vel_x;
