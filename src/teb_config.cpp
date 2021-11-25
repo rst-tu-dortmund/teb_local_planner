@@ -68,6 +68,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("publish_feedback", trajectory.publish_feedback, trajectory.publish_feedback);
   nh.param("min_resolution_collision_check_angular", trajectory.min_resolution_collision_check_angular, trajectory.min_resolution_collision_check_angular);
   nh.param("control_look_ahead_poses", trajectory.control_look_ahead_poses, trajectory.control_look_ahead_poses);
+  nh.param("prevent_look_ahead_poses_near_goal", trajectory.prevent_look_ahead_poses_near_goal, trajectory.prevent_look_ahead_poses_near_goal);
   
   // Robot
   nh.param("max_vel_x", robot.max_vel_x, robot.max_vel_x);
@@ -175,16 +176,22 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   trajectory.teb_autosize = cfg.teb_autosize;
   trajectory.dt_ref = cfg.dt_ref;
   trajectory.dt_hysteresis = cfg.dt_hysteresis;
+  trajectory.min_samples = cfg.min_samples;
+  trajectory.max_samples = cfg.max_samples;
   trajectory.global_plan_overwrite_orientation = cfg.global_plan_overwrite_orientation;
   trajectory.allow_init_with_backwards_motion = cfg.allow_init_with_backwards_motion;
   trajectory.global_plan_viapoint_sep = cfg.global_plan_viapoint_sep;
   trajectory.via_points_ordered = cfg.via_points_ordered;
   trajectory.max_global_plan_lookahead_dist = cfg.max_global_plan_lookahead_dist;
+  trajectory.global_plan_prune_distance = cfg.global_plan_prune_distance;
   trajectory.exact_arc_length = cfg.exact_arc_length;
   trajectory.force_reinit_new_goal_dist = cfg.force_reinit_new_goal_dist;
   trajectory.force_reinit_new_goal_angular = cfg.force_reinit_new_goal_angular;
   trajectory.feasibility_check_no_poses = cfg.feasibility_check_no_poses;
   trajectory.publish_feedback = cfg.publish_feedback;
+  trajectory.min_resolution_collision_check_angular = cfg.min_resolution_collision_check_angular;
+  trajectory.control_look_ahead_poses = cfg.control_look_ahead_poses;
+  trajectory.prevent_look_ahead_poses_near_goal = cfg.prevent_look_ahead_poses_near_goal;
   
   // Robot     
   robot.max_vel_x = cfg.max_vel_x;
