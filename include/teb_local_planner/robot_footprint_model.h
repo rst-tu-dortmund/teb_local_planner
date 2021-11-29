@@ -42,6 +42,8 @@
 
 #include <teb_local_planner/pose_se2.h>
 #include <teb_local_planner/obstacles.h>
+#include <teb_local_planner/misc.h>
+#include <teb_local_planner/teb_config.h>
 #include <visualization_msgs/Marker.h>
 
 namespace teb_local_planner
@@ -62,7 +64,8 @@ public:
   /**
     * @brief Default constructor of the abstract obstacle class
     */
-  BaseRobotFootprintModel()
+  BaseRobotFootprintModel() :
+    cfg_(nullptr)
   {
   }
   
@@ -109,7 +112,26 @@ public:
    */
   virtual double getInscribedRadius() = 0;
 
+  /**
+   * @brief Assign the TebConfig class for parameters.
+   * @param cfg TebConfig class
+   */
+  inline void setTEBConfiguration(const TebConfig& config)
+  {
+    cfg_ = &config;
+  }
+
+  /**
+   * @brief Assign the TebConfig class for parameters.
+   * @param cfg TebConfig class
+   */
+  inline void setTEBConfiguration(const TebConfig * const config)
+  {
+    cfg_ = config;
+  }
 	
+protected:
+  const TebConfig* cfg_; //!< Store TebConfig class for parameters
 
 public:	
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -298,7 +320,10 @@ public:
     */
   virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
   {
-    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    double sin_th = cfg_->sin(current_pose.theta());
+    double cos_th = cfg_->cos(current_pose.theta());
+
+    Eigen::Vector2d dir(cos_th, sin_th);
     double dist_front = obstacle->getMinimumDistance(current_pose.position() + front_offset_*dir) - front_radius_;
     double dist_rear = obstacle->getMinimumDistance(current_pose.position() - rear_offset_*dir) - rear_radius_;
     return std::min(dist_front, dist_rear);
@@ -313,7 +338,10 @@ public:
     */
   virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
   {
-    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    double sin_th = cfg_->sin(current_pose.theta());
+    double cos_th = cfg_->cos(current_pose.theta());
+
+    Eigen::Vector2d dir(cos_th, sin_th);
     double dist_front = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() + front_offset_*dir, t) - front_radius_;
     double dist_rear = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() - rear_offset_*dir, t) - rear_radius_;
     return std::min(dist_front, dist_rear);
@@ -329,8 +357,11 @@ public:
     * @param color Color of the footprint
     */
   virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
-  {    
-    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+  {
+    double sin_th = cfg_->sin(current_pose.theta());
+    double cos_th = cfg_->cos(current_pose.theta());
+
+    Eigen::Vector2d dir(cos_th, sin_th);
     if (front_radius_>0)
     {
       markers.push_back(visualization_msgs::Marker());
@@ -516,8 +547,9 @@ private:
     */
   void transformToWorld(const PoseSE2& current_pose, Eigen::Vector2d& line_start_world, Eigen::Vector2d& line_end_world) const
   {
-    double cos_th = std::cos(current_pose.theta());
-    double sin_th = std::sin(current_pose.theta());
+    double sin_th = cfg_->sin(current_pose.theta());
+    double cos_th = cfg_->cos(current_pose.theta());
+
     line_start_world.x() = current_pose.x() + cos_th * line_start_.x() - sin_th * line_start_.y();
     line_start_world.y() = current_pose.y() + sin_th * line_start_.x() + cos_th * line_start_.y();
     line_end_world.x() = current_pose.x() + cos_th * line_end_.x() - sin_th * line_end_.y();
@@ -662,8 +694,9 @@ private:
     */
   void transformToWorld(const PoseSE2& current_pose, Point2dContainer& polygon_world) const
   {
-    double cos_th = std::cos(current_pose.theta());
-    double sin_th = std::sin(current_pose.theta());
+    double sin_th = cfg_->sin(current_pose.theta());
+    double cos_th = cfg_->cos(current_pose.theta());
+
     for (std::size_t i=0; i<vertices_.size(); ++i)
     {
       polygon_world[i].x() = current_pose.x() + cos_th * vertices_[i].x() - sin_th * vertices_[i].y();

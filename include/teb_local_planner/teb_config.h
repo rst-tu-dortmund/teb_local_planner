@@ -45,6 +45,7 @@
 #include <Eigen/StdVector>
 
 #include <teb_local_planner/TebLocalPlannerReconfigureConfig.h>
+#include <teb_local_planner/misc.h>
 
 
 // Definitions
@@ -222,6 +223,12 @@ public:
     int divergence_detection_max_chi_squared; //!< Maximum acceptable Mahalanobis distance above which it is assumed that the optimization diverged.
   } recovery; //!< Parameters related to recovery and backup strategies
 
+  //! Performance enhancement related parameters
+  struct Performance
+  {
+    bool use_sin_cos_approximation; //!< Use sin and cos approximations to improve performance. The maximum absolute error for these approximations is 1e-3.
+  } performance;
+
 
   /**
   * @brief Construct the TebConfig using default values.
@@ -376,6 +383,9 @@ public:
     recovery.oscillation_recovery_min_duration = 10;
     recovery.oscillation_filter_duration = 10;
 
+    // Recovery
+
+    performance.use_sin_cos_approximation = false;
 
   }
 
@@ -408,6 +418,18 @@ public:
    * @param nh const reference to the local ros::NodeHandle
    */
   void checkDeprecated(const ros::NodeHandle& nh) const;
+
+  template <typename T>
+  T cos(T angle) const
+  {
+    return performance.use_sin_cos_approximation ? teb_local_planner::cos_fast(angle) : std::cos(angle);
+  }
+
+  template <typename T>
+  T sin(T angle) const
+  {
+    return performance.use_sin_cos_approximation ? teb_local_planner::sin_fast(angle) : std::sin(angle);
+  }
 
   /**
    * @brief Return the internal config mutex

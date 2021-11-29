@@ -175,6 +175,9 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("divergence_detection", recovery.divergence_detection_enable, recovery.divergence_detection_enable);
   nh.param("divergence_detection_max_chi_squared", recovery.divergence_detection_max_chi_squared, recovery.divergence_detection_max_chi_squared);
 
+  // Performance
+  nh.param("use_sin_cos_approximation", performance.use_sin_cos_approximation, performance.use_sin_cos_approximation);
+
   checkParameters();
   checkDeprecated(nh);
 }
@@ -288,6 +291,8 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   recovery.divergence_detection_enable = cfg.divergence_detection_enable;
   recovery.divergence_detection_max_chi_squared = cfg.divergence_detection_max_chi_squared;
 
+  // Performance
+  performance.use_sin_cos_approximation = cfg.use_sin_cos_approximation;
   
   checkParameters();
 }
