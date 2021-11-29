@@ -50,8 +50,6 @@
 #include <g2o/core/base_unary_edge.h>
 #include <g2o/core/base_multi_edge.h>
 
-#include <cmath>
-
 namespace teb_local_planner
 {
     
@@ -63,7 +61,7 @@ namespace teb_local_planner
  * This edge defines a base edge type for the TEB optimization problem.
  * It is derived from the corresponding g2o base classes augmented with additional information for the dedicated TEB problem (e.g. config).
  * The destructor erases the edge in all attached vertices in order to allow keeping the vertices valid in subsequent g2o optimization calls.
- * Memory of edges should be freed by calling the clearEdge method of the g2o optimzier class.
+ * Memory of edges should be freed by calling the clearEdge method of the g2o optimizer class.
  * @see BaseTebMultiEdge, BaseTebBinaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */   
 template <int D, typename E, typename VertexXi>
@@ -74,26 +72,6 @@ public:
   using typename g2o::BaseUnaryEdge<D, E, VertexXi>::ErrorVector;
   using g2o::BaseUnaryEdge<D, E, VertexXi>::computeError;
     
-  /**
-   * @brief Construct edge.
-   */  
-  BaseTebUnaryEdge()
-  {
-      _vertices[0] = NULL;
-  }
-  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~BaseTebUnaryEdge()
-  {
-      if(_vertices[0])
-        _vertices[0]->edges().erase(this);
-  }
-
   /**
   * @brief Compute and return error / cost value.
   * 
@@ -151,7 +129,7 @@ public:
  * This edge defines a base edge type for the TEB optimization problem.
  * It is derived from the corresponding g2o base classes augmented with additional information for the dedicated TEB problem (e.g. config).
  * The destructor erases the edge in all attached vertices in order to allow keeping the vertices valid in subsequent g2o optimization calls.
- * Memory of edges should be freed by calling the clearEdge method of the g2o optimzier class.
+ * Memory of edges should be freed by calling the clearEdge method of the g2o optimizer class.
  * @see BaseTebMultiEdge, BaseTebUnaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */    
 template <int D, typename E, typename VertexXi, typename VertexXj>
@@ -161,28 +139,6 @@ public:
     
   using typename g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::ErrorVector;
   using g2o::BaseBinaryEdge<D, E, VertexXi, VertexXj>::computeError;
-  
-  /**
-   * @brief Construct edge.
-   */  
-  BaseTebBinaryEdge()
-  {
-      _vertices[0] = _vertices[1] = NULL;
-  }
-  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~BaseTebBinaryEdge()
-  {
-    if(_vertices[0])
-        _vertices[0]->edges().erase(this);
-    if(_vertices[1])
-        _vertices[1]->edges().erase(this);
-  }
 
   /**
   * @brief Compute and return error / cost value.
@@ -237,12 +193,12 @@ public:
 
 /**
  * @class BaseTebMultiEdge
- * @brief Base edge connecting two vertices in the TEB optimization problem
+ * @brief Base edge connecting multiple vertices in the TEB optimization problem
  * 
  * This edge defines a base edge type for the TEB optimization problem.
  * It is derived from the corresponding g2o base classes augmented with additional information for the dedicated TEB problem (e.g. config).
  * The destructor erases the edge in all attached vertices in order to allow keeping the vertices valid in subsequent g2o optimization calls.
- * Memory of edges should be freed by calling the clearEdge method of the g2o optimzier class.
+ * Memory of edges should be freed by calling the clearEdge method of the g2o optimizer class.
  * @see BaseTebBinaryEdge, BaseTebUnaryEdge, g2o::BaseBinaryEdge, g2o::BaseUnaryEdge, g2o::BaseMultiEdge
  */    
 template <int D, typename E>
@@ -253,30 +209,6 @@ public:
   using typename g2o::BaseMultiEdge<D, E>::ErrorVector;
   using g2o::BaseMultiEdge<D, E>::computeError;
     
-  /**
-   * @brief Construct edge.
-   */  
-  BaseTebMultiEdge()
-  {
-//     for(std::size_t i=0; i<_vertices.size(); ++i)
-//         _vertices[i] = NULL;
-  }
-  
-  /**
-   * @brief Destruct edge.
-   * 
-   * We need to erase vertices manually, since we want to keep them even if TebOptimalPlanner::clearGraph() is called.
-   * This is necessary since the vertices are managed by the Timed_Elastic_Band class.
-   */   
-  virtual ~BaseTebMultiEdge()
-  {
-    for(std::size_t i=0; i<_vertices.size(); ++i)
-    {
-        if(_vertices[i])
-            _vertices[i]->edges().erase(this);
-    }
-  }
-  
   // Overwrites resize() from the parent class
   virtual void resize(size_t size)
   {

@@ -133,8 +133,11 @@ public:
   void initialize(const TebConfig& cfg, ObstContainer* obstacles = NULL, RobotFootprintModelPtr robot_model = boost::make_shared<PointRobotFootprint>(),
                   TebVisualizationPtr visual = TebVisualizationPtr(), const ViaPointContainer* via_points = NULL);
   
+  /**
+    * @param robot_model Shared pointer to the robot shape model used for optimization (optional)
+    */
+  void updateRobotModel(RobotFootprintModelPtr robot_model );
   
-
   /** @name Plan a trajectory  */
   //@{
   
@@ -388,6 +391,11 @@ public:
    *         otherwise \c false (also if no optimization has been called before).
    */
   bool isOptimized() const {return optimized_;};
+
+  /**
+   * @brief Returns true if the planner has diverged.
+   */
+  bool hasDiverged() const override;
 	
   /**
    * @brief Compute the cost vector of a given optimization problen (hyper-graph must exist).

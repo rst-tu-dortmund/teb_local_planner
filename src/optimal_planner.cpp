@@ -79,6 +79,11 @@ TebOptimalPlanner::~TebOptimalPlanner()
   //g2o::HyperGraphActionLibrary::destroy();
 }
 
+void TebOptimalPlanner::updateRobotModel(RobotFootprintModelPtr robot_model)
+{
+  robot_model_ = robot_model;
+}
+
 void TebOptimalPlanner::initialize(const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model, TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {    
   // init optimizer (set solver and block ordering settings)
@@ -329,6 +334,8 @@ bool TebOptimalPlanner::buildGraph(double weight_multiplier)
     ROS_WARN("Cannot build graph, because it is not empty. Call graphClear()!");
     return false;
   }
+
+  optimizer_->setComputeBatchStatistics(cfg_->recovery.divergence_detection_enable);
   
   // add TEB vertices
   AddTEBVertices();
@@ -406,8 +413,13 @@ void TebOptimalPlanner::clearGraph()
   // clear optimizer states
   if (optimizer_)
   {
-    //optimizer.edges().clear(); // optimizer.clear deletes edges!!! Therefore do not run optimizer.edges().clear()
-    optimizer_->vertices().clear();  // neccessary, because optimizer->clear deletes pointer-targets (therefore it deletes TEB states!)
+    // we will delete all edges but keep the vertices.
+    // before doing so, we will delete the link from the vertices to the edges.
+    auto& vertices = optimizer_->vertices();
+    for(auto& v : vertices)
+      v.second->edges().clear();
+
+    optimizer_->vertices().clear();  // necessary, because optimizer->clear deletes pointer-targets (therefore it deletes TEB states!)
     optimizer_->clear();
   }
 }
@@ -1013,6 +1025,24 @@ void TebOptimalPlanner::AddEdgesVelocityObstacleRatio()
       optimizer_->addEdge(edge);
     }
   }
+}
+
+bool TebOptimalPlanner::hasDiverged() const
+{
+  // Early returns if divergence detection is not active
+  if (!cfg_->recovery.divergence_detection_enable)
+    return false;
+
+  auto stats_vector = optimizer_->batchStatistics();
+
+  // No statistics yet
+  if (stats_vector.empty())
+    return false;
+
+  // Grab the statistics of the final iteration
+  const auto last_iter_stats = stats_vector.back();
+
+  return last_iter_stats.chi2 > cfg_->recovery.divergence_detection_max_chi_squared;
 }
 
 void TebOptimalPlanner::computeCurrentCost(double obst_cost_scale, double viapoint_cost_scale, bool alternative_time_cost)

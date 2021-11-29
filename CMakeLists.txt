@@ -159,6 +159,7 @@ catkin_package(
 	nav_msgs
 	pluginlib
 	roscpp
+  mbf_costmap_core
 	std_msgs
         tf2
         tf2_ros
