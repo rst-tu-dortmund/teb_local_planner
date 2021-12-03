@@ -139,6 +139,12 @@ public:
     * @brief Default constructor of the abstract obstacle class
     */
   PointRobotFootprint() {}
+
+  /**
+    * @brief Default constructor of the abstract obstacle class
+    * @param min_obstacle_dist Minimum obstacle distance
+    */
+  PointRobotFootprint(const double min_obstacle_dist) : min_obstacle_dist_(min_obstacle_dist) {}
   
   /**
    * @brief Virtual destructor.
@@ -174,6 +180,52 @@ public:
    */
   virtual double getInscribedRadius() {return 0.0;}
 
+  /**
+   * @brief Visualize the robot using a markers
+   * 
+   * Fill a marker message with all necessary information (type, pose, scale and color).
+   * The header, namespace, id and marker lifetime will be overwritten.
+   * @param current_pose Current robot pose
+   * @param[out] markers container of marker messages describing the robot shape
+   * @param color Color of the footprint
+   */
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+  {
+    // point footprint
+    markers.push_back(visualization_msgs::Marker());
+    visualization_msgs::Marker& marker = markers.back();
+    marker.type = visualization_msgs::Marker::POINTS;
+    current_pose.toPoseMsg(marker.pose); // all points are transformed into the robot frame!
+    marker.points.push_back(geometry_msgs::Point());
+    marker.scale.x = 0.025; 
+    marker.color = color;
+
+    if (min_obstacle_dist_ <= 0)
+    {
+      return;
+    }
+
+    // footprint with min_obstacle_dist
+    markers.push_back(visualization_msgs::Marker());
+    visualization_msgs::Marker& marker2 = markers.back();
+    marker2.type = visualization_msgs::Marker::LINE_STRIP;
+    marker2.scale.x = 0.025; 
+    marker2.color = color;
+    current_pose.toPoseMsg(marker2.pose); // all points are transformed into the robot frame!
+
+    const double n = 9;
+    const double r = min_obstacle_dist_;
+    for (double theta = 0; theta <= 2 * M_PI; theta += M_PI / n)
+    {
+      geometry_msgs::Point pt;
+      pt.x = r * cos(theta);
+      pt.y = r * sin(theta);
+      marker2.points.push_back(pt);
+    }
+  }
+
+private:
+  const double min_obstacle_dist_ = 0.0;
 };
 
 
@@ -403,7 +455,7 @@ public:
   * @param line_start start coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
   * @param line_end end coordinates (only x and y) of the line (w.r.t. robot center at (0,0))
   */
-  LineRobotFootprint(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end)
+  LineRobotFootprint(const Eigen::Vector2d& line_start, const Eigen::Vector2d& line_end, const double min_obstacle_dist) : min_obstacle_dist_(min_obstacle_dist)
   {
     setLine(line_start, line_end);
   }
@@ -493,8 +545,49 @@ public:
     line_end_world.z = 0;
     marker.points.push_back(line_end_world);
 
-    marker.scale.x = 0.05; 
-    marker.color = color;
+    marker.scale.x = 0.025; 
+    marker.color = color;    
+
+    if (min_obstacle_dist_ <= 0)
+    {
+      return;
+    }
+
+    // footprint with min_obstacle_dist
+    markers.push_back(visualization_msgs::Marker());
+    visualization_msgs::Marker& marker2 = markers.back();
+    marker2.type = visualization_msgs::Marker::LINE_STRIP;
+    marker2.scale.x = 0.025; 
+    marker2.color = color;
+    current_pose.toPoseMsg(marker2.pose); // all points are transformed into the robot frame!
+
+    const double n = 9;
+    const double r = min_obstacle_dist_;
+    const double ori = atan2(line_end_.y() - line_start_.y(), line_end_.x() - line_start_.x());
+
+    // first half-circle
+    for (double theta = M_PI_2 + ori; theta <= 3 * M_PI_2 + ori; theta += M_PI / n)
+    {
+      geometry_msgs::Point pt;
+      pt.x = line_start_.x() + r * cos(theta);
+      pt.y = line_start_.y() + r * sin(theta);
+      marker2.points.push_back(pt);
+    }
+
+    // second half-circle
+    for (double theta = -M_PI_2 + ori; theta <= M_PI_2 + ori; theta += M_PI / n)
+    {
+      geometry_msgs::Point pt;
+      pt.x = line_end_.x() + r * cos(theta);
+      pt.y = line_end_.y() + r * sin(theta);
+      marker2.points.push_back(pt);
+    }
+
+    // duplicate 1st point to close shape
+    geometry_msgs::Point pt;
+    pt.x = line_start_.x() + r * cos(M_PI_2 + ori);
+    pt.y = line_start_.y() + r * sin(M_PI_2 + ori);
+    marker2.points.push_back(pt);
   }
   
   /**
@@ -526,6 +619,7 @@ private:
 
   Eigen::Vector2d line_start_;
   Eigen::Vector2d line_end_;
+  const double min_obstacle_dist_ = 0.0;
   
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
