@@ -106,7 +106,7 @@ public:
     double vel = dist / deltaT->estimate();
     
 //     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
-    vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
+    vel *= fast_sigmoid( 100 * (deltaS.x()*conf1->theta().cos() + deltaS.y()*conf1->theta().sin()) ); // consider direction
     
     const double omega = angle_diff / deltaT->estimate();
   
@@ -241,8 +241,8 @@ public:
     const VertexTimeDiff* deltaT = static_cast<const VertexTimeDiff*>(_vertices[2]);
     Eigen::Vector2d deltaS = conf2->position() - conf1->position();
     
-    double cos_theta1 = std::cos(conf1->theta());
-    double sin_theta1 = std::sin(conf1->theta()); 
+    double cos_theta1 = conf1->theta().cos();
+    double sin_theta1 = conf1->theta().sin();
     
     // transform conf2 into current robot frame conf1 (inverse 2d rotation matrix)
     double r_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();

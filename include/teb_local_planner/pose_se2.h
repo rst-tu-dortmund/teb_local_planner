@@ -50,6 +50,57 @@ namespace teb_local_planner
 {
 
 /**
+  * @class Theta
+  * @brief This class wraps an angle value (in radian) and precompute its sin/cos
+  */
+class Theta
+{
+public:
+  Theta() {
+    _theta = 0;
+    update_sincos();
+  }
+
+  Theta& operator=(const double theta) {
+    _theta = theta;
+    update_sincos();
+  }
+
+  Theta& operator*=(const double x) {
+    _theta *= x;
+    update_sincos();
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Theta& obj) {
+    os << obj._theta;
+    return os;
+  }
+
+  friend std::istream& operator>>(std::istream& is, Theta& obj) {
+    is >> obj._theta;
+    obj.update_sincos();
+    return is;
+  }
+
+  operator double() const {return theta();}
+
+  const double& theta() const {return _theta;};
+  const double& sin() const {return _sin;};
+  const double& cos() const {return _cos;};
+
+private:
+
+  void update_sincos() {
+    _sin = std::sin(_theta);
+    _cos = std::cos(_theta);
+  }
+
+  double _theta;
+  double _sin;
+  double _cos;
+};
+
+/**
   * @class PoseSE2
   * @brief This class implements a pose in the domain SE2: \f$ \mathbb{R}^2 \times S^1 \f$
   * The pose consist of the position x and y and an orientation given as angle theta [-pi, pi].
@@ -179,13 +230,13 @@ public:
     * @brief Access the orientation part (yaw angle) of the pose
     * @return reference to the yaw angle
     */ 
-  double& theta() {return _theta;}
+  Theta& theta() {return _theta;}
   
   /**
     * @brief Access the orientation part (yaw angle) of the pose (read-only)
     * @return const reference to the yaw angle
     */ 
-  const double& theta() const {return _theta;}
+  const Theta& theta() const {return _theta;}
   
   /**
     * @brief Set pose to [0,0,0]
@@ -394,7 +445,7 @@ public:
 private:
   
   Eigen::Vector2d _position; 
-  double _theta;
+  Theta _theta;
       
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW  

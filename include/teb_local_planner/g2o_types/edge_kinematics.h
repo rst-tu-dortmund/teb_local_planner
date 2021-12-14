@@ -94,10 +94,10 @@ public:
     Eigen::Vector2d deltaS = conf2->position() - conf1->position();
 
     // non holonomic constraint
-    _error[0] = fabs( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
+    _error[0] = fabs( ( conf1->theta().cos()+conf2->theta().cos() ) * deltaS[1] - ( conf1->theta().sin()+conf2->theta().sin() ) * deltaS[0] );
 
     // positive-drive-direction constraint
-    Eigen::Vector2d angle_vec ( cos(conf1->theta()), sin(conf1->theta()) );	   
+    Eigen::Vector2d angle_vec ( conf1->theta().cos(), conf1->theta().sin() );
     _error[1] = penaltyBoundFromBelow(deltaS.dot(angle_vec), 0,0);
     // epsilon=0, otherwise it pushes the first bandpoints away from start
 
@@ -203,7 +203,7 @@ public:
     Eigen::Vector2d deltaS = conf2->position() - conf1->position();
 
     // non holonomic constraint
-    _error[0] = fabs( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
+    _error[0] = fabs( ( conf1->theta().cos()+conf2->theta().cos() ) * deltaS[1] - (conf1->theta().sin()+conf2->theta().sin() ) * deltaS[0] );
 
     // limit minimum turning radius
     double angle_diff = g2o::normalize_theta( conf2->theta() - conf1->theta() );

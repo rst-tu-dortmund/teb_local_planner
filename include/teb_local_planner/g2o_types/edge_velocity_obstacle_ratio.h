@@ -98,7 +98,7 @@ public:
     }
     double vel = dist / deltaT->estimate();
 
-    vel *= fast_sigmoid( 100 * (deltaS.x()*cos(conf1->theta()) + deltaS.y()*sin(conf1->theta())) ); // consider direction
+    vel *= fast_sigmoid( 100 * (deltaS.x()*(conf1->theta().cos() + deltaS.y()*conf1->theta().sin())) ); // consider direction
 
     const double omega = angle_diff / deltaT->estimate();
 

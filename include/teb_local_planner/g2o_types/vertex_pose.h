@@ -170,13 +170,13 @@ public:
     * @brief Access the orientation part (yaw angle) of the pose
     * @return reference to the yaw angle
     */ 
-  inline double& theta() {return _estimate.theta();}
+  inline Theta& theta() {return _estimate.theta();}
   
   /**
     * @brief Access the orientation part (yaw angle) of the pose (read-only)
     * @return const reference to the yaw angle
     */ 
-  inline const double& theta() const {return _estimate.theta();}
+  inline const Theta& theta() const {return _estimate.theta();}
   
   /**
     * @brief Set the underlying estimate (2D vector) to zero.
