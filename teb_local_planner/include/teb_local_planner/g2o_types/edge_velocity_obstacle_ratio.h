@@ -77,7 +77,7 @@ public:
     const double max_vel_fwd = ratio * cfg_->robot.max_vel_x;
     const double max_omega = ratio * cfg_->robot.max_vel_theta;
     _error[0] = penaltyBoundToInterval(vel, max_vel_fwd, 0);
-    _error[1] = penaltyBoundToInterval(omega, max_omega, 0);
+    _error[1] = penaltyBoundToInterval(omega, max_omega, 0) + penaltyBoundToInterval(omega, 0, 0) / 10.0;
 
     TEB_ASSERT_MSG(std::isfinite(_error[0]) || std::isfinite(_error[1]), "EdgeVelocityObstacleRatio::computeError() _error[0]=%f , _error[1]=%f\n",_error[0],_error[1]);
   }
