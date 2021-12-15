@@ -288,7 +288,7 @@ public:
    * @brief Return the unit vector of the current orientation
    * @returns [cos(theta), sin(theta))]^T
    */  
-  Eigen::Vector2d orientationUnitVec() const {return Eigen::Vector2d(std::cos(_theta), std::sin(_theta));}
+  Eigen::Vector2d orientationUnitVec() const {return Eigen::Vector2d(_theta.cos(), _theta.sin());}
       
   ///@}
 
