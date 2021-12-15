@@ -51,53 +51,78 @@ namespace teb_local_planner
 
 /**
   * @class Theta
-  * @brief This class wraps an angle value (in radian) and precompute its sin/cos
+  * @brief This class wraps an angle value (in radian) and lazily evaluates its sin/cos
   */
 class Theta
 {
 public:
-  Theta() {
-    _theta = 0;
-    update_sincos();
-  }
+  Theta(): Theta(0.0) {}
 
-  Theta& operator=(const double theta) {
-    _theta = theta;
-    update_sincos();
+  Theta(const Theta& other)
+    : _rad(other._rad)
+    , _sin(other._sin)
+    , _cos(other._cos)
+    , _init(other._init)
+  {}
+
+  Theta(const double rad)
+    : _rad(rad)
+    , _init(false)
+  {}
+
+  Theta& operator=(const double rad) {
+    _rad = rad;
+    _init = false;
+    return *this;
   }
 
   Theta& operator*=(const double x) {
-    _theta *= x;
-    update_sincos();
+    _rad *= x;
+    _init = false;
+    return *this;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const Theta& obj) {
-    os << obj._theta;
+    os << obj._rad;
     return os;
   }
 
   friend std::istream& operator>>(std::istream& is, Theta& obj) {
-    is >> obj._theta;
-    obj.update_sincos();
+    is >> obj._rad;
+    obj._init = false;
     return is;
   }
 
-  operator double() const {return theta();}
+  operator double() const {return rad();}
 
-  const double& theta() const {return _theta;};
-  const double& sin() const {return _sin;};
-  const double& cos() const {return _cos;};
+  const double& rad() const {return _rad;}
+
+  const double& sin() const {
+    if (!_init) {
+      const_cast<Theta*>(this)->eval_sincos();
+    }
+    return _sin;
+  }
+
+  const double& cos() const {
+    if (!_init) {
+      const_cast<Theta*>(this)->eval_sincos();
+    }
+    return _cos;
+  }
 
 private:
 
-  void update_sincos() {
-    _sin = std::sin(_theta);
-    _cos = std::cos(_theta);
+  void eval_sincos() {
+    _sin = std::sin(_rad);
+    _cos = std::cos(_rad);
+    _init = true;
   }
 
-  double _theta;
+  double _rad;
   double _sin;
   double _cos;
+  bool _init; // whether sin/cos values have been evaluated already
 };
 
 /**

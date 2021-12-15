@@ -127,8 +127,8 @@ public:
     
     
     // consider directions
-//     vel1 *= g2o::sign(diff1[0]*cos(pose1->theta()) + diff1[1]*sin(pose1->theta())); 
-//     vel2 *= g2o::sign(diff2[0]*cos(pose2->theta()) + diff2[1]*sin(pose2->theta())); 
+//     vel1 *= g2o::sign(diff1[0]*pose1->theta().cos() + diff1[1]*pose1->theta().sin());
+//     vel2 *= g2o::sign(diff2[0]*pose2->theta().cos() + diff2[1]*pose2->theta().sin());
     vel1 *= fast_sigmoid( 100*(diff1.x()*pose1->theta().cos() + diff1.y()*pose1->theta().sin()) );
     vel2 *= fast_sigmoid( 100*(diff2.x()*pose2->theta().cos() + diff2.y()*pose2->theta().sin()) );
     
@@ -326,7 +326,7 @@ public:
     double vel2 = dist / dt->dt();
 
     // consider directions
-    //vel2 *= g2o::sign(diff[0]*cos(pose1->theta()) + diff[1]*sin(pose1->theta())); 
+    //vel2 *= g2o::sign(diff[0]*pose1->theta().cos() + diff[1]*pose1->theta().sin());
     vel2 *= fast_sigmoid( 100*(diff.x()*pose1->theta().cos() + diff.y()*pose1->theta().sin()) );
     
     const double acc_lin  = (vel2 - vel1) / dt->dt();
@@ -418,7 +418,7 @@ public:
     const double vel2 = _measurement->linear.x;
     
     // consider directions
-    //vel1 *= g2o::sign(diff[0]*cos(pose_pre_goal->theta()) + diff[1]*sin(pose_pre_goal->theta())); 
+    //vel1 *= g2o::sign(diff[0]*pose_pre_goal->theta().cos() + diff[1]*pose_pre_goal->theta().sin());
     vel1 *= fast_sigmoid( 100*(diff.x()*pose_pre_goal->theta().cos() + diff.y()*pose_pre_goal->theta().sin()) );
     
     const double acc_lin  = (vel2 - vel1) / dt->dt();

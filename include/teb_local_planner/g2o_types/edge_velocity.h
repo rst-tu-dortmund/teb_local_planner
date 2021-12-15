@@ -105,7 +105,7 @@ public:
     }
     double vel = dist / deltaT->estimate();
     
-//     vel *= g2o::sign(deltaS[0]*cos(conf1->theta()) + deltaS[1]*sin(conf1->theta())); // consider direction
+//     vel *= g2o::sign(deltaS[0]*conf1->theta().cos() + deltaS[1]*conf1->theta().sin()); // consider direction
     vel *= fast_sigmoid( 100 * (deltaS.x()*conf1->theta().cos() + deltaS.y()*conf1->theta().sin()) ); // consider direction
     
     const double omega = angle_diff / deltaT->estimate();

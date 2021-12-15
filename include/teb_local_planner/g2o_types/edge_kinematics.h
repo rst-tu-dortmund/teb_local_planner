@@ -117,10 +117,10 @@ public:
     
     Eigen::Vector2d deltaS = conf2->position() - conf1->position();
 	    
-    double cos1 = cos(conf1->theta());
-    double cos2 = cos(conf2->theta());
-    double sin1 = sin(conf1->theta());
-    double sin2 = sin(conf2->theta());
+    double cos1 = conf1->theta().cos();
+    double cos2 = conf2->theta().cos();
+    double sin1 = conf1->theta().sin();
+    double sin2 = conf2->theta().sin();
     double aux1 = sin1 + sin2;
     double aux2 = cos1 + cos2;
     
@@ -128,8 +128,8 @@ public:
     double dd_error_2 = deltaS[1]*sin1;
     double dd_dev = penaltyBoundFromBelowDerivative(dd_error_1+dd_error_2, 0,0);
     
-    double dev_nh_abs = g2o::sign( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - 
-	      ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
+    double dev_nh_abs = g2o::sign( ( conf1->theta().cos()+conf2->theta().cos() ) * deltaS[1] -
+	      ( conf1->theta().sin()+conf2->theta().sin() ) * deltaS[0] );
 	    
     // conf1
     _jacobianOplusXi(0,0) = aux1 * dev_nh_abs; // nh x1
