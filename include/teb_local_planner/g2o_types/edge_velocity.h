@@ -251,9 +251,14 @@ public:
     double vx = r_dx / deltaT->estimate();
     double vy = r_dy / deltaT->estimate();
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
-    
+
+    double max_vel_linear = std::max(std::max(cfg_->robot.max_vel_x, cfg_->robot.max_vel_y), cfg_->robot.max_vel_linear);
+    // double max_linear_vel_left = std::sqrt(max_vel_linear * max_vel_linear - vx * vx); // L2
+    double max_linear_vel_left = max_vel_linear - std::abs(vx); // L1
+    double max_vel_y = std::min(max_linear_vel_left, cfg_->robot.max_vel_y);
+
     _error[0] = penaltyBoundToInterval(vx, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(vy, cfg_->robot.max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
+    _error[1] = penaltyBoundToInterval(vy, max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
     _error[2] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]) && std::isfinite(_error[2]),
