@@ -252,14 +252,13 @@ public:
     double vy = r_dy / deltaT->estimate();
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
 
-    double max_vel_trans = std::max(std::max(cfg_->robot.max_vel_x, cfg_->robot.max_vel_y), cfg_->robot.max_vel_trans);
 
     double max_vel_trans_remaining;
     if (cfg_->optim.norm_vel_trans == 1) {
-      max_vel_trans_remaining = max_vel_trans - std::abs(vx);  // L1 norm
+      max_vel_trans_remaining = std::max(0.0, cfg_->robot.max_vel_trans - std::abs(vx));  // L1 norm
     }
     else {
-      max_vel_trans_remaining = std::sqrt(max_vel_trans * max_vel_trans - vx * vx); // L2 norm
+      max_vel_trans_remaining = std::sqrt(std::max(0.0, cfg_->robot.max_vel_trans * cfg_->robot.max_vel_trans - vx * vx)); // L2 norm
     }
     double max_vel_y = std::min(max_vel_trans_remaining, cfg_->robot.max_vel_y);
 
