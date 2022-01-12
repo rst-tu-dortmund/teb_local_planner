@@ -95,7 +95,7 @@ public:
     double max_vel_x; //!< Maximum translational velocity of the robot
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
-    double max_vel_linear; //!< Maximum translational velocity of the robot for omni robots, which is different from max_vel_x
+    double max_vel_trans; //!< Maximum translational velocity of the robot for omni robots, which is different from max_vel_x
     double max_vel_theta; //!< Maximum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_y; //!< Maximum strafing acceleration of the robot
@@ -173,7 +173,7 @@ public:
 
     double weight_adapt_factor; //!< Some special weights (currently 'weight_obstacle') are repeatedly scaled by this factor in each outer TEB iteration (weight_new = weight_old*factor); Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions of the underlying optimization problem.
     double obstacle_cost_exponent; //!< Exponent for nonlinear obstacle cost (cost = linear_cost * obstacle_cost_exponent). Set to 1 to disable nonlinear cost (default)
-    double norm_vel_lin; //!< Norm constraint for translational velocity (1: L1, 2: L2)
+    double norm_vel_trans; //!< Norm constraint for translational velocity (1: L1, 2: L2)
   } optim; //!< Optimization related parameters
 
 
@@ -272,7 +272,7 @@ public:
     robot.max_vel_x = 0.4;
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
-    robot.max_vel_linear = 0.4;
+    robot.max_vel_trans = 0.4;
     robot.max_vel_theta = 0.3;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
@@ -339,7 +339,7 @@ public:
 
     optim.weight_adapt_factor = 2.0;
     optim.obstacle_cost_exponent = 1.0;
-    optim.norm_vel_lin = 1;
+    optim.norm_vel_trans = 1;
 
     // Homotopy Class Planner
 

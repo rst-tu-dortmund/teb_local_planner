@@ -421,7 +421,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   
   // Saturate velocity, if the optimization results violates the constraints (could be possible due to soft constraints).
   saturateVelocity(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z,
-                   cfg_.robot.max_vel_x, cfg_.robot.max_vel_y, cfg_.robot.max_vel_linear, cfg_.robot.max_vel_theta, 
+                   cfg_.robot.max_vel_x, cfg_.robot.max_vel_y, cfg_.robot.max_vel_trans, cfg_.robot.max_vel_theta, 
                    cfg_.robot.max_vel_x_backwards);
 
   // convert rot-vel to steering angle if desired (carlike robot).
@@ -868,7 +868,7 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
 }
       
       
-void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_linear, double max_vel_theta, 
+void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_trans, double max_vel_theta, 
               double max_vel_x_backwards) const
 {
   double ratio_x = 1, ratio_omega = 1, ratio_y = 1;
@@ -907,11 +907,11 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
   }
 
   double vel_linear = std::hypot(vx, vy);
-  if (vel_linear > max_vel_linear)
+  if (vel_linear > max_vel_trans)
   {
-    double max_vel_linear_ratio = max_vel_linear / vel_linear;
-    vx *= max_vel_linear_ratio;
-    vy *= max_vel_linear_ratio;
+    double max_vel_trans_ratio = max_vel_trans / vel_linear;
+    vx *= max_vel_trans_ratio;
+    vy *= max_vel_trans_ratio;
   }
 }
      

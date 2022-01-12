@@ -74,7 +74,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("max_vel_x", robot.max_vel_x, robot.max_vel_x);
   nh.param("max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
   nh.param("max_vel_y", robot.max_vel_y, robot.max_vel_y);
-  nh.param("max_vel_linear", robot.max_vel_linear, robot.max_vel_linear);
+  nh.param("max_vel_trans", robot.max_vel_trans, robot.max_vel_trans);
   nh.param("max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
   nh.param("acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
   nh.param("acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
@@ -137,7 +137,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("weight_prefer_rotdir", optim.weight_prefer_rotdir, optim.weight_prefer_rotdir);
   nh.param("weight_adapt_factor", optim.weight_adapt_factor, optim.weight_adapt_factor);
   nh.param("obstacle_cost_exponent", optim.obstacle_cost_exponent, optim.obstacle_cost_exponent);
-  nh.param("norm_vel_lin", optim.norm_vel_lin, optim.norm_vel_lin);
+  nh.param("norm_vel_trans", optim.norm_vel_trans, optim.norm_vel_trans);
   
   // Homotopy Class Planner
   nh.param("enable_homotopy_class_planning", hcp.enable_homotopy_class_planning, hcp.enable_homotopy_class_planning); 
@@ -215,7 +215,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.wheelbase = cfg.wheelbase;
   robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   robot.use_proportional_saturation = cfg.use_proportional_saturation;
-  robot.max_vel_linear = cfg.max_vel_linear;
+  robot.max_vel_trans = cfg.max_vel_trans;
   
   // GoalTolerance
   goal_tolerance.xy_goal_tolerance = cfg.xy_goal_tolerance;
@@ -264,7 +264,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   optim.weight_viapoint = cfg.weight_viapoint;
   optim.weight_adapt_factor = cfg.weight_adapt_factor;
   optim.obstacle_cost_exponent = cfg.obstacle_cost_exponent;
-  optim.norm_vel_lin = cfg.norm_vel_lin;
+  optim.norm_vel_trans = cfg.norm_vel_trans;
   
   // Homotopy Class Planner
   hcp.enable_multithreading = cfg.enable_multithreading;
@@ -357,8 +357,8 @@ void TebConfig::checkParameters() const
 
   // holonomic check
   if (robot.max_vel_y > 0) {
-    if (robot.max_vel_linear < robot.max_vel_x || robot.max_vel_linear < robot.max_vel_y) {
-      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_linear < max_vel_x or max_vel_linear < max_vel_y.");
+    if (robot.max_vel_trans < robot.max_vel_x || robot.max_vel_trans < robot.max_vel_y) {
+      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_trans < max_vel_x or max_vel_trans < max_vel_y.");
     }
   }
   
