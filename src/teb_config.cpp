@@ -356,9 +356,9 @@ void TebConfig::checkParameters() const
       ROS_WARN("TebLocalPlannerROS() Param Warning: parameter weight_optimaltime shoud be > 0 (even if weight_shortest_path is in use)");
 
   // holonomic check
-  if (robot.max_vel_y >= 0) {
+  if (robot.max_vel_y > 0) {
     if (robot.max_vel_linear < robot.max_vel_x || robot.max_vel_linear < robot.max_vel_y) {
-      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_linear < max_vel_x or max_vel_linear < max_vel_y. Assuming max(max_vel_x, max_vel_y)");
+      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_linear < max_vel_x or max_vel_linear < max_vel_y.");
     }
   }
   

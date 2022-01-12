@@ -95,6 +95,7 @@ public:
     double max_vel_x; //!< Maximum translational velocity of the robot
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
+    double max_vel_linear; //!< Maximum translational velocity of the robot for omni robots, which is different from max_vel_x
     double max_vel_theta; //!< Maximum angular velocity of the robot
     double acc_lim_x; //!< Maximum translational acceleration of the robot
     double acc_lim_y; //!< Maximum strafing acceleration of the robot
@@ -105,7 +106,6 @@ public:
     bool is_footprint_dynamic; //<! If true, updated the footprint before checking trajectory feasibility
     bool use_proportional_saturation; //<! If true, reduce all twists components (linear x and y, and angular z) proportionally if any exceed its corresponding bounds, instead of saturating each one individually
     double transform_tolerance = 0.5; //<! Tolerance when querying the TF Tree for a transformation (seconds)
-    double max_vel_linear; //!< Maximum translational velocity of the robot for omni robots, which is different from max_vel_x
   } robot; //!< Robot related parameters
 
   //! Goal tolerance related parameters

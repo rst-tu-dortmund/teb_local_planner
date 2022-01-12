@@ -906,9 +906,8 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
     omega *= ratio_omega;
   }
 
-  max_vel_linear = std::max(std::max(max_vel_x, max_vel_y), max_vel_linear);
-  double vel_linear = std::sqrt(vx*vx + vy*vy);
-  if (vel_linear > std::abs(max_vel_linear))
+  double vel_linear = std::hypot(vx, vy);
+  if (vel_linear > max_vel_linear)
   {
     double max_vel_linear_ratio = max_vel_linear / vel_linear;
     vx *= max_vel_linear_ratio;
