@@ -173,6 +173,7 @@ public:
 
     double weight_adapt_factor; //!< Some special weights (currently 'weight_obstacle') are repeatedly scaled by this factor in each outer TEB iteration (weight_new = weight_old*factor); Increasing weights iteratively instead of setting a huge value a-priori leads to better numerical conditions of the underlying optimization problem.
     double obstacle_cost_exponent; //!< Exponent for nonlinear obstacle cost (cost = linear_cost * obstacle_cost_exponent). Set to 1 to disable nonlinear cost (default)
+    double norm_vel_lin; //!< Norm constraint for translational velocity (1: L1, 2: L2)
   } optim; //!< Optimization related parameters
 
 
@@ -338,6 +339,7 @@ public:
 
     optim.weight_adapt_factor = 2.0;
     optim.obstacle_cost_exponent = 1.0;
+    optim.norm_vel_lin = 1;
 
     // Homotopy Class Planner
 
