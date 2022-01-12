@@ -253,16 +253,16 @@ public:
     double omega = g2o::normalize_theta(conf2->theta() - conf1->theta()) / deltaT->estimate();
 
 
-    double max_vel_trans_remaining;
-    if (cfg_->optim.norm_vel_trans == 1) {
-      max_vel_trans_remaining = std::max(0.0, cfg_->robot.max_vel_trans - std::abs(vx));  // L1 norm
-    }
-    else {
-      max_vel_trans_remaining = std::sqrt(std::max(0.0, cfg_->robot.max_vel_trans * cfg_->robot.max_vel_trans - vx * vx)); // L2 norm
-    }
-    double max_vel_y = std::min(max_vel_trans_remaining, cfg_->robot.max_vel_y);
+    double max_vel_trans_remaining_y;
+    double max_vel_trans_remaining_x;
+    max_vel_trans_remaining_y = std::sqrt(std::max(0.0, cfg_->robot.max_vel_trans * cfg_->robot.max_vel_trans - vx * vx)); 
+    max_vel_trans_remaining_x = std::sqrt(std::max(0.0, cfg_->robot.max_vel_trans * cfg_->robot.max_vel_trans - vy * vy)); 
 
-    _error[0] = penaltyBoundToInterval(vx, -cfg_->robot.max_vel_x_backwards, cfg_->robot.max_vel_x, cfg_->optim.penalty_epsilon);
+    double max_vel_y = std::min(max_vel_trans_remaining_y, cfg_->robot.max_vel_y);
+    double max_vel_x = std::min(max_vel_trans_remaining_x, cfg_->robot.max_vel_x);
+    double max_vel_x_backwards = std::min(max_vel_trans_remaining_x, cfg_->robot.max_vel_x_backwards);
+
+    _error[0] = penaltyBoundToInterval(vx, -max_vel_x_backwards, max_vel_x, cfg_->optim.penalty_epsilon);
     _error[1] = penaltyBoundToInterval(vy, max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
     _error[2] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
 
