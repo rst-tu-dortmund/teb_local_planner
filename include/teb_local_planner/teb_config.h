@@ -272,6 +272,7 @@ public:
     robot.max_vel_x = 0.4;
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
+    robot.max_vel_linear = 0.4;
     robot.max_vel_theta = 0.3;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
@@ -281,7 +282,6 @@ public:
     robot.cmd_angle_instead_rotvel = false;
     robot.is_footprint_dynamic = false;
     robot.use_proportional_saturation = false;
-    robot.max_vel_linear = robot.max_vel_x;
 
     // GoalTolerance
 
