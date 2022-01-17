@@ -93,6 +93,7 @@ public:
   struct Robot
   {
     double max_vel_x; //!< Maximum translational velocity of the robot
+    double min_vel_x; //!< Minimum translational velocity of the robot
     double max_vel_x_backwards; //!< Maximum translational velocity of the robot for driving backwards
     double max_vel_y; //!< Maximum strafing velocity of the robot (should be zero for non-holonomic robots!)
     double max_vel_theta; //!< Maximum angular velocity of the robot
