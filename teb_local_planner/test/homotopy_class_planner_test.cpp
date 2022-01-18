@@ -1,7 +1,5 @@
 #include "teb_local_planner/homotopy_class_planner.h"
 #include <rclcpp/rclcpp.hpp>
-
-#include <thread>
 #include <gtest/gtest.h>
 
 class HomotopyClassPlannerTest : public teb_local_planner::HomotopyClassPlanner {
