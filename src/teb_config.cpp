@@ -356,7 +356,11 @@ void TebConfig::checkParameters() const
   // holonomic check
   if (robot.max_vel_y > 0) {
     if (robot.max_vel_trans < robot.max_vel_x || robot.max_vel_trans < robot.max_vel_y) {
-      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_trans < max_vel_x or max_vel_trans < max_vel_y.");
+      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_trans < max_vel_x or max_vel_trans < max_vel_y. Note that vel_trans = sqrt(Vx^2 + Vy^2), thus max_vel_trans will limit Vx and Vy in the optimization step.");
+    }
+    
+    if (robot.max_vel_trans > std::max(robot.max_vel_x, robot.max_vel_y)) {
+      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_trans > max(max_vel_x, max_vel_y). Robot will rotate and move diagonally to achieve max resultant vel (possibly max vel on both axis), limited by the max_vel_trans.");
     }
   }
   
