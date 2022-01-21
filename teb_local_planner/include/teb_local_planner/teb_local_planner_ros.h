@@ -407,8 +407,6 @@ private:
   std::vector<geometry_msgs::msg::Point> footprint_spec_; //!< Store the footprint of the robot 
   double robot_inscribed_radius_; //!< The radius of the inscribed circle of the robot (collision possible)
   double robot_circumscribed_radius; //!< The radius of the circumscribed circle of the robot
-  
-  std::string global_frame_; //!< The frame in which the controller will run
     
   // flags
   bool initialized_; //!< Keeps track about the correct initialization of this class

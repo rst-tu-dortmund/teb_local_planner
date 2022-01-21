@@ -116,8 +116,7 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
     std::string costmap_model_name("costmap_model");
     costmap_model_->initialize(node, costmap_model_name, name_, costmap_ros_);
 
-    global_frame_ = costmap_ros_->getGlobalFrameID();
-    cfg_->map_frame = global_frame_; // TODO
+    cfg_->map_frame = costmap_ros_->getGlobalFrameID(); // TODO
 
     //Initialize a costmap to polygon converter
     if (!cfg_->obstacles.costmap_converter_plugin.empty())
@@ -284,7 +283,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   std::vector<geometry_msgs::msg::PoseStamped> transformed_plan;
   int goal_idx;
   geometry_msgs::msg::TransformStamped tf_plan_to_global;
-  if (!transformGlobalPlan(global_plan_, robot_pose, *costmap_, global_frame_, cfg_->trajectory.max_global_plan_lookahead_dist,
+  if (!transformGlobalPlan(global_plan_, robot_pose, *costmap_, cfg_->map_frame, cfg_->trajectory.max_global_plan_lookahead_dist,
                            transformed_plan, &goal_idx, &tf_plan_to_global))
   {
     throw nav2_core::PlannerException(
@@ -551,7 +550,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
     try 
     {
       geometry_msgs::msg::TransformStamped obstacle_to_map = tf_->lookupTransform(
-                  global_frame_, tf2::timeFromSec(0),
+                  cfg_->map_frame, tf2::timeFromSec(0),
                   custom_obstacle_msg_.header.frame_id, tf2::timeFromSec(0),
                   custom_obstacle_msg_.header.frame_id, tf2::durationFromSec(0.5));
       obstacle_to_map_eig = tf2::transformToEigen(obstacle_to_map);
