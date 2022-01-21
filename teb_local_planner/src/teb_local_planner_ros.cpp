@@ -118,7 +118,6 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
 
     global_frame_ = costmap_ros_->getGlobalFrameID();
     cfg_->map_frame = global_frame_; // TODO
-    robot_base_frame_ = costmap_ros_->getBaseFrameID();
 
     //Initialize a costmap to polygon converter
     if (!cfg_->obstacles.costmap_converter_plugin.empty())
@@ -255,7 +254,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   geometry_msgs::msg::TwistStamped cmd_vel;
   
   cmd_vel.header.stamp = clock_->now();
-  cmd_vel.header.frame_id = robot_base_frame_;
+  cmd_vel.header.frame_id = costmap_ros_->getBaseFrameID();
   cmd_vel.twist.linear.x = 0;
   cmd_vel.twist.linear.y = 0;
   cmd_vel.twist.angular.z = 0;
