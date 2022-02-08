@@ -352,11 +352,12 @@ protected:
    * @param[in,out] omega The angular velocity that should be saturated.
    * @param max_vel_x Maximum translational velocity for forward driving
    * @param max_vel_y Maximum strafing velocity (for holonomic robots)
+   * @param max_vel_trans Maximum translational velocity for holonomic robots
    * @param max_vel_theta Maximum (absolute) angular velocity
    * @param max_vel_x_backwards Maximum translational velocity for backwards driving
    */
   void saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y,
-                        double max_vel_theta, double max_vel_x_backwards) const;
+                        double max_vel_trans, double max_vel_theta, double max_vel_x_backwards) const;
 
   
   /**
