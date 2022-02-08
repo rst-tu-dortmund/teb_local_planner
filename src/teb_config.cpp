@@ -74,6 +74,7 @@ void TebConfig::loadRosParamFromNodeHandle(const ros::NodeHandle& nh)
   nh.param("max_vel_x", robot.max_vel_x, robot.max_vel_x);
   nh.param("max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
   nh.param("max_vel_y", robot.max_vel_y, robot.max_vel_y);
+  nh.param("max_vel_trans", robot.max_vel_trans, robot.max_vel_trans);
   nh.param("max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
   nh.param("acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
   nh.param("acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
@@ -213,6 +214,7 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.wheelbase = cfg.wheelbase;
   robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   robot.use_proportional_saturation = cfg.use_proportional_saturation;
+  robot.max_vel_trans = cfg.max_vel_trans;
   
   // GoalTolerance
   goal_tolerance.xy_goal_tolerance = cfg.xy_goal_tolerance;
@@ -350,6 +352,17 @@ void TebConfig::checkParameters() const
   // weights
   if (optim.weight_optimaltime <= 0)
       ROS_WARN("TebLocalPlannerROS() Param Warning: parameter weight_optimaltime shoud be > 0 (even if weight_shortest_path is in use)");
+
+  // holonomic check
+  if (robot.max_vel_y > 0) {
+    if (robot.max_vel_trans < std::min(robot.max_vel_x, robot.max_vel_trans)) {
+      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_trans < min(max_vel_x, max_vel_y). Note that vel_trans = sqrt(Vx^2 + Vy^2), thus max_vel_trans will limit Vx and Vy in the optimization step.");
+    }
+    
+    if (robot.max_vel_trans > std::max(robot.max_vel_x, robot.max_vel_y)) {
+      ROS_WARN("TebLocalPlannerROS() Param Warning: max_vel_trans > max(max_vel_x, max_vel_y). Robot will rotate and move diagonally to achieve max resultant vel (possibly max vel on both axis), limited by the max_vel_trans.");
+    }
+  }
   
 }    
 
