@@ -214,6 +214,11 @@ void TebConfig::reconfigure(TebLocalPlannerReconfigureConfig& cfg)
   robot.wheelbase = cfg.wheelbase;
   robot.cmd_angle_instead_rotvel = cfg.cmd_angle_instead_rotvel;
   robot.use_proportional_saturation = cfg.use_proportional_saturation;
+  if (cfg.max_vel_trans == 0.0)
+  {
+    ROS_INFO_STREAM("max_vel_trans is not set, setting it equal to max_vel_x: " << robot.max_vel_x);
+    cfg.max_vel_trans = robot.max_vel_x;
+  }
   robot.max_vel_trans = cfg.max_vel_trans;
   
   // GoalTolerance

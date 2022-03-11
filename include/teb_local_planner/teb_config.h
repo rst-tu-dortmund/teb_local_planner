@@ -271,7 +271,7 @@ public:
     robot.max_vel_x = 0.4;
     robot.max_vel_x_backwards = 0.2;
     robot.max_vel_y = 0.0;
-    robot.max_vel_trans = 0.4;
+    robot.max_vel_trans = 0.0;
     robot.max_vel_theta = 0.3;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
