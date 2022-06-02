@@ -68,7 +68,7 @@ namespace teb_local_planner
 
 TebLocalPlannerROS::TebLocalPlannerROS() : costmap_ros_(NULL), tf_(NULL), costmap_model_(NULL),
                                            costmap_converter_loader_("costmap_converter", "costmap_converter::BaseCostmapToPolygons"),
-                                           dynamic_recfg_(NULL), custom_via_points_active_(false), goal_reached_(false), no_infeasible_plans_(0),
+                                           dynamic_recfg_(NULL), custom_via_points_active_(false), no_infeasible_plans_(0),
                                            last_preferred_rotdir_(RotType::none), initialized_(false)
 {
 }
@@ -207,14 +207,19 @@ bool TebLocalPlannerROS::setPlan(const std::vector<geometry_msgs::PoseStamped>& 
   }
 
   // store the global plan
-  global_plan_.clear();
-  global_plan_ = orig_global_plan;
+  if (global_plan_.empty()) { /* If there is no plan, check if it's a valid plan */
+    global_plan_ = orig_global_plan;  
+    if (isGoalReached()) {
+      global_plan_.clear();
+    }
+  }
+  else { /* If there is a plan, update it */
+    global_plan_.clear();
+    global_plan_ = orig_global_plan;
+  }
 
   // we do not clear the local planner here, since setPlan is called frequently whenever the global planner updates the plan.
   // the local planner checks whether it is required to reinitialize the trajectory or not within each velocity computation step.  
-            
-  // reset goal_reached_ flag
-  goal_reached_ = false;
   
   return true;
 }
@@ -248,7 +253,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   cmd_vel.header.stamp = ros::Time::now();
   cmd_vel.header.frame_id = robot_base_frame_;
   cmd_vel.twist.linear.x = cmd_vel.twist.linear.y = cmd_vel.twist.angular.z = 0;
-  goal_reached_ = false;  
+  // goal_reached_ = false;  
   
   // Get robot pose
   geometry_msgs::PoseStamped robot_pose;
@@ -280,25 +285,6 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   // update via-points container
   if (!custom_via_points_active_)
     updateViaPointsContainer(transformed_plan, cfg_.trajectory.global_plan_viapoint_sep);
-
-  nav_msgs::Odometry base_odom;
-  odom_helper_.getOdom(base_odom);
-
-  // check if global goal is reached
-  geometry_msgs::PoseStamped global_goal;
-  tf2::doTransform(global_plan_.back(), global_goal, tf_plan_to_global);
-  double dx = global_goal.pose.position.x - robot_pose_.x();
-  double dy = global_goal.pose.position.y - robot_pose_.y();
-  double delta_orient = g2o::normalize_theta( tf2::getYaw(global_goal.pose.orientation) - robot_pose_.theta() );
-  if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
-    && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
-    && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
-    && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
-        || cfg_.goal_tolerance.free_goal_vel))
-  {
-    goal_reached_ = true;
-    return mbf_msgs::ExePathResult::SUCCESS;
-  }
 
   // check if we should enter any backup mode and apply settings
   configureBackupModes(transformed_plan, goal_idx);
@@ -461,12 +447,47 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
 
 bool TebLocalPlannerROS::isGoalReached()
 {
-  if (goal_reached_)
+  if(!initialized_ || ! global_plan_.size() > 0) /* check if the planner was initialized and it there is a global plan */
   {
-    ROS_INFO("GOAL Reached!");
-    planner_->clearPlanner();
-    return true;
+    return false;
   }
+
+  // check if global goal is reached
+  try 
+  {
+    geometry_msgs::PoseStamped robot_pose;
+    costmap_ros_->getRobotPose(robot_pose);
+
+    nav_msgs::Odometry base_odom;
+    odom_helper_.getOdom(base_odom);
+
+    /* assume that the global goal is the last point of the global plan and transform it to the planning frame */
+    geometry_msgs::PoseStamped global_goal;
+    const geometry_msgs::PoseStamped& plan_pose = global_plan_.back();
+    geometry_msgs::TransformStamped tf_plan_to_global = tf_->lookupTransform(global_frame_, ros::Time(), plan_pose.header.frame_id, plan_pose.header.stamp,
+                                                                                    plan_pose.header.frame_id, ros::Duration(cfg_.robot.transform_tolerance));
+    tf2::doTransform(plan_pose, global_goal, tf_plan_to_global);
+
+    /* Check if the goal is reached */
+    double dx = global_goal.pose.position.x - robot_pose.pose.position.x;
+    double dy = global_goal.pose.position.y - robot_pose.pose.position.y;
+    double delta_orient = g2o::normalize_theta( tf2::getYaw(global_goal.pose.orientation) - robot_pose_.theta() );
+    if(fabs(std::sqrt(dx*dx+dy*dy)) < cfg_.goal_tolerance.xy_goal_tolerance
+      && fabs(delta_orient) < cfg_.goal_tolerance.yaw_goal_tolerance
+      && (!cfg_.goal_tolerance.complete_global_plan || via_points_.size() == 0)
+      && (base_local_planner::stopped(base_odom, cfg_.goal_tolerance.theta_stopped_vel, cfg_.goal_tolerance.trans_stopped_vel)
+          || cfg_.goal_tolerance.free_goal_vel))
+    {
+      global_plan_.clear();
+      planner_->clearPlanner();
+      return true;
+    }
+  }
+  catch(...) /* Failed to transform the goal to the planning frame */
+  {
+    return false;
+  }
+
   return false;
 }
 
