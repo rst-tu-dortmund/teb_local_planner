@@ -1114,7 +1114,7 @@ void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pos
   
   if (cfg_->robot.max_vel_y == 0) // nonholonomic robot
   {
-    Eigen::Vector2d conf1dir( cos(pose1.theta()), sin(pose1.theta()) );
+    Eigen::Vector2d conf1dir( pose1.theta().cos(), pose1.theta().sin() );
     // translational velocity
     double dir = deltaS.dot(conf1dir);
     vx = (double) g2o::sign(dir) * deltaS.norm()/dt;
@@ -1125,8 +1125,8 @@ void TebOptimalPlanner::extractVelocity(const PoseSE2& pose1, const PoseSE2& pos
     // transform pose 2 into the current robot frame (pose1)
     // for velocities only the rotation of the direction vector is necessary.
     // (map->pose1-frame: inverse 2d rotation matrix)
-    double cos_theta1 = std::cos(pose1.theta());
-    double sin_theta1 = std::sin(pose1.theta());
+    double cos_theta1 = pose1.theta().cos();
+    double sin_theta1 = pose1.theta().sin();
     double p1_dx =  cos_theta1*deltaS.x() + sin_theta1*deltaS.y();
     double p1_dy = -sin_theta1*deltaS.x() + cos_theta1*deltaS.y();
     vx = p1_dx / dt;

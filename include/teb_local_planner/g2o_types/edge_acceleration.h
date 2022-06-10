@@ -127,10 +127,10 @@ public:
     
     
     // consider directions
-//     vel1 *= g2o::sign(diff1[0]*cos(pose1->theta()) + diff1[1]*sin(pose1->theta())); 
-//     vel2 *= g2o::sign(diff2[0]*cos(pose2->theta()) + diff2[1]*sin(pose2->theta())); 
-    vel1 *= fast_sigmoid( 100*(diff1.x()*cos(pose1->theta()) + diff1.y()*sin(pose1->theta())) ); 
-    vel2 *= fast_sigmoid( 100*(diff2.x()*cos(pose2->theta()) + diff2.y()*sin(pose2->theta())) ); 
+//     vel1 *= g2o::sign(diff1[0]*pose1->theta().cos() + diff1[1]*pose1->theta().sin());
+//     vel2 *= g2o::sign(diff2[0]*pose2->theta().cos() + diff2[1]*pose2->theta().sin());
+    vel1 *= fast_sigmoid( 100*(diff1.x()*pose1->theta().cos() + diff1.y()*pose1->theta().sin()) );
+    vel2 *= fast_sigmoid( 100*(diff2.x()*pose2->theta().cos() + diff2.y()*pose2->theta().sin()) );
     
     const double acc_lin  = (vel2 - vel1)*2 / ( dt1->dt() + dt2->dt() );
    
@@ -326,8 +326,8 @@ public:
     double vel2 = dist / dt->dt();
 
     // consider directions
-    //vel2 *= g2o::sign(diff[0]*cos(pose1->theta()) + diff[1]*sin(pose1->theta())); 
-    vel2 *= fast_sigmoid( 100*(diff.x()*cos(pose1->theta()) + diff.y()*sin(pose1->theta())) ); 
+    //vel2 *= g2o::sign(diff[0]*pose1->theta().cos() + diff[1]*pose1->theta().sin());
+    vel2 *= fast_sigmoid( 100*(diff.x()*pose1->theta().cos() + diff.y()*pose1->theta().sin()) );
     
     const double acc_lin  = (vel2 - vel1) / dt->dt();
     
@@ -418,8 +418,8 @@ public:
     const double vel2 = _measurement->linear.x;
     
     // consider directions
-    //vel1 *= g2o::sign(diff[0]*cos(pose_pre_goal->theta()) + diff[1]*sin(pose_pre_goal->theta())); 
-    vel1 *= fast_sigmoid( 100*(diff.x()*cos(pose_pre_goal->theta()) + diff.y()*sin(pose_pre_goal->theta())) ); 
+    //vel1 *= g2o::sign(diff[0]*pose_pre_goal->theta().cos() + diff[1]*pose_pre_goal->theta().sin());
+    vel1 *= fast_sigmoid( 100*(diff.x()*pose_pre_goal->theta().cos() + diff.y()*pose_pre_goal->theta().sin()) );
     
     const double acc_lin  = (vel2 - vel1) / dt->dt();
 
@@ -499,10 +499,10 @@ public:
     Eigen::Vector2d diff1 = pose2->position() - pose1->position();
     Eigen::Vector2d diff2 = pose3->position() - pose2->position();
     
-    double cos_theta1 = std::cos(pose1->theta());
-    double sin_theta1 = std::sin(pose1->theta()); 
-    double cos_theta2 = std::cos(pose2->theta());
-    double sin_theta2 = std::sin(pose2->theta()); 
+    double cos_theta1 = pose1->theta().cos();
+    double sin_theta1 = pose1->theta().sin();
+    double cos_theta2 = pose2->theta().cos();
+    double sin_theta2 = pose2->theta().sin();
     
     // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
     double p1_dx =  cos_theta1*diff1.x() + sin_theta1*diff1.y();
@@ -589,8 +589,8 @@ public:
     // VELOCITY & ACCELERATION
     Eigen::Vector2d diff = pose2->position() - pose1->position();
             
-    double cos_theta1 = std::cos(pose1->theta());
-    double sin_theta1 = std::sin(pose1->theta()); 
+    double cos_theta1 = pose1->theta().cos();
+    double sin_theta1 = pose1->theta().sin();
     
     // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
     double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();
@@ -681,8 +681,8 @@ public:
 
     Eigen::Vector2d diff = pose_goal->position() - pose_pre_goal->position();    
     
-    double cos_theta1 = std::cos(pose_pre_goal->theta());
-    double sin_theta1 = std::sin(pose_pre_goal->theta()); 
+    double cos_theta1 = pose_pre_goal->theta().cos();
+    double sin_theta1 = pose_pre_goal->theta().sin();
     
     // transform pose2 into robot frame pose1 (inverse 2d rotation matrix)
     double p1_dx =  cos_theta1*diff.x() + sin_theta1*diff.y();

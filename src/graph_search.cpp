@@ -176,7 +176,7 @@ void lrKeyPointGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, dou
         {
           Eigen::Vector2d keypoint_dist = graph_[*it_j].pos-start.position();
           keypoint_dist.normalize();
-          Eigen::Vector2d start_orient_vec( cos(start.theta()), sin(start.theta()) ); // already normalized
+          Eigen::Vector2d start_orient_vec( start.theta().cos(), start.theta().sin() ); // already normalized
           // check angle
           if (start_orient_vec.dot(keypoint_dist) <= obstacle_heading_threshold)
           {

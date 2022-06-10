@@ -50,6 +50,82 @@ namespace teb_local_planner
 {
 
 /**
+  * @class Theta
+  * @brief This class wraps an angle value (in radian) and lazily evaluates its sin/cos
+  */
+class Theta
+{
+public:
+  Theta(): Theta(0.0) {}
+
+  Theta(const Theta& other)
+    : _rad(other._rad)
+    , _sin(other._sin)
+    , _cos(other._cos)
+    , _init(other._init)
+  {}
+
+  Theta(const double rad)
+    : _rad(rad)
+    , _init(false)
+  {}
+
+  Theta& operator=(const double rad) {
+    _rad = rad;
+    _init = false;
+    return *this;
+  }
+
+  Theta& operator*=(const double x) {
+    _rad *= x;
+    _init = false;
+    return *this;
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const Theta& obj) {
+    os << obj._rad;
+    return os;
+  }
+
+  friend std::istream& operator>>(std::istream& is, Theta& obj) {
+    is >> obj._rad;
+    obj._init = false;
+    return is;
+  }
+
+  operator double() const {return rad();}
+
+  const double& rad() const {return _rad;}
+
+  const double& sin() const {
+    if (!_init) {
+      const_cast<Theta*>(this)->eval_sincos();
+    }
+    return _sin;
+  }
+
+  const double& cos() const {
+    if (!_init) {
+      const_cast<Theta*>(this)->eval_sincos();
+    }
+    return _cos;
+  }
+
+private:
+
+  void eval_sincos() {
+    _sin = std::sin(_rad);
+    _cos = std::cos(_rad);
+    _init = true;
+  }
+
+  double _rad;
+  double _sin;
+  double _cos;
+  bool _init; // whether sin/cos values have been evaluated already
+};
+
+/**
   * @class PoseSE2
   * @brief This class implements a pose in the domain SE2: \f$ \mathbb{R}^2 \times S^1 \f$
   * The pose consist of the position x and y and an orientation given as angle theta [-pi, pi].
@@ -179,13 +255,13 @@ public:
     * @brief Access the orientation part (yaw angle) of the pose
     * @return reference to the yaw angle
     */ 
-  double& theta() {return _theta;}
+  Theta& theta() {return _theta;}
   
   /**
     * @brief Access the orientation part (yaw angle) of the pose (read-only)
     * @return const reference to the yaw angle
     */ 
-  const double& theta() const {return _theta;}
+  const Theta& theta() const {return _theta;}
   
   /**
     * @brief Set pose to [0,0,0]
@@ -212,7 +288,7 @@ public:
    * @brief Return the unit vector of the current orientation
    * @returns [cos(theta), sin(theta))]^T
    */  
-  Eigen::Vector2d orientationUnitVec() const {return Eigen::Vector2d(std::cos(_theta), std::sin(_theta));}
+  Eigen::Vector2d orientationUnitVec() const {return Eigen::Vector2d(_theta.cos(), _theta.sin());}
       
   ///@}
 
@@ -394,7 +470,7 @@ public:
 private:
   
   Eigen::Vector2d _position; 
-  double _theta;
+  Theta _theta;
       
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW  

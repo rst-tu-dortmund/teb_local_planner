@@ -609,8 +609,8 @@ private:
     */
   void transformToWorld(const PoseSE2& current_pose, Eigen::Vector2d& line_start_world, Eigen::Vector2d& line_end_world) const
   {
-    double cos_th = std::cos(current_pose.theta());
-    double sin_th = std::sin(current_pose.theta());
+    double cos_th = current_pose.theta().cos();
+    double sin_th = current_pose.theta().sin();
     line_start_world.x() = current_pose.x() + cos_th * line_start_.x() - sin_th * line_start_.y();
     line_start_world.y() = current_pose.y() + sin_th * line_start_.x() + cos_th * line_start_.y();
     line_end_world.x() = current_pose.x() + cos_th * line_end_.x() - sin_th * line_end_.y();
@@ -756,8 +756,8 @@ private:
     */
   void transformToWorld(const PoseSE2& current_pose, Point2dContainer& polygon_world) const
   {
-    double cos_th = std::cos(current_pose.theta());
-    double sin_th = std::sin(current_pose.theta());
+    double cos_th = current_pose.theta().cos();
+    double sin_th = current_pose.theta().sin();
     for (std::size_t i=0; i<vertices_.size(); ++i)
     {
       polygon_world[i].x() = current_pose.x() + cos_th * vertices_[i].x() - sin_th * vertices_[i].y();
