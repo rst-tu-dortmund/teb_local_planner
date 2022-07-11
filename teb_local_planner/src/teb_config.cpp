@@ -197,9 +197,13 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
 
   // Robot
   nh->get_parameter_or(name + "." + "max_vel_x", robot.max_vel_x, robot.max_vel_x);
+  nh->get_parameter_or(name + "." + "max_vel_x", robot.base_max_vel_x, robot.base_max_vel_x);
   nh->get_parameter_or(name + "." + "max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);
+  nh->get_parameter_or(name + "." + "max_vel_x_backwards", robot.base_max_vel_x_backwards, robot.base_max_vel_x_backwards);
   nh->get_parameter_or(name + "." + "max_vel_y", robot.max_vel_y, robot.max_vel_y);
+  nh->get_parameter_or(name + "." + "max_vel_y", robot.base_max_vel_y, robot.base_max_vel_y);
   nh->get_parameter_or(name + "." + "max_vel_theta", robot.max_vel_theta, robot.max_vel_theta);
+  nh->get_parameter_or(name + "." + "max_vel_theta", robot.base_max_vel_theta, robot.base_max_vel_theta);
   nh->get_parameter_or(name + "." + "acc_lim_x", robot.acc_lim_x, robot.acc_lim_x);
   nh->get_parameter_or(name + "." + "acc_lim_y", robot.acc_lim_y, robot.acc_lim_y);
   nh->get_parameter_or(name + "." + "acc_lim_theta", robot.acc_lim_theta, robot.acc_lim_theta);
