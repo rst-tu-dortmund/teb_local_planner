@@ -271,9 +271,9 @@ public:
     robot.max_vel_y = 0.0;
     robot.max_vel_theta = 0.3;
     robot.base_max_vel_x = robot.max_vel_x;
-    robot.base_max_vel_x_backwards = robot.base_max_vel_x_backwards;
-    robot.base_max_vel_y = robot.base_max_vel_y;
-    robot.base_max_vel_theta = robot.base_max_vel_theta;
+    robot.base_max_vel_x_backwards = robot.max_vel_x_backwards;
+    robot.base_max_vel_y = robot.max_vel_y;
+    robot.base_max_vel_theta = robot.max_vel_theta;
     robot.acc_lim_x = 0.5;
     robot.acc_lim_y = 0.5;
     robot.acc_lim_theta = 0.5;
