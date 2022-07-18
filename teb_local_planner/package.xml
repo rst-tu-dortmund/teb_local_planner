@@ -39,6 +39,7 @@
   <depend>std_msgs</depend>
   <depend>teb_msgs</depend>
   <depend>tf2</depend>
+  <depend>tf2_eigen</depend>
   <depend>visualization_msgs</depend>
   <depend>builtin_interfaces</depend>
   <exec_depend>nav2_bringup</exec_depend>
