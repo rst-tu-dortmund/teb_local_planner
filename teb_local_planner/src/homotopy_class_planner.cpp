@@ -47,24 +47,23 @@ HomotopyClassPlanner::HomotopyClassPlanner() : cfg_(NULL), obstacles_(NULL), via
 {
 }
 
-HomotopyClassPlanner::HomotopyClassPlanner(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model,
+HomotopyClassPlanner::HomotopyClassPlanner(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles,
                                            TebVisualizationPtr visual, const ViaPointContainer* via_points) : initial_plan_(NULL)
 {
-  initialize(node, cfg, obstacles, robot_model, visual, via_points);
+  initialize(node, cfg, obstacles, visual, via_points);
 }
 
 HomotopyClassPlanner::~HomotopyClassPlanner()
 {
 }
 
-void HomotopyClassPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles, RobotFootprintModelPtr robot_model,
+void HomotopyClassPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, const TebConfig& cfg, ObstContainer* obstacles,
                                       TebVisualizationPtr visual, const ViaPointContainer* via_points)
 {
   node_ = node;
   cfg_ = &cfg;
   obstacles_ = obstacles;
   via_points_ = via_points;
-  robot_model_ = robot_model;
 
   if (cfg_->hcp.simple_exploration)
     graph_search_ = std::shared_ptr<GraphSearchInterface>(new lrKeyPointGraph(*cfg_, this));
@@ -80,11 +79,6 @@ void HomotopyClassPlanner::initialize(nav2_util::LifecycleNode::SharedPtr node, 
   initialized_ = true;
 
   setVisualization(visual);
-}
-
-void HomotopyClassPlanner::updateRobotModel(RobotFootprintModelPtr robot_model )
-{
-  robot_model_ = robot_model;
 }
 
 void HomotopyClassPlanner::setVisualization(const TebVisualizationPtr& visualization)
@@ -171,7 +165,7 @@ void HomotopyClassPlanner::visualize()
       visualization_->publishLocalPlanAndPoses(best_teb->teb());
 
       if (best_teb->teb().sizePoses() > 0) //TODO maybe store current pose (start) within plan method as class field.
-        visualization_->publishRobotFootprintModel(best_teb->teb().Pose(0), *robot_model_);
+        visualization_->publishRobotFootprintModel(best_teb->teb().Pose(0), *cfg_->robot_model);
 
       // feedback message
       if (cfg_->trajectory.publish_feedback)
@@ -372,7 +366,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const PoseSE2& start
 {
   if(tebs_.size() >= cfg_->hcp.max_number_classes)
     return TebOptimalPlannerPtr();
-  TebOptimalPlannerPtr candidate =  TebOptimalPlannerPtr( new TebOptimalPlanner(node_, *cfg_, obstacles_, robot_model_, visualization_));
+  TebOptimalPlannerPtr candidate =  TebOptimalPlannerPtr( new TebOptimalPlanner(node_, *cfg_, obstacles_, visualization_));
 
   candidate->teb().initTrajectoryToGoal(start, goal, 0, cfg_->robot.max_vel_x, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);
 
@@ -427,7 +421,7 @@ TebOptimalPlannerPtr HomotopyClassPlanner::addAndInitNewTeb(const std::vector<ge
 {
   if(tebs_.size() >= cfg_->hcp.max_number_classes)
     return TebOptimalPlannerPtr();
-  TebOptimalPlannerPtr candidate = TebOptimalPlannerPtr( new TebOptimalPlanner(node_, *cfg_, obstacles_, robot_model_, visualization_));
+  TebOptimalPlannerPtr candidate = TebOptimalPlannerPtr( new TebOptimalPlanner(node_, *cfg_, obstacles_, visualization_));
 
   candidate->teb().initTrajectoryToGoal(initial_plan, cfg_->robot.max_vel_x, cfg_->robot.max_vel_theta,
     cfg_->trajectory.global_plan_overwrite_orientation, cfg_->trajectory.min_samples, cfg_->trajectory.allow_init_with_backwards_motion);

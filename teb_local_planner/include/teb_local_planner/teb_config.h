@@ -45,6 +45,8 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 #include <nav_2d_utils/parameters.hpp>
+#include "teb_local_planner/robot_footprint_model.h"
+#include <nav2_costmap_2d/footprint.hpp>
 
 // Definitions
 #define USE_ANALYTIC_JACOBI // if available for a specific edge, use analytic jacobi
@@ -63,6 +65,13 @@ public:
   std::string odom_topic; //!< Topic name of the odometry message, provided by the robot driver or simulator
   std::string map_frame; //!< Global planning frame
   std::string node_name; //!< node name used for parameter event callback
+
+  RobotFootprintModelPtr robot_model;
+  std::string model_name;
+  double radius;
+  std::vector<double> line_start, line_end;
+  double front_offset, front_radius, rear_offset, rear_radius;
+  std::string footprint_string;
 
   //! Trajectory related parameters
   struct Trajectory
@@ -389,11 +398,11 @@ public:
   void loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::SharedPtr nh, const std::string name);
   
   /**
-   * @brief Paremeter event callback
-   * @param event The ParameterEvent
+   * @brief Callback executed when a paramter change is detected
+   * @param parameters list of changed parameters
    */
-  void on_parameter_event_callback(
-      const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+  rcl_interfaces::msg::SetParametersResult
+    dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
   
   /**
    * @brief Check parameters and print warnings in case of discrepancies

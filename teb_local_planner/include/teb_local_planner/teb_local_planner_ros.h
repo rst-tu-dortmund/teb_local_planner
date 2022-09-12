@@ -71,6 +71,7 @@
 #include <nav2_util/lifecycle_node.hpp>
 #include <nav2_costmap_2d/costmap_2d_ros.hpp>
 #include <nav_2d_utils/parameters.hpp>
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
 // dynamic reconfigure
 //#include "teb_local_planner/TebLocalPlannerReconfigureConfig.h>
 //#include <dynamic_reconfigure/server.h>
@@ -109,7 +110,7 @@ public:
    */
   void configure(
     const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
-    std::string name, 
+    std::string name,
     std::shared_ptr<tf2_ros::Buffer> tf,
     std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros) override;
   void activate() override;
@@ -406,18 +407,14 @@ private:
   std::vector<geometry_msgs::msg::Point> footprint_spec_; //!< Store the footprint of the robot 
   double robot_inscribed_radius_; //!< The radius of the inscribed circle of the robot (collision possible)
   double robot_circumscribed_radius; //!< The radius of the circumscribed circle of the robot
-  
-  std::string global_frame_; //!< The frame in which the controller will run
-  std::string robot_base_frame_; //!< Used as the base frame id of the robot
     
   // flags
   bool initialized_; //!< Keeps track about the correct initialization of this class
   std::string name_; //!< Name of plugin ID
 
-  // Subscription for parameter change
-  rclcpp::AsyncParametersClient::SharedPtr parameters_client_;
-  rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent>::SharedPtr parameter_event_sub_;
-
+protected:
+  // Dynamic parameters handler
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
