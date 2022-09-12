@@ -128,15 +128,6 @@ void TebOptimalPlanner::visualize()
  
 }
 
-template < typename T>
-void register_type(g2o::Factory* factory, const std::string name)
-{
-  std::unique_ptr<g2o::HyperGraphElementCreator<T>> ptr_(new g2o::HyperGraphElementCreator<T>());
-  std::shared_ptr<g2o::HyperGraphElementCreator<T>> shared_(std::move(ptr_));
-
-  factory->registerType(name, shared_);
-}
-
 /*
  * registers custom vertices and edges in g2o framework
  */
@@ -145,7 +136,6 @@ void TebOptimalPlanner::registerG2OTypes()
   g2o::Factory* factory = g2o::Factory::instance();
   factory->registerType("VERTEX_POSE", std::make_shared<g2o::HyperGraphElementCreator<VertexPose>>());
   factory->registerType("VERTEX_TIMEDIFF", std::make_shared<g2o::HyperGraphElementCreator<VertexTimeDiff>>());
-
   factory->registerType("EDGE_TIME_OPTIMAL", std::make_shared<g2o::HyperGraphElementCreator<EdgeTimeOptimal>>());
   factory->registerType("EDGE_SHORTEST_PATH", std::make_shared<g2o::HyperGraphElementCreator<EdgeShortestPath>>());
   factory->registerType("EDGE_VELOCITY", std::make_shared<g2o::HyperGraphElementCreator<EdgeVelocity>>());
