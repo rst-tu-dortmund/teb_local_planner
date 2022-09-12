@@ -1033,30 +1033,44 @@ void TebLocalPlannerROS::configureBackupModes(std::vector<geometry_msgs::msg::Po
             RCLCPP_INFO(logger_, "TebLocalPlannerROS: oscillation recovery disabled/expired.");
         }
     }
-
 }
-     
 
-void TebLocalPlannerROS::setSpeedLimit(
-    const double & speed_limit, const bool & percentage)
-{
+void TebLocalPlannerROS::setSpeedLimit(const double& speed_limit,
+                                       const bool& percentage) {
   if (speed_limit == nav2_costmap_2d::NO_SPEED_LIMIT) {
-    // Restore default value
+    // Restore Defaults
     cfg_->robot.max_vel_x = cfg_->robot.base_max_vel_x;
-    cfg_->robot.base_max_vel_x_backwards = cfg_->robot.base_max_vel_x_backwards;
-    cfg_->robot.base_max_vel_y = cfg_->robot.base_max_vel_y;
-    cfg_->robot.base_max_vel_theta = cfg_->robot.base_max_vel_theta;
+    cfg_->robot.max_vel_x_backwards = cfg_->robot.base_max_vel_x_backwards;
+    cfg_->robot.max_vel_y = cfg_->robot.base_max_vel_y;
+    cfg_->robot.max_vel_theta = cfg_->robot.base_max_vel_theta;
   } else {
     if (percentage) {
-      // Speed limit is expressed in % from maximum speed of robot
-      cfg_->robot.max_vel_x = cfg_->robot.base_max_vel_x * speed_limit / 100.0;
-      cfg_->robot.base_max_vel_x_backwards = cfg_->robot.base_max_vel_x_backwards * speed_limit / 100.0;
-      cfg_->robot.base_max_vel_y = cfg_->robot.base_max_vel_y * speed_limit / 100.0;
-      cfg_->robot.base_max_vel_theta = cfg_->robot.base_max_vel_theta * speed_limit / 100.0;
+      if (speed_limit > 1.0 || speed_limit < 0.0) {
+        RCLCPP_WARN_THROTTLE(
+            logger_, *(clock_), 100,
+            "Percentage given outside the range 0-1. Using base velocities.");
+        // Restore defaults
+        cfg_->robot.max_vel_x = cfg_->robot.base_max_vel_x;
+        cfg_->robot.max_vel_x_backwards = cfg_->robot.base_max_vel_x_backwards;
+        cfg_->robot.max_vel_y = cfg_->robot.base_max_vel_y;
+        cfg_->robot.max_vel_theta = cfg_->robot.base_max_vel_theta;
+      } else {
+        // Speed limit is expressed in % from maximum speed of robot
+        cfg_->robot.max_vel_x =
+            cfg_->robot.base_max_vel_x * speed_limit / 100.0;
+        cfg_->robot.max_vel_x_backwards =
+            cfg_->robot.base_max_vel_x_backwards * speed_limit / 100.0;
+        cfg_->robot.max_vel_y =
+            cfg_->robot.base_max_vel_y * speed_limit / 100.0;
+        cfg_->robot.max_vel_theta =
+            cfg_->robot.base_max_vel_theta * speed_limit / 100.0;
+      }
     } else {
       // Speed limit is expressed in absolute value
-      double max_speed_xy = std::max(
-            std::max(cfg_->robot.base_max_vel_x,cfg_->robot.base_max_vel_x_backwards),cfg_->robot.base_max_vel_y);
+      double max_speed_xy =
+          std::max(std::max(cfg_->robot.base_max_vel_x,
+                            cfg_->robot.base_max_vel_x_backwards),
+                   cfg_->robot.base_max_vel_y);
       if (speed_limit < max_speed_xy) {
         // Handling components and angular velocity changes:
         // Max velocities are being changed in the same proportion
@@ -1065,9 +1079,17 @@ void TebLocalPlannerROS::setSpeedLimit(
         // G. Doisy: not sure if that's applicable to base_max_vel_x_backwards.
         const double ratio = speed_limit / max_speed_xy;
         cfg_->robot.max_vel_x = cfg_->robot.base_max_vel_x * ratio;
-        cfg_->robot.base_max_vel_x_backwards = cfg_->robot.base_max_vel_x_backwards * ratio;
-        cfg_->robot.base_max_vel_y = cfg_->robot.base_max_vel_y * ratio;
-        cfg_->robot.base_max_vel_theta = cfg_->robot.base_max_vel_theta * ratio;
+        cfg_->robot.max_vel_x_backwards =
+            cfg_->robot.base_max_vel_x_backwards * ratio;
+        cfg_->robot.max_vel_y = cfg_->robot.base_max_vel_y * ratio;
+        cfg_->robot.max_vel_theta = cfg_->robot.base_max_vel_theta * ratio;
+
+      } else {
+        // Restore defaults
+        cfg_->robot.max_vel_x = cfg_->robot.base_max_vel_x;
+        cfg_->robot.max_vel_x_backwards = cfg_->robot.base_max_vel_x_backwards;
+        cfg_->robot.max_vel_y = cfg_->robot.base_max_vel_y;
+        cfg_->robot.max_vel_theta = cfg_->robot.base_max_vel_theta;
       }
     }
   }
