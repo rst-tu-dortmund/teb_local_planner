@@ -208,6 +208,12 @@ void TebConfig::loadRosParamFromNodeHandle(const nav2_util::LifecycleNode::Share
   nh->get_parameter_or(name + "." + "wheelbase", robot.wheelbase, robot.wheelbase);
   nh->get_parameter_or(name + "." + "cmd_angle_instead_rotvel", robot.cmd_angle_instead_rotvel, robot.cmd_angle_instead_rotvel);
   nh->get_parameter_or(name + "." + "is_footprint_dynamic", robot.is_footprint_dynamic, robot.is_footprint_dynamic);
+
+  // Update the values of the variables used to keep trace of the maximum speeds before applying the speed limits
+  robot.base_max_vel_x = robot.max_vel_x;
+  robot.base_max_vel_x_backwards = robot.base_max_vel_x_backwards;
+  robot.base_max_vel_y = robot.base_max_vel_y;
+  robot.base_max_vel_theta = robot.base_max_vel_theta;
   
   // GoalTolerance
   nh->get_parameter_or(name + "." + "free_goal_vel", goal_tolerance.free_goal_vel, goal_tolerance.free_goal_vel);
