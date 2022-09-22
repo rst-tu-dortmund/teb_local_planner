@@ -326,6 +326,7 @@ bool TimedElasticBand::initTrajectoryToGoal(const PoseSE2& start, const PoseSE2&
 {
   if (!isInit())
   {   
+    clearTimedElasticBand();
     addPose(start); // add starting point
     setPoseVertexFixed(0,true); // StartConf is a fixed constraint during optimization
 
@@ -391,6 +392,7 @@ bool TimedElasticBand::initTrajectoryToGoal(const std::vector<geometry_msgs::Pos
   
   if (!isInit())
   {
+    clearTimedElasticBand();
     PoseSE2 start(plan.front().pose);
     PoseSE2 goal(plan.back().pose);
     
