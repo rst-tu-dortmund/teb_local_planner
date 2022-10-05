@@ -150,7 +150,7 @@ void TebVisualization::publishInfeasibleRobotPose(const PoseSE2& current_pose, c
 }
 
 
-void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
+void TebVisualization::publishObstacles(const ObstContainer& obstacles, double scale) const
 {
   if ( obstacles.empty() || printErrorWhenNotInitialized() )
     return;
@@ -200,8 +200,8 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       }
     }
     
-    marker.scale.x = 0.1;
-    marker.scale.y = 0.1;
+    marker.scale.x = scale;
+    marker.scale.y = scale;
     marker.color.a = 1.0;
     marker.color.r = 1.0;
     marker.color.g = 0.0;
@@ -272,8 +272,8 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
       end.z = 0;
       marker.points.push_back(end);
   
-      marker.scale.x = 0.1;
-      marker.scale.y = 0.1;
+      marker.scale.x = scale;
+      marker.scale.y = scale;
       marker.color.a = 1.0;
       marker.color.r = 0.0;
       marker.color.g = 1.0;
@@ -321,8 +321,8 @@ void TebVisualization::publishObstacles(const ObstContainer& obstacles) const
         point.z = 0;
         marker.points.push_back(point);
       }
-      marker.scale.x = 0.1;
-      marker.scale.y = 0.1;
+      marker.scale.x = scale;
+      marker.scale.y = scale;
       marker.color.a = 1.0;
       marker.color.r = 1.0;
       marker.color.g = 0.0;
