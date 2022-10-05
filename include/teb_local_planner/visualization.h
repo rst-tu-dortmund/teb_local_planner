@@ -151,8 +151,9 @@ public:
    * @brief Publish obstacle positions to the ros topic \e ../../teb_markers
    * @todo Move filling of the marker message to polygon class in order to avoid checking types.
    * @param obstacles Obstacle container
+   * @param scale Size of the non-circular obstacles
    */
-  void publishObstacles(const ObstContainer& obstacles) const;
+  void publishObstacles(const ObstContainer& obstacles, double scale = 0.1) const;
 
   /**
    * @brief Publish via-points to the ros topic \e ../../teb_markers
