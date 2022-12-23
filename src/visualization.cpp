@@ -119,8 +119,8 @@ void TebVisualization::publishLocalPlanAndPoses(const TimedElasticBand& teb) con
 
 
 
-void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model, const std::string& ns,
-                                                  const std_msgs::ColorRGBA &color)
+void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model,
+                                                  const std::string& ns, const std_msgs::ColorRGBA &color)
 {
   if ( printErrorWhenNotInitialized() )
     return;
@@ -129,8 +129,8 @@ void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, c
   robot_model.visualizeRobot(current_pose, markers, color);
   if (markers.empty())
     return;
-  
-  int idx = 1000000;  // avoid overshadowing by obstacles
+
+  int idx = 0;
   for (std::vector<visualization_msgs::Marker>::iterator marker_it = markers.begin(); marker_it != markers.end(); ++marker_it, ++idx)
   {
     marker_it->header.frame_id = cfg_->map_frame;
@@ -144,11 +144,34 @@ void TebVisualization::publishRobotFootprintModel(const PoseSE2& current_pose, c
   
 }
 
-void TebVisualization::publishInfeasibleRobotPose(const PoseSE2& current_pose, const BaseRobotFootprintModel& robot_model)
+void TebVisualization::publishRobotFootprint(const PoseSE2& current_pose, const std::vector<geometry_msgs::Point>& footprint,
+                                             const std::string& ns, const std_msgs::ColorRGBA &color)
 {
-  publishRobotFootprintModel(current_pose, robot_model, "InfeasibleRobotPoses", toColorMsg(0.5, 0.8, 0.0, 0.0));
+  if ( printErrorWhenNotInitialized() || footprint.empty() )
+    return;
+
+  visualization_msgs::Marker vertex_marker;
+  vertex_marker.header.frame_id = cfg_->map_frame;
+  vertex_marker.header.stamp = ros::Time::now();
+  vertex_marker.ns = ns;
+  vertex_marker.type = visualization_msgs::Marker::LINE_STRIP;
+  vertex_marker.action = visualization_msgs::Marker::ADD;
+  vertex_marker.color = color;
+  vertex_marker.scale.x = 0.01;
+  vertex_marker.lifetime = ros::Duration(2.0);
+  vertex_marker.points = footprint;
+  vertex_marker.points.push_back(footprint.front());  // close the polygon
+  current_pose.toPoseMsg(vertex_marker.pose);
+  teb_marker_pub_.publish(vertex_marker);
 }
 
+void TebVisualization::publishInfeasibleRobotPose(const PoseSE2& infeasible_pose,
+                                                  const BaseRobotFootprintModel& robot_model,
+                                                  const std::vector<geometry_msgs::Point>& footprint)
+{
+  publishRobotFootprintModel(infeasible_pose, robot_model, "InfeasibleRobotPose/model", toColorMsg(0.5, 0.8, 0.0, 0.0));
+  publishRobotFootprint(infeasible_pose, footprint, "InfeasibleRobotPose/footprint", toColorMsg(0.5, 0.9, 0.7, 0.0));
+}
 
 void TebVisualization::publishObstacles(const ObstContainer& obstacles, double scale) const
 {
