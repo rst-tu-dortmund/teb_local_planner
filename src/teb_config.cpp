@@ -393,5 +393,17 @@ void TebConfig::checkDeprecated(const ros::NodeHandle& nh) const
   if (nh.hasParam("global_plan_via_point_sep"))
     ROS_WARN("TebLocalPlannerROS() Param Warning: 'global_plan_via_point_sep' is deprecated. It has been replaced by 'global_plan_viapoint_sep' due to consistency reasons.");
 }
+
+double TebConfig::getXYGoalTolerance() const
+{
+  return goal_tolerance.mbf_xy_goal_tolerance > 0 ? goal_tolerance.mbf_xy_goal_tolerance :
+                                                    goal_tolerance.xy_goal_tolerance;
+}
+
+double TebConfig::getYawGoalTolerance() const
+{
+  return goal_tolerance.mbf_yaw_goal_tolerance > 0 ? goal_tolerance.mbf_yaw_goal_tolerance :
+                                                     goal_tolerance.yaw_goal_tolerance;
+}
     
 } // namespace teb_local_planner

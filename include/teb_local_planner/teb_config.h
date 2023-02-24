@@ -117,6 +117,8 @@ public:
   {
     double yaw_goal_tolerance; //!< Allowed final orientation error
     double xy_goal_tolerance; //!< Allowed final euclidean distance to the goal position
+    double mbf_yaw_goal_tolerance; //!< yaw_goal_tolerance provided by MBF in isGoalReached
+    double mbf_xy_goal_tolerance; //!< xy_goal_tolerance provided by MBF in isGoalReached
     bool free_goal_vel; //!< Allow the robot's velocity to be nonzero (usally max_vel) for planning purposes
     double trans_stopped_vel; //!< Below what maximum velocity we consider the robot to be stopped in translation
     double theta_stopped_vel; //!< Below what maximum rotation velocity we consider the robot to be stopped in rotation
@@ -292,6 +294,8 @@ public:
 
     goal_tolerance.xy_goal_tolerance = 0.2;
     goal_tolerance.yaw_goal_tolerance = 0.2;
+    goal_tolerance.mbf_xy_goal_tolerance = 0.0;
+    goal_tolerance.mbf_yaw_goal_tolerance = 0.0;
     goal_tolerance.free_goal_vel = false;
     goal_tolerance.trans_stopped_vel = 0.1;
     goal_tolerance.theta_stopped_vel = 0.1;
@@ -423,6 +427,20 @@ public:
    * @brief Return the internal config mutex
    */
   boost::mutex& configMutex() {return config_mutex_;}
+
+  /**
+   * Get xy tolerance taking into account the values provided by MBF in isGoalReached
+   *
+   * @return XY tolerance
+   */
+  double getXYGoalTolerance() const;
+
+  /**
+   * Get yaw tolerance taking into account the values provided by MBF in isGoalReached
+   *
+   * @return Yaw tolerance
+   */
+  double getYawGoalTolerance() const;
 
 private:
   boost::mutex config_mutex_; //!< Mutex for config accesses and changes

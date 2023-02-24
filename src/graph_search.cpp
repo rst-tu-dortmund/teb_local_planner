@@ -99,7 +99,7 @@ void lrKeyPointGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, dou
   // Direction-vector between start and goal and normal-vector:
   Eigen::Vector2d diff = goal.position()-start.position();
 
-  if (diff.norm()<cfg_->goal_tolerance.xy_goal_tolerance)
+  if (diff.norm()<cfg_->getXYGoalTolerance())
   {
     ROS_DEBUG("HomotopyClassPlanner::createProbRoadmapGraph(): xy-goal-tolerance already reached.");
     if (hcp_->getTrajectoryContainer().empty())
@@ -227,7 +227,7 @@ void ProbRoadmapGraph::createGraph(const PoseSE2& start, const PoseSE2& goal, do
   Eigen::Vector2d diff = goal.position()-start.position();
   double start_goal_dist = diff.norm();
 
-  if (start_goal_dist<cfg_->goal_tolerance.xy_goal_tolerance)
+  if (start_goal_dist<cfg_->getXYGoalTolerance())
   {
     ROS_DEBUG("HomotopyClassPlanner::createProbRoadmapGraph(): xy-goal-tolerance already reached.");
     if (hcp_->getTrajectoryContainer().empty())

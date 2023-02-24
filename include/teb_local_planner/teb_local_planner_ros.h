@@ -166,9 +166,13 @@ public:
   bool isGoalReached();
 
   /**
-    * @brief Dummy version to satisfy MBF API
+    * @brief  Check if the goal pose has been achieved
+    * 
+    * The actual check is performed in computeVelocityCommands(). 
+    * Only the status flag is checked here.
+    * @return True if achieved, false otherwise
     */
-  bool isGoalReached(double xy_tolerance, double yaw_tolerance) { return isGoalReached(); };
+  bool isGoalReached(double xy_tolerance, double yaw_tolerance);
 
   /**
     * @brief Requests the planner to cancel, e.g. if it takes too much time
