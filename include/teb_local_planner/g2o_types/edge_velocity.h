@@ -262,8 +262,10 @@ public:
     double max_vel_x = std::min(max_vel_trans_remaining_x, cfg_->robot.max_vel_x);
     double max_vel_x_backwards = std::min(max_vel_trans_remaining_x, cfg_->robot.max_vel_x_backwards);
 
-    _error[0] = penaltyBoundToInterval(vx, -max_vel_x_backwards, max_vel_x, cfg_->optim.penalty_epsilon);
-    _error[1] = penaltyBoundToInterval(vy, max_vel_y, 0.0); // we do not apply the penalty epsilon here, since the velocity could be close to zero
+    // we do not apply the penalty epsilon for linear velocities on
+    // holonomic robots, since either vx or yy could be close to zero
+    _error[0] = penaltyBoundToInterval(vx, -max_vel_x_backwards, max_vel_x, 0.0);
+    _error[1] = penaltyBoundToInterval(vy, max_vel_y, 0.0);
     _error[2] = penaltyBoundToInterval(omega, cfg_->robot.max_vel_theta,cfg_->optim.penalty_epsilon);
 
     ROS_ASSERT_MSG(std::isfinite(_error[0]) && std::isfinite(_error[1]) && std::isfinite(_error[2]),
