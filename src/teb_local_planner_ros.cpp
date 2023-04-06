@@ -358,11 +358,18 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   // Now perform the actual planning
 //   bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_.goal_tolerance.free_goal_vel); // straight line init
   bool success = planner_->plan(transformed_plan, &robot_vel_, cfg_.goal_tolerance.free_goal_vel);
+
+  // Visualize plan, obstacles and via points
+  planner_->visualize();
+  visualization_->publishObstacles(obstacles_, costmap_->getResolution());
+  visualization_->publishViaPoints(via_points_);
+  visualization_->publishGlobalPlan(global_plan_);
+
   if (!success)
   {
     planner_->clearPlanner(); // force reinitialization for next time
     ROS_WARN("teb_local_planner was not able to obtain a local plan for the current setting.");
-    
+
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = ros::Time::now();
     last_cmd_ = cmd_vel.twist;
@@ -384,9 +391,9 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
     last_cmd_ = cmd_vel.twist;
     return mbf_msgs::ExePathResult::NO_VALID_CMD;
   }
-         
+
   // Check feasibility (but within the first few states only)
-  if(cfg_.robot.is_footprint_dynamic)
+  if (cfg_.robot.is_footprint_dynamic)
   {
     // Update footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
@@ -411,7 +418,6 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
 
   // Get the velocity command for this sampling interval
   if (!planner_->getVelocityCommand(cmd_vel.twist.linear.x, cmd_vel.twist.linear.y, cmd_vel.twist.angular.z, cfg_.trajectory.control_look_ahead_poses))
-
   {
     planner_->clearPlanner();
     ROS_WARN("TebLocalPlannerROS: velocity command invalid. Resetting planner...");
@@ -452,12 +458,7 @@ uint32_t TebLocalPlannerROS::computeVelocityCommands(const geometry_msgs::PoseSt
   
   // store last command (for recovery analysis etc.)
   last_cmd_ = cmd_vel.twist;
-  
-  // Now visualize everything    
-  planner_->visualize();
-  visualization_->publishObstacles(obstacles_, costmap_->getResolution());
-  visualization_->publishViaPoints(via_points_);
-  visualization_->publishGlobalPlan(global_plan_);
+
   return mbf_msgs::ExePathResult::SUCCESS;
 }
 
