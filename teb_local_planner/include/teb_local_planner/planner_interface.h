@@ -173,10 +173,6 @@ public:
   }
 
   virtual void setVisualization(const TebVisualizationPtr & visualization) = 0;
-  
-  virtual void updateRobotModel(RobotFootprintModelPtr robot_model)
-  {
-  }
 
   /**
    * @brief Check whether the planned trajectory is feasible or not.

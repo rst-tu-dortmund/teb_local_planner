@@ -58,8 +58,8 @@
 #include <nav2_costmap_2d/footprint.hpp>
 #include <nav_2d_utils/tf_help.hpp>
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 using nav2_util::declare_parameter_if_not_declared;
 
@@ -97,18 +97,15 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
     // reserve some memory for obstacles
     obstacles_.reserve(500);
         
-    // create robot footprint/contour model for optimization
-    RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(node);
-    
     // create the planner instance
     if (cfg_->hcp.enable_homotopy_class_planning)
     {
-      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(node, *cfg_.get(), &obstacles_, robot_model, visualization_, &via_points_));
+      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(node, *cfg_.get(), &obstacles_, visualization_, &via_points_));
       RCLCPP_INFO(logger_, "Parallel planning in distinctive topologies enabled.");
     }
     else
     {
-      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(node, *cfg_.get(), &obstacles_, robot_model, visualization_, &via_points_));
+      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(node, *cfg_.get(), &obstacles_, visualization_, &via_points_));
       RCLCPP_INFO(logger_, "Parallel planning in distinctive topologies disabled.");
     }
     
@@ -119,9 +116,7 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
     std::string costmap_model_name("costmap_model");
     costmap_model_->initialize(node, costmap_model_name, name_, costmap_ros_);
 
-    global_frame_ = costmap_ros_->getGlobalFrameID();
-    cfg_->map_frame = global_frame_; // TODO
-    robot_base_frame_ = costmap_ros_->getBaseFrameID();
+    cfg_->map_frame = costmap_ros_->getGlobalFrameID(); // TODO
 
     //Initialize a costmap to polygon converter
     if (!cfg_->obstacles.costmap_converter_plugin.empty())
@@ -130,7 +125,7 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
       {
         costmap_converter_ = costmap_converter_loader_.createSharedInstance(cfg_->obstacles.costmap_converter_plugin);
         std::string converter_name = costmap_converter_loader_.getName(cfg_->obstacles.costmap_converter_plugin);
-        RCLCPP_INFO(logger_, "library path : %s", costmap_converter_loader_.getClassLibraryPath("costmap_converter").c_str());
+        RCLCPP_INFO(logger_, "library path : %s", costmap_converter_loader_.getClassLibraryPath(cfg_->obstacles.costmap_converter_plugin).c_str());
         // replace '::' by '/' to convert the c++ namespace to a NodeHandle namespace
         boost::replace_all(converter_name, "::", "/");
 
@@ -155,20 +150,14 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
     
     // Get footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
-    nav2_costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);    
+    nav2_costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
 
-    // Setup callback for changes to parameters.
-    parameters_client_ = std::make_shared<rclcpp::AsyncParametersClient>(
-      node->get_node_base_interface(),
-      node->get_node_topics_interface(),
-      node->get_node_graph_interface(),
-      node->get_node_services_interface());
+    // Add callback for dynamic parameters
+    dyn_params_handler = node->add_on_set_parameters_callback(
+      std::bind(&TebConfig::dynamicParametersCallback, std::ref(cfg_), std::placeholders::_1));
 
-    parameter_event_sub_ = parameters_client_->on_parameter_event(
-      std::bind(&TebConfig::on_parameter_event_callback, std::ref(cfg_), std::placeholders::_1));
-    
     // validate optimization footprint and costmap footprint
-    validateFootprints(robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_->obstacles.min_obstacle_dist);
+    validateFootprints(cfg_->robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_->obstacles.min_obstacle_dist);
         
     // setup callback for custom obstacles
     custom_obst_sub_ = node->create_subscription<costmap_converter_msgs::msg::ObstacleArrayMsg>(
@@ -205,8 +194,8 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
 void TebLocalPlannerROS::configure(
     const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
     std::string name,
-    const std::shared_ptr<tf2_ros::Buffer> & tf,
-    const std::shared_ptr<nav2_costmap_2d::Costmap2DROS> & costmap_ros) {
+    std::shared_ptr<tf2_ros::Buffer> tf,
+    std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros) {
   nh_ = parent;
 
   auto node = nh_.lock();
@@ -264,7 +253,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   geometry_msgs::msg::TwistStamped cmd_vel;
   
   cmd_vel.header.stamp = clock_->now();
-  cmd_vel.header.frame_id = robot_base_frame_;
+  cmd_vel.header.frame_id = costmap_ros_->getBaseFrameID();
   cmd_vel.twist.linear.x = 0;
   cmd_vel.twist.linear.y = 0;
   cmd_vel.twist.angular.z = 0;
@@ -294,7 +283,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   std::vector<geometry_msgs::msg::PoseStamped> transformed_plan;
   int goal_idx;
   geometry_msgs::msg::TransformStamped tf_plan_to_global;
-  if (!transformGlobalPlan(global_plan_, robot_pose, *costmap_, global_frame_, cfg_->trajectory.max_global_plan_lookahead_dist,
+  if (!transformGlobalPlan(global_plan_, robot_pose, *costmap_, cfg_->map_frame, cfg_->trajectory.max_global_plan_lookahead_dist,
                            transformed_plan, &goal_idx, &tf_plan_to_global))
   {
     throw nav2_core::PlannerException(
@@ -396,8 +385,11 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   if(cfg_->robot.is_footprint_dynamic)
   {
     // Update footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
-    footprint_spec_ = costmap_ros_->getRobotFootprint();
-    nav2_costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
+    std::vector<geometry_msgs::msg::Point> updated_footprint_spec_ = costmap_ros_->getRobotFootprint();
+    if (updated_footprint_spec_ != footprint_spec_) {
+      updated_footprint_spec_ = footprint_spec_;
+      nav2_costmap_2d::calculateMinAndMaxDistances(updated_footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
+    }
   }
 
   bool feasible = planner_->isTrajectoryFeasible(costmap_model_.get(), footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius, cfg_->trajectory.feasibility_check_no_poses, cfg_->trajectory.feasibility_check_lookahead_distance);
@@ -558,7 +550,7 @@ void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
     try 
     {
       geometry_msgs::msg::TransformStamped obstacle_to_map = tf_->lookupTransform(
-                  global_frame_, tf2::timeFromSec(0),
+                  cfg_->map_frame, tf2::timeFromSec(0),
                   custom_obstacle_msg_.header.frame_id, tf2::timeFromSec(0),
                   custom_obstacle_msg_.header.frame_id, tf2::durationFromSec(0.5));
       obstacle_to_map_eig = tf2::transformToEigen(obstacle_to_map);
@@ -907,7 +899,7 @@ void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega,
   
   // limit strafing velocity
   if (vy > max_vel_y || vy < -max_vel_y)
-    ratio_y = std::abs(vy / max_vel_y);
+    ratio_y = std::abs(max_vel_y / vy);
   
   // Limit angular velocity
   if (omega > max_vel_theta || omega < -max_vel_theta)
@@ -1105,141 +1097,6 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::msg::Path::ConstShare
     via_points_.emplace_back(pose.pose.position.x, pose.pose.position.y);
   }
   custom_via_points_active_ = !via_points_.empty();
-}
-     
-RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(nav2_util::LifecycleNode::SharedPtr node)
-{
-  declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.type", rclcpp::ParameterType::PARAMETER_STRING);
-
-  std::string model_name;
-  if (!node->get_parameter(name_ + "." + "footprint_model.type", model_name))
-  {
-    RCLCPP_INFO(logger_, "No robot footprint model specified for trajectory optimization. Using point-shaped model.");
-    return std::make_shared<PointRobotFootprint>();
-  }
-    
-  // point  
-  if (model_name.compare("point") == 0)
-  {
-    RCLCPP_INFO(logger_, "Footprint model 'point' loaded for trajectory optimization.");
-    return std::make_shared<PointRobotFootprint>();
-  }
-  
-  // circular
-  if (model_name.compare("circular") == 0)
-  {
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
-    // get radius
-    double radius;
-    if (!node->get_parameter(name_ + "." + "footprint_model.radius", radius))
-    {
-      RCLCPP_ERROR(logger_,
-                   "Footprint model 'circular' cannot be loaded for trajectory optimization, since param '%s.footprint_model.radius' does not exist. Using point-model instead.",
-                   node->get_namespace());
-
-      return std::make_shared<PointRobotFootprint>();
-    }
-    RCLCPP_INFO(logger_, "Footprint model 'circular' (radius: %fm) loaded for trajectory optimization.", radius);
-    return std::make_shared<CircularRobotFootprint>(radius);
-  }
-  
-  rclcpp::Parameter dummy;
-  // line
-  if (model_name.compare("line") == 0)
-  {
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.line_start", rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY);
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.line_end", rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY);
-    std::vector<double> line_start, line_end;
-    // check parameters
-    if (!node->get_parameter(name_ + "." + "footprint_model.line_start", line_start) || !node->get_parameter(name_ + "." + "footprint_model.line_end", line_end))
-    {
-      RCLCPP_ERROR(logger_,
-                   "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not exist. Using point-model instead.",
-                   node->get_namespace());
-      return std::make_shared<PointRobotFootprint>();
-    }
-    if (line_start.size() != 2 || line_end.size() != 2)
-    {
-      RCLCPP_ERROR(logger_, "Footprint model 'line' cannot be loaded for trajectory optimization, since param '%s.footprint_model.line_start' and/or '.../line_end' do not contain x and y coordinates (2D). Using point-model instead.",
-                   node->get_namespace());
-      return std::make_shared<PointRobotFootprint>();
-    }
-    
-    RCLCPP_INFO(logger_,
-                "Footprint model 'line' (line_start: [%f,%f]m, line_end: [%f,%f]m) loaded for trajectory optimization.",
-                line_start[0], line_start[1], line_end[0], line_end[1]);
-
-    return std::make_shared<LineRobotFootprint>(Eigen::Map<const Eigen::Vector2d>(line_start.data()), Eigen::Map<const Eigen::Vector2d>(line_end.data()));
-  }
-  
-  // two circles
-  if (model_name.compare("two_circles") == 0)
-  {
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.front_offset", rclcpp::ParameterType::PARAMETER_DOUBLE);
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.front_radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.rear_offset", rclcpp::ParameterType::PARAMETER_DOUBLE);
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.rear_radius", rclcpp::ParameterType::PARAMETER_DOUBLE);
-    // check parameters
-    if (!node->get_parameter(name_ + "." + "footprint_model.front_offset", dummy) || !node->get_parameter(name_ + "." + "footprint_model.front_radius", dummy)
-        || !node->get_parameter(name_ + "." + "footprint_model.rear_offset", dummy) || !node->get_parameter(name_ + "." + "footprint_model.rear_radius", dummy))
-    {
-      RCLCPP_ERROR(logger_,
-                   "Footprint model 'two_circles' cannot be loaded for trajectory optimization, since params '%s.footprint_model.front_offset', '.../front_radius', '.../rear_offset' and '.../rear_radius' do not exist. Using point-model instead.",
-                   node->get_namespace());
-      return std::make_shared<PointRobotFootprint>();
-    }
-    double front_offset, front_radius, rear_offset, rear_radius;
-    node->get_parameter(name_ + "." + "footprint_model.front_offset", front_offset);
-    node->get_parameter(name_ + "." + "footprint_model.front_radius", front_radius);
-    node->get_parameter(name_ + "." + "footprint_model.rear_offset", rear_offset);
-    node->get_parameter(name_ + "." + "footprint_model.rear_radius", rear_radius);
-    RCLCPP_INFO(logger_,
-                "Footprint model 'two_circles' (front_offset: %fm, front_radius: %fm, rear_offset: %fm, rear_radius: %fm) loaded for trajectory optimization.",
-                front_offset, front_radius, rear_offset, rear_radius);
-
-    return std::make_shared<TwoCirclesRobotFootprint>(front_offset, front_radius, rear_offset, rear_radius);
-  }
-
-  // polygon
-  if (model_name.compare("polygon") == 0)
-  {
-    declare_parameter_if_not_declared(node, name_ + "." + "footprint_model.vertices", rclcpp::ParameterType::PARAMETER_STRING);
-    // check parameters
-    std::string footprint_string;
-    if (!node->get_parameter(name_ + "." + "footprint_model.vertices", footprint_string) )
-    {
-      RCLCPP_ERROR(logger_,
-                   "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s.footprint_model.vertices' does not exist. Using point-model instead.",
-                   node->get_namespace());
-
-      return std::make_shared<PointRobotFootprint>();
-    }
-
-    std::vector<geometry_msgs::msg::Point> footprint;
-    // get vertices
-    if (nav2_costmap_2d::makeFootprintFromString(footprint_string, footprint))
-    {
-      Point2dContainer polygon;
-      for(const auto &pt : footprint) {
-          polygon.push_back(Eigen::Vector2d(pt.x, pt.y));
-      }
-      RCLCPP_INFO(logger_, "Footprint model 'polygon' loaded for trajectory optimization.");
-      return std::make_shared<PolygonRobotFootprint>(polygon);
-    }
-    else
-    {
-      RCLCPP_ERROR(logger_,
-                "Footprint model 'polygon' cannot be loaded for trajectory optimization, since param '%s.footprint_model.vertices' does not define an array of coordinates. Using point-model instead.",
-                node->get_namespace());
-      return std::make_shared<PointRobotFootprint>();
-    }
-    
-  }
-  
-  // otherwise
-  RCLCPP_WARN(logger_, "Unknown robot footprint model specified with parameter '%s.footprint_model.type'. Using point model instead.",
-                  node->get_namespace());
-  return std::make_shared<PointRobotFootprint>();
 }
 
 void TebLocalPlannerROS::activate() {
