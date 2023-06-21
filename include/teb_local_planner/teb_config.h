@@ -45,6 +45,7 @@
 #include <Eigen/StdVector>
 
 #include <teb_local_planner/TebLocalPlannerReconfigureConfig.h>
+#include <teb_local_planner/robot_footprint_model.h>
 
 
 // Definitions
@@ -64,6 +65,8 @@ public:
 
   std::string odom_topic; //!< Topic name of the odometry message, provided by the robot driver or simulator
   std::string map_frame; //!< Global planning frame
+
+  RobotFootprintModelPtr robot_model; //!< model of the robot's footprint
 
   //! Trajectory related parameters
   struct Trajectory
@@ -244,6 +247,7 @@ public:
 
     odom_topic = "odom";
     map_frame = "odom";
+    robot_model = boost::make_shared<PointRobotFootprint>();
 
     // Trajectory
 

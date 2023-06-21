@@ -82,9 +82,12 @@ void TebLocalPlannerROS::reconfigureCB(TebLocalPlannerReconfigureConfig& config,
 {
   cfg_.reconfigure(config);
   ros::NodeHandle nh("~/" + name_);
+  // lock the config mutex externally
+  boost::mutex::scoped_lock lock(cfg_.configMutex());
+
   // create robot footprint/contour model for optimization
-  RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh, cfg_);
-  planner_->updateRobotModel(robot_model);
+  cfg_.robot_model = getRobotFootprintFromParamServer(nh, cfg_);
+  planner_->updateRobotModel(cfg_.robot_model);
 }
 
 void TebLocalPlannerROS::initialize(std::string name, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* costmap_ros)
@@ -106,17 +109,17 @@ void TebLocalPlannerROS::initialize(std::string name, tf2_ros::Buffer* tf, costm
     visualization_ = TebVisualizationPtr(new TebVisualization(nh, cfg_)); 
         
     // create robot footprint/contour model for optimization
-    RobotFootprintModelPtr robot_model = getRobotFootprintFromParamServer(nh, cfg_);
+    cfg_.robot_model = getRobotFootprintFromParamServer(nh, cfg_);
     
     // create the planner instance
     if (cfg_.hcp.enable_homotopy_class_planning)
     {
-      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, robot_model, visualization_, &via_points_));
+      planner_ = PlannerInterfacePtr(new HomotopyClassPlanner(cfg_, &obstacles_, visualization_, &via_points_));
       ROS_INFO("Parallel planning in distinctive topologies enabled.");
     }
     else
     {
-      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(cfg_, &obstacles_, robot_model, visualization_, &via_points_));
+      planner_ = PlannerInterfacePtr(new TebOptimalPlanner(cfg_, &obstacles_, visualization_, &via_points_));
       ROS_INFO("Parallel planning in distinctive topologies disabled.");
     }
     
@@ -170,7 +173,7 @@ void TebLocalPlannerROS::initialize(std::string name, tf2_ros::Buffer* tf, costm
     dynamic_recfg_->setCallback(cb);
     
     // validate optimization footprint and costmap footprint
-    validateFootprints(robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_.obstacles.min_obstacle_dist);
+    validateFootprints(cfg_.robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_.obstacles.min_obstacle_dist);
         
     // setup callback for custom obstacles
     custom_obst_sub_ = nh.subscribe("obstacles", 1, &TebLocalPlannerROS::customObstacleCB, this);
