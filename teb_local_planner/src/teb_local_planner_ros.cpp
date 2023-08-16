@@ -54,7 +54,7 @@
 #include "g2o/solvers/csparse/linear_solver_csparse.h"
 #include "g2o/solvers/cholmod/linear_solver_cholmod.h"
 
-#include <nav2_core/exceptions.hpp>
+#include <nav2_core/controller_exceptions.hpp>
 #include <nav2_costmap_2d/footprint.hpp>
 #include <nav_2d_utils/tf_help.hpp>
 
@@ -246,7 +246,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   // check if plugin initialized
   if(!initialized_)
   {
-    throw nav2_core::PlannerException(
+    throw nav2_core::ControllerException(
       std::string("teb_local_planner has not been initialized, please call initialize() before using this planner")
     );
   }
@@ -286,7 +286,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   if (!transformGlobalPlan(global_plan_, robot_pose, *costmap_, cfg_->map_frame, cfg_->trajectory.max_global_plan_lookahead_dist,
                            transformed_plan, &goal_idx, &tf_plan_to_global))
   {
-    throw nav2_core::PlannerException(
+    throw nav2_core::ControllerException(
       std::string("Could not transform the global plan to the frame of the controller")
     );
   }
@@ -301,7 +301,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty())
   {
-    throw nav2_core::PlannerException(
+    throw nav2_core::ControllerException(
       std::string("Transformed plan is empty. Cannot determine a local plan.")
     );
   }
@@ -359,7 +359,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
     
-    throw nav2_core::PlannerException(
+    throw nav2_core::ControllerException(
       std::string("teb_local_planner was not able to obtain a local plan for the current setting.")
     );
   }
@@ -376,7 +376,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
-    throw nav2_core::PlannerException(
+    throw nav2_core::ControllerException(
       std::string("TebLocalPlannerROS: velocity command invalid (hasDiverged). Resetting planner...")
     );
   }
@@ -404,7 +404,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
     
-    throw nav2_core::PlannerException(
+    throw nav2_core::ControllerException(
       std::string("TebLocalPlannerROS: trajectory is not feasible. Resetting planner...")
     );
   }
@@ -417,7 +417,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
     
-    throw nav2_core::PlannerException(
+    throw nav2_core::ControllerException(
       std::string("TebLocalPlannerROS: velocity command invalid. Resetting planner...")
     );
   }
@@ -441,7 +441,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
       ++no_infeasible_plans_; // increase number of infeasible solutions in a row
       time_last_infeasible_plan_ = clock_->now();
       
-      throw nav2_core::PlannerException(
+      throw nav2_core::ControllerException(
         std::string("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...")
       );
     }
