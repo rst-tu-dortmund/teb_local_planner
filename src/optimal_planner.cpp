@@ -510,7 +510,7 @@ void TebOptimalPlanner::AddEdgesObstacles(double weight_multiplier)
             continue;
           
           // determine side (left or right) and assign obstacle if closer than the previous one
-          if (cross2d(pose_orient, obst->getCentroid()) > 0) // left
+          if (cross2d(pose_orient, obst->getCentroid() - teb_.Pose(i).position()) > 0) // left
           {
               if (dist < left_min_dist)
               {
