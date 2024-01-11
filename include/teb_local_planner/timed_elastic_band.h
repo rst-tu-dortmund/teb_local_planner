@@ -642,6 +642,8 @@ public:
   //@}
 	
 protected:
+  int findNearestStartState(const PoseSE2& new_start, int min_samples, std::function<double(const PoseSE2&, const PoseSE2&)> distance);
+
   PoseSequence pose_vec_; //!< Internal container storing the sequence of optimzable pose vertices
   TimeDiffSequence timediff_vec_;  //!< Internal container storing the sequence of optimzable timediff vertices
   
