@@ -85,10 +85,14 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
   // check if the plugin is already initialized
   if(!initialized_)
   {	
+    auto options = rclcpp::NodeOptions().arguments(
+      {"--ros-args", "-r",
+       std::string("__node:=") + node->get_name() + "_" + name_ +
+           "_costmap_converter_rclcpp_node",
+       "--"});
+    intra_proc_node_ = std::make_shared<rclcpp::Node>("_", options);
+
     // declare parameters (ros2-dashing)
-    intra_proc_node_.reset( 
-            new rclcpp::Node("costmap_converter", node->get_namespace(), 
-              rclcpp::NodeOptions()));
     cfg_->declareParameters(node, name_);
 
     // get parameters of TebConfig via the nodehandle and override the default config
