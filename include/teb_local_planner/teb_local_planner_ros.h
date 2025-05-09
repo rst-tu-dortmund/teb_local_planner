@@ -77,7 +77,7 @@
 #include <dynamic_reconfigure/server.h>
 
 // boost classes
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
 
