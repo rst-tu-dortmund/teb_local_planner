@@ -51,7 +51,7 @@
 #include <functional>
 #include <vector>
 #include <iterator>
-
+#include <boost/math/special_functions/sign.hpp>
 
 namespace teb_local_planner
 {
