@@ -42,6 +42,7 @@
   <depend>tf2_eigen</depend>
   <depend>visualization_msgs</depend>
   <depend>builtin_interfaces</depend>
+  <depend>benchmark_msg</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
 
