@@ -54,7 +54,7 @@
 #include "g2o/solvers/csparse/linear_solver_csparse.h"
 #include "g2o/solvers/cholmod/linear_solver_cholmod.h"
 
-#include <nav2_core/exceptions.hpp>
+// #include <nav2_core/controller_exceptions.hpp>
 #include <nav2_costmap_2d/footprint.hpp>
 #include <nav_2d_utils/tf_help.hpp>
 
@@ -150,11 +150,49 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
     
     // Get footprint of the robot and minimum and maximum distance from the center of the robot to its footprint vertices.
     footprint_spec_ = costmap_ros_->getRobotFootprint();
-    nav2_costmap_2d::calculateMinAndMaxDistances(footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
-
+    nav2_costmap_2d::calculateMinAndMaxDistances(
+        footprint_spec_,
+        robot_inscribed_radius_,
+        robot_circumscribed_radius
+    );
     // Add callback for dynamic parameters
     dyn_params_handler = node->add_on_set_parameters_callback(
       std::bind(&TebConfig::dynamicParametersCallback, std::ref(cfg_), std::placeholders::_1));
+
+    // FERNANDO 06/11/2025
+    // bool enable_adaptative;
+    // bool full_payload;
+    // double dist_obst, new_dist, mu, zone1;
+    // // std::lock_guard<std::mutex> cfg_lock(cfg_->configMutex());
+    // std::lock_guard<std::mutex> lock(pid_params_mutex_);
+    // {
+    //   dist_obst = dist_obst_;
+    //   enable_adaptative = enable_adaptative_;
+    //   full_payload = full_payload_;
+    //   mu = mu_value_;
+    //   zone1 = mu_zone1_;
+    // }
+    // if (enable_adaptative){
+    //   if (full_payload){
+    //     if (mu == zone1){
+    //       {
+    //         std::lock_guard<std::mutex> cfg_lock(cfg_->configMutex());
+    //         double new_dist = cfg_->obstacles.min_obstacle_dist + dist_obst_ + 0.1;
+    //         cfg_->obstacles.min_obstacle_dist = new_dist;
+
+    //         RCLCPP_INFO(
+    //             logger_,  // imprime como máximo cada 2 segundos
+    //             "Distancia a obstaculo en tiempo real: %.3f",
+    //             new_dist);
+    //       }
+    //     }
+    //     // min_obstacle_dist = min_obstacle_dist + dist_obst + 0.1;
+    //     // cfg_->obstacles.min_obstacle_dist = cfg_->obstacles.min_obstacle_dist;
+    //   }
+    //   // else{
+    //   //   cfg_->obstacles.min_obstacle_dist = cfg_->obstacles.min_obstacle_dist + dist_obst;
+    //   // }
+    // }
 
     // validate optimization footprint and costmap footprint
     validateFootprints(cfg_->robot_model->getInscribedRadius(), robot_inscribed_radius_, cfg_->obstacles.min_obstacle_dist);
@@ -189,8 +227,14 @@ void TebLocalPlannerROS::initialize(nav2_util::LifecycleNode::SharedPtr node)
   {
     RCLCPP_INFO(logger_, "teb_local_planner has already been initialized, doing nothing.");
   }
-}
 
+  benchmark_params_sub_ =
+      node->create_subscription<benchmark_msg::msg::BenchmarkParams>(
+          "benchmark_params",
+          rclcpp::SystemDefaultsQoS(),
+          std::bind(&TebLocalPlannerROS::pidParamsCB, this, std::placeholders::_1));
+
+}
 void TebLocalPlannerROS::configure(
     const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
     std::string name,
@@ -246,7 +290,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   // check if plugin initialized
   if(!initialized_)
   {
-    throw nav2_core::PlannerException(
+    throw std::runtime_error(
       std::string("teb_local_planner has not been initialized, please call initialize() before using this planner")
     );
   }
@@ -286,7 +330,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   if (!transformGlobalPlan(global_plan_, robot_pose, *costmap_, cfg_->map_frame, cfg_->trajectory.max_global_plan_lookahead_dist,
                            transformed_plan, &goal_idx, &tf_plan_to_global))
   {
-    throw nav2_core::PlannerException(
+    throw std::runtime_error(
       std::string("Could not transform the global plan to the frame of the controller")
     );
   }
@@ -301,7 +345,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   // Return false if the transformed global plan is empty
   if (transformed_plan.empty())
   {
-    throw nav2_core::PlannerException(
+    throw std::runtime_error(
       std::string("Transformed plan is empty. Cannot determine a local plan.")
     );
   }
@@ -343,11 +387,8 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
   
   // also consider custom obstacles (must be called after other updates, since the container is not cleared)
   updateObstacleContainerWithCustomObstacles();
-  
-    
-  // Do not allow config changes during the following optimization step
-  std::lock_guard<std::mutex> cfg_lock(cfg_->configMutex());
-    
+
+
   // Now perform the actual planning
 //   bool success = planner_->plan(robot_pose_, robot_goal_, robot_vel_, cfg_->goal_tolerance.free_goal_vel); // straight line init
   bool success = planner_->plan(transformed_plan, &robot_vel_, cfg_->goal_tolerance.free_goal_vel);
@@ -359,7 +400,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
     
-    throw nav2_core::PlannerException(
+    throw std::runtime_error(
       std::string("teb_local_planner was not able to obtain a local plan for the current setting.")
     );
   }
@@ -376,7 +417,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     ++no_infeasible_plans_; // increase number of infeasible solutions in a row
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
-    throw nav2_core::PlannerException(
+    throw std::runtime_error(
       std::string("TebLocalPlannerROS: velocity command invalid (hasDiverged). Resetting planner...")
     );
   }
@@ -388,7 +429,11 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     std::vector<geometry_msgs::msg::Point> updated_footprint_spec_ = costmap_ros_->getRobotFootprint();
     if (updated_footprint_spec_ != footprint_spec_) {
       updated_footprint_spec_ = footprint_spec_;
-      nav2_costmap_2d::calculateMinAndMaxDistances(updated_footprint_spec_, robot_inscribed_radius_, robot_circumscribed_radius);
+      nav2_costmap_2d::calculateMinAndMaxDistances(
+          updated_footprint_spec_,
+          robot_inscribed_radius_,
+          robot_circumscribed_radius
+      );
     }
   }
 
@@ -404,7 +449,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
     
-    throw nav2_core::PlannerException(
+    throw std::runtime_error(
       std::string("TebLocalPlannerROS: trajectory is not feasible. Resetting planner...")
     );
   }
@@ -417,7 +462,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
     time_last_infeasible_plan_ = clock_->now();
     last_cmd_ = cmd_vel.twist;
     
-    throw nav2_core::PlannerException(
+    throw std::runtime_error(
       std::string("TebLocalPlannerROS: velocity command invalid. Resetting planner...")
     );
   }
@@ -441,7 +486,7 @@ geometry_msgs::msg::TwistStamped TebLocalPlannerROS::computeVelocityCommands(con
       ++no_infeasible_plans_; // increase number of infeasible solutions in a row
       time_last_infeasible_plan_ = clock_->now();
       
-      throw nav2_core::PlannerException(
+      throw std::runtime_error(
         std::string("TebLocalPlannerROS: Resulting steering angle is not finite. Resetting planner...")
       );
     }
@@ -536,7 +581,6 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmapConverter()
       obstacles_.back()->setCentroidVelocity(obstacles->obstacles[i].velocities, obstacles->obstacles[i].orientation);
   }
 }
-
 
 void TebLocalPlannerROS::updateObstacleContainerWithCustomObstacles()
 {
@@ -835,9 +879,6 @@ bool TebLocalPlannerROS::transformGlobalPlan(const std::vector<geometry_msgs::ms
 
   return true;
 }
-
-    
-      
       
 double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geometry_msgs::msg::PoseStamped>& global_plan, const geometry_msgs::msg::PoseStamped& local_goal,
                     int current_goal_idx, const geometry_msgs::msg::TransformStamped& tf_plan_to_global, int moving_average_length) const
@@ -890,31 +931,159 @@ double TebLocalPlannerROS::estimateLocalGoalOrientation(const std::vector<geomet
 }
       
       
-void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_theta, double max_vel_x_backwards) const
+void TebLocalPlannerROS::saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y, double max_vel_theta, double max_vel_x_backwards)
 {
   double ratio_x = 1, ratio_omega = 1, ratio_y = 1;
+  bool enable_adaptative, full_payload;
+  double mu, zone1, zone2, zone3, new_vel_max, w_vel_max, dist_obst;
+  
+  {
+    // FERNANDO 06/11/2025
+    std::lock_guard<std::mutex> lock(pid_params_mutex_);
+    enable_adaptative = enable_adaptative_;
+    full_payload = full_payload_;
+    mu = mu_value_;
+    zone1 = mu_zone1_;
+    zone2 = mu_zone2_;
+    zone3 = mu_zone3_;
+    new_vel_max = new_vel_max_;
+    w_vel_max = new_w_max_;
+  }
+  double min = std::min({zone1, zone2, zone3});
+
   // Limit translational velocity for forward driving
-  if (vx > max_vel_x)
-    ratio_x = max_vel_x / vx;
-  
+  if (enable_adaptative){
+    if (full_payload){
+      if (mu == zone3){
+        max_vel_x = max_vel_x * ((new_vel_max) / 100.00);
+        if (vx > max_vel_x){
+          ratio_x = max_vel_x / vx;
+        }
+      }
+        if (mu == zone1){
+        max_vel_x = max_vel_x * ((new_vel_max) / 100.00);
+        if (vx > max_vel_x){
+          ratio_x = max_vel_x / vx;
+        }
+        }
+    }
+    else{
+      if (mu == zone3){
+        max_vel_x = max_vel_x * (new_vel_max / 100.00);
+        if (vx > max_vel_x){
+          ratio_x = max_vel_x / vx;
+        }
+      }
+        if (mu == zone1){
+        max_vel_x = max_vel_x * (new_vel_max / 100.00);
+        if (vx > max_vel_x){
+          ratio_x = max_vel_x / vx;
+        }
+    }
+  }
+  }
+  else{
+    if (vx > max_vel_x){
+      ratio_x = max_vel_x / vx;
+    }
+  }
+    // // if (vx > max_vel_x){
+    // //   ratio_x = max_vel_x / vx;
+    // // }
   // limit strafing velocity
-  if (vy > max_vel_y || vy < -max_vel_y)
+  if (vy > max_vel_y || vy < -max_vel_y){
     ratio_y = std::abs(max_vel_y / vy);
-  
+  }
   // Limit angular velocity
-  if (omega > max_vel_theta || omega < -max_vel_theta)
-    ratio_omega = std::abs(max_vel_theta / omega);
-  
+  if (enable_adaptative){ // reduce la velocidad un tanto porciento especificado
+    if (full_payload){
+      if (mu == zone3){
+        max_vel_theta = max_vel_theta * ((w_vel_max) / 100.00);
+        if (omega > max_vel_theta  || omega < -max_vel_theta){
+          ratio_omega = std::abs(max_vel_theta / omega);
+        }
+      }
+        if (mu == zone1){
+        max_vel_theta = max_vel_theta * ((w_vel_max) / 100.00);
+        if (omega > max_vel_theta  || omega < -max_vel_theta){
+          ratio_omega = std::abs(max_vel_theta / omega);
+        }
+        }
+    }
+    else{
+      if (mu == zone3){
+        max_vel_theta = max_vel_theta * (w_vel_max / 100.00);
+        if (omega > max_vel_theta || omega < -max_vel_theta){
+          ratio_omega = std::abs(max_vel_theta / omega);
+        }
+      }
+        if (mu == zone1){
+        max_vel_theta = max_vel_theta * (w_vel_max / 100.00);
+        if (omega > max_vel_theta || omega < -max_vel_theta){
+          ratio_omega = std::abs(max_vel_theta / omega);
+        }
+        }
+    }
+  }
+  else{
+    if (omega > max_vel_theta || omega < -max_vel_theta){
+      ratio_omega = std::abs(max_vel_theta / omega);
+    }
+  }
+    // if (omega > max_vel_theta || omega < -max_vel_theta){
+    //   ratio_omega = std::abs(max_vel_theta / omega);
+    // }
+  // RCLCPP_INFO(
+  //     logger_,  // imprime como máximo cada 2 segundos
+  //     "Velocidad adaptativa: %s | Carga completa: %s | mu=%.3f | max_vel_x=%.3f | max_vel_theta=%.3f",
+  //     enable_adaptative ? "true" : "false",
+  //     full_payload ? "true" : "false",
+  //     mu,
+  //     max_vel_x,
+  //     max_vel_theta);
+
   // Limit backwards velocity
+
   if (max_vel_x_backwards<=0)
   {
     RCLCPP_WARN_ONCE(
                 logger_,
                 "TebLocalPlannerROS(): Do not choose max_vel_x_backwards to be <=0. Disable backwards driving by increasing the optimization weight for penalyzing backwards driving.");
   }
-  else if (vx < -max_vel_x_backwards)
-    ratio_x = - max_vel_x_backwards / vx;
-
+  else if (vx < -max_vel_x_backwards){
+    if (enable_adaptative){
+      if (full_payload){
+        if (mu == zone3){
+          max_vel_x_backwards = max_vel_x_backwards * ((new_vel_max) / 100.00);
+          ratio_x = - max_vel_x_backwards / vx;
+        }
+        if (mu == zone1){
+          max_vel_x_backwards = max_vel_x_backwards * ((new_vel_max) / 100.00);
+          ratio_x = - max_vel_x_backwards / vx;
+        }
+      }
+      else{
+        if (mu == zone3){
+          max_vel_x = max_vel_x * (new_vel_max / 100.00);
+          if (vx > max_vel_x){
+            ratio_x = max_vel_x / vx;
+          }
+        }
+        if (mu == zone1){
+          max_vel_x_backwards = max_vel_x_backwards * ((new_vel_max) / 100.00);
+          ratio_x = - max_vel_x_backwards / vx;
+        }
+      }
+    }
+    else{
+      if (vx > max_vel_x){
+        ratio_x = - max_vel_x_backwards / vx;
+      }
+    }
+      // if (vx > max_vel_x){
+      //   ratio_x = - max_vel_x_backwards / vx;
+      // }
+  }
   if (cfg_->robot.use_proportional_saturation)
   {
     double ratio = std::min(std::min(ratio_x, ratio_y), ratio_omega);
@@ -939,7 +1108,7 @@ double TebLocalPlannerROS::convertTransRotVelToSteeringAngle(double v, double om
   double radius = v/omega;
   
   if (fabs(radius) < min_turning_radius)
-    radius = double(g2o::sign(radius)) * min_turning_radius; 
+    radius = double(sign(radius)) * min_turning_radius;
 
   return std::atan(wheelbase / radius);
 }
@@ -1097,6 +1266,22 @@ void TebLocalPlannerROS::customViaPointsCB(const nav_msgs::msg::Path::ConstShare
     via_points_.emplace_back(pose.pose.position.x, pose.pose.position.y);
   }
   custom_via_points_active_ = !via_points_.empty();
+}
+
+void TebLocalPlannerROS::pidParamsCB(
+        const benchmark_msg::msg::BenchmarkParams::ConstSharedPtr msg)
+{
+    // Guardamos los valores recibidos
+    std::lock_guard<std::mutex> lock(pid_params_mutex_);
+    enable_adaptative_ = msg->enable_adaptative;
+    full_payload_      = msg->full_payload;
+    mu_value_          = msg->mu;
+    mu_zone1_          = msg->mu_zone1;
+    mu_zone2_          = msg->mu_zone2;
+    mu_zone3_          = msg->mu_zone3;
+    new_vel_max_       = msg->new_vel_max;
+    new_w_max_         = msg->new_w_max;
+    dist_obst_         = msg->dist_obst;
 }
 
 void TebLocalPlannerROS::activate() {

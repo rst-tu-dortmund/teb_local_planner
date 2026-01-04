@@ -101,6 +101,43 @@ inline double fast_sigmoid(double x)
 }
 
 /**
+ * sign function. (g2o::sign)
+ * @return the sign of x. +1 for x > 0, -1 for x < 0, 0 for x == 0
+ */
+template <typename T>
+inline int sign(T x) {
+  if (x > 0)
+    return 1;
+  else if (x < 0)
+    return -1;
+  else
+    return 0;
+}
+
+/**
+ * average two angles
+ */
+inline double average_angle(double theta1, double theta2) {
+  double x, y;
+
+  x = std::cos(theta1) + std::cos(theta2);
+  y = std::sin(theta1) + std::sin(theta2);
+  if (x == 0 && y == 0)
+    return 0;
+  else
+    return std::atan2(y, x);
+}
+
+/**
+ * normalize the angle
+ */
+inline double normalize_theta(double theta) {
+  const double result = fmod(theta + M_PI, 2.0 * M_PI);
+  if (result <= 0.0) return result + M_PI;
+  return result - M_PI;
+}
+
+/**
  * @brief Calculate Euclidean distance between two 2D point datatypes
  * @param point1 object containing fields x and y
  * @param point2 object containing fields x and y

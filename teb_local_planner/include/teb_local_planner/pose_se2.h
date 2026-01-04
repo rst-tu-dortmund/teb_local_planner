@@ -39,8 +39,6 @@
 #ifndef POSE_SE2_H_
 #define POSE_SE2_H_
 
-#include <g2o/stuff/misc.h>
-
 #include <Eigen/Core>
 #include "teb_local_planner/misc.h"
 #include <geometry_msgs/msg/pose.hpp>
@@ -254,7 +252,7 @@ public:
   void scale(double factor)
   {
     _position *= factor;
-    _theta = g2o::normalize_theta( _theta*factor );
+    _theta = normalize_theta( _theta*factor );
   }
 	  
   /**
@@ -266,7 +264,7 @@ public:
   {
     _position.coeffRef(0) += pose_as_array[0];
     _position.coeffRef(1) += pose_as_array[1];
-    _theta = g2o::normalize_theta( _theta + pose_as_array[2] );
+    _theta = normalize_theta( _theta + pose_as_array[2] );
   }
   
   /**
@@ -279,7 +277,7 @@ public:
   void averageInPlace(const PoseSE2& pose1, const PoseSE2& pose2)
   {
     _position = (pose1._position + pose2._position)/2;
-    _theta = g2o::average_angle(pose1._theta, pose2._theta);
+    _theta = average_angle(pose1._theta, pose2._theta);
   }
   
   /**
@@ -292,7 +290,7 @@ public:
     */ 
   static PoseSE2 average(const PoseSE2& pose1, const PoseSE2& pose2)
   {
-    return PoseSE2( (pose1._position + pose2._position)/2 , g2o::average_angle(pose1._theta, pose2._theta) );
+    return PoseSE2( (pose1._position + pose2._position)/2 , average_angle(pose1._theta, pose2._theta) );
   }
   
   /**
@@ -310,7 +308,7 @@ public:
     _position.x() = new_x;
     _position.y() = new_y;
     if (adjust_theta)
-        _theta = g2o::normalize_theta(_theta+angle);
+        _theta = normalize_theta(_theta+angle);
   }
   
   ///@}
@@ -341,7 +339,7 @@ public:
   PoseSE2& operator+=(const PoseSE2& rhs)
   {
     _position += rhs._position;
-    _theta = g2o::normalize_theta(_theta + rhs._theta);
+    _theta = normalize_theta(_theta + rhs._theta);
     return *this;
   }
   
@@ -362,7 +360,7 @@ public:
   PoseSE2& operator-=(const PoseSE2& rhs)
   {
     _position -= rhs._position;
-    _theta = g2o::normalize_theta(_theta - rhs._theta);
+    _theta = normalize_theta(_theta - rhs._theta);
     return *this;
   }
   

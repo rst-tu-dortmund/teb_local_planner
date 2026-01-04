@@ -129,7 +129,8 @@ public:
     double dd_error_2 = deltaS[1]*sin1;
     double dd_dev = penaltyBoundFromBelowDerivative(dd_error_1+dd_error_2, 0,0);
     
-    double dev_nh_abs = g2o::sign( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] - 
+
+    double dev_nh_abs = sign( ( cos(conf1->theta())+cos(conf2->theta()) ) * deltaS[1] -
 	      ( sin(conf1->theta())+sin(conf2->theta()) ) * deltaS[0] );
 	    
     // conf1

@@ -1,6 +1,15 @@
 teb_local_planner ROS Package
 =============================
 
+
+
+([Original repo TEB LOCAL PLANNER](https://github.com/rst-tu-dortmund/teb_local_planner/tree/ros2-master))
+
+
+
+
+
+
 The teb_local_planner package implements a plugin to the base_local_planner of the 2D navigation stack. 
 The underlying method called Timed Elastic Band locally optimizes the robot's trajectory with respect to trajectory execution time, 
 separation from obstacles and compliance with kinodynamic constraints at runtime.

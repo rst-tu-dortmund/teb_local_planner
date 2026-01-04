@@ -59,6 +59,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <costmap_converter_msgs/msg/obstacle_msg.hpp>
+#include <benchmark_msg/msg/benchmark_params.hpp>
 
 // transforms
 #include <tf2_ros/transform_listener.h>
@@ -319,7 +320,7 @@ protected:
    * @param max_vel_x_backwards Maximum translational velocity for backwards driving
    */
   void saturateVelocity(double& vx, double& vy, double& omega, double max_vel_x, double max_vel_y,
-                        double max_vel_theta, double max_vel_x_backwards) const;
+                        double max_vel_theta, double max_vel_x_backwards);
 
   
   /**
@@ -372,7 +373,6 @@ private:
   nav2_costmap_2d::Costmap2D* costmap_; //!< Pointer to the 2d costmap (obtained from the costmap ros wrapper)
   TFBufferPtr tf_; //!< pointer to Transform Listener
   TebConfig::UniquePtr cfg_; //!< Config class that stores and manages all related parameters
-    
   // internal objects (memory management owned)
   PlannerInterfacePtr planner_; //!< Instance of the underlying optimal planner class
   ObstContainer obstacles_; //!< Obstacle vector that should be considered during local trajectory optimization
@@ -383,6 +383,24 @@ private:
   
   std::vector<geometry_msgs::msg::PoseStamped> global_plan_; //!< Store the current global plan
   
+  // Suscriptor al topic /pid_params
+  rclcpp::Subscription<benchmark_msg::msg::BenchmarkParams>::SharedPtr benchmark_params_sub_;
+
+  // Variables para guardar los valores recibidos
+  std::mutex pid_params_mutex_;
+  bool   enable_adaptative_ = false;
+  bool   full_payload_ = false;
+  double mu_value_ = 0.0;
+  double mu_zone1_ = 0.0;
+  double mu_zone2_ = 0.0;
+  double mu_zone3_ = 0.0;
+  double new_vel_max_ = 0.0;
+  double new_w_max_ = 0.0;
+  double dist_obst_ = 0.0;
+
+  // Callback del subscriber
+  void pidParamsCB(const benchmark_msg::msg::BenchmarkParams::ConstSharedPtr msg);
+
   pluginlib::ClassLoader<costmap_converter::BaseCostmapToPolygons> costmap_converter_loader_; //!< Load costmap converter plugins at runtime
   std::shared_ptr<costmap_converter::BaseCostmapToPolygons> costmap_converter_; //!< Store the current costmap_converter  
 

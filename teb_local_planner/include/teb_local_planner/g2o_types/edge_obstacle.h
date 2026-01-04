@@ -136,8 +136,8 @@ public:
     double aux1 = -fabs(aux0) / dist;
     double dev_norm_x = deltaS[0]*aux1;
     double dev_norm_y = deltaS[1]*aux1;
-    
-    double aux2 = cos(angdiff) * g2o::sign(aux0);
+
+    double aux2 = cos(angdiff) * sign(aux0);
     double aux3 = aux2 / dist_squared;
     double dev_proj_x = aux3 * deltaS[1] * dist;
     double dev_proj_y = -aux3 * deltaS[0] * dist;

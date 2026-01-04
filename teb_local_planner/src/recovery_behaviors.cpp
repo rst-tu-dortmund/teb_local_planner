@@ -41,7 +41,7 @@
 #include <limits>
 #include <functional>
 #include <numeric>
-#include <g2o/stuff/misc.h>
+#include "teb_local_planner/misc.h"
 
 namespace teb_local_planner
 {
@@ -99,7 +99,7 @@ bool FailureDetector::detect(double v_eps, double omega_eps)
     {
         v_mean += buffer_[i].v;
         omega_mean += buffer_[i].omega;
-        if ( i>0 && g2o::sign(buffer_[i].omega) != g2o::sign(buffer_[i-1].omega) )
+        if ( i>0 && sign(buffer_[i].omega) != sign(buffer_[i-1].omega) )
             ++omega_zero_crossings;
     }
     v_mean /= n;
