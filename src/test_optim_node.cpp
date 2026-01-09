@@ -88,7 +88,7 @@ int main( int argc, char** argv )
   
   // setup dynamic reconfigure
   dynamic_recfg = boost::make_shared< dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig> >(n);
-  dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(CB_reconfigure, _1, _2);
+  dynamic_reconfigure::Server<TebLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(CB_reconfigure, boost::placeholders::_1, boost::placeholders::_2);
   dynamic_recfg->setCallback(cb);
   
   // setup callback for custom obstacles
@@ -131,7 +131,7 @@ int main( int argc, char** argv )
   {
     // setup callbacks for setting obstacle velocities
     std::string topic = "/test_optim_node/obstacle_" + std::to_string(i) + "/cmd_vel";
-    obst_vel_subs.push_back(n.subscribe<geometry_msgs::Twist>(topic, 1, boost::bind(&CB_setObstacleVelocity, _1, i)));
+    obst_vel_subs.push_back(n.subscribe<geometry_msgs::Twist>(topic, 1, boost::bind(&CB_setObstacleVelocity, boost::placeholders::_1, i)));
 
     //CreateInteractiveMarker(obst_vector.at(i)[0],obst_vector.at(i)[1],i,&marker_server, &CB_obstacle_marker);  
     // Add interactive markers for all point obstacles

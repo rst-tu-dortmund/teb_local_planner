@@ -64,7 +64,7 @@ void GraphSearchInterface::DepthFirst(HcGraph& g, std::vector<HcGraphVertexType>
       visited.push_back(*it);
 
       // Add new TEB, if this path belongs to a new homotopy class
-      hcp_->addAndInitNewTeb(visited.begin(), visited.end(), boost::bind(getVector2dFromHcGraph, _1, boost::cref(graph_)),
+      hcp_->addAndInitNewTeb(visited.begin(), visited.end(), boost::bind(getVector2dFromHcGraph, boost::placeholders::_1, boost::cref(graph_)),
                              start_orientation, goal_orientation, start_velocity, free_goal_vel);
 
       visited.pop_back();

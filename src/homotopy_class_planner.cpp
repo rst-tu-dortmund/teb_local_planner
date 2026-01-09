@@ -262,7 +262,7 @@ void HomotopyClassPlanner::renewAndAnalyzeOldTebs(bool delete_detours)
 //   while (cand_i != teb_candidates.rend())
 //   {
 //
-//     TebCandidateType::reverse_iterator cand_j = std::find_if(boost::next(cand_i),teb_candidates.rend(), boost::bind(compareH,_1,cand_i->second));
+//     TebCandidateType::reverse_iterator cand_j = std::find_if(boost::next(cand_i),teb_candidates.rend(), boost::bind(compareH,boost::placeholders::_1,cand_i->second));
 //     if (cand_j != teb_candidates.rend() && cand_j != cand_i)
 //     {
 //         TebOptimalPlannerPtr pt1 = *(cand_j->first);
