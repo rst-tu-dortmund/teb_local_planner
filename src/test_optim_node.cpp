@@ -60,6 +60,7 @@ ros::Subscriber via_points_sub;
 ros::Subscriber clicked_points_sub;
 std::vector<ros::Subscriber> obst_vel_subs;
 unsigned int no_fixed_obstacles;
+bool strafe = true;
 
 // =========== Function declarations =============
 void CB_mainCycle(const ros::TimerEvent& e);
@@ -79,7 +80,8 @@ int main( int argc, char** argv )
   ros::init(argc, argv, "test_optim_node");
   ros::NodeHandle n("~");
  
-  
+  n.getParam("strafe", strafe);
+
   // load ros parameters from node handle
   config.loadRosParamFromNodeHandle(n);
  
@@ -103,18 +105,18 @@ int main( int argc, char** argv )
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
 
-  obst_vector.push_back( boost::make_shared<PointObstacle>(-3,1) );
-  obst_vector.push_back( boost::make_shared<PointObstacle>(6,2) );
-  obst_vector.push_back( boost::make_shared<PointObstacle>(0,0.1) );
+//  obst_vector.push_back( boost::make_shared<PointObstacle>(-3,1) );
+//  obst_vector.push_back( boost::make_shared<PointObstacle>(6,2) );
+//  obst_vector.push_back( boost::make_shared<PointObstacle>(0,0.1) );
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,1.5,1,-1.5) ); //90 deg
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,0,-1,0) ); //180 deg
 //  obst_vector.push_back( boost::make_shared<PointObstacle>(-1.5,-0.5) );
 
   // Dynamic obstacles
-  Eigen::Vector2d vel (0.1, -0.3);
-  obst_vector.at(0)->setCentroidVelocity(vel);
-  vel = Eigen::Vector2d(-0.3, -0.2);
-  obst_vector.at(1)->setCentroidVelocity(vel);
+//  Eigen::Vector2d vel (0.1, -0.3);
+//  obst_vector.at(0)->setCentroidVelocity(vel);
+//  vel = Eigen::Vector2d(-0.3, -0.2);
+//  obst_vector.at(1)->setCentroidVelocity(vel);
 
   /*
   PolygonObstacle* polyobst = new PolygonObstacle;
@@ -165,7 +167,10 @@ int main( int argc, char** argv )
 // Planning loop
 void CB_mainCycle(const ros::TimerEvent& e)
 {
-  planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0)); // hardcoded start and goal for testing purposes
+  static double x = -4;
+  x += 0.0025;
+  static double t = strafe ? M_PI_2 : 0.0;
+  planner->plan(PoseSE2(x,0,t), PoseSE2(4,0,t)); // hardcoded start and goal for testing purposes
 }
 
 // Visualization loop

@@ -1,0 +1,8 @@
+# holonomic robot
+max_vel_y: 0.4
+weight_kinematics_nh: 0.0
+
+enable_homotopy_class_planning: False
+visualize_with_time_as_z_axis_scale: 0.1
+
+strafe: true  # true to reproduce the issue, false for nominal behavior
