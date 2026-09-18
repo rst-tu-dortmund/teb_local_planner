@@ -482,9 +482,9 @@ void TebLocalPlannerROS::updateObstacleContainerWithCostmap()
   {
     Eigen::Vector2d robot_orient = robot_pose_.orientationUnitVec();
     
-    for (unsigned int i=0; i<costmap_->getSizeInCellsX()-1; ++i)
+    for (unsigned int i=0; i+1<costmap_->getSizeInCellsX(); ++i)
     {
-      for (unsigned int j=0; j<costmap_->getSizeInCellsY()-1; ++j)
+      for (unsigned int j=0; j+1<costmap_->getSizeInCellsY(); ++j)
       {
         if (costmap_->getCost(i,j) == costmap_2d::LETHAL_OBSTACLE)
         {
